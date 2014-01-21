@@ -1,0 +1,56 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
+		<artifactId>accesscontroltool</artifactId>
+		<version>0.5.2-SNAPSHOT</version>
+	</parent>
+	<artifactId>accesscontroltool-package</artifactId>
+	<packaging>war</packaging>
+
+	<description>
+       jenkins build number: ${BUILD_NUMBER}, build id ${BUILD_ID}, svn revision ${SVN_REVISION}
+  </description>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>com.day.jcr.vault</groupId>
+				<artifactId>content-package-maven-plugin</artifactId>
+
+				<!-- creates and deploys CRX packages, http://dev.day.com/docs/en/cq/current/core/how_to/how_to_use_the_vlttool/vlt-mavenplugin.html -->
+				<configuration>
+					<embeddeds combine.children="append">
+						<embedded>
+							<!-- embed everything which has the same group id as this project 
+								itself, nevertheless it only filters from the list of given dependencies. -->
+							<groupId>org.yaml</groupId>
+						</embedded>
+					</embeddeds>
+				</configuration>
+			</plugin>
+
+			<!-- checks all xml files (within view projects) for well-formedness -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>xml-maven-plugin</artifactId>
+			</plugin>
+
+		</plugins>
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>accesscontroltool-bundle</artifactId>
+			<version>${project.version}</version>
+			<type>bundle</type>
+		</dependency>
+		<dependency>
+			<groupId>org.yaml</groupId>
+			<artifactId>snakeyaml</artifactId>
+			<version>1.13</version>
+			<type>bundle</type>
+		</dependency>
+	</dependencies>
+</project>
