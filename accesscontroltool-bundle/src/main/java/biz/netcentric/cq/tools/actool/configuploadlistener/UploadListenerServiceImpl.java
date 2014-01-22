@@ -136,9 +136,8 @@ public class UploadListenerServiceImpl implements UploadListenerService, EventLi
 	private void setEventListener() throws Exception {
 		if(StringUtils.isNotBlank(this.configurationPath) ){
 			try {
-
 				adminSession = repository.loginAdministrative(null);
-				String[] nodeType = {"nt:file"};
+				
 				adminSession.getWorkspace().getObservationManager().addEventListener(
 
 						this, //handler
@@ -156,7 +155,6 @@ public class UploadListenerServiceImpl implements UploadListenerService, EventLi
 				LOG.info("added EventListener for ACE configuration root path: {}", this.configurationPath);
 			} catch (RepositoryException e){
 				LOG.error("RepositoryException in UploadListenerService:{}",e);
-//				throw new Exception(e);
 			}
 		}else{
 			LOG.warn("no root ACE configuration path configured in AceService");

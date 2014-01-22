@@ -7,7 +7,9 @@ public interface AcHistoryService {
 	
 	public void persistHistory(AcInstallationHistoryPojo history);
 
-	public String getLastInstallationLog();
+	public String getInstallationLogPaths();
 
 	public String getLogHtml(Session session, String path);
+	
+	public String getLastInstallationHistory();
 }

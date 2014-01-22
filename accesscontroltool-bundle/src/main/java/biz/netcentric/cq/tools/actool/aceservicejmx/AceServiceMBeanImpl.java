@@ -2,11 +2,13 @@ package biz.netcentric.cq.tools.actool.aceservicejmx;
 
 
 import java.util.Set;
+
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.felix.scr.annotations.Property;
+
 import biz.netcentric.cq.tools.actool.aceservice.AceService;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 
@@ -68,10 +70,8 @@ public class AceServiceMBeanImpl implements AceServiceMBean{
 
 	@Override
 	public String getSavedLogs()  {
-		return acHistoryService.getLastInstallationLog();
+		return acHistoryService.getInstallationLogPaths();
 	}
-
-	
 
 	@Override
 	public String pathBasedDump() {
@@ -82,4 +82,13 @@ public class AceServiceMBeanImpl implements AceServiceMBean{
 	public String groupBasedDump() {
 		return aceService.getCompletePrincipalBasedDumpsAsString();
 	}
+
+	@Override
+	public String lastInstallationHistory() {
+		return acHistoryService.getLastInstallationHistory();
+	}
+
+	
+
+	
 }

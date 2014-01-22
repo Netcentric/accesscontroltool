@@ -32,12 +32,16 @@ public class HistoryUtils {
 	private static final Logger LOG = LoggerFactory.getLogger(HistoryUtils.class);
 
 
-
-	public static void persistHistory(final Session session, AcInstallationHistoryPojo history,  final int nrOfHistoriesToSave) throws RepositoryException{
-
+	public static Node getAcHistoryRootNode(final Session session) throws RepositoryException{
 		final Node rootNode = session.getRootNode();
 		Node statisticsRootNode = safeGetNode(rootNode, STATISTICS_ROOT_NODE, "nt:unstructured");
 		Node acHistoryRootNode = safeGetNode(statisticsRootNode,ACHISTORY_ROOT_NODE, "sling:OrderedFolder");
+		return acHistoryRootNode;
+	}
+	
+	public static void persistHistory(final Session session, AcInstallationHistoryPojo history,  final int nrOfHistoriesToSave) throws RepositoryException{
+
+		Node acHistoryRootNode = getAcHistoryRootNode(session);
 		Node newHistoryNode = safeGetNode(acHistoryRootNode, "history_" + System.currentTimeMillis(), "nt:unstructured");
 		String path = newHistoryNode.getPath();
 		setHistoryNodeProperties(newHistoryNode, history);
@@ -52,6 +56,7 @@ public class HistoryUtils {
 		history.addMessage(message);
 		LOG.info(message);
 	}
+
 	private static Node safeGetNode(final Node baseNode, final String name, final String typeToCreate)
 			throws RepositoryException {
 		if (!baseNode.hasNode(name)) {
@@ -62,6 +67,7 @@ public class HistoryUtils {
 			return baseNode.getNode(name);
 		}
 	}
+
 	private static void setHistoryNodeProperties(final Node historyNode, AcInstallationHistoryPojo history) throws ValueFormatException, VersionException, LockException, ConstraintViolationException, RepositoryException{
 
 		historyNode.setProperty(PROPERTY_INSTALLATION_DATE, history.getInstallationDate().toString());
@@ -69,9 +75,8 @@ public class HistoryUtils {
 		historyNode.setProperty(PROPERTY_EXECUTION_TIME, history.getExecutionTime());
 		historyNode.setProperty(PROPERTY_MESSAGES, history.getVerboseMessageHistory());
 		historyNode.setProperty(PROPERTY_TIMESTAMP, history.getInstallationDate().getTime());
-
-
 	}
+
 	private static void deleteObsoleteHistoryNodes(final Node acHistoryRootNode, final int nrOfHistoriesToSave) throws RepositoryException{
 		NodeIterator childNodeIt = acHistoryRootNode.getNodes();
 		Set<Node> historyChildNodes = new TreeSet<Node>(new TimestampPropertyComparator());
@@ -88,13 +93,10 @@ public class HistoryUtils {
 			index++;
 		}
 	}
+
 	public static String getInstallationLogLinks(final Session session) throws RepositoryException{
-		final Node rootNode = session.getRootNode();
-		Node statisticsRootNode = safeGetNode(rootNode, STATISTICS_ROOT_NODE, "nt:unstructured");
-		Node acHistoryRootNode = safeGetNode(statisticsRootNode, ACHISTORY_ROOT_NODE, "sling:OrderedFolder");
-
+		Node acHistoryRootNode = getAcHistoryRootNode(session);
 		return getHistoryFromProperties(acHistoryRootNode);
-
 	}
 
 	private static String getHistoryFromProperties(Node acHistoryRootNode)

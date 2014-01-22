@@ -282,12 +282,11 @@ public class AceServiceImpl implements AceService{
 			session = repository.loginAdministrative(null);
 
 			Map<String, String> newestConfigurations = getNewestConfigurationNodes(path, session, history);
-
 			List mergedConfigurations = AcHelper.getMergedConfigurations(session,newestConfigurations, history);
 
 			if(newestConfigurations != null){
 
-				String message = "start installation of configuration of merged configurations";
+				String message = "start installation of merged configurations";
 				LOG.info(message);
 				history.addMessage(message);
 
