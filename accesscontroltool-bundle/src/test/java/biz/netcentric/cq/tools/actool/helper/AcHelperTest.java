@@ -2,20 +2,17 @@ package biz.netcentric.cq.tools.actool.helper;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-
 import org.junit.Before;
 import org.junit.Test;
 
-
-
 public class AcHelperTest {
-
 
 	AceBean aceBeanGroupA_1;
 	AceBean aceBeanGroupA_2;
@@ -108,11 +105,7 @@ public class AcHelperTest {
 
 	@Test
 	public void getMergedACLTest(){
-		//		Set<AceBean> getMergedACL(Session session, Set<AceBean> aclfromConfig, Set<AceBean> aclFomRepository, 
-		//		                          Set<String> authorizablesSet) 
-
-
-
+		
 		Set<AceBean> aclfromConfig = new HashSet<AceBean>();
 		Set<AceBean> aclFomRepository = new HashSet<AceBean>();
 		Set<String> authorizablesSet = new HashSet<String>();
@@ -121,12 +114,11 @@ public class AcHelperTest {
 		authorizablesSet.add("group-B");
 		authorizablesSet.add("group-C");
 
-
-
 		// groups in config: group-A, group-B, group-C
 
 		// basic assertion: the ACE set from config is never empty
 		// gets used for all following tests
+		
 		aclfromConfig.add(aceBeanGroupA_1);
 		aclfromConfig.add(aceBeanGroupB_1);
 
@@ -233,12 +225,7 @@ public class AcHelperTest {
 		assertEquals(pathBasedAceMap, AcHelper.getPathBasedAceMap(groupBasedAceMap, 2)); // 1: TreeSet, 2: HashSet
 
 
-
-
-
 		// case 2: ordered Set (deny-ACEs before allow ACEs)
-
-
 
 		groupBasedAceMap = new HashMap<String, Set<AceBean>>();
 		pathBasedAceMap = new HashMap<String, Set<AceBean>>();
@@ -261,10 +248,9 @@ public class AcHelperTest {
 
 		pathBasedAceMap.get("/content").add(aceBeanGroupB_2); // deny, /content
 		pathBasedAceMap.get("/content").add(aceBeanGroupA_1); // deny, /content
-		pathBasedAceMap.get("/content").add(aceBeanGroupA_2); // allow, /content
 		pathBasedAceMap.get("/content").add(aceBeanGroupB_1); // allow, /content
-
-
+		pathBasedAceMap.get("/content").add(aceBeanGroupA_2); // allow, /content
+		
 		pathBasedAceMap.put("/content/isp",  new LinkedHashSet<AceBean>());
 
 		pathBasedAceMap.get("/content/isp").add(aceBeanGroupA_3); // deny, /content/isp
@@ -274,24 +260,23 @@ public class AcHelperTest {
 
 		Map<String, Set<AceBean>> resultMap = AcHelper.getPathBasedAceMap(groupBasedAceMap, 1);
 
-		Set<AceBean> linkedResultSet1 =  new LinkedHashSet<AceBean>();
-		Set<AceBean> linkedResultSet2 =  new LinkedHashSet<AceBean>();
-
-		Set<AceBean> resultSet1 = resultMap.get("/content");
-		Set<AceBean> resultSet2 = resultMap.get("/content/isp");
-
-		// transfer elements from resultSet (TreeSet) into LinkedHashSets to make them comparable
-		for(AceBean aceBean : resultSet1){
-			linkedResultSet1.add(aceBean);
-		}
-		for(AceBean aceBean : resultSet2){
-			linkedResultSet2.add(aceBean);
+		Collection<AceBean> listBeansexpected = new ArrayList<AceBean>();
+		Collection<AceBean> listBeansResult = new ArrayList<AceBean>();
+		
+		// loop through each map save the beans in a list and then compare the single elements
+		
+		for(Map.Entry<String, Set<AceBean>> aceSet : pathBasedAceMap.entrySet()){
+			for(AceBean bean : aceSet.getValue()){
+				listBeansexpected.add(bean);
+			}
 		}
 		
-		assertEquals(pathBasedAceMap.get("/content"), linkedResultSet1);
-		assertEquals(pathBasedAceMap.get("/content/isp"), linkedResultSet2);
+		for(Map.Entry<String, Set<AceBean>> aceSet : resultMap.entrySet()){
+			for(AceBean bean : aceSet.getValue()){
+				listBeansResult.add(bean);
+			}
+		}
 		
-		// TODO: looping through each list and compare the single elements
-
+		assertEquals(listBeansexpected, listBeansResult);
 	}
 }
