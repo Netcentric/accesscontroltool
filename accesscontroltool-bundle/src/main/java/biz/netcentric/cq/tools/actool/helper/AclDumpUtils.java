@@ -28,19 +28,19 @@ public class AclDumpUtils {
 	public final static int NO_ACL_SORTING = 2;
 
 
-/**
- * returns a dump of the ACEs installed in the system using a PrintWriter.
- * @param out PrintWriter
- * @param aceMap map containing all ACE data, either path based or group based
- * @param mapOrdering 
- * @param aceOrdering
- */
+	/**
+	 * returns a dump of the ACEs installed in the system using a PrintWriter.
+	 * @param out PrintWriter
+	 * @param aceMap map containing all ACE data, either path based or group based
+	 * @param mapOrdering 
+	 * @param aceOrdering
+	 */
 	public static void returnAceDump(final PrintWriter out, Map<String, Set<AceBean>> aceMap, final int mapOrdering, final int aceOrdering){
 
 		if(mapOrdering == PATH_BASED_SORTING){
 			LOG.debug("path based ordering required therefor getting path based ACE map");
 			int aclOrder = NO_ACL_SORTING;
-			
+
 			if(aceOrdering == DENY_ALLOW_ACL_SORTING){
 				aclOrder = DENY_ALLOW_ACL_SORTING;
 			}
@@ -97,26 +97,26 @@ public class AclDumpUtils {
 			}
 		}
 	}
-	
+
 	public static String returnConfigurationDumpAsString(final Map<String, Set<AceBean>> aceMap, final Set<AuthorizableConfigBean> authorizableSet, final int mapOrder) throws IOException{
-		
+
 		StringBuilder sb = new StringBuilder(20000);
 		AuthorizableDumpUtils.getAuthorizableConfigAsString(sb, authorizableSet);
 		returnAceDumpAsString(sb, aceMap, mapOrder);
-		
+
 		return sb.toString();
 	}
-	
+
 	public static StringBuilder returnAceDumpAsString(final StringBuilder sb, final Map<String, Set<AceBean>> aceMap, final int mapOrder) throws IOException{
-		
+
 		Set<String> keys = aceMap.keySet();
 		sb.append("- " + Constants.ACE_CONFIGURATION_KEY + ":") ;
 		sb.append("<br /><br />");
-		
+
 		for(String mapKey : keys){
 
 			Set<AceBean> aceBeanSet = aceMap.get(mapKey);
-			
+
 			sb.append(Constants.DUMP_INDENTATION_KEY + "- " + mapKey + ":");
 			sb.append("<br />");
 			for(AceBean bean : aceBeanSet){
@@ -131,26 +131,26 @@ public class AclDumpUtils {
 				sb.append(Constants.DUMP_INDENTATION_PROPERTY + "permission: " + bean.getPermission()).append("<br />");
 				sb.append(Constants.DUMP_INDENTATION_PROPERTY + "actions: " + bean.getActionsString()).append("<br />");
 				sb.append(Constants.DUMP_INDENTATION_PROPERTY + "privileges: " + bean.getPrivilegesString()).append("<br />");
-				sb.append(Constants.DUMP_INDENTATION_PROPERTY + "repGlob: ").append("<br />");
+				sb.append(Constants.DUMP_INDENTATION_PROPERTY + "repGlob: ");
 				if(!bean.getRepGlob().isEmpty()){
 					sb.append("'" + bean.getRepGlob() + "'");
-				}else{
-					sb.append("<br />");
 				}
+				sb.append("<br />");
+
 
 			}
 			sb.append("\n");
 		}
 		sb.append("\n");
-		
-		
-		
+
+
+
 		return sb;
 	}
 
 	public static void returnConfigurationDumpAsFile(final SlingHttpServletResponse response,
 			Map<String, Set<AceBean>> aceMap, Set<AuthorizableConfigBean> authorizableSet, final int mapOrder) throws IOException{
-		
+
 		String mimetype =  "application/octet-stream";
 		response.setContentType(mimetype);
 		ServletOutputStream outStream = null;
@@ -177,8 +177,8 @@ public class AclDumpUtils {
 			}
 		}
 	}
-	
-    
+
+
 	private static ServletOutputStream writeAclConfigToStream(
 			Map<String, Set<AceBean>> aceMap, final int mapOrder,
 			ServletOutputStream outStream) throws IOException {
@@ -193,8 +193,8 @@ public class AclDumpUtils {
 			outStream.println(Constants.DUMP_INDENTATION_KEY + "- " + mapKey + ":");
 
 			for(AceBean bean : aceBeanSet){
-            bean = CqActionsMapping.getAlignedPermissionBean(bean);
-  
+				bean = CqActionsMapping.getAlignedPermissionBean(bean);
+
 				outStream.println();
 				if(mapOrder == PATH_BASED_SORTING){
 					outStream.println(Constants.DUMP_INDENTATION_FIRST_PROPERTY + "- principal: " + bean.getPrincipalName());
