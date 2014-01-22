@@ -5,11 +5,13 @@ import javax.jcr.Session;
 
 public interface AcHistoryService {
 	
-	public void persistHistory(AcInstallationHistoryPojo history);
+	public void persistHistory(AcInstallationHistoryPojo history, final String configurationRootPath);
 
 	public String getInstallationLogPaths();
 
 	public String getLogHtml(Session session, String path);
 	
 	public String getLastInstallationHistory();
+	
+	
 }

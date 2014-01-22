@@ -18,6 +18,10 @@ import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.day.cq.commons.jcr.JcrUtil;
+
+
+
 @Service
 @Component(
 		metatype = true,
@@ -30,13 +34,18 @@ import org.slf4j.LoggerFactory;
 
 })
 
+
+
 public class AcHistoryServiceImpl implements AcHistoryService{
+	private static final String INSTALLED_CONFIGS_NODE_NAME = "installedConfigs";
 	private static final int NR_OF_HISTORIES_TO_SAVE_DEFAULT = 5;
 	private static final Logger LOG = LoggerFactory.getLogger(AcHistoryServiceImpl.class);
 	private int nrOfSavedHistories;
 
 	@Reference
 	private SlingRepository repository;
+
+
 
 	@Activate
 	public void activate(@SuppressWarnings("rawtypes") final Map properties) throws Exception {
@@ -45,12 +54,25 @@ public class AcHistoryServiceImpl implements AcHistoryService{
 	}
 
 	@Override
-	public void persistHistory(AcInstallationHistoryPojo history){
+	public void persistHistory(AcInstallationHistoryPojo history, final String configurationRootPath){
 		Session session = null;
 		try {
 			try {
 				session = repository.loginAdministrative(null);
-				HistoryUtils.persistHistory(session, history, this.nrOfSavedHistories);
+				Node historyNode = HistoryUtils.persistHistory(session, history, this.nrOfSavedHistories);
+				session.save();
+				if(history.isSuccess()){
+					Node configurationRootNode = session.getNode(configurationRootPath);
+					if(configurationRootNode != null){
+						persistInstalledConfigurations(historyNode, configurationRootNode, history);
+						session.save();
+					}
+					else{
+						String message = "Couldn't find configuration root Node under path: " + configurationRootPath;
+						LOG.error(message);
+						history.addWarning(message);
+					}
+				}
 			} catch (RepositoryException e) {
 				LOG.error("RepositoryException: ", e);
 			}
@@ -87,21 +109,20 @@ public class AcHistoryServiceImpl implements AcHistoryService{
 		Session session = null;
 		String history = "";
 		try {
-
 			session = repository.loginAdministrative(null);
-			final Node rootNode = session.getRootNode();
+			
 			Node statisticsRootNode = HistoryUtils.getAcHistoryRootNode(session);
 			NodeIterator it = statisticsRootNode.getNodes();
+
 			if(it.hasNext()){
 				Node lastHistoryNode = it.nextNode();
 
 				if(lastHistoryNode != null){
 					history = getLogHtml(session, lastHistoryNode.getName());
 				}
+			}else{
+				history = "no history found!";
 			}
-			history = "no history found!";
-
-
 		} catch (RepositoryException e) {
 			LOG.error("RepositoryException: ", e);
 		}finally{
@@ -110,6 +131,23 @@ public class AcHistoryServiceImpl implements AcHistoryService{
 			}
 		}
 		return history;
+	}
+
+	public void persistInstalledConfigurations(final Node historyNode, final Node configurationRootNode, AcInstallationHistoryPojo history) {
+
+		try {
+			JcrUtil.copy(configurationRootNode, historyNode, INSTALLED_CONFIGS_NODE_NAME);
+		} catch (RepositoryException e) {
+			String message = e.toString();
+			history.setException(e.toString());
+			LOG.error("Exception: ", e);
+		}
+
+		try {
+			history.addMessage("saved installed configuration files under : " + historyNode.getPath() + "/" + INSTALLED_CONFIGS_NODE_NAME);
+		} catch (RepositoryException e) {
+			LOG.error("Exception: ", e);
+		}
 
 	}
 

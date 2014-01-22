@@ -1,7 +1,5 @@
 package biz.netcentric.cq.tools.actool.helper;
 
-
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Date;

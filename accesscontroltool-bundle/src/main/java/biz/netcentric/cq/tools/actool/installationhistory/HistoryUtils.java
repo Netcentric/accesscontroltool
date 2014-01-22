@@ -35,11 +35,11 @@ public class HistoryUtils {
 	public static Node getAcHistoryRootNode(final Session session) throws RepositoryException{
 		final Node rootNode = session.getRootNode();
 		Node statisticsRootNode = safeGetNode(rootNode, STATISTICS_ROOT_NODE, "nt:unstructured");
-		Node acHistoryRootNode = safeGetNode(statisticsRootNode,ACHISTORY_ROOT_NODE, "sling:OrderedFolder");
+		Node acHistoryRootNode = safeGetNode(statisticsRootNode, ACHISTORY_ROOT_NODE, "sling:OrderedFolder");
 		return acHistoryRootNode;
 	}
 	
-	public static void persistHistory(final Session session, AcInstallationHistoryPojo history,  final int nrOfHistoriesToSave) throws RepositoryException{
+	public static Node persistHistory(final Session session, AcInstallationHistoryPojo history,  final int nrOfHistoriesToSave) throws RepositoryException{
 
 		Node acHistoryRootNode = getAcHistoryRootNode(session);
 		Node newHistoryNode = safeGetNode(acHistoryRootNode, "history_" + System.currentTimeMillis(), "nt:unstructured");
@@ -51,10 +51,11 @@ public class HistoryUtils {
 		if(previousHistoryNode != null){
 			acHistoryRootNode.orderBefore(newHistoryNode.getName(), previousHistoryNode.getName());
 		}
-		session.save();
+		
 		String message = "saved history in node: " + path;
 		history.addMessage(message);
 		LOG.info(message);
+		return newHistoryNode;
 	}
 
 	private static Node safeGetNode(final Node baseNode, final String name, final String typeToCreate)
@@ -112,21 +113,12 @@ public class HistoryUtils {
 	}
 
 	public static String getLogHtml(Session session, String path) {
-		Node rootNode = null;
-		try {
-			rootNode = session.getRootNode();
-		} catch (RepositoryException e) {
-			LOG.error("RepositoryException: {}", e);
-		}
-		Node statisticsRootNode;
+		
 		StringBuilder sb = new StringBuilder();
 		try {
-			statisticsRootNode = safeGetNode(rootNode, STATISTICS_ROOT_NODE, "nt:unstructured");
-
-			Node acHistoryRootNode = safeGetNode(statisticsRootNode, ACHISTORY_ROOT_NODE, "sling:OrderedFolder");
+			Node acHistoryRootNode = getAcHistoryRootNode(session);
 			Node historyNode = acHistoryRootNode.getNode(path);
-
-
+			
 			sb.append("<html><head></head><body>");
 			if(historyNode != null){
 				sb.append("Installation triggered: " + historyNode.getProperty(PROPERTY_INSTALLATION_DATE).getString());

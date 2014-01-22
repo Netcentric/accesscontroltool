@@ -327,7 +327,7 @@ public class AceServiceImpl implements AceService{
 			LOG.info("installation of AccessControlConfiguration took: {} ms", executionTime);
 			history.setExecutionTime(executionTime);
 			this.isExecuting = false;
-			acHistoryService.persistHistory(history);
+			acHistoryService.persistHistory(history, this.configurationPath);
 
 		}
 		return history;
@@ -358,10 +358,7 @@ public class AceServiceImpl implements AceService{
 		}
 
 		if(configurationRootNode != null){
-			Iterator<Node> childNodesIterator = null;
-
-			childNodesIterator = configurationRootNode.getNodes();
-
+			Iterator<Node> childNodesIterator = configurationRootNode.getNodes();
 
 			if(childNodesIterator != null){
 				while(childNodesIterator.hasNext()){
@@ -438,6 +435,7 @@ public class AceServiceImpl implements AceService{
 			// TO DO: Logging
 			flag = false;
 			message = e.toString();
+			LOG.error("Exception: ", e);
 		}finally{
 			if(session != null){
 				session.logout();

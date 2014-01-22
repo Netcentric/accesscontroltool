@@ -84,11 +84,7 @@ public class AceServiceMBeanImpl implements AceServiceMBean{
 	}
 
 	@Override
-	public String lastInstallationHistory() {
+	public String showLastInstallationHistory() {
 		return acHistoryService.getLastInstallationHistory();
 	}
-
-	
-
-	
 }
