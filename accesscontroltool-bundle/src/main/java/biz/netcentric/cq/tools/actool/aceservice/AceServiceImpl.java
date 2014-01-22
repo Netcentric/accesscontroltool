@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+
 import javax.jcr.AccessDeniedException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -31,7 +32,7 @@ import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.commons.osgi.OsgiUtil;
+import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,8 +84,8 @@ public class AceServiceImpl implements AceService{
 
 	@Activate
 	public void activate(@SuppressWarnings("rawtypes") final Map properties) throws Exception {
-		this.configurationPath = OsgiUtil.toString(properties.get(PROPERTY_CONFIGURATION_PATH), "");
-		this.excludePaths = OsgiUtil.toStringArray(properties.get("AceService.queryExcludePaths"),null);
+		this.configurationPath = PropertiesUtil.toString(properties.get(PROPERTY_CONFIGURATION_PATH), "");
+		this.excludePaths = PropertiesUtil.toStringArray(properties.get("AceService.queryExcludePaths"),null);
 	}
 
 	@Override
