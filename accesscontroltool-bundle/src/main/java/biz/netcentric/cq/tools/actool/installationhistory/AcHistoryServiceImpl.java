@@ -34,10 +34,10 @@ public class AcHistoryServiceImpl implements AcHistoryService{
 	private static final int NR_OF_HISTORIES_TO_SAVE_DEFAULT = 5;
 	private static final Logger LOG = LoggerFactory.getLogger(AcHistoryServiceImpl.class);
 	private int nrOfSavedHistories;
-	
+
 	@Reference
 	private SlingRepository repository;
-	
+
 	@Activate
 	public void activate(@SuppressWarnings("rawtypes") final Map properties) throws Exception {
 		this.nrOfSavedHistories = PropertiesUtil.toInteger(properties.get("AceService.nrOfSavedHistories"), NR_OF_HISTORIES_TO_SAVE_DEFAULT);
@@ -87,18 +87,21 @@ public class AcHistoryServiceImpl implements AcHistoryService{
 		Session session = null;
 		String history = "";
 		try {
-			
+
 			session = repository.loginAdministrative(null);
 			final Node rootNode = session.getRootNode();
 			Node statisticsRootNode = HistoryUtils.getAcHistoryRootNode(session);
 			NodeIterator it = statisticsRootNode.getNodes();
-			Node lastHistoryNode = it.nextNode();
-			
-			if(lastHistoryNode != null){
-				history = getLogHtml(session, lastHistoryNode.getName());
+			if(it.hasNext()){
+				Node lastHistoryNode = it.nextNode();
+
+				if(lastHistoryNode != null){
+					history = getLogHtml(session, lastHistoryNode.getName());
+				}
 			}
-		
-		
+			history = "no history found!";
+
+
 		} catch (RepositoryException e) {
 			LOG.error("RepositoryException: ", e);
 		}finally{
@@ -107,7 +110,7 @@ public class AcHistoryServiceImpl implements AcHistoryService{
 			}
 		}
 		return history;
-		
+
 	}
 
 }
