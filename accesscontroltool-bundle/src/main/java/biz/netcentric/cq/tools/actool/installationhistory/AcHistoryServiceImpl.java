@@ -110,7 +110,7 @@ public class AcHistoryServiceImpl implements AcHistoryService{
 		String history = "";
 		try {
 			session = repository.loginAdministrative(null);
-			
+
 			Node statisticsRootNode = HistoryUtils.getAcHistoryRootNode(session);
 			NodeIterator it = statisticsRootNode.getNodes();
 
@@ -150,5 +150,7 @@ public class AcHistoryServiceImpl implements AcHistoryService{
 		}
 
 	}
+
+	
 
 }

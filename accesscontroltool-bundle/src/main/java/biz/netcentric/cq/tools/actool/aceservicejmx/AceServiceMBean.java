@@ -35,5 +35,7 @@ public interface AceServiceMBean {
 	
 	public String groupBasedDump();
 	
-	public String showLastInstallationHistory();
+//	public String showLastInstallationHistory();
+	
+	
 }

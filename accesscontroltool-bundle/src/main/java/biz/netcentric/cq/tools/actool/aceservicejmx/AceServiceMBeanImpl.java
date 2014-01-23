@@ -23,7 +23,7 @@ public class AceServiceMBeanImpl implements AceServiceMBean{
 
 	@Reference
 	AceService aceService;
-	
+
 	@Reference
 	AcHistoryService acHistoryService;
 
@@ -64,7 +64,7 @@ public class AceServiceMBeanImpl implements AceServiceMBean{
 		for(String path : paths){
 			sb.append(path + "<br />");
 		}
-		
+
 		return  sb.toString();
 	} 
 
@@ -83,8 +83,10 @@ public class AceServiceMBeanImpl implements AceServiceMBean{
 		return aceService.getCompletePrincipalBasedDumpsAsString();
 	}
 
-	@Override
-	public String showLastInstallationHistory() {
-		return acHistoryService.getLastInstallationHistory();
-	}
+//	@Override
+//	public String showLastInstallationHistory() {
+//		return acHistoryService.getLastInstallationHistory();
+//	}
+
+	
 }

@@ -21,6 +21,7 @@ import biz.netcentric.cq.tools.actools.comparators.TimestampPropertyComparator;
 
 public class HistoryUtils {
 
+	private static final String PROPERTY_SLING_RESOURCE_TYPE = "sling:resourceType";
 	private static final String ACHISTORY_ROOT_NODE = "achistory";
 	private static final String STATISTICS_ROOT_NODE = "var/statistics";
 
@@ -29,6 +30,11 @@ public class HistoryUtils {
 	private static final String PROPERTY_EXECUTION_TIME = "executionTime";
 	private static final String PROPERTY_SUCCESS = "success";
 	private static final String PROPERTY_INSTALLATION_DATE = "installationDate";
+	
+	private static final String FONT_COLOR_SUCCESS_HTML_OPEN = "<font color='green'><b>";
+	private static final String FONT_COLOR_NO_SUCCESS_HTML_OPEN = "<font color='red'><b>";
+	private static final String FONT_COLOR_SUCCESS_HTML_CLOSE = "</b></font>";
+	
 	private static final Logger LOG = LoggerFactory.getLogger(HistoryUtils.class);
 
 
@@ -76,6 +82,7 @@ public class HistoryUtils {
 		historyNode.setProperty(PROPERTY_EXECUTION_TIME, history.getExecutionTime());
 		historyNode.setProperty(PROPERTY_MESSAGES, history.getVerboseMessageHistory());
 		historyNode.setProperty(PROPERTY_TIMESTAMP, history.getInstallationDate().getTime());
+		historyNode.setProperty(PROPERTY_SLING_RESOURCE_TYPE, "/apps/netcentric/actool/components/historyRenderer");
 	}
 
 	private static void deleteObsoleteHistoryNodes(final Node acHistoryRootNode, final int nrOfHistoriesToSave) throws RepositoryException{
@@ -97,16 +104,21 @@ public class HistoryUtils {
 
 	public static String getInstallationLogLinks(final Session session) throws RepositoryException{
 		Node acHistoryRootNode = getAcHistoryRootNode(session);
-		return getHistoryFromProperties(acHistoryRootNode);
+		return getAssembledHistoryLinks(acHistoryRootNode);
 	}
 
-	private static String getHistoryFromProperties(Node acHistoryRootNode)
+	private static String getAssembledHistoryLinks(Node acHistoryRootNode)
 			throws RepositoryException, PathNotFoundException {
 		String messages = "";
 		for (NodeIterator iterator =  acHistoryRootNode.getNodes(); iterator.hasNext();) {
 			Node node = (Node) iterator.next();
 			if(node != null){
-				messages = messages + node.getPath() + " <br />";
+				String successStatusString = FONT_COLOR_NO_SUCCESS_HTML_OPEN + "failed"  + FONT_COLOR_SUCCESS_HTML_CLOSE;
+				if(node.getProperty(PROPERTY_SUCCESS).getBoolean()){
+					successStatusString = FONT_COLOR_SUCCESS_HTML_OPEN + "ok" + FONT_COLOR_SUCCESS_HTML_CLOSE;
+				}
+				
+				messages = messages + node.getPath() + " " + "(" + successStatusString + ")" + " <a href ='"+ node.getPath()  + ".html'>" + " (show)" + "</a><br />";
 			}
 		}
 		return messages;
@@ -119,13 +131,11 @@ public class HistoryUtils {
 			Node acHistoryRootNode = getAcHistoryRootNode(session);
 			Node historyNode = acHistoryRootNode.getNode(path);
 			
-			sb.append("<html><head></head><body>");
 			if(historyNode != null){
 				sb.append("Installation triggered: " + historyNode.getProperty(PROPERTY_INSTALLATION_DATE).getString());
 				sb.append("<br />" + historyNode.getProperty(PROPERTY_MESSAGES).getString().replace("\n", "<br />"));
 				sb.append("<br /><br />" + "Execution time: " + historyNode.getProperty(PROPERTY_EXECUTION_TIME).getLong() + " ms");
 				sb.append("<br />" + "Success: " + historyNode.getProperty(PROPERTY_SUCCESS).getBoolean());
-				sb.append("</body></html>");
 			}
 		} catch (RepositoryException e) {
 			LOG.error("RepositoryException: {}", e);
