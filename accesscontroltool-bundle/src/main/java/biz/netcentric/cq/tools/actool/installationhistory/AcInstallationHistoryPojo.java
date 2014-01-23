@@ -17,9 +17,7 @@ public class AcInstallationHistoryPojo {
 	
 	private static final String MSG_IDENTIFIER_EXCEPTION = "EXCEPTION:";
 	private static final String MSG_IDENTIFIER_WARNING = "WARNING:";
-	private static final String FONT_COLOR_SUCCESS_HTML_OPEN = "<font color='green'><b>";
-	private static final String FONT_COLOR_NO_SUCCESS_HTML_OPEN = "<font color='red'><b>";
-	private static final String FONT_COLOR_SUCCESS_HTML_CLOSE = "</b></font>";
+	
 	
 	private Set <HistoryEntry> warnings = new HashSet<HistoryEntry> ();
 	private Set <HistoryEntry> messages =  new HashSet<HistoryEntry> ();
@@ -97,13 +95,13 @@ public class AcInstallationHistoryPojo {
 		sb.append("\n" + "Execution time: " + this.executionTime + " ms\n");
 		
         if(this.success){
-        	sb.append(FONT_COLOR_SUCCESS_HTML_OPEN);
+        	sb.append(HtmlConstants.FONT_COLOR_SUCCESS_HTML_OPEN);
         }else{
-        	sb.append(FONT_COLOR_NO_SUCCESS_HTML_OPEN);
+        	sb.append(HtmlConstants.FONT_COLOR_NO_SUCCESS_HTML_OPEN);
         }
 		sb.append("\n" + "Success: " + this.success);
 		
-        sb.append(FONT_COLOR_SUCCESS_HTML_CLOSE);
+        sb.append(HtmlConstants.FONT_COLOR_SUCCESS_HTML_CLOSE);
 		return sb.toString();
 	}
 	

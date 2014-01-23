@@ -31,10 +31,6 @@ public class HistoryUtils {
 	private static final String PROPERTY_SUCCESS = "success";
 	private static final String PROPERTY_INSTALLATION_DATE = "installationDate";
 	
-	private static final String FONT_COLOR_SUCCESS_HTML_OPEN = "<font color='green'><b>";
-	private static final String FONT_COLOR_NO_SUCCESS_HTML_OPEN = "<font color='red'><b>";
-	private static final String FONT_COLOR_SUCCESS_HTML_CLOSE = "</b></font>";
-	
 	private static final Logger LOG = LoggerFactory.getLogger(HistoryUtils.class);
 
 
@@ -113,9 +109,9 @@ public class HistoryUtils {
 		for (NodeIterator iterator =  acHistoryRootNode.getNodes(); iterator.hasNext();) {
 			Node node = (Node) iterator.next();
 			if(node != null){
-				String successStatusString = FONT_COLOR_NO_SUCCESS_HTML_OPEN + "failed"  + FONT_COLOR_SUCCESS_HTML_CLOSE;
+				String successStatusString = HtmlConstants.FONT_COLOR_NO_SUCCESS_HTML_OPEN + "failed"  + HtmlConstants.FONT_COLOR_SUCCESS_HTML_CLOSE;
 				if(node.getProperty(PROPERTY_SUCCESS).getBoolean()){
-					successStatusString = FONT_COLOR_SUCCESS_HTML_OPEN + "ok" + FONT_COLOR_SUCCESS_HTML_CLOSE;
+					successStatusString = HtmlConstants.FONT_COLOR_SUCCESS_HTML_OPEN + "ok" + HtmlConstants.FONT_COLOR_SUCCESS_HTML_CLOSE;
 				}
 				
 				messages = messages + node.getPath() + " " + "(" + successStatusString + ")" + " <a href ='"+ node.getPath()  + ".html'>" + " (show)" + "</a><br />";
