@@ -30,6 +30,10 @@ public class AcInstallationHistoryPojo {
 	private long executionTime;
 	private long msgIndex = 0;
 	
+	public AcInstallationHistoryPojo() {
+		this.setInstallationDate(new Date());
+	}
+	
 	public Date getInstallationDate() {
 		return installationDate;
 	}
