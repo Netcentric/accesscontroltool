@@ -1,10 +1,8 @@
 package biz.netcentric.cq.tools.actool.configuploadlistener;
 
 
-import java.util.LinkedHashSet;
-import java.util.List;
+
 import java.util.Map;
-import java.util.Set;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -25,10 +23,8 @@ import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import biz.netcentric.cq.tools.actool.aceservice.AceService;
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
-import biz.netcentric.cq.tools.actool.helper.AceBean;
-import biz.netcentric.cq.tools.actool.helper.AcHelper;
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
+
 
 
 @Component(
@@ -69,6 +65,9 @@ public class UploadListenerServiceImpl implements UploadListenerService, EventLi
 	@Reference
 	AceService aceService;
 
+	@Reference
+	AcHistoryService acHistoryService;
+	
 	@Override
 	public void onEvent(EventIterator events) {
 	
@@ -89,27 +88,8 @@ public class UploadListenerServiceImpl implements UploadListenerService, EventLi
 						}
 					}
 					if(config != null){
-						Session session = null;
-						try {
-							session = repository.loginAdministrative(null);
-							AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
-							Set<AuthorizableInstallationHistory> authorizableHistorySet = new LinkedHashSet<AuthorizableInstallationHistory>();
-							
-							Map<String, Set<AceBean>> repositoryDumpAceMap = null;
-							LOG.info("start building dump from repository");
-							repositoryDumpAceMap = AcHelper.createAclDumpMap(session, AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE, aceService.getExcludePaths());
-							Map<String, String> newestConfigurations = aceService.getNewestConfigurationNodes(path, session, history);
-							List mergedConfigurations = AcHelper.getMergedConfigurations(session,newestConfigurations, history);
-							aceService.installConfigurationFromString(mergedConfigurations, history, session, authorizableHistorySet, repositoryDumpAceMap);
-						} catch (Exception e) {
-							
-							e.printStackTrace();
-						}finally{
-							if(session != null){
-								session.logout();
-							}
-						}
-						
+						LOG.info("installation triggered by upload listener. detected change in path: ", path);
+						aceService.execute();
 					}else{
 						LOG.error("Did not found a config, path: " + path + " ! Config is null!");
 					}
