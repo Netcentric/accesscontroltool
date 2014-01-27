@@ -2,7 +2,6 @@ package biz.netcentric.cq.tools.actool.aceservice;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -10,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-
 import javax.jcr.AccessDeniedException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -230,8 +228,6 @@ public class AceServiceImpl implements AceService{
 			}
 		}
 
-
-
 		String message = "finished installation of groups configuration without errors!";
 		status.addMessage(message);
 		LOG.info(message);
@@ -262,8 +258,8 @@ public class AceServiceImpl implements AceService{
 			LOG.error(message);
 		} 
 	}
-
-
+	
+	
 	/**
 	 * executes the installation of the existing configurations
 	 */
@@ -275,7 +271,7 @@ public class AceServiceImpl implements AceService{
 		this.isExecuting = true;
 		Session session = null;
 		AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
-		history.setInstallationDate(new Date());
+
 		Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet = new LinkedHashSet<AuthorizableInstallationHistory>();
 
 		try {
@@ -299,6 +295,8 @@ public class AceServiceImpl implements AceService{
 				// thus persisting the changed ACLs
 				session.save();
 				history.addMessage("persisted changes of ACLs");
+				
+				
 			}
 		} catch (Exception e) {
 			// in case an installation of an ACE configuration
@@ -340,7 +338,7 @@ public class AceServiceImpl implements AceService{
 	 * @return set containing paths to the newest configurations
 	 * @throws Exception 
 	 */
-	public Map<String,String> getNewestConfigurationNodes(final String path, final Session session, AcInstallationHistoryPojo history) throws Exception {
+	public Map<String, String> getNewestConfigurationNodes(final String path, final Session session, AcInstallationHistoryPojo history) throws Exception {
 		Node configurationRootNode = null;
 		Set<Node> configs = new LinkedHashSet<Node>();
 		if(path.isEmpty()){
@@ -563,7 +561,6 @@ public class AceServiceImpl implements AceService{
 		try {
 			session = repository.loginAdministrative(null);
 			paths = this.getNewestConfigurationNodes(this.configurationPath, session, null).keySet();
-
 		} catch (Exception e) {
 
 		}finally{
@@ -573,4 +570,6 @@ public class AceServiceImpl implements AceService{
 		}
 		return paths;
 	}
+	
+
 }

@@ -3,11 +3,14 @@ package biz.netcentric.cq.tools.actool.aceservicejmx;
 
 import java.util.Set;
 
+import org.apache.commons.lang.time.StopWatch;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.felix.scr.annotations.Property;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.aceservice.AceService;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
@@ -20,6 +23,8 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 })
 
 public class AceServiceMBeanImpl implements AceServiceMBean{  
+	
+	private static final Logger LOG = LoggerFactory.getLogger(AceServiceMBeanImpl.class);
 
 	@Reference
 	AceService aceService;
@@ -58,13 +63,12 @@ public class AceServiceMBeanImpl implements AceServiceMBean{
 	}
 
 	@Override
-	public String getConfigurationFiles() {
+	public String getConfigurationFileLinks() {
 		final Set<String> paths = aceService.getFoundConfigPaths();
 		StringBuilder sb = new StringBuilder();
 		for(String path : paths){
-			sb.append(path + "<br />");
+			sb.append("<a href = '/crx/de/index.jsp#/crx.default/jcr%3aroot" + path + "' target=\"_blank'\" >" + path + "</a><br />");
 		}
-
 		return  sb.toString();
 	} 
 
@@ -75,18 +79,18 @@ public class AceServiceMBeanImpl implements AceServiceMBean{
 
 	@Override
 	public String pathBasedDump() {
-		return aceService.getCompletePathBasedDumpsAsString();
+		StopWatch sw = new StopWatch();
+		sw.start();
+		String dump =  aceService.getCompletePathBasedDumpsAsString();
+		sw.stop();
+		LOG.info("path based dump took: " + sw.getTime() + " ms");
+		return dump;
 	}
 
 	@Override
 	public String groupBasedDump() {
 		return aceService.getCompletePrincipalBasedDumpsAsString();
 	}
-
-//	@Override
-//	public String showLastInstallationHistory() {
-//		return acHistoryService.getLastInstallationHistory();
-//	}
 
 	
 }

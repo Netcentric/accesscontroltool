@@ -114,7 +114,7 @@ public class HistoryUtils {
 					successStatusString = HtmlConstants.FONT_COLOR_SUCCESS_HTML_OPEN + "ok" + HtmlConstants.FONT_COLOR_SUCCESS_HTML_CLOSE;
 				}
 				
-				messages = messages + node.getPath() + " " + "(" + successStatusString + ")" + " <a href ='"+ node.getPath()  + ".html'>" + " (show)" + "</a><br />";
+				messages = messages + node.getPath() + " " + "(" + successStatusString + ")" + " <a href ='"+ node.getPath()  + ".html' target=\"_blank'\">" + " (show)" + "</a><br />";
 			}
 		}
 		return messages;
