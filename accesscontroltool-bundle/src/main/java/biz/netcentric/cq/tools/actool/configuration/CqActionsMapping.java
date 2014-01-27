@@ -15,8 +15,8 @@ import biz.netcentric.cq.tools.actool.helper.AceBean;
 
 
 public class CqActionsMapping {
-
-	// Set requiredPrivs = cqActions.getPrivileges(action);
+	
+	
 
 	static public Map<String, List <String>> map = new HashMap <String, List <String>>();
 	static List <String> repWriteList = new ArrayList<String>(Arrays.asList(new String[] {"rep:write"}));
@@ -39,7 +39,7 @@ public class CqActionsMapping {
 				"jcr:write",
 				"jcr:nodeTypeDefinitionManagement",
 				"jcr:retentionManagement",
-		        "jcr:readAccessControl"})));
+				"jcr:readAccessControl"})));
 
 		map.put("read",new ArrayList<String>( Arrays.asList(new String[] {"jcr:read"})));
 		map.put("modify", new ArrayList<String>( Arrays.asList(new String[] { "jcr:modifyProperties", "jcr:lockManagement", "jcr:versionManagement" })));
@@ -50,6 +50,7 @@ public class CqActionsMapping {
 		map.put("replicate", new ArrayList<String>( Arrays.asList(new String[] { "crx:replicate"})));
 
 	}
+	
 	public static String getCqActions(final Privilege[] jcrPrivileges){
 		StringBuilder sb = new StringBuilder(); 
 		for(Privilege p : jcrPrivileges){
@@ -57,6 +58,7 @@ public class CqActionsMapping {
 		}
 		return getCqActions(StringUtils.chomp(sb.toString()));
 	}
+	
 	public static String getCqActions(final String[] jcrPrivileges){
 		StringBuilder sb = new StringBuilder(); 
 		for(String s : jcrPrivileges){
@@ -65,6 +67,11 @@ public class CqActionsMapping {
 		return getCqActions(StringUtils.chomp(sb.toString()));
 	}
 
+	/**
+	 * method that converts jcr:privileges to cq actions 
+	 * @param jcrPrivilegesString comma separated String containing jcr:privileges
+	 * @return comma separated String containing the assigned cq actions
+	 */
 	public static String getCqActions(final String jcrPrivilegesString){
 		List <String> jcrPrivileges = new ArrayList<String>(Arrays.asList(jcrPrivilegesString.split(",")));
 
@@ -109,8 +116,14 @@ public class CqActionsMapping {
 		}
 		return actionsString;
 	}
-
-	public static String getStrippedPrivilegesString(String privilegesString, String actionsString){
+	
+	/**
+	 * Method that removes jcr:privileges covered by cq actions from a String
+	 * @param privilegesString comma separated String containing jcr:privileges
+	 * @param actionsString comma separated String containing cq actions
+	 * @return comma separated String containing  jcr:privileges
+	 */
+	public static String getStrippedPrivilegesString(final String privilegesString, final String actionsString){
 		List <String> actions = new ArrayList<String>(Arrays.asList(actionsString.split(",")));
 		List <String> jcrPrivileges = new ArrayList<String>(Arrays.asList(privilegesString.split(",")));
 
@@ -125,7 +138,7 @@ public class CqActionsMapping {
 			jcrPrivileges.addAll(map.get("jcr:write"));
 		}
 		// Don't replace jcr:all
-		
+
 		for(String action : actions){
 			List<String> privilegesFromAction = map.get(action);
 			if(privilegesFromAction != null){
@@ -141,7 +154,12 @@ public class CqActionsMapping {
 		return StringUtils.chop(sb.toString());
 	}
 
-	public static AceBean getAlignedPermissionBean(AceBean bean){
+	/**
+	 * method that deletes jvr:privileges from a AceBean which are covered by cq actions stored in the respective bean property
+	 * @param bean a AceBean
+	 * @return
+	 */
+	public static AceBean getAlignedPermissionBean(final AceBean bean){
 		String alignedPrivileges = getStrippedPrivilegesString(bean.getPrivilegesString(),bean.getActionsString());
 		bean.setPrivilegesString(alignedPrivileges);
 
