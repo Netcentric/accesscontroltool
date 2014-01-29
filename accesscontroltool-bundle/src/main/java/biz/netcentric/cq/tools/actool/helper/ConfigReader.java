@@ -229,7 +229,7 @@ public class ConfigReader {
 					//mandatory Properties which have to be set per ACE definition
 					boolean isPathDefined = false;
 					boolean isPermissionDefined = false;
-					boolean isActionOrPermissionDefined = false;
+					boolean isActionOrPrivilegeDefined = false;
 
 					long counter = 1;
 
@@ -302,7 +302,7 @@ public class ConfigReader {
 									}
 
 									tmpAclBean.setActions(actions);
-									isActionOrPermissionDefined = true;
+									isActionOrPrivilegeDefined = true;
 									
 									}
 								}
@@ -312,8 +312,9 @@ public class ConfigReader {
 									// TO DO: validation
 									if("null".equals(currentEntryValue)){
 										tmpAclBean.setPrivilegesString("");
-									}else{
+									}else if(!currentEntryValue.isEmpty()){
 									    tmpAclBean.setPrivilegesString(currentEntryValue);
+									    isActionOrPrivilegeDefined = true;
 									}
 								}
 								
@@ -322,7 +323,6 @@ public class ConfigReader {
 									if(Validators.isValidPermission(currentEntryValue)){
 										tmpAclBean.setAllow(new Boolean(StringUtils.equals("allow", currentEntryValue) ? "true" : "deny"));
 										tmpAclBean.setIsAllowProvide(true);
-										isActionOrPermissionDefined = true;
 									}
 									else{
 
@@ -331,7 +331,7 @@ public class ConfigReader {
 									}
 								}
 								
-								// validata globbing
+								// validate globbing
 								else if(StringUtils.equals(ACE_CONFIG_PROPERTY_GLOB, entry )){
 									if(Validators.isValidRegex(currentEntryValue)){
 										tmpAclBean.setRepGlob(currentEntryValue);
@@ -344,7 +344,7 @@ public class ConfigReader {
 								}
 							}
 
-							String missingPropertiesString = getMissingPropertiesString(isPathDefined,  isActionOrPermissionDefined);
+							String missingPropertiesString = getMissingPropertiesString(isPathDefined,  isActionOrPrivilegeDefined);
 
 							if(missingPropertiesString.isEmpty()){
 								
@@ -396,26 +396,7 @@ public class ConfigReader {
 					}
 				}
 			}
-			if(out != null){
-				out.println("\nACL-Beans created out of config file: \n");
-			}
-			Set<String> keySet = aceMap.keySet();
-			if(out != null){
-				for(String principal:keySet){
-					Set<AceBean> aceBeanSet = aceMap.get(principal);
-					out.println("principal: " + principal);
-					for(AceBean bean : aceBeanSet){
-						out.println();
-						out.println(" " + ACE_CONFIG_PROPERTY_PATH + ": " + bean.getJcrPath());
-						out.println(" " + ACE_CONFIG_PROPERTY_PERMISSION + ": " + bean.getPermission());
-						out.println(" " + ACE_CONFIG_PROPERTY_ACTIONS + ": " + bean.getActionsString());
-						out.println(" " + ACE_CONFIG_PROPERTY_PRIVILEGES + ": " + bean.getPrivilegesString());
-						out.println(" " + ACE_CONFIG_PROPERTY_GLOB + ": " + bean.getRepGlob());
-					}
-					out.println();
-				}
-				out.println();
-			}
+			
 		}
 		return aceMap;
 	}
