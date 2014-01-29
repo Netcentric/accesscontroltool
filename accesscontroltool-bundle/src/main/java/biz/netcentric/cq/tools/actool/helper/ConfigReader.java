@@ -49,12 +49,11 @@ public class ConfigReader {
 		}
 		
 		
-		Map<String, Set<AceBean>> aceMapFromConfig = getPreservedOrderdAceMap(session,out, aclList, groupsFromConfig); // group based Map from config file
+		Map<String, Set<AceBean>> aceMapFromConfig = getPreservedOrderdAceMap(session, aclList, groupsFromConfig); // group based Map from config file
 		return aceMapFromConfig;
 	}
 
-	public static Map<String, LinkedHashSet<AuthorizableConfigBean>> getAuthorizableConfigurationBeans(
-			PrintWriter out, List<LinkedHashMap> yamlList) {
+	public static Map<String, LinkedHashSet<AuthorizableConfigBean>> getAuthorizableConfigurationBeans(List<LinkedHashMap> yamlList) {
 
 		// build principal Beans
 		LinkedHashMap authorizableConfigMap = yamlList.get(0);
@@ -63,13 +62,13 @@ public class ConfigReader {
 			LOG.error("group configuration not found in YAML configuration file");
 			return null;
 		}
-		Map<String, LinkedHashSet<AuthorizableConfigBean>> principalsMap = getAuthorizablesMap(out, authorizableList);
+		Map<String, LinkedHashSet<AuthorizableConfigBean>> principalsMap = getAuthorizablesMap(authorizableList);
 		return principalsMap;
 	}
 
 
 
-	private static Map<String, LinkedHashSet<AuthorizableConfigBean>> getAuthorizablesMap(final PrintWriter out, final List <LinkedHashMap> yamlMap) {
+	private static Map<String, LinkedHashSet<AuthorizableConfigBean>> getAuthorizablesMap(final List <LinkedHashMap> yamlMap) {
 
 		Map<String, LinkedHashSet<AuthorizableConfigBean>> principalMap = new LinkedHashMap <String, LinkedHashSet<AuthorizableConfigBean>>();
 
@@ -86,9 +85,7 @@ public class ConfigReader {
 
 					LOG.info("start reading group configuration");
 					LOG.info("Found principal: {} in config", currentPrincipal);
-					if(out != null){
-						out.write("Found group: " + currentPrincipal + " in groupConfig\n");
-					}
+					
 
 					LinkedHashSet<AuthorizableConfigBean> tmpSet = new LinkedHashSet<AuthorizableConfigBean>();
 					principalMap.put((String)currentPrincipal,  tmpSet);
@@ -169,37 +166,13 @@ public class ConfigReader {
 					}
 				}
 			}
-
-
-			if(out != null){
-				out.println("\nPrincipalConfigBeans created out of config file: \n");
-			}
-
 			Set<String> keySet = principalMap.keySet();
-
-
-			if(out != null){
-				for(String principal:keySet){
-					Set<AuthorizableConfigBean> aceBeanSet = principalMap.get(principal);
-					out.println("principal: " + principal);
-					for(AuthorizableConfigBean bean : aceBeanSet){
-						out.println();
-						out.println(" ID: " + bean.getPrincipalID());
-						out.println(" name: " + bean.getPrincipalName());
-						out.println(" memberOf: " + bean.getMemberOfString());
-						out.println(" path: " + bean.getPath());
-						out.println(" isGroup: " + bean.isGroup());
-						out.println(" password: " + bean.getPassword());
-					}
-					out.println();
-				}
-				out.println();
-			}
+			
 		}
 		return principalMap;
 	}
 
-	private static Map<String, Set<AceBean>> getPreservedOrderdAceMap(final Session session,final PrintWriter out, final List <LinkedHashMap> aceYamlMap, Set<String> groupsFromCurrentConfig) throws RepositoryException {
+	private static Map<String, Set<AceBean>> getPreservedOrderdAceMap(final Session session, final List <LinkedHashMap> aceYamlMap, Set<String> groupsFromCurrentConfig) throws RepositoryException {
 
 		Map<String, Set<AceBean>> aceMap = new LinkedHashMap <String, Set<AceBean>>();
 		
@@ -215,16 +188,10 @@ public class ConfigReader {
 					List<LinkedHashMap> aceData = (List<LinkedHashMap>) currentPrincipalAceMap.get(principal);
 					LOG.info("start reading ACE configuration of authorizable: {}", principal);
 
-
-					if(out != null){
-						out.write("\n" + principal);
-					}
-
 					if(aceMap.get(principal) == null){
 						LinkedHashSet<AceBean> tmpSet = new LinkedHashSet<AceBean>();
 						aceMap.put(principal,  tmpSet);
 					}
-
 
 					//mandatory Properties which have to be set per ACE definition
 					boolean isPathDefined = false;
@@ -241,9 +208,7 @@ public class ConfigReader {
 
 							for(String entry : keySet2){
 								String logString = "\n" + " " + entry + ": " + map2.get(entry);
-								if(out != null){
-									out.write(logString);
-								}
+								
 								LOG.info(logString);
 								
 								
@@ -388,9 +353,7 @@ public class ConfigReader {
 								throw new IllegalArgumentException("Mandatory property/properties in ACE definition nr." + counter + " of authorizable: " + principal + " missing: " + missingPropertiesString + "! Installation aborted!");
 							}
 
-							if(out != null){
-								out.write("\n");
-							}
+							
 						}
 
 					}
