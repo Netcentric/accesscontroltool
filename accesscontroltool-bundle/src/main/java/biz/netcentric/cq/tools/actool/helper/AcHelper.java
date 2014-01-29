@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
-
 import javax.jcr.AccessDeniedException;
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
@@ -31,7 +30,6 @@ import javax.jcr.security.AccessControlEntry;
 import javax.jcr.security.AccessControlList;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.AccessControlPolicy;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
@@ -41,19 +39,7 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-
-
-
-
-
-
-
-
-
-
 import org.yaml.snakeyaml.Yaml;
-
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
@@ -125,13 +111,9 @@ public class AcHelper {
 
 	public static String deleteAces(final Session session, Set<AclBean> aclSet, String authorizableId) throws AccessDeniedException, PathNotFoundException, ItemNotFoundException, RepositoryException{
 		AccessControlManager aMgr = session.getAccessControlManager();
-		//		AccessControlList acl;
 		StringBuilder message = new StringBuilder();
-		//		Set <AccessControlList> aclSet = new LinkedHashSet<AccessControlList>();
 
 		for(AclBean aclBean : aclSet){
-
-
 			if(aclBean != null){
 				for (AccessControlEntry ace : aclBean.getAcl().getAccessControlEntries()) {
 					if(StringUtils.equals(ace.getPrincipal().getName(), authorizableId)){
@@ -148,7 +130,12 @@ public class AcHelper {
 		}
 		return message.toString();
 	}
-
+	/**
+	 * Method that returns a set containing all rep:policy nodes from repository excluding those contained in paths which are excluded from search
+	 * @param session
+	 * @param excludePaths paths which are excluded from search
+	 * @return all rep:policy nodes delivered by query
+	 */
 	public static Set<Node> getRepPolicyNodes(final Session session, final List<String> excludePaths){
 		NodeIterator nodeIt  = null;
 		try {
@@ -199,6 +186,7 @@ public class AcHelper {
 		QueryResult queryResult = query.execute();
 		NodeIterator nit = queryResult.getNodes();
 		List<String> paths = new ArrayList<String>();
+		
 		while (nit.hasNext()) {
 			// get the next rep:policy node
 			Node node = nit.nextNode();
@@ -218,6 +206,7 @@ public class AcHelper {
 		Query queryUsers = session.getWorkspace().getQueryManager().createQuery(queryStringUsers, Query.XPATH);
 		QueryResult queryResultUsers = queryUsers.execute();
 		NodeIterator nitUsers = queryResultUsers.getNodes();
+		
 		while(nitUsers.hasNext()){
 			Node node = nitUsers.nextNode();
 			String tmp = node.getProperty( "rep:principalName").getString();
@@ -233,6 +222,7 @@ public class AcHelper {
 		Query queryGroups = session.getWorkspace().getQueryManager().createQuery(queryStringGroups, Query.XPATH);
 		QueryResult queryResultGroups = queryGroups.execute();
 		NodeIterator nitGroups = queryResultGroups.getNodes();
+		
 		while(nitGroups.hasNext()){
 			Node node = nitGroups.nextNode();
 			String tmp = node.getProperty( "rep:principalName").getString();
@@ -242,9 +232,6 @@ public class AcHelper {
 	}
 
 
-
-
-	// TO DO: make process more generic. create List of ACE then transform into a principal- or path-based map
 	public static Map <String, Set<AceBean>> createPrincipalBasedAceDump(final Session session, final String[] excludePaths) throws AccessDeniedException, UnsupportedRepositoryOperationException, IllegalArgumentException, RepositoryException{
 
 		Map <String, Set<AceBean>> groupBasedAceMap = new HashMap<String, Set<AceBean>>();
@@ -300,11 +287,13 @@ public class AcHelper {
 
 	public static void purgeACLs(final ResourceResolver resourceResolver, final String[] paths, final PrintWriter out) throws Exception {
 		Session session = resourceResolver.adaptTo(Session.class);
+		
 		for (int i = 0; i < paths.length; i++) {
 			if (StringUtils.isNotBlank(paths[i])) {
 				String query = "/jcr:root" + paths[i].trim() + "//rep:policy";
 				Iterator<Resource> results = resourceResolver.findResources(query, Query.XPATH);
 				AccessControlManager accessManager = session.getAccessControlManager();
+				
 				while (results.hasNext()) {
 					Resource res = results.next().getParent();
 					if (res != null) {
@@ -368,14 +357,26 @@ public class AcHelper {
 		}
 	}
 	
+	/**
+	 * Method which installs all ACE contained in the configurations. if an ACL is already existing in CRX the ACEs from the config get merged into the ACL (the ones from config overwrite the ones in CRX)
+	 * ACEs belonging to groups which are not contained in any configuration don't get altered
+	 * @param pathBasedAceMapFromConfig map containing the ACE data from the merged configurations path based
+	 * @param repositoryDumpedAceMap map containing the ACL data from the repository dump, path based
+	 * @param authorizablesSet set which contains all group names contained in the configurations
+	 * @param session
+	 * @param out 
+	 * @param history history object
+	 * @throws Exception
+	 */
+	
 	public static void installPathBasedACEs(final Map<String, Set<AceBean>> pathBasedAceMapFromConfig, final Map<String, Set<AceBean>> repositoryDumpedAceMap, Set<String> authorizablesSet, final Session session, final PrintWriter out,final AcInstallationHistoryPojo history) throws Exception{
 		long addingActionsCounter = 0;
 		JackrabbitSession js = (JackrabbitSession) session;
 		PrincipalManager pm = js.getPrincipalManager();
 
-		Set<String> keySet = pathBasedAceMapFromConfig.keySet();
+		Set<String> paths = pathBasedAceMapFromConfig.keySet();
 
-		history.addVerboseMessage("found: " + keySet.size() + "  paths in merged config");
+		history.addVerboseMessage("found: " + paths.size() + "  paths in merged config");
 		history.addVerboseMessage("found: " + authorizablesSet.size() + " authorizables in merged config");
 
 		// counters for history output
@@ -383,12 +384,10 @@ public class AcHelper {
 		long aclBeansProcessed = 0;
 
 		// loop through all nodes from config
-		for(String path : keySet){
+		for(String path : paths){
 
-
-
-			Set<AceBean> aceBeanSetFromConfig = pathBasedAceMapFromConfig.get(path); 
-			Set<AceBean> aceBeanSetFromRepo = repositoryDumpedAceMap.get(path);
+			Set<AceBean> aceBeanSetFromConfig = pathBasedAceMapFromConfig.get(path); // Set which holds the AceBeans of the current path in configuration
+			Set<AceBean> aceBeanSetFromRepo = repositoryDumpedAceMap.get(path);  // Set which holds the AceBeans of the current path in dump from repository
 
 			if(aceBeanSetFromRepo != null){
 				aclBeansProcessed+=aceBeanSetFromConfig.size();
@@ -429,13 +428,17 @@ public class AcHelper {
 					if(session.itemExists(bean.getJcrPath())){
 						if(bean.getActions() != null){
 							addingActionsCounter++;
+
 							// install actions
 							history.addVerboseMessage("adding action for path: "+ bean.getJcrPath() + ", principal: " + currentPrincipal.getName() + ", actions: " + bean.getActionsString() + ", permission: " + bean.getPermission());
 							AccessControlUtils.addActions(session, bean, currentPrincipal,history); 
 
+							// since CqActions.installActions() doesn't allow to set jcr:privileges and globbing, this is done in a dedicated step
+
 							if(StringUtils.isNotBlank(bean.getRepGlob()) || StringUtils.isNotBlank(bean.getPrivilegesString())){
 								AccessControlUtils.setPermissionAndRestriction(session, bean, currentPrincipal.getName());
 							}
+
 						}else{
 							AccessControlUtils.installPermissions(session, bean.getJcrPath(), currentPrincipal, bean.isAllow(), bean.getRepGlob(), bean.getPrivileges());
 						}
@@ -445,7 +448,7 @@ public class AcHelper {
 						history.addWarning(warningMessage);
 						continue;
 					}
-					// since CqActions.installActions() doesn't allow to set jcr:privileges and globbing, this is done in a dedicated step
+
 				}
 			}
 		}
@@ -468,11 +471,19 @@ public class AcHelper {
 			}
 			aclsProcessedCounter++;
 		}
-		
+
 		history.addVerboseMessage("processed: " + aclsProcessedCounter + " ACLs in total");
 		history.addVerboseMessage("addingActionsCounter: " + addingActionsCounter );
 	}
 
+	/**
+	 * Method that merges an ACL from configuration in a ACL from CRX both having the same parent. ACEs in CRX belonging to a group which is defined in the configuration get replaced 
+	 * by ACEs from the configuration. Other ACEs don't get changed.
+	 * @param aclfromConfig Set containing an ACL from configuration
+	 * @param aclFomRepository Set containing an ACL from repository dump
+	 * @param authorizablesSet Set containing the names of all groups contained in the configurations(s)
+	 * @return merged Set
+	 */
 	static Set<AceBean> getMergedACL(Set<AceBean> aclfromConfig, Set<AceBean> aclFomRepository, Set<String> authorizablesSet) {
 
 		// build a Set which contains all authorizables from the current ACL from config for the current node
@@ -519,12 +530,11 @@ public class AcHelper {
 	 */
 	public static Map <String, Set<AceBean>> createAclDumpMap(final Session session, final int keyOrdering, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException{
 
-
 		Map <String, Set<AceBean>> aceMap = null;
 
-		if(keyOrdering == PRINCIPAL_BASED_ORDER){ //principalbased
+		if(keyOrdering == PRINCIPAL_BASED_ORDER){ // principal based
 			aceMap = new HashMap<String, Set<AceBean>>();
-		}else if(keyOrdering == PATH_BASED_ORDER){ // pathBased
+		}else if(keyOrdering == PATH_BASED_ORDER){ // path based
 			aceMap = new LinkedHashMap<String, Set<AceBean>>();
 		}
 
@@ -547,9 +557,7 @@ public class AcHelper {
 					aceSet = new TreeSet<AceBean>(new biz.netcentric.cq.tools.actools.comparators.AcePermissionComparator());
 				}
 
-
 				aceSet.add(tmpAceBean);
-
 
 				if(keyOrdering == PRINCIPAL_BASED_ORDER){
 					if(!aceMap.containsKey(tmpAceBean.getPrincipalName())){
@@ -579,6 +587,7 @@ public class AcHelper {
 			Set aceSet = entry.getValue();
 			Iterator <AceBean> it = aceSet.iterator();
 			Set <AceBean> deleteSet = new HashSet <AceBean>();
+			
 			while(it.hasNext()){
 				AceBean aceBean = it.next();
 				if(StringUtils.equals(aceBean.getRepGlob(), "*/jcr:content*")){
@@ -604,13 +613,14 @@ public class AcHelper {
 	 * @return
 	 */
 	public static Map<String, Set<AceBean>>getPathBasedAceMap(final Map<String, Set<AceBean>> groupBasedAceMap, final int sorting){
-		Map<String, Set<AceBean>> pathBasedAceMap = new HashMap<String, Set<AceBean>>();
+		Map<String, Set<AceBean>> pathBasedAceMap = new HashMap<String, Set<AceBean>>(groupBasedAceMap.size());
 
 		// loop through all Sets of groupBasedAceMap
 		for (Entry<String, Set<AceBean>> entry : groupBasedAceMap.entrySet()) {
 			String principal = entry.getKey();
 			// get current Set of current principal
 			Set<AceBean> tmpSet = entry.getValue();
+			
 			for(AceBean bean : tmpSet){
 
 				// set current principal
@@ -659,7 +669,7 @@ public class AcHelper {
 			Yaml yaml = new Yaml();
 			List<LinkedHashMap>  yamlList =  (List<LinkedHashMap>) yaml.load(entry.getValue());
 
-			Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig = ConfigReader.getAuthorizableConfigurationBeans(null, yamlList);
+			Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig = ConfigReader.getAuthorizableConfigurationBeans(yamlList);
 			Set<String> groupsFromConfig = authorizablesMapfromConfig.keySet();
 			Map<String, Set<AceBean>> aceMapFromConfig = ConfigReader.getAceConfigurationBeans(session, null, yamlList, groupsFromConfig);
 
@@ -670,7 +680,21 @@ public class AcHelper {
 		c.add(compoundAceMapFromConfig);
 		return c;
 	}
-
+	
+	
+    public static boolean isEqualBean(AceBean bean1, AceBean bean2){
+    	if(bean1.getJcrPath().equals(bean2.getJcrPath()) 
+    			&& bean1.getPrincipalName().equals(bean2.getPrincipalName())
+    			&& bean1.isAllow() == bean2.isAllow()
+    			&& bean1.getRepGlob().equals(bean2.getRepGlob())
+    			&& bean1.getPermission().equals(bean2.getPermission())
+    			&& bean1.getPrivilegesString().equals(bean2.getPrivilegesString())
+    			){
+    		return true;
+    	}
+    	return false;
+    	
+    }
 }
 
 
