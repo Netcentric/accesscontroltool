@@ -101,17 +101,17 @@ public class AuthorizableDumpUtils {
 	}
 		
    public static StringBuilder getAuthorizableConfigAsString(final StringBuilder sb, final Set<AuthorizableConfigBean> authorizableSet){
-	   sb.append("- " + Constants.GROUP_CONFIGURATION_KEY + ":").append("<br />");
-	   sb.append("<br />");
+	   sb.append("- " + Constants.GROUP_CONFIGURATION_KEY + ":").append("\n");
+	   sb.append("\n");
 		
 		for(AuthorizableConfigBean bean:authorizableSet){
-			sb.append(Constants.DUMP_INDENTATION_KEY + "- " + bean.getPrincipalID() + ":").append("<br />");
-			sb.append("<br />");
-			sb.append(Constants.DUMP_INDENTATION_FIRST_PROPERTY + "- name: ").append("<br />");
-			sb.append(Constants.DUMP_INDENTATION_PROPERTY + "memberOf: " + bean.getMemberOfString()).append("<br />");
-			sb.append(Constants.DUMP_INDENTATION_PROPERTY + "path: " + bean.getPath()).append("<br />");
-			sb.append(Constants.DUMP_INDENTATION_PROPERTY + "isGroup: " + "'" + bean.isGroup() + "'").append("<br />");
-			sb.append("<br />");
+			sb.append(Constants.DUMP_INDENTATION_KEY + "- " + bean.getPrincipalID() + ":").append("\n");
+			sb.append("\n");
+			sb.append(Constants.DUMP_INDENTATION_FIRST_PROPERTY + "- name: ").append("\n");
+			sb.append(Constants.DUMP_INDENTATION_PROPERTY + "memberOf: " + bean.getMemberOfString()).append("\n");
+			sb.append(Constants.DUMP_INDENTATION_PROPERTY + "path: " + bean.getPath()).append("\n");
+			sb.append(Constants.DUMP_INDENTATION_PROPERTY + "isGroup: " + "'" + bean.isGroup() + "'").append("\n");
+			sb.append("\n");
 		}
 		return sb;
    }
