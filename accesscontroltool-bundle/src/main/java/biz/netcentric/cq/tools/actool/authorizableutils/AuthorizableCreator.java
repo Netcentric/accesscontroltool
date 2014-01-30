@@ -29,7 +29,7 @@ public class AuthorizableCreator {
 
 	private static final Logger LOG = LoggerFactory.getLogger(AuthorizableCreator.class);
 
-	public static void createNewAuthorizables(Map<String, LinkedHashSet<AuthorizableConfigBean>> principalMap, final Session session, final PrintWriter out, AcInstallationHistoryPojo status, AuthorizableInstallationHistory authorizableInstallationHistory) throws AccessDeniedException, UnsupportedRepositoryOperationException, RepositoryException, AuthorizableCreatorException{
+	public static void createNewAuthorizables(Map<String, LinkedHashSet<AuthorizableConfigBean>> principalMap, final Session session, AcInstallationHistoryPojo status, AuthorizableInstallationHistory authorizableInstallationHistory) throws AccessDeniedException, UnsupportedRepositoryOperationException, RepositoryException, AuthorizableCreatorException{
 
 
 		Set<String> principalSet = principalMap.keySet();
@@ -61,14 +61,13 @@ public class AuthorizableCreator {
 				password = tmpPricipalConfigBean.getPassword();
 			}
 
-			installAuthorizableConfigurationBean(session, out, principalId, groupName, memberOf, isGroup,
+			installAuthorizableConfigurationBean(session, principalId, groupName, memberOf, isGroup,
 					password, status, authorizableInstallationHistory);
 
 		}
 
 	}
-	private static void installAuthorizableConfigurationBean(final Session session,
-			final PrintWriter out, String principalId, String name, String[] memberOf,
+	private static void installAuthorizableConfigurationBean(final Session session, String principalId, String name, String[] memberOf,
 			boolean isGroup, String password, AcInstallationHistoryPojo status, AuthorizableInstallationHistory authorizableInstallationHistory ) throws AccessDeniedException,
 			UnsupportedRepositoryOperationException, RepositoryException,
 			AuthorizableExistsException, AuthorizableCreatorException {
@@ -91,11 +90,11 @@ public class AuthorizableCreator {
 		if(userManager.getAuthorizable(principalId) == null) {
 			//	Group newGroup = userManager.createGroup(groupID, new PrincipalImpl(groupName), intermediatePath);
 			if(isGroup){
-				createNewGroup(out, userManager, principalId, name, memberOf, status, authorizableInstallationHistory, vf );
+				createNewGroup(userManager, principalId, name, memberOf, status, authorizableInstallationHistory, vf );
 				authorizableInstallationHistory.addNewCreatedAuthorizabe(principalId);
 				LOG.info("Successfully created new Group: {}", principalId);
 			} else{
-				createNewUser(out, userManager, principalId, memberOf, password, status, authorizableInstallationHistory, vf );
+				createNewUser(userManager, principalId, memberOf, password, status, authorizableInstallationHistory, vf );
 				LOG.info("Successfully created new User: {}", principalId);
 				authorizableInstallationHistory.addNewCreatedAuthorizabe(principalId);
 			}
@@ -257,14 +256,13 @@ public class AuthorizableCreator {
 
 
 
-	private static void createNewGroup(final PrintWriter out,
-			final UserManager userManager, final String groupID, String name, final String[] memberOf,  AcInstallationHistoryPojo status, AuthorizableInstallationHistory authorizableInstallationHistory, ValueFactory vf )
+	private static void createNewGroup(final UserManager userManager, final String groupID, String name, final String[] memberOf,  AcInstallationHistoryPojo status, AuthorizableInstallationHistory authorizableInstallationHistory, ValueFactory vf )
 					throws AuthorizableExistsException, RepositoryException, AuthorizableCreatorException {
 		Group newGroup = null;
 		if(memberOf != null && memberOf.length > 0){
 
 			// add group to groups according to configuration
-			Set<Authorizable> assignedGroups = validateAssignedGroups(out, userManager, groupID, memberOf, status, authorizableInstallationHistory );
+			Set<Authorizable> assignedGroups = validateAssignedGroups(userManager, groupID, memberOf, status, authorizableInstallationHistory );
 
 			if(!assignedGroups.isEmpty()){
 
@@ -290,16 +288,14 @@ public class AuthorizableCreator {
 		}
 	}
 
-	private static void createNewUser(final PrintWriter out,
-			final UserManager userManager, final String userID, final String[] memberOf,
+	private static void createNewUser(final UserManager userManager, final String userID, final String[] memberOf,
 			final String password,  AcInstallationHistoryPojo status, AuthorizableInstallationHistory authorizableInstallationHistory, ValueFactory vf ) throws AuthorizableExistsException,
 			RepositoryException, AuthorizableCreatorException {
-
 
 		if(memberOf != null && memberOf.length > 0){
 
 			// add group to groups according to configuration
-			Set<Authorizable> authorizables = validateAssignedGroups(out, userManager, userID, memberOf, status, authorizableInstallationHistory );
+			Set<Authorizable> authorizables = validateAssignedGroups(userManager, userID, memberOf, status, authorizableInstallationHistory );
 
 			if(!authorizables.isEmpty()){
 				User newUser = userManager.createUser(userID, password);
@@ -323,8 +319,7 @@ public class AuthorizableCreator {
 	 * @throws RepositoryException
 	 * @throws AuthorizableCreatorException if one of the authorizables contained in membersOf array is a user
 	 */
-	private static Set<Authorizable>  validateAssignedGroups(final PrintWriter out,
-			final UserManager userManager, final String authorizablelID,
+	private static Set<Authorizable>  validateAssignedGroups(final UserManager userManager, final String authorizablelID,
 			final String[] memberOf,  AcInstallationHistoryPojo status, AuthorizableInstallationHistory authorizableInstallationHistory ) throws RepositoryException, AuthorizableCreatorException {
 
 		Set<Authorizable> authorizableSet = new HashSet<Authorizable>();
@@ -344,9 +339,7 @@ public class AuthorizableCreator {
 				else{
 					String message = "Failed to add authorizable " + authorizablelID + "to autorizable " + principal + "! Authorizable is not a group";
 					LOG.warn(message);
-					if(out != null){
-						out.print("\n" + message + "\n");
-					}
+					
 					throw new AuthorizableCreatorException("Failed to add authorizable " + authorizablelID + "to autorizable " + principal + "! Authorizable is not a group");
 				}
 				// if authorizable doesn't exist yet, it gets created and the current authorizable gets added as a member
@@ -356,9 +349,7 @@ public class AuthorizableCreator {
 				authorizableInstallationHistory.addNewCreatedAuthorizabe(newGroup.getID());
 				LOG.warn("Failed to add group: {} to authorizable: {}. Didn't find this authorizable under /home! Created group", authorizablelID, principal);
 
-				if(out != null){
-					out.printf("\nWARNING: Failed to add group: %s to authorizable: %s. Didn't find this authorizable in home! Created group\n", authorizablelID, principal);
-				}
+				
 			}
 		}
 		return authorizableSet;

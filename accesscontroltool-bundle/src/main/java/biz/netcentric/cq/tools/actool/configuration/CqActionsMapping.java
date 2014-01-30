@@ -3,6 +3,7 @@ package biz.netcentric.cq.tools.actool.configuration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -169,6 +170,34 @@ public class CqActionsMapping {
 		}
 		return bean;
 
+	}
+	
+	public static AceBean getConvertedPrivilegeBean(AceBean bean){
+		Set <String> actions = new HashSet<String>();
+		Set <String> privileges = new HashSet<String>();
+		
+		if(bean.getActions() != null){
+			actions = new HashSet<String>(Arrays.asList(bean.getActions()));
+		}
+		if(bean.getPrivileges() != null){
+			privileges = new HashSet<String>(Arrays.asList(bean.getPrivileges()));
+		}
+		
+		for(String action : actions){
+			privileges.addAll(map.get(action));
+		}
+		bean.clearActions();
+		bean.setActionsString("");
+		
+		StringBuilder sb = new StringBuilder();
+		for (String privilege : privileges) {
+			sb.append(privilege).append(",");
+		}
+		
+		bean.setPrivilegesString(StringUtils.chop(sb.toString()));
+		
+		return bean;
+		
 	}
 }
 

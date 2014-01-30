@@ -1,6 +1,9 @@
 package biz.netcentric.cq.tools.actool.helper;
 
+import java.util.Arrays;
+
 import org.apache.commons.lang.StringUtils;
+
 
 
 
@@ -12,7 +15,7 @@ import org.apache.commons.lang.StringUtils;
  * and to store data during the reading of existing ACEs before writing the data back to a dump or 
  * configuration file again on the other hand.
  */
-public class AceBean{
+public class AceBean {
 	
 	private String jcrPath;
 	private boolean isAllow;
@@ -58,6 +61,9 @@ public class AceBean{
 		return this.isAllowProvided;
 	}
 	public String getRepGlob() {
+		if(this.repGlob == null){
+			return "";
+		}
 		return repGlob;
 	}
 	public void setRepGlob(String repGlob) {
@@ -100,15 +106,13 @@ public class AceBean{
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("principal:" + getPrincipalName() + "\n" + 
-				  "jcrPath: " + jcrPath + "\n" + 
-				  "actions: " + getActionsString() + "\n" + 
-		          "permission: " + getPermission() + "\n" + 
-				  "privileges: " + privilegesString + "\n" +
-				  "repGlob: " + this.repGlob + "\n");
-		return sb.toString();
+		return "AceBean [jcrPath=" + jcrPath + "\n" +", isAllow=" + isAllow + "\n"
+				+ ", repGlob=" + repGlob +  "\n"+ ", actionsString=" + actionsString + "\n"
+				+ ", privilegesString=" + privilegesString + "\n" +", principal="
+				+ principal + "\n" +  ", isAllowProvided=" + isAllowProvided
+				+ "\n" + ", actions=" + Arrays.toString(actions) + "]";
 	}
-
 	
 }
+	
+

@@ -1,6 +1,6 @@
 package biz.netcentric.cq.tools.actool.helper;
 
-import java.io.PrintWriter;
+
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -285,7 +285,7 @@ public class AcHelper {
 
 
 
-	public static void purgeACLs(final ResourceResolver resourceResolver, final String[] paths, final PrintWriter out) throws Exception {
+	public static void purgeACLs(final ResourceResolver resourceResolver, final String[] paths) throws Exception {
 		Session session = resourceResolver.adaptTo(Session.class);
 		
 		for (int i = 0; i < paths.length; i++) {
@@ -301,14 +301,14 @@ public class AcHelper {
 						for (int j = 0; j<policies.length; j++) {
 							accessManager.removePolicy(res.getPath(), policies[j]);   
 						}
-						out.printf("Removed all policies from node " + res.getPath() + ".\n");                            
+						                           
 					}
 				}
-				out.printf("<b>Completed removing ACLs from path " + paths[i] +".</b>\n");
+				
 			}
 		}
 		session.save();
-		out.printf("\npurging of ACEs done!");
+		
 	}
 
 	public static String purgeACLs(final Session session, final String path) throws Exception {
@@ -369,7 +369,7 @@ public class AcHelper {
 	 * @throws Exception
 	 */
 	
-	public static void installPathBasedACEs(final Map<String, Set<AceBean>> pathBasedAceMapFromConfig, final Map<String, Set<AceBean>> repositoryDumpedAceMap, Set<String> authorizablesSet, final Session session, final PrintWriter out,final AcInstallationHistoryPojo history) throws Exception{
+	public static void installPathBasedACEs(final Map<String, Set<AceBean>> pathBasedAceMapFromConfig, final Map<String, Set<AceBean>> repositoryDumpedAceMap, Set<String> authorizablesSet, final Session session, final AcInstallationHistoryPojo history) throws Exception{
 		long addingActionsCounter = 0;
 		JackrabbitSession js = (JackrabbitSession) session;
 		PrincipalManager pm = js.getPrincipalManager();
@@ -413,17 +413,10 @@ public class AcHelper {
 					String warningMessage = "Could not find definition for authorizable " + bean.getPrincipalName() + " in groups config while installing ACE for: "+bean.getJcrPath()+"! Don't install ACEs for this authorizable!\n";
 					LOG.warn(warningMessage);
 					history.addWarning(warningMessage);
-					if(out != null){
-						out.println(warningMessage);
-					}
+					
 					continue;
 				}
 				else{
-
-					if(out != null){
-						out.println("\n installing ACE: " + bean.toString());
-
-					}
 
 					if(session.itemExists(bean.getJcrPath())){
 						if(bean.getActions() != null){

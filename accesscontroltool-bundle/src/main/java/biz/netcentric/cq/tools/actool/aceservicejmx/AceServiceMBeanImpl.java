@@ -92,5 +92,4 @@ public class AceServiceMBeanImpl implements AceServiceMBean{
 		return aceService.getCompletePrincipalBasedDumpsAsString();
 	}
 
-	
 }

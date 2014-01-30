@@ -1,7 +1,6 @@
 package biz.netcentric.cq.tools.actool.aceservice;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -9,11 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import javax.jcr.AccessDeniedException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
 import javax.jcr.query.InvalidQueryException;
 import org.apache.commons.lang.time.StopWatch;
@@ -34,7 +31,6 @@ import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.Yaml;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreator;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableDumpUtils;
@@ -86,21 +82,10 @@ public class AceServiceImpl implements AceService{
 		this.excludePaths = PropertiesUtil.toStringArray(properties.get("AceService.queryExcludePaths"),null);
 	}
 
-	@Override
-	public void returnAceDump(final PrintWriter out, final Session session, final int mapOrder, final int aceOrder){
-		try {
-			AclDumpUtils.returnAceDump(out, AcHelper.createPrincipalBasedAceDump(session, this.excludePaths), mapOrder, aceOrder );
-		} catch (AccessDeniedException e) {
-			LOG.error("AccessDeniedException in AceServiceImpl: {}", e);
-		} catch (UnsupportedRepositoryOperationException e) {
-			LOG.error("UnsupportedRepositoryOperationException in AceServiceImpl: {}", e);
-		} catch (RepositoryException e) {
-			LOG.error("RepositoryException in AceServiceImpl: {}", e);
-		}
-	}
+	
 
 	@Override
-	public void returnAceDumpAsFile(final SlingHttpServletRequest request, final SlingHttpServletResponse response, Session session,int mapOrder, int aceOrder) {
+	public void returnAceDumpAsFile(final SlingHttpServletRequest request, final SlingHttpServletResponse response, Session session, int mapOrder, int aceOrder) {
 		try {
 			Map<String, Set<AceBean>> aclDumpMap = AcHelper.getAcePlainDump(AcHelper.createAceMap(request, mapOrder, aceOrder, this.excludePaths));
 			AclDumpUtils.returnAceDumpAsFile(response, aclDumpMap , mapOrder);
@@ -131,7 +116,7 @@ public class AceServiceImpl implements AceService{
 		Session session = null;
 		try {
 			session = repository.loginAdministrative(null);
-			Map<String, Set<AceBean>> aclDumpMap = AcHelper.getAcePlainDump(AcHelper.createAclDumpMap(session, aclMapKeyOrder, 2, excludePaths));
+			Map<String, Set<AceBean>> aclDumpMap = AcHelper.getAcePlainDump(AcHelper.createAclDumpMap(session, aclMapKeyOrder, AcHelper.ACE_ORDER_NONE, excludePaths));
 			Set<AuthorizableConfigBean> authorizableBeans = AuthorizableDumpUtils.returnGroupBeans(session);
 
 			return AclDumpUtils.returnConfigurationDumpAsString(aclDumpMap, authorizableBeans, mapOrder);
@@ -151,31 +136,19 @@ public class AceServiceImpl implements AceService{
 		return null;
 
 	}
+	
 
 	@Override
-	public void purge(PrintWriter out, ResourceResolver resourceResolver,
+	public void purge(ResourceResolver resourceResolver,
 			String[] purgePaths) {
 		try {
-			AcHelper.purgeACLs(resourceResolver, purgePaths, out);
+			AcHelper.purgeACLs(resourceResolver, purgePaths);
 		} catch (Exception e) {
 			LOG.error("Exception in AceServiceImpl: {}", e);
 		}
 	}
 
-	@Override 
-	public void installConfigurationFromRequest(SlingHttpServletRequest request,
-			PrintWriter out, Session session, final boolean dryRun, final AcInstallationHistoryPojo status, Set<AuthorizableInstallationHistory> authorizableHistorySet) throws Exception {
-
-		Yaml yaml = new Yaml();
-		List<LinkedHashMap>  yamlList =  (List<LinkedHashMap>) yaml.load(request.getParameter("aceFile"));
-		LOG.info("received Access Control Configuration data from request");
-
-		Map<String, Set<AceBean>> repositoryDumpAceMap = null;
-		LOG.info("start building dump from repository");
-		repositoryDumpAceMap = AcHelper.createAclDumpMap(session, AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE, this.excludePaths);
-
-		installConfigurationFromYamlList(out, dryRun, yamlList, status, session, authorizableHistorySet, repositoryDumpAceMap);
-	}
+	
 
 	@Override
 	public void installConfigurationFromString(final List mergedConfigurations, AcInstallationHistoryPojo status, Session session, Set<AuthorizableInstallationHistory> authorizableHistorySet, Map<String, Set<AceBean>> repoDump) throws Exception {
@@ -183,13 +156,12 @@ public class AceServiceImpl implements AceService{
 
 		if(session != null){
 			LOG.info("received Access Control Configuration data from string");
-			installConfigurationFromYamlList(null, false, mergedConfigurations, status, session, authorizableHistorySet, repoDump);
+			installConfigurationFromYamlList(false, mergedConfigurations, status, session, authorizableHistorySet, repoDump);
 		}
 
 	}
 
-	private void installConfigurationFromYamlList(PrintWriter out, 
-			final boolean dryRun, final List mergedConfigurations, AcInstallationHistoryPojo status, final Session session, Set<AuthorizableInstallationHistory> authorizableHistorySet, Map<String, Set<AceBean>> repositoryDumpAceMap) throws Exception  {
+	private void installConfigurationFromYamlList(final boolean dryRun, final List mergedConfigurations, AcInstallationHistoryPojo status, final Session session, Set<AuthorizableInstallationHistory> authorizableHistorySet, Map<String, Set<AceBean>> repositoryDumpAceMap) throws Exception  {
 
 		Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig  = (Map<String, LinkedHashSet<AuthorizableConfigBean>>) mergedConfigurations.get(0);
 		Map<String, Set<AceBean>> aceMapFromConfig = (Map<String, Set<AceBean>>) mergedConfigurations.get(1);
@@ -217,7 +189,7 @@ public class AceServiceImpl implements AceService{
 			// only save session if no exceptions occured
 			AuthorizableInstallationHistory authorizableInstallationHistory = new AuthorizableInstallationHistory();
 			authorizableHistorySet.add(authorizableInstallationHistory);
-			AuthorizableCreator.createNewAuthorizables(authorizablesMapfromConfig, authorizableInstallationSession, out, status, authorizableInstallationHistory);
+			AuthorizableCreator.createNewAuthorizables(authorizablesMapfromConfig, authorizableInstallationSession, status, authorizableInstallationHistory);
 			authorizableInstallationSession.save();
 		}catch (Exception e){
 			status.setException(e.toString());
@@ -240,7 +212,7 @@ public class AceServiceImpl implements AceService{
 
 		if(repositoryDumpAceMap != null){ 
 			Set<String> authorizablesSet = authorizablesMapfromConfig.keySet();
-			AcHelper.installPathBasedACEs(pathBasedAceMapFromConfig, repositoryDumpAceMap, authorizablesSet, session, out, status);
+			AcHelper.installPathBasedACEs(pathBasedAceMapFromConfig, repositoryDumpAceMap, authorizablesSet, session, status);
 
 			if(!dryRun){
 
@@ -258,8 +230,8 @@ public class AceServiceImpl implements AceService{
 			LOG.error(message);
 		} 
 	}
-	
-	
+
+
 	/**
 	 * executes the installation of the existing configurations
 	 */
@@ -290,13 +262,13 @@ public class AceServiceImpl implements AceService{
 				LOG.info("start building dump from repository");
 				repositoryDumpAceMap = AcHelper.createAclDumpMap(session, AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE, this.excludePaths);
 				installConfigurationFromString(mergedConfigurations, history, session, authorizableInstallationHistorySet, repositoryDumpAceMap);
-			
+
 				// if everything went fine (no exceptions), save the session
 				// thus persisting the changed ACLs
 				session.save();
 				history.addMessage("persisted changes of ACLs");
-				
-				
+
+
 			}
 		} catch (Exception e) {
 			// in case an installation of an ACE configuration
@@ -455,7 +427,7 @@ public class AceServiceImpl implements AceService{
 			message = AcHelper.purgeACLs(session, path);
 			session.save();
 		} catch (Exception e) {
-			// TO DO: Logging
+			LOG.error("Exception: ", e);
 			flag = false;
 			message = e.toString();
 		}finally{
@@ -494,8 +466,7 @@ public class AceServiceImpl implements AceService{
 				}
 			} catch (RepositoryException e) {
 				message = "deletion of authorizable: " + authorizableId + " failed! Reason: " + e.toString();
-				// TO DO: Logging
-				e.printStackTrace();
+				LOG.error("Exception: ", e);
 			}
 
 			// deletion of all ACE of that autorizable
@@ -570,6 +541,6 @@ public class AceServiceImpl implements AceService{
 		}
 		return paths;
 	}
-	
+
 
 }

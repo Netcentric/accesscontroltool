@@ -1,7 +1,6 @@
 package biz.netcentric.cq.tools.actool.aceservice;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,20 +15,13 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryP
 
 public interface AceService {
 	
-	/**
-	 * returns a dump of a ACEs set in the system and writes it in an output stream
-	 * @param out PrintWriter
-	 * @param session session having sufficient rights
-	 * @param mapOrder 1:group based, 2: path baswd
-	 * @param aceOrder order of the ACEs. 1: deny before allows, 2: no sorting
-	 */
-	public void returnAceDump(final PrintWriter out, final Session session, final int mapOrder, final int aceOrder);
+	
 	
 	public void returnAceDumpAsFile(final SlingHttpServletRequest request, final SlingHttpServletResponse response, final Session session, final int mapOrder, final int aceOrder);
 	
 	public void returnCompleteDumpAsFile(final SlingHttpServletResponse response, Map<String, Set<AceBean>> aceMap,  Set<AuthorizableConfigBean> authorizableSet, final Session session, final int mapOrder, final int aceOrder) throws IOException;
 	
-	public void purge(final PrintWriter out, final ResourceResolver resourceResolver, final String purgePaths[]);
+	public void purge(final ResourceResolver resourceResolver, final String purgePaths[]);
 	
 	public String getCompletePathBasedDumpsAsString();
 	
@@ -55,21 +47,10 @@ public interface AceService {
 	
 	public Set<String> getFoundConfigPaths();
 	
-	Map<String,String> getNewestConfigurationNodes(final String path, final Session session, AcInstallationHistoryPojo status) throws Exception;
+	public Map<String,String> getNewestConfigurationNodes(final String path, final Session session, AcInstallationHistoryPojo status) throws Exception;
 	
-
-	
-
-	void installConfigurationFromRequest(SlingHttpServletRequest request,
-			PrintWriter out, Session session, boolean dryRun,
-			AcInstallationHistoryPojo status,
-			Set<AuthorizableInstallationHistory> authorizableHistorySet)
-			throws Exception;
-
-
-
-	void installConfigurationFromString(List mergedConfigurations,
-			AcInstallationHistoryPojo status, Session session,
+	public void installConfigurationFromString(List mergedConfigurations,
+			AcInstallationHistoryPojo status, final Session session,
 			Set<AuthorizableInstallationHistory> authorizableHistorySet,
 			Map<String, Set<AceBean>> repoDump) throws Exception;
 
