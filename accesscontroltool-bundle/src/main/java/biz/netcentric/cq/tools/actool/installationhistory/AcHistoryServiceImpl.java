@@ -6,6 +6,7 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.management.openmbean.TabularData;
 
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -84,11 +85,11 @@ public class AcHistoryServiceImpl implements AcHistoryService{
 	}
 
 	@Override
-	public String getInstallationLogPaths()  {
+	public String[] getInstallationLogPaths()  { 
 		Session session = null;
 		try {
 			session = repository.loginAdministrative(null);
-			return HistoryUtils.getInstallationLogLinks(session);
+			return HistoryUtils.getInstallationLogs(session);
 		} catch (RepositoryException e) {
 			LOG.error("RepositoryException: ", e);
 		}finally{
@@ -102,6 +103,11 @@ public class AcHistoryServiceImpl implements AcHistoryService{
 	@Override
 	public String getLogHtml(Session session, String path) {
 		return HistoryUtils.getLogHtml(session, path); 
+	}
+	
+	@Override
+	public String getLogTxt(Session session, String path) {
+		return HistoryUtils.getLogTxt(session, path); 
 	}
 
 	@Override
@@ -132,6 +138,8 @@ public class AcHistoryServiceImpl implements AcHistoryService{
 		}
 		return history;
 	}
+	
+	
 
 	public void persistInstalledConfigurations(final Node historyNode, final Node configurationRootNode, AcInstallationHistoryPojo history) {
 
@@ -151,6 +159,32 @@ public class AcHistoryServiceImpl implements AcHistoryService{
 
 	}
 
-	
+	public String showHistory(int n){
+		Session session = null;
+		String history = "";
+		try {
+			session = repository.loginAdministrative(null);
+
+			Node statisticsRootNode = HistoryUtils.getAcHistoryRootNode(session);
+			NodeIterator it = statisticsRootNode.getNodes();
+			int cnt = 1;
+			
+		while(it.hasNext()){
+				Node historyNode = it.nextNode();
+
+				if(historyNode != null && cnt == n){
+					history = getLogTxt(session, historyNode.getName());
+				}
+				cnt++;
+			}
+		} catch (RepositoryException e) {
+			LOG.error("RepositoryException: ", e);
+		}finally{
+			if(session != null){
+				session.logout();
+			}
+		}
+		return history;
+	}
 
 }

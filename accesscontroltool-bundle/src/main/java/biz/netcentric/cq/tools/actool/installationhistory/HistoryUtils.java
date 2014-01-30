@@ -1,6 +1,7 @@
 package biz.netcentric.cq.tools.actool.installationhistory;
 
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -16,6 +17,8 @@ import javax.jcr.version.VersionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.adobe.granite.jmx.annotation.OpenTypeUtils;
 
 import biz.netcentric.cq.tools.actools.comparators.TimestampPropertyComparator;
 
@@ -98,29 +101,41 @@ public class HistoryUtils {
 		}
 	}
 
-	public static String getInstallationLogLinks(final Session session) throws RepositoryException{
+	public static String[] getInstallationLogs(final Session session) throws RepositoryException{
 		Node acHistoryRootNode = getAcHistoryRootNode(session);
 		return getAssembledHistoryLinks(acHistoryRootNode);
 	}
 
-	private static String getAssembledHistoryLinks(Node acHistoryRootNode)
+	private static String[] getAssembledHistoryLinks(Node acHistoryRootNode)
 			throws RepositoryException, PathNotFoundException {
-		String messages = "";
+		Set<String> messages = new LinkedHashSet<String>();
+		int cnt = 1;
 		for (NodeIterator iterator =  acHistoryRootNode.getNodes(); iterator.hasNext();) {
 			Node node = (Node) iterator.next();
 			if(node != null){
-				String successStatusString = HtmlConstants.FONT_COLOR_NO_SUCCESS_HTML_OPEN + "failed"  + HtmlConstants.FONT_COLOR_SUCCESS_HTML_CLOSE;
+				String successStatusString = "failed";
 				if(node.getProperty(PROPERTY_SUCCESS).getBoolean()){
-					successStatusString = HtmlConstants.FONT_COLOR_SUCCESS_HTML_OPEN + "ok" + HtmlConstants.FONT_COLOR_SUCCESS_HTML_CLOSE;
+					successStatusString = "ok";
 				}
 				
-				messages = messages + node.getPath() + " " + "(" + successStatusString + ")" + " <a href ='"+ node.getPath()  + ".html' target=\"_blank'\">" + " (show)" + "</a><br />";
+				messages.add(cnt + ". " + node.getPath() + " " + "(" + successStatusString + ")" );
+				
 			}
+			cnt++;
 		}
-		return messages;
+		
+		return messages.toArray(new String[messages.size()]);
+	}
+	
+	public static String getLogTxt(Session session, String path) {
+		return getLog(session, path, "\n").toString();
 	}
 
 	public static String getLogHtml(Session session, String path) {
+		return getLog(session, path, "<br />").toString();
+	}
+	
+	public static String getLog(Session session, String path, String lineFeed) {
 		
 		StringBuilder sb = new StringBuilder();
 		try {
@@ -129,13 +144,14 @@ public class HistoryUtils {
 			
 			if(historyNode != null){
 				sb.append("Installation triggered: " + historyNode.getProperty(PROPERTY_INSTALLATION_DATE).getString());
-				sb.append("<br />" + historyNode.getProperty(PROPERTY_MESSAGES).getString().replace("\n", "<br />"));
-				sb.append("<br /><br />" + "Execution time: " + historyNode.getProperty(PROPERTY_EXECUTION_TIME).getLong() + " ms");
-				sb.append("<br />" + "Success: " + historyNode.getProperty(PROPERTY_SUCCESS).getBoolean());
+				sb.append(lineFeed + historyNode.getProperty(PROPERTY_MESSAGES).getString().replace("\n", lineFeed));
+				sb.append(lineFeed + "Execution time: " + historyNode.getProperty(PROPERTY_EXECUTION_TIME).getLong() + " ms");
+				sb.append(lineFeed + "Success: " + historyNode.getProperty(PROPERTY_SUCCESS).getBoolean());
 			}
 		} catch (RepositoryException e) {
 			LOG.error("RepositoryException: {}", e);
 		}
 		return sb.toString();
 	}
+	
 }

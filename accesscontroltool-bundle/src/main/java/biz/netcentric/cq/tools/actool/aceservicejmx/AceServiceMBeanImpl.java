@@ -63,17 +63,21 @@ public class AceServiceMBeanImpl implements AceServiceMBean{
 	}
 
 	@Override
-	public String getConfigurationFileLinks() {
+	public String[] getConfigurationFiles() {
 		final Set<String> paths = aceService.getFoundConfigPaths();
 		StringBuilder sb = new StringBuilder();
+		int cnt = 1;
 		for(String path : paths){
-			sb.append("<a href = '/crx/de/index.jsp#/crx.default/jcr%3aroot" + path + "' target=\"_blank'\" >" + path + "</a><br />");
+			sb.append(cnt + ". " + path + " \n");
+			cnt++;
 		}
-		return  sb.toString();
+		
+		return  paths.toArray(new String[paths.size()]);
+		
 	} 
 
 	@Override
-	public String getSavedLogs()  {
+	public String[] getSavedLogs()  {
 		return acHistoryService.getInstallationLogPaths();
 	}
 
@@ -90,6 +94,11 @@ public class AceServiceMBeanImpl implements AceServiceMBean{
 	@Override
 	public String groupBasedDump() {
 		return aceService.getCompletePrincipalBasedDumpsAsString();
+	}
+
+	@Override
+	public String showHistory(int n) {
+		return acHistoryService.showHistory(n);
 	}
 
 }

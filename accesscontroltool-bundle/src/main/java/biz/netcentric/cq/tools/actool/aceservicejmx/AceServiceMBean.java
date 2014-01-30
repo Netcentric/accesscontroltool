@@ -25,7 +25,7 @@ public interface AceServiceMBean {
 	String purgeAuthorizable(final String authorizableId);
 	
 	@Description("provides status and links to the saved history logs")
-	String getSavedLogs() throws RepositoryException;
+	String[] getSavedLogs() throws RepositoryException;
 	
 	@Description("shows execution status of the ac tool")
 	public boolean isExecuting();
@@ -37,8 +37,7 @@ public interface AceServiceMBean {
 	public String groupBasedDump();
 		
 	@Description("returns links to the existing configuration files in CRX")
-	public String getConfigurationFileLinks();
+	public String[] getConfigurationFiles();
 	
-	
-	
+	public String showHistory(int n);
 }

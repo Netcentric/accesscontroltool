@@ -146,6 +146,9 @@
 			<artifactId>cq-security</artifactId>
 			<type>bundle</type>
 		</dependency>
+		
+	  
+    
 
 	</dependencies>
 	<packaging>bundle</packaging>
