@@ -109,7 +109,7 @@ public class AclDumpUtils {
 
 		Set<String> keys = aceMap.keySet();
 		sb.append("- " + Constants.ACE_CONFIGURATION_KEY + ":") ;
-		sb.append("\n\n>");
+		sb.append("\n\n");
 
 		for(String mapKey : keys){
 
