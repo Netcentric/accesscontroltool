@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
+
 import javax.jcr.AccessDeniedException;
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
@@ -30,6 +31,8 @@ import javax.jcr.security.AccessControlEntry;
 import javax.jcr.security.AccessControlList;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.AccessControlPolicy;
+
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
@@ -40,10 +43,11 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
+
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
 import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
-import biz.netcentric.cq.tools.actools.comparators.AcePermissionComparator;
 
 public class AcHelper {
 
@@ -547,7 +551,7 @@ public class AcHelper {
 				if(aclOrdering == ACE_ORDER_NONE){
 					aceSet = new LinkedHashSet<AceBean>();
 				}else if(aclOrdering == ACE_ORDER_DENY_ALLOW){
-					aceSet = new TreeSet<AceBean>(new biz.netcentric.cq.tools.actools.comparators.AcePermissionComparator());
+					aceSet = new TreeSet<AceBean>(new biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator());
 				}
 
 				aceSet.add(tmpAceBean);
@@ -628,7 +632,7 @@ public class AcHelper {
 						aceSet  = new HashSet<AceBean>();
 					}
 					else if (sorting == 1){
-						aceSet  = new TreeSet<AceBean>(new biz.netcentric.cq.tools.actools.comparators.AcePermissionComparator());
+						aceSet  = new TreeSet<AceBean>(new biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator());
 					}
 
 					aceSet.add(bean);
@@ -653,9 +657,10 @@ public class AcHelper {
 	 */
 	public static List  getMergedConfigurations(final Session session, Map<String, String> newestConfigurations, AcInstallationHistoryPojo history) throws RepositoryException{
 		List c = new ArrayList<Map>();
-		Map<String, LinkedHashSet<AuthorizableConfigBean>> compoundAuthorizablesMapfromConfig = new LinkedHashMap<String, LinkedHashSet<AuthorizableConfigBean>>();
-		Map<String, Set<AceBean>> compoundAceMapFromConfig = new LinkedHashMap<String, Set<AceBean>>();
-
+		Map<String, LinkedHashSet<AuthorizableConfigBean>> mergedAuthorizablesMapfromConfig = new LinkedHashMap<String, LinkedHashSet<AuthorizableConfigBean>>();
+		Map<String, Set<AceBean>> mergedAceMapFromConfig = new LinkedHashMap<String, Set<AceBean>>();
+		Set<String> groupsFromAllConfig = new HashSet<String>();
+		
 		for(Map.Entry<String, String> entry : newestConfigurations.entrySet()){
 			String message = "start merging configuration data from: " + entry.getKey();
 			history.addVerboseMessage(message);
@@ -663,14 +668,31 @@ public class AcHelper {
 			List<LinkedHashMap>  yamlList =  (List<LinkedHashMap>) yaml.load(entry.getValue());
 
 			Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig = ConfigReader.getAuthorizableConfigurationBeans(yamlList);
-			Set<String> groupsFromConfig = authorizablesMapfromConfig.keySet();
-			Map<String, Set<AceBean>> aceMapFromConfig = ConfigReader.getAceConfigurationBeans(session, null, yamlList, groupsFromConfig);
+			Set<String> groupsFromCurrentConfig = authorizablesMapfromConfig.keySet();
+			
+				// check if any group contained in the current configuration is already contained in one of the previous ones
+				// if this is the case the installation gets aborted!
+				if(CollectionUtils.containsAny(groupsFromAllConfig, groupsFromCurrentConfig))  {
+					String errorMessage = "double group definition found: ";
+					
+					// find the name of the doubled defined group and add it to error message
+					for(String group : groupsFromCurrentConfig){
+						if(groupsFromAllConfig.contains(group)){
+							errorMessage = errorMessage + group;
+							break;
+						}
+					}
+					throw new IllegalArgumentException(errorMessage);
+				
+			}
+			groupsFromAllConfig.addAll(groupsFromCurrentConfig);
+			Map<String, Set<AceBean>> aceMapFromConfig = ConfigReader.getAceConfigurationBeans(session, null, yamlList, groupsFromCurrentConfig);
 
-			compoundAuthorizablesMapfromConfig.putAll(authorizablesMapfromConfig);
-			compoundAceMapFromConfig.putAll(aceMapFromConfig);
+			mergedAuthorizablesMapfromConfig.putAll(authorizablesMapfromConfig);
+			mergedAceMapFromConfig.putAll(aceMapFromConfig);
 		}
-		c.add(compoundAuthorizablesMapfromConfig);
-		c.add(compoundAceMapFromConfig);
+		c.add(mergedAuthorizablesMapfromConfig);
+		c.add(mergedAceMapFromConfig);
 		return c;
 	}
 	
