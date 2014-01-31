@@ -4,6 +4,7 @@ package biz.netcentric.cq.tools.actool.installationhistory;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.TreeSet;
+
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
@@ -13,8 +14,11 @@ import javax.jcr.ValueFormatException;
 import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.version.VersionException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+
 
 
 
@@ -22,6 +26,8 @@ import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
 
 public class HistoryUtils {
 
+	private static final String HISTORY_NODE_NAME_PREFIX = "history_";
+	private static final String NODETYPE_NT_UNSTRUCTURED = "nt:unstructured";
 	private static final String PROPERTY_SLING_RESOURCE_TYPE = "sling:resourceType";
 	private static final String ACHISTORY_ROOT_NODE = "achistory";
 	private static final String STATISTICS_ROOT_NODE = "var/statistics";
@@ -31,21 +37,29 @@ public class HistoryUtils {
 	private static final String PROPERTY_EXECUTION_TIME = "executionTime";
 	private static final String PROPERTY_SUCCESS = "success";
 	private static final String PROPERTY_INSTALLATION_DATE = "installationDate";
-	
+
 	private static final Logger LOG = LoggerFactory.getLogger(HistoryUtils.class);
 
 
 	public static Node getAcHistoryRootNode(final Session session) throws RepositoryException{
 		final Node rootNode = session.getRootNode();
-		Node statisticsRootNode = safeGetNode(rootNode, STATISTICS_ROOT_NODE, "nt:unstructured");
+		Node statisticsRootNode = safeGetNode(rootNode, STATISTICS_ROOT_NODE, NODETYPE_NT_UNSTRUCTURED);
 		Node acHistoryRootNode = safeGetNode(statisticsRootNode, ACHISTORY_ROOT_NODE, "sling:OrderedFolder");
 		return acHistoryRootNode;
 	}
-	
+
+	/**
+	 * Method that persists a new history log in CRX under '/var/statistics/achistory'
+	 * @param session
+	 * @param history history to persist
+	 * @param nrOfHistoriesToSave number of newest histories which should be kept in CRX. older histories get automatically deleted
+	 * @return
+	 * @throws RepositoryException
+	 */
 	public static Node persistHistory(final Session session, AcInstallationHistoryPojo history,  final int nrOfHistoriesToSave) throws RepositoryException{
 
 		Node acHistoryRootNode = getAcHistoryRootNode(session);
-		Node newHistoryNode = safeGetNode(acHistoryRootNode, "history_" + System.currentTimeMillis(), "nt:unstructured");
+		Node newHistoryNode = safeGetNode(acHistoryRootNode, HISTORY_NODE_NAME_PREFIX + System.currentTimeMillis(), NODETYPE_NT_UNSTRUCTURED);
 		String path = newHistoryNode.getPath();
 		setHistoryNodeProperties(newHistoryNode, history);
 		deleteObsoleteHistoryNodes(acHistoryRootNode, nrOfHistoriesToSave);
@@ -54,7 +68,7 @@ public class HistoryUtils {
 		if(previousHistoryNode != null){
 			acHistoryRootNode.orderBefore(newHistoryNode.getName(), previousHistoryNode.getName());
 		}
-		
+
 		String message = "saved history in node: " + path;
 		history.addMessage(message);
 		LOG.info(message);
@@ -82,6 +96,13 @@ public class HistoryUtils {
 		historyNode.setProperty(PROPERTY_SLING_RESOURCE_TYPE, "/apps/netcentric/actool/components/historyRenderer");
 	}
 
+	/**
+	 * Method that ensures that only the number of history logs is persisted in CRX which is configured in nrOfHistoriesToSave
+	 * @param acHistoryRootNode node in CRX under which the history logs are located
+	 * @param nrOfHistoriesToSave number of history logs which get stored in CRX 
+	 * (as direct child nodes of acHistoryRootNode in insertion order - newest always on top) 
+	 * @throws RepositoryException
+	 */
 	private static void deleteObsoleteHistoryNodes(final Node acHistoryRootNode, final int nrOfHistoriesToSave) throws RepositoryException{
 		NodeIterator childNodeIt = acHistoryRootNode.getNodes();
 		Set<Node> historyChildNodes = new TreeSet<Node>(new TimestampPropertyComparator());
@@ -99,13 +120,16 @@ public class HistoryUtils {
 		}
 	}
 
-	public static String[] getInstallationLogs(final Session session) throws RepositoryException{
-		Node acHistoryRootNode = getAcHistoryRootNode(session);
-		return getAssembledHistoryLinks(acHistoryRootNode);
-	}
-
-	private static String[] getAssembledHistoryLinks(Node acHistoryRootNode)
+	
+	/**
+	 * @param acHistoryRootNode
+	 * @return
+	 * @throws RepositoryException
+	 * @throws PathNotFoundException
+	 */
+	static String[] getHistoryInfos(final Session session)
 			throws RepositoryException, PathNotFoundException {
+		Node acHistoryRootNode = getAcHistoryRootNode(session);
 		Set<String> messages = new LinkedHashSet<String>();
 		int cnt = 1;
 		for (NodeIterator iterator =  acHistoryRootNode.getNodes(); iterator.hasNext();) {
@@ -115,13 +139,10 @@ public class HistoryUtils {
 				if(node.getProperty(PROPERTY_SUCCESS).getBoolean()){
 					successStatusString = "ok";
 				}
-				
 				messages.add(cnt + ". " + node.getPath() + " " + "(" + successStatusString + ")" );
-				
 			}
 			cnt++;
 		}
-		
 		return messages.toArray(new String[messages.size()]);
 	}
 	
@@ -132,24 +153,24 @@ public class HistoryUtils {
 	public static String getLogHtml(final Session session, final String path) {
 		return getLog(session, path, "<br />").toString();
 	}
-	
-	public static String getLog(final Session session, final String path, final String lineFeed) {
-		
+
+	public static String getLog(final Session session, final String path, final String lineFeedSymbol) {
+
 		StringBuilder sb = new StringBuilder();
 		try {
 			Node acHistoryRootNode = getAcHistoryRootNode(session);
 			Node historyNode = acHistoryRootNode.getNode(path);
-			
+
 			if(historyNode != null){
 				sb.append("Installation triggered: " + historyNode.getProperty(PROPERTY_INSTALLATION_DATE).getString());
-				sb.append(lineFeed + historyNode.getProperty(PROPERTY_MESSAGES).getString().replace("\n", lineFeed));
-				sb.append(lineFeed + "Execution time: " + historyNode.getProperty(PROPERTY_EXECUTION_TIME).getLong() + " ms");
-				sb.append(lineFeed + "Success: " + historyNode.getProperty(PROPERTY_SUCCESS).getBoolean());
+				sb.append(lineFeedSymbol + historyNode.getProperty(PROPERTY_MESSAGES).getString().replace("\n", lineFeedSymbol));
+				sb.append(lineFeedSymbol + "Execution time: " + historyNode.getProperty(PROPERTY_EXECUTION_TIME).getLong() + " ms");
+				sb.append(lineFeedSymbol + "Success: " + historyNode.getProperty(PROPERTY_SUCCESS).getBoolean());
 			}
 		} catch (RepositoryException e) {
 			LOG.error("RepositoryException: {}", e);
 		}
 		return sb.toString();
 	}
-	
+
 }

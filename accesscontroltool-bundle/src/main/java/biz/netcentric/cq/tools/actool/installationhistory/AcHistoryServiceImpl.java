@@ -89,7 +89,7 @@ public class AcHistoryServiceImpl implements AcHistoryService{
 		Session session = null;
 		try {
 			session = repository.loginAdministrative(null);
-			return HistoryUtils.getInstallationLogs(session);
+			return HistoryUtils.getHistoryInfos(session);
 		} catch (RepositoryException e) {
 			LOG.error("RepositoryException: ", e);
 		}finally{
