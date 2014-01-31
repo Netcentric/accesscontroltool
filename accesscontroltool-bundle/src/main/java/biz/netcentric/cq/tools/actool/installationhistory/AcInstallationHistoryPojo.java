@@ -9,7 +9,7 @@ import java.util.TreeSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actools.comparators.HistoryEntryComparator;
+import biz.netcentric.cq.tools.actool.comparators.HistoryEntryComparator;
 
 public class AcInstallationHistoryPojo {
 	
@@ -29,10 +29,21 @@ public class AcInstallationHistoryPojo {
 	private Date installationDate;
 	private long executionTime;
 	private long msgIndex = 0;
+	Rendition rendition;
+	
+	public enum Rendition {
+		 HTML, TXT; 
+		}
 	
 	public AcInstallationHistoryPojo() {
+		this.rendition = rendition.TXT;
 		this.setInstallationDate(new Date());
 	}
+	public AcInstallationHistoryPojo(Rendition rendition) {
+		this.rendition = rendition;
+		this.setInstallationDate(new Date());
+	}
+	
 	
 	public Date getInstallationDate() {
 		return installationDate;
@@ -55,7 +66,11 @@ public class AcInstallationHistoryPojo {
 	}
 	
 	public void addWarning(String warning){
-		this.warnings.add(new HistoryEntry(msgIndex, new Timestamp(new Date().getTime()), "<font color='orange'><b>" + MSG_IDENTIFIER_WARNING + " " + warning +"</b></font>"));
+		if(this.rendition.equals(Rendition.HTML)){
+		    this.warnings.add(new HistoryEntry(msgIndex, new Timestamp(new Date().getTime()), "<font color='orange'><b>" + MSG_IDENTIFIER_WARNING + " " + warning +"</b></font>"));
+		}else if(this.rendition.equals(Rendition.TXT)){
+			this.warnings.add(new HistoryEntry(msgIndex, new Timestamp(new Date().getTime()), MSG_IDENTIFIER_WARNING + " " + warning ));
+		}
 		msgIndex++;
 	}
 	public void addMessage(String message){
@@ -63,7 +78,12 @@ public class AcInstallationHistoryPojo {
 		msgIndex++;
 	}
 	public void setException(final String exception) {
+		if(this.rendition.equals(Rendition.HTML)){
 		this.exceptions.add(new HistoryEntry(msgIndex, new Timestamp(new Date().getTime()), "<font color='red'><b>" + MSG_IDENTIFIER_EXCEPTION +"</b>"+ " " + exception+"</b></font>"));
+		}else if(this.rendition.equals(Rendition.TXT)){
+			this.exceptions.add(new HistoryEntry(msgIndex, new Timestamp(new Date().getTime()), MSG_IDENTIFIER_EXCEPTION + "</b>" + " " + exception));
+
+		}
 		this.success = false;
 		msgIndex++;
 	}
