@@ -122,8 +122,9 @@ public class HistoryUtils {
 
 	
 	/**
-	 * @param acHistoryRootNode
-	 * @return
+	 * Method that returns a string which contains a number, path of a stored history log in CRX, and the success status of that installation
+	 * @param acHistoryRootNode node in CRX under which the history logs get stored
+	 * @return String array which holds the single history infos
 	 * @throws RepositoryException
 	 * @throws PathNotFoundException
 	 */
@@ -153,7 +154,15 @@ public class HistoryUtils {
 	public static String getLogHtml(final Session session, final String path) {
 		return getLog(session, path, "<br />").toString();
 	}
-
+    /**
+     * Method which assembles String containing informations of the properties of the respective history node which is specified by the path parameter
+     * 
+     * @param session
+     * @param path
+     * @param lineFeedSymbol 
+     * @return
+     */
+	
 	public static String getLog(final Session session, final String path, final String lineFeedSymbol) {
 
 		StringBuilder sb = new StringBuilder();
