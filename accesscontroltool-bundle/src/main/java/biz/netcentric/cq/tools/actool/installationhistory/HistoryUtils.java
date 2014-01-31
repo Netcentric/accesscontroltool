@@ -4,7 +4,6 @@ package biz.netcentric.cq.tools.actool.installationhistory;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.TreeSet;
-
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
@@ -14,13 +13,12 @@ import javax.jcr.ValueFormatException;
 import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.version.VersionException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.adobe.granite.jmx.annotation.OpenTypeUtils;
 
-import biz.netcentric.cq.tools.actools.comparators.TimestampPropertyComparator;
+
+import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
 
 public class HistoryUtils {
 
@@ -127,15 +125,15 @@ public class HistoryUtils {
 		return messages.toArray(new String[messages.size()]);
 	}
 	
-	public static String getLogTxt(Session session, String path) {
+	public static String getLogTxt(final Session session, final String path) {
 		return getLog(session, path, "\n").toString();
 	}
 
-	public static String getLogHtml(Session session, String path) {
+	public static String getLogHtml(final Session session, final String path) {
 		return getLog(session, path, "<br />").toString();
 	}
 	
-	public static String getLog(Session session, String path, String lineFeed) {
+	public static String getLog(final Session session, final String path, final String lineFeed) {
 		
 		StringBuilder sb = new StringBuilder();
 		try {
