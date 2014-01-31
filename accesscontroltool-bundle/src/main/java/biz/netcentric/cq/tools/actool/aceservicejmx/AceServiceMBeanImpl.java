@@ -78,7 +78,11 @@ public class AceServiceMBeanImpl implements AceServiceMBean{
 
 	@Override
 	public String[] getSavedLogs()  {
-		return acHistoryService.getInstallationLogPaths();
+		String[] logs = acHistoryService.getInstallationLogPaths();
+		if(logs.length == 0){
+			return new String[]{"no logs found"};
+		}
+		return logs;
 	}
 
 	@Override
@@ -97,8 +101,24 @@ public class AceServiceMBeanImpl implements AceServiceMBean{
 	}
 
 	@Override
-	public String showHistory(int n) {
-		return acHistoryService.showHistory(n);
+	public String showHistoryLog(String n) {
+		int i;
+		String[] logs = acHistoryService.getInstallationLogPaths();
+		if(logs.length == 0){
+			return "no logs found";
+		}
+		int numberOfFoundLogs = logs.length;
+		
+		String errorMessage = "please enter a valid log number (between 1 and " + numberOfFoundLogs + ")";
+		try {
+			i = Integer.parseInt(n);
+		} catch (NumberFormatException e) {
+			return errorMessage;
+		}
+		if(i < 1 || i > numberOfFoundLogs){
+			return errorMessage;
+		}
+		return acHistoryService.showHistory(i);
 	}
 
 }

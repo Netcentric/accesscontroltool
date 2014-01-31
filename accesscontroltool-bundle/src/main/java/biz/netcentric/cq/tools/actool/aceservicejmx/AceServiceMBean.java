@@ -39,5 +39,6 @@ public interface AceServiceMBean {
 	@Description("returns links to the existing configuration files in CRX")
 	public String[] getConfigurationFiles();
 	
-	public String showHistory(int n);
+	@Description("returns history logs which matches the provided number")
+	public String showHistoryLog(String n);
 }
