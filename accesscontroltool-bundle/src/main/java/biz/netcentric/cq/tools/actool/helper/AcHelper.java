@@ -648,7 +648,8 @@ public class AcHelper {
 
 
 	/**
-	 * Method that merges several textual AccessControlConfigurations written in YAML format, each consisting of a groups and ACE configuration
+	 * Method that merges several textual AccessControlConfigurations written in YAML format, each consisting of a groups and ACE configuration.
+	 * Overall validation ensures that no doubled defined groups in different configuration files are possible
 	 * @param session 
 	 * @param newestConfigurations map which contains all paths and configuration in YAML format. key is the node path in CRX under which the respective configuration is stored, entry is the textual configuration
 	 * @param history history object
@@ -686,7 +687,7 @@ public class AcHelper {
 				
 			}
 			groupsFromAllConfig.addAll(groupsFromCurrentConfig);
-			Map<String, Set<AceBean>> aceMapFromConfig = ConfigReader.getAceConfigurationBeans(session, null, yamlList, groupsFromCurrentConfig);
+			Map<String, Set<AceBean>> aceMapFromConfig = ConfigReader.getAceConfigurationBeans(session, yamlList, groupsFromCurrentConfig);
 
 			mergedAuthorizablesMapfromConfig.putAll(authorizablesMapfromConfig);
 			mergedAceMapFromConfig.putAll(aceMapFromConfig);
