@@ -37,8 +37,7 @@ public class ConfigReader {
 
 	@SuppressWarnings("rawtypes")
 
-	public static Map<String, Set<AceBean>> getAceConfigurationBeans(final Session session,
-			PrintWriter out, List<LinkedHashMap> yamlList, Set<String> groupsFromConfig) throws RepositoryException {
+	public static Map<String, Set<AceBean>> getAceConfigurationBeans(final Session session, final List<LinkedHashMap> yamlList, final Set<String> groupsFromConfig) throws RepositoryException {
 
 		// build ACE Beans
 		LinkedHashMap aceConfigMap = yamlList.get(1);
@@ -53,7 +52,7 @@ public class ConfigReader {
 		return aceMapFromConfig;
 	}
 
-	public static Map<String, LinkedHashSet<AuthorizableConfigBean>> getAuthorizableConfigurationBeans(List<LinkedHashMap> yamlList) {
+	public static Map<String, LinkedHashSet<AuthorizableConfigBean>> getAuthorizableConfigurationBeans(final List<LinkedHashMap> yamlList) {
 
 		// build principal Beans
 		LinkedHashMap authorizableConfigMap = yamlList.get(0);
