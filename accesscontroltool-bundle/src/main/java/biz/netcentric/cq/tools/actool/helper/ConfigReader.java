@@ -188,7 +188,7 @@ public class ConfigReader {
 					LOG.info("start reading ACE configuration of authorizable: {}", principal);
 
 					if(aceMap.get(principal) == null){
-						LinkedHashSet<AceBean> tmpSet = new LinkedHashSet<AceBean>();
+						Set<AceBean> tmpSet = new LinkedHashSet<AceBean>();
 						aceMap.put(principal,  tmpSet);
 					}
 
