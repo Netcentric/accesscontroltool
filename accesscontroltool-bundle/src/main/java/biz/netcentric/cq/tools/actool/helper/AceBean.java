@@ -112,6 +112,67 @@ public class AceBean {
 				+ principal + "\n" +  ", isAllowProvided=" + isAllowProvided
 				+ "\n" + ", actions=" + Arrays.toString(actions) + "]";
 	}
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Arrays.hashCode(actions);
+		result = prime * result
+				+ ((actionsString == null) ? 0 : actionsString.hashCode());
+		result = prime * result + (isAllow ? 1231 : 1237);
+		result = prime * result + (isAllowProvided ? 1231 : 1237);
+		result = prime * result + ((jcrPath == null) ? 0 : jcrPath.hashCode());
+		result = prime * result
+				+ ((principal == null) ? 0 : principal.hashCode());
+		result = prime
+				* result
+				+ ((privilegesString == null) ? 0 : privilegesString.hashCode());
+		result = prime * result + ((repGlob == null) ? 0 : repGlob.hashCode());
+		return result;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		AceBean other = (AceBean) obj;
+		if (!Arrays.equals(actions, other.actions))
+			return false;
+		if (actionsString == null) {
+			if (other.actionsString != null)
+				return false;
+		} else if (!actionsString.equals(other.actionsString))
+			return false;
+		if (isAllow != other.isAllow)
+			return false;
+		if (isAllowProvided != other.isAllowProvided)
+			return false;
+		if (jcrPath == null) {
+			if (other.jcrPath != null)
+				return false;
+		} else if (!jcrPath.equals(other.jcrPath))
+			return false;
+		if (principal == null) {
+			if (other.principal != null)
+				return false;
+		} else if (!principal.equals(other.principal))
+			return false;
+		if (privilegesString == null) {
+			if (other.privilegesString != null)
+				return false;
+		} else if (!privilegesString.equals(other.privilegesString))
+			return false;
+		if (repGlob == null) {
+			if (other.repGlob != null)
+				return false;
+		} else if (!repGlob.equals(other.repGlob))
+			return false;
+		return true;
+	}
 	
 }
 	
