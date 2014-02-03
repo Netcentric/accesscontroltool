@@ -153,16 +153,7 @@ public class AceServiceImpl implements AceService{
 
 	
 
-	@Override
-	public void installConfigurationFromString(final List mergedConfigurations, AcInstallationHistoryPojo status, Session session, Set<AuthorizableInstallationHistory> authorizableHistorySet, Map<String, Set<AceBean>> repoDump) throws Exception {
 
-
-		if(session != null){
-			LOG.info("received Access Control Configuration data from string");
-			installConfigurationFromYamlList(false, mergedConfigurations, status, session, authorizableHistorySet, repoDump);
-		}
-
-	}
 
 	private void installConfigurationFromYamlList(final boolean dryRun, final List mergedConfigurations, AcInstallationHistoryPojo status, final Session session, Set<AuthorizableInstallationHistory> authorizableHistorySet, Map<String, Set<AceBean>> repositoryDumpAceMap) throws Exception  {
 
@@ -264,7 +255,7 @@ public class AceServiceImpl implements AceService{
 				Map<String, Set<AceBean>> repositoryDumpAceMap = null;
 				LOG.info("start building dump from repository");
 				repositoryDumpAceMap = AcHelper.createAclDumpMap(session, AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE, this.excludePaths);
-				installConfigurationFromString(mergedConfigurations, history, session, authorizableInstallationHistorySet, repositoryDumpAceMap);
+				installConfigurationFromYamlList(false,mergedConfigurations, history, session, authorizableInstallationHistorySet, repositoryDumpAceMap);
 
 				// if everything went fine (no exceptions), save the session
 				// thus persisting the changed ACLs

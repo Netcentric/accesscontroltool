@@ -49,10 +49,6 @@ public interface AceService {
 	
 	public Map<String,String> getNewestConfigurationNodes(final String path, final Session session, AcInstallationHistoryPojo status) throws Exception;
 	
-	public void installConfigurationFromString(List mergedConfigurations,
-			AcInstallationHistoryPojo status, final Session session,
-			Set<AuthorizableInstallationHistory> authorizableHistorySet,
-			Map<String, Set<AceBean>> repoDump) throws Exception;
 
 	
 	
