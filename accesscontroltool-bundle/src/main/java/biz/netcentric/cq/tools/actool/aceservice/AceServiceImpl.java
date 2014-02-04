@@ -76,13 +76,13 @@ public class AceServiceImpl implements AceService{
 	private static final String PROPERTY_CONFIGURATION_PATH = "AceService.configurationPath";
 	private boolean isExecuting = false;
 	private String configurationPath;
-	private String[] excludePaths;
+	private String[] queryExcludePaths;
 
 
 	@Activate
 	public void activate(@SuppressWarnings("rawtypes") final Map properties) throws Exception {
 		this.configurationPath = PropertiesUtil.toString(properties.get(PROPERTY_CONFIGURATION_PATH), "");
-		this.excludePaths = PropertiesUtil.toStringArray(properties.get("AceService.queryExcludePaths"),null);
+		this.queryExcludePaths = PropertiesUtil.toStringArray(properties.get("AceService.queryExcludePaths"),null);
 	}
 
 	
@@ -90,7 +90,7 @@ public class AceServiceImpl implements AceService{
 	@Override
 	public void returnAceDumpAsFile(final SlingHttpServletRequest request, final SlingHttpServletResponse response, Session session, int mapOrder, int aceOrder) {
 		try {
-			Map<String, Set<AceBean>> aclDumpMap = AcHelper.getCorrectedAceDump(AcHelper.createAceMap(request, mapOrder, aceOrder, this.excludePaths));
+			Map<String, Set<AceBean>> aclDumpMap = AcHelper.getCorrectedAceDump(AcHelper.createAceMap(request, mapOrder, aceOrder, this.queryExcludePaths));
 			AclDumpUtils.returnAceDumpAsFile(response, aclDumpMap , mapOrder);
 		} catch (ValueFormatException e) {
 			LOG.error("ValueFormatException in AceServiceImpl: {}", e);
@@ -119,7 +119,7 @@ public class AceServiceImpl implements AceService{
 		Session session = null;
 		try {
 			session = repository.loginAdministrative(null);
-			Map<String, Set<AceBean>> aclDumpMap = AcHelper.getCorrectedAceDump(AcHelper.createAclDumpMap(session, aclMapKeyOrder, AcHelper.ACE_ORDER_NONE, excludePaths));
+			Map<String, Set<AceBean>> aclDumpMap = AcHelper.getCorrectedAceDump(AcHelper.createAclDumpMap(session, aclMapKeyOrder, AcHelper.ACE_ORDER_NONE, queryExcludePaths));
 			Set<AuthorizableConfigBean> authorizableBeans = AuthorizableDumpUtils.returnGroupBeans(session);
 
 			return AclDumpUtils.returnConfigurationDumpAsString(aclDumpMap, authorizableBeans, mapOrder);
@@ -140,20 +140,6 @@ public class AceServiceImpl implements AceService{
 
 	}
 	
-
-	@Override
-	public void purge(ResourceResolver resourceResolver,
-			String[] purgePaths) {
-		try {
-			AcHelper.purgeACLs(resourceResolver, purgePaths);
-		} catch (Exception e) {
-			LOG.error("Exception in AceServiceImpl: {}", e);
-		}
-	}
-
-	
-
-
 
 	private void installConfigurationFromYamlList(final boolean dryRun, final List mergedConfigurations, AcInstallationHistoryPojo status, final Session session, Set<AuthorizableInstallationHistory> authorizableHistorySet, Map<String, Set<AceBean>> repositoryDumpAceMap) throws Exception  {
 
@@ -254,7 +240,7 @@ public class AceServiceImpl implements AceService{
 
 				Map<String, Set<AceBean>> repositoryDumpAceMap = null;
 				LOG.info("start building dump from repository");
-				repositoryDumpAceMap = AcHelper.createAclDumpMap(session, AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE, this.excludePaths);
+				repositoryDumpAceMap = AcHelper.createAclDumpMap(session, AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE, this.queryExcludePaths);
 				installConfigurationFromYamlList(false,mergedConfigurations, history, session, authorizableInstallationHistorySet, repositoryDumpAceMap);
 
 				// if everything went fine (no exceptions), save the session
@@ -299,24 +285,26 @@ public class AceServiceImpl implements AceService{
 
 	/**
 	 * 
-	 * @param path parent path in repository where one or several configurations are stored underneath
+	 * @param configurationsRootPath parent path in repository where one or several configurations are stored underneath
 	 * @param session admin session
 	 * @return set containing paths to the newest configurations
 	 * @throws Exception 
 	 */
-	public Map<String, String> getNewestConfigurationNodes(final String path, final Session session, AcInstallationHistoryPojo history) throws Exception {
+	public Map<String, String> getNewestConfigurationNodes(final String configurationsRootPath, final Session session, AcInstallationHistoryPojo history) throws Exception {
 		Node configurationRootNode = null;
 		Set<Node> configs = new LinkedHashSet<Node>();
-		if(path.isEmpty()){
+		if(configurationsRootPath.isEmpty()){
 			String message = "no configuration path configured! please check the configuration of AcService!";
 			LOG.error(message);
 			throw new IllegalArgumentException(message);
 		}
 		try{
-			configurationRootNode = session.getNode(path);
+			configurationRootNode = session.getNode(configurationsRootPath);
 		}catch(RepositoryException e){
 			String message = "no configuration node found specified by given path! please check the configuration of AcService!";
-			history.addWarning(message);
+			if(history != null){
+			  history.addWarning(message);
+			}
 			LOG.error(message);
 			throw e;
 		}
@@ -343,9 +331,11 @@ public class AceServiceImpl implements AceService{
 
 				}
 			}else{
-				String message = "ACL root configuration node " + path + " doesn't have any children!";
+				String message = "ACL root configuration node " + configurationsRootPath + " doesn't have any children!";
 				LOG.warn(message);
-				history.addWarning(message);
+				if(history != null){
+			    	history.addWarning(message);
+				}
 				return null;
 			}
 			LOG.info("found following configs: ", configs);
@@ -501,15 +491,11 @@ public class AceServiceImpl implements AceService{
 		return this.isExecuting;
 	}
 
-	@Override
-	public String checkPrincipalPermissions(String principalID, String path) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
 
 	@Override
-	public String[] getExcludePaths() {
-		return this.excludePaths;
+	public String[] getQueryExcludePaths() {
+		return this.queryExcludePaths;
 	}
 
 	@Override
@@ -518,7 +504,7 @@ public class AceServiceImpl implements AceService{
 	}
 
 	@Override
-	public Set<String> getFoundConfigPaths() {
+	public Set<String> getCurrentConfigurationPaths() {
 
 		Session session = null;
 		Set<String> paths = new LinkedHashSet<String>();

@@ -64,7 +64,7 @@ public class AceServiceMBeanImpl implements AceServiceMBean{
 
 	@Override
 	public String[] getConfigurationFiles() {
-		final Set<String> paths = aceService.getFoundConfigPaths();
+		final Set<String> paths = aceService.getCurrentConfigurationPaths();
 		StringBuilder sb = new StringBuilder();
 		int cnt = 1;
 		for(String path : paths){
