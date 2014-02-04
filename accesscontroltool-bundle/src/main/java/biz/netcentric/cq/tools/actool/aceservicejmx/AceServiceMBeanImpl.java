@@ -1,7 +1,11 @@
 package biz.netcentric.cq.tools.actool.aceservicejmx;
 
 
+import java.awt.Desktop;
+import java.net.URI;
 import java.util.Set;
+
+import javax.management.NotCompliantMBeanException;
 
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.felix.scr.annotations.Component;
@@ -11,6 +15,8 @@ import org.apache.felix.scr.annotations.Service;
 import org.apache.felix.scr.annotations.Property;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.adobe.granite.jmx.annotation.AnnotatedStandardMBean;
 
 import biz.netcentric.cq.tools.actool.aceservice.AceService;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
@@ -22,8 +28,12 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 	@Property(name = "pattern", value = "/.*")
 })
 
-public class AceServiceMBeanImpl implements AceServiceMBean{  
+public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceServiceMBean{  
 	
+	public AceServiceMBeanImpl() throws NotCompliantMBeanException {
+		super(AceServiceMBean.class);
+	}
+
 	private static final Logger LOG = LoggerFactory.getLogger(AceServiceMBeanImpl.class);
 
 	@Reference
@@ -101,7 +111,7 @@ public class AceServiceMBeanImpl implements AceServiceMBean{
 	}
 
 	@Override
-	public String showHistoryLog(String n) {
+	public String showHistoryLog(final String n) {
 		int i;
 		String[] logs = acHistoryService.getInstallationLogPaths();
 		if(logs.length == 0){
@@ -120,5 +130,11 @@ public class AceServiceMBeanImpl implements AceServiceMBean{
 		}
 		return acHistoryService.showHistory(i);
 	}
+
+	@Override
+	public String purgeAllAuthorizablesFromConfigurations() {
+		return aceService.purgAuthorizablesFromConfig();
+	}
+
 
 }

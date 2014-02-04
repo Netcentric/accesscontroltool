@@ -24,16 +24,20 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
+import javax.jcr.lock.LockException;
 import javax.jcr.query.InvalidQueryException;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryResult;
 import javax.jcr.security.AccessControlEntry;
+import javax.jcr.security.AccessControlException;
 import javax.jcr.security.AccessControlList;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.AccessControlPolicy;
+import javax.jcr.version.VersionException;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.StopWatch;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.jackrabbit.api.security.principal.PrincipalManager;
@@ -114,26 +118,73 @@ public class AcHelper {
 		}
 		return aclSet;
 	}
+	
+	public static Set<AclBean> getAuthorizablesAcls(final Session session, final Set<String> authorizableIds) throws InvalidQueryException, RepositoryException{
+		Set<Node> nodeSet = new LinkedHashSet<Node>();
 
-	public static String deleteAces(final Session session, final Set<AclBean> aclSet, final String authorizableId) throws AccessDeniedException, PathNotFoundException, ItemNotFoundException, RepositoryException{
+		StringBuilder query = new StringBuilder();
+		query.append("/jcr:root//*[(@jcr:primaryType = 'rep:GrantACE' or @jcr:primaryType = 'rep:DenyACE' ) and (");
+
+		for (Iterator<String> iterator = authorizableIds.iterator(); iterator.hasNext();) {
+			
+			query.append("@rep:principalName = '" + iterator.next() + "'");
+			if(iterator.hasNext()){
+				query.append(" or ");
+			}
+		}
+		query.append(")]");
+
+		
+		nodeSet.addAll(getNodes(session, query.toString() ));
+
 		AccessControlManager aMgr = session.getAccessControlManager();
-		StringBuilder message = new StringBuilder();
+		AccessControlList acl;
+		Set <AclBean> aclSet = new LinkedHashSet<AclBean>();
+		for(Node node : nodeSet){
+			acl = (AccessControlList) aMgr.getPolicies(node.getParent().getParent().getPath())[0];
+			AclBean aclBean = new AclBean();
+			aclBean.setParentPath(node.getParent().getParent().getPath());
+			aclBean.setAcl((JackrabbitAccessControlList)acl);
+			aclBean.setJcrPath(node.getParent().getPath());
+			aclSet.add(aclBean);
+		}
+		return aclSet;
+	}
 
-		for(AclBean aclBean : aclSet){
+	public static String deleteAcesFromAuthorizable(final Session session, final Set<AclBean> aclSet, final String authorizableId) throws AccessDeniedException, PathNotFoundException, ItemNotFoundException, RepositoryException{
+		return deleteAcesFromAuthorizables(session, new HashSet<String>(Arrays.asList(new String[]{authorizableId})), aclSet);
+	}
+	
+	public static String deleteAcesFromAuthorizables(final Session session, final Set<String> authorizabeIDs, final Set<AclBean> aclBeans)
+			throws UnsupportedRepositoryOperationException,
+			RepositoryException, AccessControlException, PathNotFoundException,
+			AccessDeniedException, LockException, VersionException {
+		StopWatch sw = new StopWatch();
+		sw.start();
+		StringBuilder message = new StringBuilder();
+		AccessControlManager aMgr = session.getAccessControlManager();
+		long aclCounter = 0;
+		long aceCounter = 0;
+		for(AclBean aclBean : aclBeans){
 			if(aclBean != null){
 				for (AccessControlEntry ace : aclBean.getAcl().getAccessControlEntries()) {
-					if(StringUtils.equals(ace.getPrincipal().getName(), authorizableId)){
+					String authorizableId = ace.getPrincipal().getName();
+					if(authorizabeIDs.contains(authorizableId)){
 						String parentNodePath = aclBean.getParentPath();
 						String acePath = aclBean.getJcrPath();
 						aclBean.getAcl().removeAccessControlEntry(ace);
 						aMgr.setPolicy(aclBean.getParentPath(), aclBean.getAcl());
 						LOG.info("removed ACE {} from ACL of node: {}", acePath, parentNodePath );
-						message.append("removed ACE: " + acePath + " from ACL of node:" + parentNodePath  + "\n");
-
+						message.append("removed ACE of principal: " + authorizableId + " from ACL of node:" + parentNodePath  + "\n");
+						aceCounter++;
 					}
 				}
 			}
-		}
+			aclCounter++;
+		}sw.stop();
+		long executionTime = sw.getTime();
+		message.append("\n\ndeleted: " + aclCounter + " ACLs and " + aceCounter + " ACEs in repository");
+		message.append("\nexecution time: " + executionTime + " ms");
 		return message.toString();
 	}
 	/**
@@ -724,12 +775,15 @@ public class AcHelper {
 
 
 	public static boolean isEqualBean(final AceBean bean1, final AceBean bean2){
+		Set<String> bean1Privileges = new HashSet<String>(Arrays.asList(bean1.getPrivilegesString().split(",")));
+		Set<String> bean2Privileges = new HashSet<String>(Arrays.asList(bean2.getPrivilegesString().split(",")));
+		
 		if(bean1.getJcrPath().equals(bean2.getJcrPath()) 
 				&& bean1.getPrincipalName().equals(bean2.getPrincipalName())
 				&& bean1.isAllow() == bean2.isAllow()
 				&& bean1.getRepGlob().equals(bean2.getRepGlob())
 				&& bean1.getPermission().equals(bean2.getPermission())
-				&& bean1.getPrivilegesString().equals(bean2.getPrivilegesString())
+				&& bean1Privileges.containsAll(bean2Privileges)
 				){
 			return true;
 		}

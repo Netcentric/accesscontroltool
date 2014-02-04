@@ -3,9 +3,12 @@ package biz.netcentric.cq.tools.actool.aceservice;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
+
 import javax.jcr.Session;
+
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
@@ -117,4 +120,6 @@ public interface AceService {
 	 */
 	public Map<String,String> getNewestConfigurationNodes(final String configurationsRootPath, final Session session, AcInstallationHistoryPojo history) throws Exception;
 	
+	
+	public String purgAuthorizablesFromConfig();
 }

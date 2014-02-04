@@ -3,11 +3,13 @@ package biz.netcentric.cq.tools.actool.aceservicejmx;
 import javax.jcr.RepositoryException;
 
 import com.adobe.granite.jmx.annotation.Description;
+import com.adobe.granite.jmx.annotation.Name;
 /**
- * exposes functionalities and of the Netcentric AC-Tool
+ * exposes functionalities of the Netcentric AC-Tool
  * @author jochenkoschorke
  *
  */
+@Description("AC Service")
 public interface AceServiceMBean {
 	
 	boolean isReadyToStart();
@@ -16,13 +18,16 @@ public interface AceServiceMBean {
 	String execute();
 	
 	@Description("purges the AccessControlList of the given path, if existing")
-	String purgeACL(final String path);
+	String purgeACL(@Name("path") final String path);
 	
 	@Description("purges all AccessControlLists under the given path and its subpaths, if existing")
-	String purgeACLs(final String path);
+	String purgeACLs(@Name("path") final String path);
 	
 	@Description("purges an authorizable and all its ACEs from the system")
-	String purgeAuthorizable(final String authorizableId);
+	String purgeAuthorizable(@Name("authorizableId") final String authorizableId);
+	
+	@Description("purges all authorizables contained in configuration files and all their ACEs from the system")
+	public String purgeAllAuthorizablesFromConfigurations();
 	
 	@Description("provides status and links to the saved history logs")
 	String[] getSavedLogs() throws RepositoryException;
@@ -30,15 +35,17 @@ public interface AceServiceMBean {
 	@Description("shows execution status of the ac tool")
 	public boolean isExecuting();
 	
-	@Description("returns a dump of all groups and path based dump all ACLs")
+	@Description("returns a configuration dump containing all groups and all ACLs ordered by path")
 	public String pathBasedDump();
 	
-	@Description("returns a dump of all groups andfroup based dump all ACEs")
+	@Description("returns a configuration dump containing all groups and all ACEs ordered by groups")
 	public String groupBasedDump();
 		
 	@Description("returns links to the existing configuration files in CRX")
 	public String[] getConfigurationFiles();
 	
 	@Description("returns history logs which matches the provided number")
-	public String showHistoryLog(String n);
+	public String showHistoryLog(@Name("historyLogNumber") @Description("number of history log") final String historyLogNumber);
+	
+	
 }
