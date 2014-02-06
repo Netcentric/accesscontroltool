@@ -140,7 +140,9 @@ public class HistoryUtils {
 				if(node.getProperty(PROPERTY_SUCCESS).getBoolean()){
 					successStatusString = "ok";
 				}
-				messages.add(cnt + ". " + node.getPath() + " " + "(" + successStatusString + ")" );
+				String installationDate = node.getProperty(PROPERTY_INSTALLATION_DATE).getString();
+				
+				messages.add(cnt + ". " + node.getPath() + " " + ""+ "(" + installationDate +")" + "(" + successStatusString + ")" );
 			}
 			cnt++;
 		}
