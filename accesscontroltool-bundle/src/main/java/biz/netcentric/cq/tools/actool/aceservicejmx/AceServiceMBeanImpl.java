@@ -1,8 +1,7 @@
 package biz.netcentric.cq.tools.actool.aceservicejmx;
 
 
-import java.awt.Desktop;
-import java.net.URI;
+
 import java.util.Set;
 
 import javax.management.NotCompliantMBeanException;
