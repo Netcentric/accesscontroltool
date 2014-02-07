@@ -573,7 +573,7 @@ public class AceServiceImpl implements AceService{
 			} catch (RepositoryException e) {
 				LOG.error("RepositoryException: ", e);
 			}
-			message = "removed authorizable: " + authorizableId + "from /home\n";
+			message = "removed authorizable: " + authorizableId + " from /home\n";
 		}else{
 			message = "deletion of authorizable: " + authorizableId + " from home failed! Reason: authorizable doesn't exist\n" ;
 		}
