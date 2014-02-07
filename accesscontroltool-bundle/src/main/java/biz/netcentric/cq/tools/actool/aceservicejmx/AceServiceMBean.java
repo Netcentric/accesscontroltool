@@ -41,7 +41,7 @@ public interface AceServiceMBean {
 	@Description("returns links to the existing configuration files in CRX")
 	public String[] getConfigurationFiles();
 	
-	@Description("returns history logs which matches the provided number")
+	@Description("returns history log which matches the provided number")
 	public String showHistoryLog(@Name("historyLogNumber") @Description("number of history log") final String historyLogNumber);
 	
 	@Description("purges authorizable(s) and respective ACEs from the system. Several authorizable ids have to be comma separated.")
