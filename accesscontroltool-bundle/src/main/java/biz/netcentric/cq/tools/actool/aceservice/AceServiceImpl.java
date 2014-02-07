@@ -1,6 +1,9 @@
 package biz.netcentric.cq.tools.actool.aceservice;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -51,6 +54,8 @@ import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AclBean;
 import biz.netcentric.cq.tools.actool.helper.AclDumpUtils;
+import biz.netcentric.cq.tools.actool.helper.PurgeHelper;
+import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
@@ -126,8 +131,8 @@ public class AceServiceImpl implements AceService{
 		Session session = null;
 		try {
 			session = repository.loginAdministrative(null);
-			Map<String, Set<AceBean>> aclDumpMap = AcHelper.getCorrectedAceDump(AcHelper.createAclDumpMap(session, aclMapKeyOrder, AcHelper.ACE_ORDER_NONE, queryExcludePaths));
-			Set <String> groups = AcHelper.getGroupsFromHome(session);
+			Map<String, Set<AceBean>> aclDumpMap = AcHelper.getCorrectedAceDump(AclDumpUtils.createAclDumpMap(session, aclMapKeyOrder, AcHelper.ACE_ORDER_NONE, queryExcludePaths));
+			Set <String> groups = QueryHelper.getGroupsFromHome(session);
 			Set<AuthorizableConfigBean> authorizableBeans = AuthorizableDumpUtils.returnGroupBeans(session);
 
 			return AclDumpUtils.returnConfigurationDumpAsString(aclDumpMap, authorizableBeans, mapOrder);
@@ -251,7 +256,7 @@ public class AceServiceImpl implements AceService{
 
 				Map<String, Set<AceBean>> repositoryDumpAceMap = null;
 				LOG.info("start building dump from repository");
-				repositoryDumpAceMap = AcHelper.createAclDumpMap(session, AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE, this.queryExcludePaths);
+				repositoryDumpAceMap = AclDumpUtils.createAclDumpMap(session, AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE, this.queryExcludePaths);
 				
 				installConfigurationFromYamlList(mergedConfigurations, history, session, authorizableInstallationHistorySet, repositoryDumpAceMap);
 
@@ -398,7 +403,7 @@ public class AceServiceImpl implements AceService{
 		boolean flag = true;
 		try {
 			session = repository.loginAdministrative(null);
-			AcHelper.purgeAcl(session, path);
+			PurgeHelper.purgeAcl(session, path);
 			session.save();
 		} catch (Exception e) {
 			// TO DO: Logging
@@ -423,7 +428,7 @@ public class AceServiceImpl implements AceService{
 		boolean flag = true;
 		try {
 			session = repository.loginAdministrative(null);
-			message = AcHelper.purgeACLs(session, path);
+			message = PurgeHelper.purgeACLs(session, path);
 			session.save();
 		} catch (Exception e) {
 			LOG.error("Exception: ", e);
@@ -461,6 +466,27 @@ public class AceServiceImpl implements AceService{
 		return message;
 	}
 
+	public String purgeAuthorizables(String authorizableIds){
+		Session session = null;
+		String message = "";
+		try {
+			try {
+				session = repository.loginAdministrative(null);
+				authorizableIds = authorizableIds.trim();
+				Set <String> authorizablesSet = new HashSet<String> (new ArrayList(Arrays.asList(authorizableIds.split(","))));
+				message = purgeAuthorizables(authorizablesSet, session);
+			} catch (RepositoryException e) {
+				LOG.error("Exception: ", e);
+				
+			}
+		}finally{
+				if(session != null){
+					session.logout();
+				}
+			}
+		return message;
+		}
+	
 	private String purgeAuthorizables(Set<String> authorizableIds, final Session session){
 
 		StringBuilder message = new StringBuilder();
@@ -475,9 +501,9 @@ public class AceServiceImpl implements AceService{
 				message.append(deleteAuthorizableFromHome(authorizableId,userManager, principalManager));
 			}
 			
-			Set<AclBean> aclBeans = AcHelper.getAuthorizablesAcls(session, authorizableIds);
+			Set<AclBean> aclBeans = QueryHelper.getAuthorizablesAcls(session, authorizableIds);
 
-			message.append(AcHelper.deleteAcesFromAuthorizables(session, authorizableIds, aclBeans));
+			message.append(PurgeHelper.deleteAcesFromAuthorizables(session, authorizableIds, aclBeans));
 			session.save();
 		} catch (RepositoryException e) {
 			message2 = message2 + " deletion of ACEs failed! reason: RepositoryException: " + e.toString();
@@ -489,55 +515,55 @@ public class AceServiceImpl implements AceService{
 		return message+message2;
 	}
 	
-	@Override
-	public String purgeAuthorizable(String authorizableId) {
-		Session session = null;
-		String message = "";
-		String message2 = "";
-		try {
+//	@Override
+//	public String purgeAuthorizable(String authorizableId) {
+//		Session session = null;
+//		String message = "";
+//		String message2 = "";
+//		try {
+//
+//			session = repository.loginAdministrative(null);
+//			JackrabbitSession js = (JackrabbitSession) session;
+//			UserManager userManager = js.getUserManager();
+//			userManager.autoSave(false);
+//			PrincipalManager principalManager = js.getPrincipalManager();
+//
+//			// deletion of authorizable from /home
+//
+//			message = deleteAuthorizableFromHome(authorizableId,
+//					userManager, principalManager);
+//
+//			
+//			// deletion of all ACE of that autorizable
+//			try {
+//				Set<AclBean> nodes =  QueryHelper.getAuthorizablesAcls(session, authorizableId);
+//				if(!nodes.isEmpty()){
+//					message2 =  PurgeHelper.deleteAcesFromAuthorizable(session, nodes, authorizableId);
+//					session.save();
+//				}else{
+//					message2 = "did not find any ACEs for this principal in repository!";
+//				}
+//			} catch (InvalidQueryException e) {
+//				message2 = "\n deletion of ACEs failed! Reason: InvalidQueryException: " + e.toString() + "\n";
+//				e.printStackTrace();
+//
+//
+//			}
+//		} catch (RepositoryException e) {
+//			message2 = message2 + " deletion of ACEs failed! reason: RepositoryException: " + e.toString();
+//			e.printStackTrace();
+//		}
+//		finally{
+//			if(session != null){
+//				session.logout();
+//			}
+//		}
+//		return message + message2;
+//	}
 
-			session = repository.loginAdministrative(null);
-			JackrabbitSession js = (JackrabbitSession) session;
-			UserManager userManager = js.getUserManager();
-			userManager.autoSave(false);
-			PrincipalManager principalManager = js.getPrincipalManager();
-
-			// deletion of authorizable from /home
-
-			message = deleteAuthorizableFromHome(authorizableId,
-					userManager, principalManager);
-
-			
-			// deletion of all ACE of that autorizable
-			try {
-				Set<AclBean> nodes =  AcHelper.getAuthorizablesAcls(session, authorizableId);
-				if(!nodes.isEmpty()){
-					message2 =  AcHelper.deleteAcesFromAuthorizable(session, nodes, authorizableId);
-					session.save();
-				}else{
-					message2 = "did not find any ACEs for this principal in repository!";
-				}
-			} catch (InvalidQueryException e) {
-				message2 = "\n deletion of ACEs failed! Reason: InvalidQueryException: " + e.toString() + "\n";
-				e.printStackTrace();
 
 
-			}
-		} catch (RepositoryException e) {
-			message2 = message2 + " deletion of ACEs failed! reason: RepositoryException: " + e.toString();
-			e.printStackTrace();
-		}
-		finally{
-			if(session != null){
-				session.logout();
-			}
-		}
-		return message + message2;
-	}
-
-
-
-	private String deleteAuthorizableFromHome(String authorizableId, UserManager userManager, PrincipalManager principalManager) {
+	private String deleteAuthorizableFromHome(final String authorizableId, final UserManager userManager, final PrincipalManager principalManager) {
 		String message;
 		if(principalManager.hasPrincipal(authorizableId)){
 			Authorizable authorizable;

@@ -80,11 +80,11 @@ public interface AceService {
 	public String purgeACLs(final String path);
 	
 	/**
-	 * method that purges an authorizable and all its aces from the system
+	 * method that purges authorizable(s) and all respective aces from the system
 	 * @param authorizableId
 	 * @return status message
 	 */
-	public String purgeAuthorizable(String authorizableId);
+	public String purgeAuthorizables(String authorizableIds);
 	
 	/**
 	 * returns current execution status
@@ -122,4 +122,6 @@ public interface AceService {
 	
 	
 	public String purgAuthorizablesFromConfig();
+	
+	
 }

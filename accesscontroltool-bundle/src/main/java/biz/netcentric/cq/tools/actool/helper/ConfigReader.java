@@ -317,7 +317,7 @@ public class ConfigReader {
 									
 									// perform query using the path containing wildcards
 									String query = "/jcr:root" + tmpAclBean.getJcrPath();
-									Set<Node> result = AcHelper.getNodes(session, query); 
+									Set<Node> result = QueryHelper.getNodes(session, query); 
 
 									// if there are nodes in repository matching the wildcard-query
 									// replace the bean holding the wildcard path by beans having the found paths

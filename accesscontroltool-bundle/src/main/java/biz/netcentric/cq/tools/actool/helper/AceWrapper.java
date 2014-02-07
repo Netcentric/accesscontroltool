@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
 
 /**
- * class that wraps an AccessControlEntry and stores an additional path information
+ * class that wraps an javax.jcr.security.AccessControlEntry and stores an additional path information
  * Also provides some getter methods which return ACE data. Created and used during the reading of ACEs from a system, in order to create a ACE Dump
  * @author jochenkoschorke
  *

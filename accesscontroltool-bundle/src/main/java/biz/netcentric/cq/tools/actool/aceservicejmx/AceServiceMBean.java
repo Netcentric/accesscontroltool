@@ -23,9 +23,6 @@ public interface AceServiceMBean {
 	@Description("purges all AccessControlLists under the given path and its subpaths, if existing")
 	String purgeACLs(@Name("path") final String path);
 	
-	@Description("purges an authorizable and all its ACEs from the system")
-	String purgeAuthorizable(@Name("authorizableId") final String authorizableId);
-	
 	@Description("purges all authorizables contained in configuration files and all their ACEs from the system")
 	public String purgeAllAuthorizablesFromConfigurations();
 	
@@ -47,5 +44,6 @@ public interface AceServiceMBean {
 	@Description("returns history logs which matches the provided number")
 	public String showHistoryLog(@Name("historyLogNumber") @Description("number of history log") final String historyLogNumber);
 	
-	
+	@Description("purges authorizable(s) and respective ACEs from the system. Several authorizable ids have to be comma separated.")
+	public String purgeAuthorizables(@Name("authorizableIds")String authorizableIds);
 }

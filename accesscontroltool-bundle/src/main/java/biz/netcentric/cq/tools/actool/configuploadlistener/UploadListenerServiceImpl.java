@@ -38,9 +38,8 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 	
 	@Property(label = "Service status", name = UploadListenerServiceImpl.ACE_UPLOAD_LISTENER_SET_STATUS_SERVICE,
     options = {
-        @PropertyOption(name = "enabled", value = "enabled"),
-        @PropertyOption(name = "disabled", value = "disabled")
-      
+		@PropertyOption(name = "disabled", value = "disabled"),
+        @PropertyOption(name = "enabled", value = "enabled")
     }
 )
 })

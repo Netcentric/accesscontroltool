@@ -2,17 +2,34 @@ package biz.netcentric.cq.tools.actool.helper;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
+
+import javax.jcr.AccessDeniedException;
+import javax.jcr.ItemNotFoundException;
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.ValueFormatException;
+import javax.jcr.security.AccessControlEntry;
 import javax.servlet.ServletOutputStream;
+
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableDumpUtils;
+import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
 import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
 import biz.netcentric.cq.tools.actool.installationhistory.HtmlConstants;
 
@@ -226,5 +243,102 @@ public class AclDumpUtils {
 		sb.append("group based dump <a href = '" + Constants.ACE_SERVLET_PATH + "?dumpAll=true&aceOrder=denyallow'> (download)</a>");
 
 		return sb.toString();
+	}
+
+	public static Set<AclBean> getACLDump(final Session session, final String[] excludePaths) throws RepositoryException{
+	
+		List <String> excludeNodesList = Arrays.asList(excludePaths);
+	
+		// check excludePaths for existence
+		for(String path : excludeNodesList){
+			try {
+				if(!session.itemExists(path)){
+					AcHelper.LOG.error("Query exclude path: {} doesn't exist in repository! AccessControl installation aborted! Check exclude paths in OSGi configuration of AceService!", path );
+					throw new IllegalArgumentException("Query exclude path: " + path + " doesn't exist in repository! AccessControl installation aborted! Check exclude paths in OSGi configuration of AceService!");
+				}
+			} catch (RepositoryException e) {
+				AcHelper.LOG.error("RepositoryException: {}", e);
+				throw e;
+			}
+		}
+	
+		Set<Node> resultNodeSet = QueryHelper.getRepPolicyNodes(session, excludeNodesList);
+		Set<AclBean> accessControBeanSet = new LinkedHashSet<AclBean>();
+	
+		// assemble big query result set using the query results of the child paths of jcr:root node
+		for(Node node : resultNodeSet){
+			try {
+				accessControBeanSet.add(new AclBean(AccessControlUtils.getAccessControlList(session, node.getParent().getPath()), node.getParent().getPath()));
+			} catch (AccessDeniedException e) {
+				AcHelper.LOG.error("AccessDeniedException: {}", e);
+			} catch (ItemNotFoundException e) {
+				AcHelper.LOG.error("ItemNotFoundException: {}", e);
+			} catch (RepositoryException e) {
+				AcHelper.LOG.error("RepositoryException: {}", e);
+			}
+		}
+		return accessControBeanSet;
+	}
+
+	/**
+	 * returns a Map with holds either principal or path based ACE data
+	 * @param request
+	 * @param keyOrdering either principals (AceHelper.PRINCIPAL_BASED_ORDERING) or node paths (AceHelper.PATH_BASED_ORDERING) as keys
+	 * @param aclOrdering specifies whether the allow and deny ACEs within an ACL should be divided in separate blocks (first deny then allow)
+	 * @return
+	 * @throws ValueFormatException
+	 * @throws IllegalStateException
+	 * @throws RepositoryException
+	 */
+	public static Map <String, Set<AceBean>> createAclDumpMap(final Session session, final int keyOrdering, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException{
+	
+		Map <String, Set<AceBean>> aceMap = null;
+	
+		if(keyOrdering == AcHelper.PRINCIPAL_BASED_ORDER){ // principal based
+			aceMap = new HashMap<String, Set<AceBean>>();
+		}else if(keyOrdering == AcHelper.PATH_BASED_ORDER){ // path based
+			aceMap = new LinkedHashMap<String, Set<AceBean>>();
+		}
+	
+		Set<AclBean> aclBeanSet = getACLDump(session, excludePaths);
+	
+		// build a set containing all ACE found in the original order
+		for(AclBean aclBean : aclBeanSet){
+			if(aclBean.getAcl() == null){
+				continue;
+			}
+			for(AccessControlEntry ace : aclBean.getAcl().getAccessControlEntries()){
+				AceWrapper tmpBean = new AceWrapper(ace, aclBean.getJcrPath());
+				AceBean tmpAceBean = AcHelper.getAceBean(tmpBean);
+	
+				Set<AceBean> aceSet = null;
+	
+				if(aclOrdering == AcHelper.ACE_ORDER_NONE){
+					aceSet = new LinkedHashSet<AceBean>();
+				}else if(aclOrdering == AcHelper.ACE_ORDER_DENY_ALLOW){
+					aceSet = new TreeSet<AceBean>(new biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator());
+				}
+	
+				aceSet.add(tmpAceBean);
+	
+				if(keyOrdering == AcHelper.PRINCIPAL_BASED_ORDER){
+					if(!aceMap.containsKey(tmpAceBean.getPrincipalName())){
+						aceMap.put(tmpBean.getPrincipal().getName(), aceSet);
+						//						checkPrincipalHomeEntry(session, tmpBean.getPrincipal().getName());
+					}else{
+						aceMap.get(tmpBean.getPrincipal().getName()).add(tmpAceBean);
+					}
+				}else if(keyOrdering == AcHelper.PATH_BASED_ORDER){ 
+					if(!aceMap.containsKey(tmpBean.getJcrPath())){
+						aceMap.put(tmpBean.getJcrPath(), aceSet);
+						//						checkPrincipalHomeEntry(session, tmpBean.getPrincipal().getName());
+					}else{
+						aceMap.get(tmpBean.getJcrPath()).add(tmpAceBean);
+					}
+				}
+			}
+		}
+	
+		return aceMap;
 	}
 }

@@ -61,10 +61,6 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
 		return aceService.purgeACLs(path);
 	}
 
-	@Override
-	public String purgeAuthorizable(String authorizableId) {
-		return aceService.purgeAuthorizable(authorizableId);
-	}
 
 	@Override
 	public boolean isExecuting() {
@@ -133,6 +129,11 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
 	@Override
 	public String purgeAllAuthorizablesFromConfigurations() {
 		return aceService.purgAuthorizablesFromConfig();
+	}
+
+	@Override
+	public String purgeAuthorizables(String authorizableIds) {
+		return aceService.purgeAuthorizables(authorizableIds);
 	}
 
 

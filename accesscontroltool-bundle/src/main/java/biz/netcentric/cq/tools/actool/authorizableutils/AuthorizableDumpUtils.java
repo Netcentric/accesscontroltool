@@ -7,11 +7,13 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
 import javax.jcr.AccessDeniedException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.servlet.ServletOutputStream;
+
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
@@ -19,8 +21,8 @@ import org.apache.sling.api.SlingHttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.Constants;
+import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 
 public class AuthorizableDumpUtils {
 	
@@ -31,7 +33,7 @@ public class AuthorizableDumpUtils {
 		JackrabbitSession js = (JackrabbitSession) session;
 		UserManager userManager = js.getUserManager();
 		
-		Set <String> groups = AcHelper.getGroupsFromHome(session);
+		Set <String> groups = QueryHelper.getGroupsFromHome(session);
 		Set <AuthorizableConfigBean> userBeans = new LinkedHashSet<AuthorizableConfigBean>();
 		
 		for(String groupId : groups){
