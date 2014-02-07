@@ -23,6 +23,10 @@ import javax.jcr.ValueFormatException;
 import javax.jcr.security.AccessControlEntry;
 import javax.servlet.ServletOutputStream;
 
+import org.apache.jackrabbit.api.JackrabbitSession;
+import org.apache.jackrabbit.api.security.principal.PrincipalManager;
+import org.apache.jackrabbit.api.security.user.Authorizable;
+import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -163,7 +167,7 @@ public class AclDumpUtils {
 		return sb;
 	}
 
-	
+
 
 	public static void returnConfigurationDumpAsFile(final SlingHttpServletResponse response,
 			Map<String, Set<AceBean>> aceMap, Set<AuthorizableConfigBean> authorizableSet, final int mapOrder) throws IOException{
@@ -246,9 +250,9 @@ public class AclDumpUtils {
 	}
 
 	public static Set<AclBean> getACLDump(final Session session, final String[] excludePaths) throws RepositoryException{
-	
+
 		List <String> excludeNodesList = Arrays.asList(excludePaths);
-	
+
 		// check excludePaths for existence
 		for(String path : excludeNodesList){
 			try {
@@ -261,10 +265,10 @@ public class AclDumpUtils {
 				throw e;
 			}
 		}
-	
+
 		Set<Node> resultNodeSet = QueryHelper.getRepPolicyNodes(session, excludeNodesList);
 		Set<AclBean> accessControBeanSet = new LinkedHashSet<AclBean>();
-	
+
 		// assemble big query result set using the query results of the child paths of jcr:root node
 		for(Node node : resultNodeSet){
 			try {
@@ -291,17 +295,18 @@ public class AclDumpUtils {
 	 * @throws RepositoryException
 	 */
 	public static Map <String, Set<AceBean>> createAclDumpMap(final Session session, final int keyOrdering, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException{
-	
+
+		UserManager um = ((JackrabbitSession)session).getUserManager();
 		Map <String, Set<AceBean>> aceMap = null;
-	
+
 		if(keyOrdering == AcHelper.PRINCIPAL_BASED_ORDER){ // principal based
 			aceMap = new HashMap<String, Set<AceBean>>();
 		}else if(keyOrdering == AcHelper.PATH_BASED_ORDER){ // path based
 			aceMap = new LinkedHashMap<String, Set<AceBean>>();
 		}
-	
+
 		Set<AclBean> aclBeanSet = getACLDump(session, excludePaths);
-	
+
 		// build a set containing all ACE found in the original order
 		for(AclBean aclBean : aclBeanSet){
 			if(aclBean.getAcl() == null){
@@ -310,35 +315,39 @@ public class AclDumpUtils {
 			for(AccessControlEntry ace : aclBean.getAcl().getAccessControlEntries()){
 				AceWrapper tmpBean = new AceWrapper(ace, aclBean.getJcrPath());
 				AceBean tmpAceBean = AcHelper.getAceBean(tmpBean);
-	
+
 				Set<AceBean> aceSet = null;
-	
+
 				if(aclOrdering == AcHelper.ACE_ORDER_NONE){
 					aceSet = new LinkedHashSet<AceBean>();
 				}else if(aclOrdering == AcHelper.ACE_ORDER_DENY_ALLOW){
 					aceSet = new TreeSet<AceBean>(new biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator());
 				}
-	
-				aceSet.add(tmpAceBean);
-	
-				if(keyOrdering == AcHelper.PRINCIPAL_BASED_ORDER){
-					if(!aceMap.containsKey(tmpAceBean.getPrincipalName())){
-						aceMap.put(tmpBean.getPrincipal().getName(), aceSet);
-						//						checkPrincipalHomeEntry(session, tmpBean.getPrincipal().getName());
-					}else{
-						aceMap.get(tmpBean.getPrincipal().getName()).add(tmpAceBean);
-					}
-				}else if(keyOrdering == AcHelper.PATH_BASED_ORDER){ 
-					if(!aceMap.containsKey(tmpBean.getJcrPath())){
-						aceMap.put(tmpBean.getJcrPath(), aceSet);
-						//						checkPrincipalHomeEntry(session, tmpBean.getPrincipal().getName());
-					}else{
-						aceMap.get(tmpBean.getJcrPath()).add(tmpAceBean);
+
+				// only add bean if authorizable is a group
+				Authorizable authorizable = um.getAuthorizable(tmpAceBean.getPrincipalName());
+				if(authorizable.isGroup()){
+					aceSet.add(tmpAceBean);
+
+					if(keyOrdering == AcHelper.PRINCIPAL_BASED_ORDER){
+						if(!aceMap.containsKey(tmpAceBean.getPrincipalName())){
+							aceMap.put(tmpBean.getPrincipal().getName(), aceSet);
+							//						checkPrincipalHomeEntry(session, tmpBean.getPrincipal().getName());
+						}else{
+							aceMap.get(tmpBean.getPrincipal().getName()).add(tmpAceBean);
+						}
+					}else if(keyOrdering == AcHelper.PATH_BASED_ORDER){ 
+						if(!aceMap.containsKey(tmpBean.getJcrPath())){
+							aceMap.put(tmpBean.getJcrPath(), aceSet);
+							//						checkPrincipalHomeEntry(session, tmpBean.getPrincipal().getName());
+						}else{
+							aceMap.get(tmpBean.getJcrPath()).add(tmpAceBean);
+						}
 					}
 				}
 			}
 		}
-	
+
 		return aceMap;
 	}
 }
