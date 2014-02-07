@@ -98,20 +98,19 @@
         <dependency>
             <groupId>com.adobe.granite</groupId>
             <artifactId>com.adobe.granite.jmx</artifactId>
-            <version>0.2.6</version>
+            <type>bundle</type>
         </dependency>
         
         <dependency>
 				<groupId>org.apache.jackrabbit</groupId>
 				<artifactId>jackrabbit-api</artifactId>
-				<version>2.4.0</version>
 				<type>bundle</type>
 			</dependency>
-	   <dependency>
-				<groupId>org.apache.sling</groupId>
-				<artifactId>org.apache.sling.commons.testing</artifactId>
-				<version>2.0.8</version>
-			</dependency>
+<!-- 	   <dependency> -->
+<!-- 				<groupId>org.apache.sling</groupId> -->
+<!-- 				<artifactId>org.apache.sling.commons.testing</artifactId> -->
+<!-- 				<version>2.0.8</version> -->
+<!-- 			</dependency> -->
 			
 			<dependency>
 			<groupId>org.osgi</groupId>
@@ -132,7 +131,7 @@
 		<dependency>
         <groupId>org.apache.sling</groupId>
         <artifactId>org.apache.sling.commons.osgi</artifactId>
-        <version>2.1.0</version>
+        <type>bundle</type>
       </dependency>
       
       <dependency>
@@ -146,9 +145,18 @@
 			<artifactId>cq-security</artifactId>
 			<type>bundle</type>
 		</dependency>
+		<dependency>
+			<groupId>biz.netcentric.cq.tools.test</groupId>
+			<artifactId>cq-test</artifactId>
+			<version>0.4.1</version>
+		</dependency>
 		
-	  
-    
+		 <dependency>
+		<groupId>org.easymock</groupId>
+			<artifactId>easymock</artifactId>
+			<version>3.1</version>
+			<scope>test</scope>
+		</dependency>
 
 	</dependencies>
 	<packaging>bundle</packaging>
