@@ -326,20 +326,19 @@ public class AclDumpUtils {
 
 				// only add bean if authorizable is a group
 				Authorizable authorizable = um.getAuthorizable(tmpAceBean.getPrincipalName());
-				if(authorizable.isGroup()){
+				
+				if(authorizable != null && authorizable.isGroup()){
 					aceSet.add(tmpAceBean);
 
 					if(keyOrdering == AcHelper.PRINCIPAL_BASED_ORDER){
 						if(!aceMap.containsKey(tmpAceBean.getPrincipalName())){
 							aceMap.put(tmpBean.getPrincipal().getName(), aceSet);
-							//						checkPrincipalHomeEntry(session, tmpBean.getPrincipal().getName());
 						}else{
 							aceMap.get(tmpBean.getPrincipal().getName()).add(tmpAceBean);
 						}
 					}else if(keyOrdering == AcHelper.PATH_BASED_ORDER){ 
 						if(!aceMap.containsKey(tmpBean.getJcrPath())){
 							aceMap.put(tmpBean.getJcrPath(), aceSet);
-							//						checkPrincipalHomeEntry(session, tmpBean.getPrincipal().getName());
 						}else{
 							aceMap.get(tmpBean.getJcrPath()).add(tmpAceBean);
 						}
