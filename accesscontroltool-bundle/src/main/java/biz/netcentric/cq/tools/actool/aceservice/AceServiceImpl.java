@@ -233,6 +233,16 @@ public class AceServiceImpl implements AceService{
 	 */
 	@Override
 	public AcInstallationHistoryPojo execute() { 
+		
+		if(this.isReadyToStart() == false){
+			AcInstallationHistoryPojo acp = new AcInstallationHistoryPojo();
+			acp.addWarning("Cannot perform installation, service not ready to start!");
+			if(this.getCurrentConfigurationPaths().isEmpty()){
+				acp.addWarning("no configuration files found in repository!");
+			}
+			return acp;
+		}
+		
 		String path = this.getConfigurationRootPath();
 		StopWatch sw = new StopWatch();
 		sw.start();
