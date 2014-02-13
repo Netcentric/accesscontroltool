@@ -58,6 +58,10 @@ public class QueryHelper {
 		}
 		Set<Node> nodes = new LinkedHashSet<Node>();
 		try {
+			// get the rep:policy node of "/", if existing
+			if(session.nodeExists("/rep:policy")){
+				nodes.add(session.getNode("/rep:policy"));
+			}
 			for(String path : paths){
 				String query = "/jcr:root" + path + "//*[(@jcr:primaryType = 'rep:ACL') ]";
 				nodes.addAll(QueryHelper.getNodes(session, query ));
