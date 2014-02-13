@@ -421,10 +421,12 @@ public class AccessControlUtils {
 
 		}
 		if (privileges != null) {
-			if(restrictions != null)
+			if(restrictions != null){
 				acl.addEntry(principal, (Privilege[])privileges.toArray(new Privilege[privileges.size()]), isAllow, restrictions);
-		}else{
-			acl.addEntry(principal, (Privilege[])privileges.toArray(new Privilege[privileges.size()]), isAllow);
+			}
+			else{
+				acl.addEntry(principal, (Privilege[])privileges.toArray(new Privilege[privileges.size()]), isAllow);
+			}
 		}
 
 		acMgr.setPolicy(nodePath, acl);
