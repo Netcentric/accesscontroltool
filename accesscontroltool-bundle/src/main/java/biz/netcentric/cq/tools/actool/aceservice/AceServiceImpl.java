@@ -239,6 +239,7 @@ public class AceServiceImpl implements AceService{
 			acp.addWarning("Cannot perform installation, service not ready to start!");
 			if(this.getCurrentConfigurationPaths().isEmpty()){
 				acp.addWarning("no configuration files found in repository!");
+				acp.setSuccess(false);
 			}
 			return acp;
 		}
