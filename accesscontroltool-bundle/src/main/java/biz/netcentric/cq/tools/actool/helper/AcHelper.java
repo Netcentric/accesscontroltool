@@ -238,15 +238,15 @@ public class AcHelper {
 	 */
 	static Set<AceBean> getMergedACL(final Set<AceBean> aclfromConfig, final Set<AceBean> aclFomRepository, final Set<String> authorizablesSet) {
 
-		// build a Set which contains all authorizables from the current ACL from config for the current node
+		// build a Set which contains all authorizable ids from the current ACL from config for the current node
 		Set<String> authorizablesInAclFromConfig = new LinkedHashSet<String>();
 
 		//Set for storage of the new ACL that'll replace the one in repo, containing ordered ACEs (denies before allows) 
-		Set<AceBean> orderedMergedSet = new TreeSet<AceBean>(new AcePermissionComparator());
+		Set<AceBean> orderedMergedAceSet = new TreeSet<AceBean>(new AcePermissionComparator());
 
 		for(AceBean aceBean : aclfromConfig){
 			authorizablesInAclFromConfig.add(aceBean.getPrincipalName());
-			orderedMergedSet.add(aceBean);
+			orderedMergedAceSet.add(aceBean);
 		}
 		LOG.info("authorizablesInAclFromConfig: {}", authorizablesInAclFromConfig);
 
@@ -254,16 +254,14 @@ public class AcHelper {
 		for(AceBean aceBeanFromRepository : aclFomRepository){
 			// if the ACL from config doesn't contain an ACE from the current authorizable
 
-			// if the ACL form repo contains an authorizable from the groups config but the ACL from the config does not - "delete" the respective ACE by not adding it to the orderedMergedSet
+			// if the ACL from repo contains an authorizable from the groups config but the ACL from the config does not - "delete" the respective ACE by not adding it to the orderedMergedSet
 			if(!authorizablesInAclFromConfig.contains(aceBeanFromRepository.getPrincipalName()) && !authorizablesSet.contains(aceBeanFromRepository.getPrincipalName())){
-				// add the ACL from repo
-				orderedMergedSet.add(aceBeanFromRepository);
+				// add the ACE from repo
+				orderedMergedAceSet.add(aceBeanFromRepository);
 			}
 
 		}
-		//		aclFomRepository.removeAll(deleteSet);
-
-		return orderedMergedSet;
+		return orderedMergedAceSet;
 	}
 
 	public static Map <String, Set<AceBean>> createAceMap(final SlingHttpServletRequest request, final int keyOrdering, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalStateException, RepositoryException{
