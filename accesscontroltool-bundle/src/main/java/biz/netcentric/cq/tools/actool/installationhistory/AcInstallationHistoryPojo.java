@@ -118,14 +118,18 @@ public class AcInstallationHistoryPojo {
 		
 		sb.append("\n" + "Execution time: " + this.executionTime + " ms\n");
 		
-        if(this.success){
-        	sb.append(HtmlConstants.FONT_COLOR_SUCCESS_HTML_OPEN);
-        }else{
-        	sb.append(HtmlConstants.FONT_COLOR_NO_SUCCESS_HTML_OPEN);
-        }
+		if(this.rendition.equals(rendition.HTML)){
+			if(this.success ){
+				sb.append(HtmlConstants.FONT_COLOR_SUCCESS_HTML_OPEN);
+			}else{
+				sb.append(HtmlConstants.FONT_COLOR_NO_SUCCESS_HTML_OPEN);
+			}
+		}
 		sb.append("\n" + "Success: " + this.success);
 		
-        sb.append(HtmlConstants.FONT_COLOR_SUCCESS_HTML_CLOSE);
+		if(this.rendition.equals(rendition.HTML)){
+			sb.append(HtmlConstants.FONT_COLOR_SUCCESS_HTML_CLOSE);
+		}
 		return sb.toString();
 	}
 	
