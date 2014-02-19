@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableDumpUtils;
+import biz.netcentric.cq.tools.actool.comparators.AcePathComparator;
 import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
 import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
 import biz.netcentric.cq.tools.actool.installationhistory.HtmlConstants;
@@ -43,9 +44,10 @@ public class AclDumpUtils {
 	private static final Logger LOG = LoggerFactory.getLogger(AclDumpUtils.class);
 	public final static int PRINCIPAL_BASED_SORTING = 1;
 	public final static int PATH_BASED_SORTING = 2;
+	
 	public final static int DENY_ALLOW_ACL_SORTING= 1;
 	public final static int NO_ACL_SORTING = 2;
-
+	
 
 	/**
 	 * returns a dump of the ACEs installed in the system using a PrintWriter.
@@ -161,9 +163,6 @@ public class AclDumpUtils {
 			sb.append("\n");
 		}
 		sb.append("\n");
-
-
-
 		return sb;
 	}
 
@@ -287,22 +286,22 @@ public class AclDumpUtils {
 	/**
 	 * returns a Map with holds either principal or path based ACE data
 	 * @param request
-	 * @param keyOrdering either principals (AceHelper.PRINCIPAL_BASED_ORDERING) or node paths (AceHelper.PATH_BASED_ORDERING) as keys
+	 * @param keyOrder either principals (AceHelper.PRINCIPAL_BASED_ORDERING) or node paths (AceHelper.PATH_BASED_ORDERING) as keys
 	 * @param aclOrdering specifies whether the allow and deny ACEs within an ACL should be divided in separate blocks (first deny then allow)
 	 * @return
 	 * @throws ValueFormatException
 	 * @throws IllegalStateException
 	 * @throws RepositoryException
 	 */
-	public static Map <String, Set<AceBean>> createAclDumpMap(final Session session, final int keyOrdering, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException{
+	public static Map <String, Set<AceBean>> createAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException{
 
 		UserManager um = ((JackrabbitSession)session).getUserManager();
 		Map <String, Set<AceBean>> aceMap = null;
 
-		if(keyOrdering == AcHelper.PRINCIPAL_BASED_ORDER){ // principal based
-			aceMap = new HashMap<String, Set<AceBean>>();
-		}else if(keyOrdering == AcHelper.PATH_BASED_ORDER){ // path based
-			aceMap = new LinkedHashMap<String, Set<AceBean>>();
+		if(keyOrder == AcHelper.PRINCIPAL_BASED_ORDER){ // principal based
+			aceMap = new TreeMap<String, Set<AceBean>>();
+		}else if(keyOrder == AcHelper.PATH_BASED_ORDER){ // path based
+			aceMap = new TreeMap<String, Set<AceBean>>();
 		}
 
 		Set<AclBean> aclBeanSet = getACLDump(session, excludePaths);
@@ -315,13 +314,15 @@ public class AclDumpUtils {
 			for(AccessControlEntry ace : aclBean.getAcl().getAccessControlEntries()){
 				AceWrapper tmpBean = new AceWrapper(ace, aclBean.getJcrPath());
 				AceBean tmpAceBean = AcHelper.getAceBean(tmpBean);
-
+				CqActionsMapping.getAggregatedPrivilegesBean(tmpAceBean);
 				Set<AceBean> aceSet = null;
 
 				if(aclOrdering == AcHelper.ACE_ORDER_NONE){
 					aceSet = new LinkedHashSet<AceBean>();
 				}else if(aclOrdering == AcHelper.ACE_ORDER_DENY_ALLOW){
-					aceSet = new TreeSet<AceBean>(new biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator());
+					aceSet = new TreeSet<AceBean>(new AcePermissionComparator());
+				}else if(aclOrdering == AcHelper.ACE_ORDER_ALPHABETICAL){
+					aceSet = new TreeSet<AceBean>(new AcePathComparator());
 				}
 
 				// only add bean if authorizable is a group
@@ -330,13 +331,13 @@ public class AclDumpUtils {
 				if(authorizable != null && authorizable.isGroup()){
 					aceSet.add(tmpAceBean);
 
-					if(keyOrdering == AcHelper.PRINCIPAL_BASED_ORDER){
+					if(keyOrder == AcHelper.PRINCIPAL_BASED_ORDER){
 						if(!aceMap.containsKey(tmpAceBean.getPrincipalName())){
 							aceMap.put(tmpBean.getPrincipal().getName(), aceSet);
 						}else{
 							aceMap.get(tmpBean.getPrincipal().getName()).add(tmpAceBean);
 						}
-					}else if(keyOrdering == AcHelper.PATH_BASED_ORDER){ 
+					}else if(keyOrder == AcHelper.PATH_BASED_ORDER){ 
 						if(!aceMap.containsKey(tmpBean.getJcrPath())){
 							aceMap.put(tmpBean.getJcrPath(), aceSet);
 						}else{

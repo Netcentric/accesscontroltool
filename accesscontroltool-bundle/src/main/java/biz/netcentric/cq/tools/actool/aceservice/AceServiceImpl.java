@@ -131,7 +131,7 @@ public class AceServiceImpl implements AceService{
 		Session session = null;
 		try {
 			session = repository.loginAdministrative(null);
-			Map<String, Set<AceBean>> aclDumpMap = AcHelper.getCorrectedAceDump(AclDumpUtils.createAclDumpMap(session, aclMapKeyOrder, AcHelper.ACE_ORDER_NONE, queryExcludePaths));
+			Map<String, Set<AceBean>> aclDumpMap = AcHelper.getCorrectedAceDump(AclDumpUtils.createAclDumpMap(session, aclMapKeyOrder, AcHelper.ACE_ORDER_ALPHABETICAL, queryExcludePaths));
 			Set <String> groups = QueryHelper.getGroupsFromHome(session);
 			Set<AuthorizableConfigBean> authorizableBeans = AuthorizableDumpUtils.returnGroupBeans(session);
 

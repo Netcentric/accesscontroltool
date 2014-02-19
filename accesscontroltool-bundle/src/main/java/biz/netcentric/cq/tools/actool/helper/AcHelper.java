@@ -44,6 +44,7 @@ public class AcHelper {
 
 	public static int ACE_ORDER_DENY_ALLOW = 1;
 	public static int ACE_ORDER_NONE = 2;
+	public static int ACE_ORDER_ALPHABETICAL = 3;
 
 	public static int PRINCIPAL_BASED_ORDER = 1;
 	public static int PATH_BASED_ORDER = 2;
