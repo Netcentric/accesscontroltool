@@ -314,7 +314,7 @@ public class AclDumpUtils {
 			for(AccessControlEntry ace : aclBean.getAcl().getAccessControlEntries()){
 				AceWrapper tmpBean = new AceWrapper(ace, aclBean.getJcrPath());
 				AceBean tmpAceBean = AcHelper.getAceBean(tmpBean);
-				CqActionsMapping.getAggregatedPrivilegesBean(tmpAceBean);
+
 				Set<AceBean> aceSet = null;
 
 				if(aclOrdering == AcHelper.ACE_ORDER_NONE){
