@@ -62,6 +62,10 @@ public class QueryHelper {
 			if(session.nodeExists("/rep:policy")){
 				nodes.add(session.getNode("/rep:policy"));
 			}
+			// get the rep:policy node of "/home", if existing
+			if(session.nodeExists("/home/rep:policy")){
+				nodes.add(session.getNode("/home/rep:policy"));
+			}
 			for(String path : paths){
 				String query = "/jcr:root" + path + "//*[(@jcr:primaryType = 'rep:ACL') ]";
 				nodes.addAll(QueryHelper.getNodes(session, query ));
