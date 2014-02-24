@@ -314,31 +314,28 @@ public class AclDumpUtils {
 			for(AccessControlEntry ace : aclBean.getAcl().getAccessControlEntries()){
 				AceWrapper tmpBean = new AceWrapper(ace, aclBean.getJcrPath());
 				AceBean tmpAceBean = AcHelper.getAceBean(tmpBean);
-
-				Set<AceBean> aceSet = null;
-
-				if(aclOrdering == AcHelper.ACE_ORDER_NONE){
-					aceSet = new LinkedHashSet<AceBean>();
-				}else if(aclOrdering == AcHelper.ACE_ORDER_DENY_ALLOW){
-					aceSet = new TreeSet<AceBean>(new AcePermissionComparator());
-				}else if(aclOrdering == AcHelper.ACE_ORDER_ALPHABETICAL){
-					aceSet = new TreeSet<AceBean>(new AcePathComparator());
-				}
+				//CqActionsMapping.getAggregatedPrivilegesBean(tmpAceBean);
+				
+				
 
 				// only add bean if authorizable is a group
 				Authorizable authorizable = um.getAuthorizable(tmpAceBean.getPrincipalName());
 				
 				if(authorizable != null && authorizable.isGroup()){
-					aceSet.add(tmpAceBean);
+					
 
 					if(keyOrder == AcHelper.PRINCIPAL_BASED_ORDER){
 						if(!aceMap.containsKey(tmpAceBean.getPrincipalName())){
+							Set<AceBean> aceSet = getNewAceSet(aclOrdering);
+							aceSet.add(tmpAceBean);
 							aceMap.put(tmpBean.getPrincipal().getName(), aceSet);
 						}else{
 							aceMap.get(tmpBean.getPrincipal().getName()).add(tmpAceBean);
 						}
 					}else if(keyOrder == AcHelper.PATH_BASED_ORDER){ 
 						if(!aceMap.containsKey(tmpBean.getJcrPath())){
+							Set<AceBean> aceSet = getNewAceSet(aclOrdering);
+							aceSet.add(tmpAceBean);
 							aceMap.put(tmpBean.getJcrPath(), aceSet);
 						}else{
 							aceMap.get(tmpBean.getJcrPath()).add(tmpAceBean);
@@ -349,5 +346,18 @@ public class AclDumpUtils {
 		}
 
 		return aceMap;
+	}
+
+	private static Set<AceBean> getNewAceSet(final int aclOrdering) {
+		Set<AceBean> aceSet = null;
+
+		if(aclOrdering == AcHelper.ACE_ORDER_NONE){
+			aceSet = new LinkedHashSet<AceBean>();
+		}else if(aclOrdering == AcHelper.ACE_ORDER_DENY_ALLOW){
+			aceSet = new TreeSet<AceBean>(new AcePermissionComparator());
+		}else if(aclOrdering == AcHelper.ACE_ORDER_ALPHABETICAL){
+			aceSet = new TreeSet<AceBean>(new AcePathComparator());
+		}
+		return aceSet;
 	}
 }
