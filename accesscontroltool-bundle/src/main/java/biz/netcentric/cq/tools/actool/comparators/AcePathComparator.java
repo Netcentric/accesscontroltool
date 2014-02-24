@@ -8,7 +8,14 @@ public class AcePathComparator implements Comparator<AceBean>{
 
 	@Override
 	public int compare(AceBean ace1, AceBean ace2) {
-		return(ace1.getJcrPath().compareTo(ace2.getJcrPath()));
+		if(ace1.getJcrPath().compareTo(ace2.getJcrPath()) == 1){
+			return 1;
+		}else  if(ace1.getJcrPath().compareTo(ace2.getJcrPath()) == -1){
+			return -1;
+		}
+		// makes sure that several AceBeans having the same path can be in the collection
+		return 1;
+
 	}
 
 }
