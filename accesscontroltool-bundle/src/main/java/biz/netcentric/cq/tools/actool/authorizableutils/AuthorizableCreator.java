@@ -1,7 +1,7 @@
 package biz.netcentric.cq.tools.actool.authorizableutils;
 
 
-import java.io.PrintWriter;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -128,8 +128,6 @@ public class AuthorizableCreator {
 			}
 			
 			
-			
-			
 			// create snapshot bean
 			String authorizableName = "";
 			
@@ -148,95 +146,141 @@ public class AuthorizableCreator {
 			authorizableInstallationHistory.addAuthorizable(currentGroupFromRepository.getID(), authorizableName, currentGroupFromRepository.getPath(), membershipGroupsFromRepository);
 			
 			
-			
-			
-			
-			LOG.info("...checking differences");
+			mergeMemberOfGroups(principalId, status, userManager, currentGroupFromRepository, membershipGroupsFromConfig, membershipGroupsFromRepository);
+		}
+	}
+	private static void mergeMemberOfGroups(String principalId,
+			AcInstallationHistoryPojo status, UserManager userManager,
+			Authorizable currentGroupFromRepository,
+			Set<String> membershipGroupsFromConfig,
+			Set<String> membershipGroupsFromRepository)
+			throws RepositoryException, AuthorizableExistsException,
+			AuthorizableCreatorException {
+		LOG.info("...checking differences");
 
-			//  group in repo doesn't have any members and group in config doesn't have any members
-			//  do nothing
-			if(!isMemberOfOtherGroup(currentGroupFromRepository) && membershipGroupsFromConfig.isEmpty()){
-				LOG.info("{}: authorizable in repo is not member of any other group and group in config is not member of any other group. No change necessary here!", principalId);
-			}
+		//  group in repo doesn't have any members and group in config doesn't have any members
+		//  do nothing
+		if(!isMemberOfOtherGroup(currentGroupFromRepository) && membershipGroupsFromConfig.isEmpty()){
+			LOG.info("{}: authorizable in repo is not member of any other group and group in config is not member of any other group. No change necessary here!", principalId);
+		}
 
-			//  group in repo is not member of any other group  but group in config is member of at least one other group
-			//  transfer members to group in repo
+		
+		//  group in repo is not member of any other group  but group in config is member of at least one other group
+		//  transfer members to group in repo
 
-			else if(!isMemberOfOtherGroup(currentGroupFromRepository) && !membershipGroupsFromConfig.isEmpty()){
-				LOG.info("{}: authorizable in repo is not member of any other group  but authorizable in config is member of at least one other group", principalId);
+		else if(!isMemberOfOtherGroup(currentGroupFromRepository) && !membershipGroupsFromConfig.isEmpty()){
+			mergeMemberOfGroupsFromConfig(principalId, status, userManager,
+					membershipGroupsFromConfig);
 
-				for(String group : membershipGroupsFromConfig){
-					LOG.info("{}: add authorizable to members of group {} in repository", principalId, group);
-					Group membershipGroup = (Group)userManager.getAuthorizable(group);
-					if(membershipGroup != null){
-						if(StringUtils.equals(group, principalId)){
-							String warning = "Attempt to add a group as member of itself (" + group + ").";
-							LOG.warn(warning);
-							status.addWarning(warning);
-						}else{
-							membershipGroup.addMember(userManager.getAuthorizable(principalId));
-						}
+		//  group in repo is member of at least one other group and group in config is not member of any other group
 
-					}else{
-						LOG.warn("Group: {} doesn't yet exist. Create group!", group);
-						Group newGroup = userManager.createGroup(group);
-						newGroup.addMember(userManager.getAuthorizable(principalId));
-					}
+		}
+		else if(isMemberOfOtherGroup(currentGroupFromRepository) && membershipGroupsFromConfig.isEmpty()){
+
+			mergeMemberOfGroupsFromRepo(principalId, userManager,
+					membershipGroupsFromRepository);
+		}
+
+		//  group in repo does have members and group in config does have members
+
+		else if(isMemberOfOtherGroup(currentGroupFromRepository) && !membershipGroupsFromConfig.isEmpty()){
+			mergeMultipleMembersOfBothGroups(principalId, status, userManager, membershipGroupsFromConfig, membershipGroupsFromRepository);
+		}
+	}
+	
+	
+	private static void mergeMemberOfGroupsFromRepo(String principalId,
+			UserManager userManager, Set<String> membershipGroupsFromRepository)
+			throws RepositoryException {
+		LOG.info("{}: authorizable in repo is member of at least one other group and authorizable in config is not member of any other group", principalId);
+		//  delete memberOf groups of that group in repo
+		for(String group : membershipGroupsFromRepository){
+			LOG.info("{}: delete authorizable from members of group {} in repository", principalId, group);
+			((Group)userManager.getAuthorizable(group)).removeMember(userManager.getAuthorizable(principalId));
+		}
+	}
+	private static void mergeMemberOfGroupsFromConfig(String principalId,
+			AcInstallationHistoryPojo status, UserManager userManager,
+			Set<String> membershipGroupsFromConfig) throws RepositoryException,
+			AuthorizableExistsException {
+		LOG.info("{}: authorizable in repo is not member of any other group  but authorizable in config is member of at least one other group", principalId);
+
+		for(String group : membershipGroupsFromConfig){
+			LOG.info("{}: add authorizable to members of group {} in repository", principalId, group);
+			Group membershipGroup = (Group)userManager.getAuthorizable(group);
+			if(membershipGroup != null){
+				if(StringUtils.equals(group, principalId)){
+					String warning = "Attempt to add a group as member of itself (" + group + ").";
+					LOG.warn(warning);
+					status.addWarning(warning);
+				}else{
+					membershipGroup.addMember(userManager.getAuthorizable(principalId));
 				}
 
-				//  group in repo is member of at least one other group and group in config is not member of any other group
+			}else{
+				LOG.warn("Group: {} doesn't yet exist. Create group!", group);
+				Group newGroup = userManager.createGroup(group);
+				newGroup.addMember(userManager.getAuthorizable(principalId));
+			}
+		}
+	}
+	
+	private static void mergeMultipleMembersOfBothGroups(String principalId,
+			AcInstallationHistoryPojo status, UserManager userManager,
+			Set<String> membershipGroupsFromConfig,
+			Set<String> membershipGroupsFromRepository)
+			throws RepositoryException, AuthorizableExistsException,
+			AuthorizableCreatorException {
+		// are both groups members of exactly the same groups?
+		if(membershipGroupsFromRepository.equals(membershipGroupsFromConfig)){
+			// do nothing!
+			LOG.info("{}: authorizable in repo  and authorizable in config are members of the same group(s). No change necessary here!", principalId);
+		}else{
+			LOG.info("{}: authorizable in repo is member of at least one other group and authorizable in config is member of at least one other group", principalId);
 
-			}else if(isMemberOfOtherGroup(currentGroupFromRepository) && membershipGroupsFromConfig.isEmpty()){
+			// loop through memberOf-groups of group from config 
 
-				LOG.info("{}: authorizable in repo is member of at least one other group and authorizable in config is not member of any other group", principalId);
-				//  delete memberOf groups of that group in repo
-				for(String group : membershipGroupsFromRepository){
-					LOG.info("{}: delete authorizable from members of group {} in repository", principalId, group);
+			for(String group : membershipGroupsFromRepository){
+				// is current group also contained in memberOf-groups property of existing group?
+				if(membershipGroupsFromConfig.contains(group)){
+					continue;
+
+				}else{
+					// if not delete that group of membersOf-property of existing group
+
+					LOG.info("delete {} from members of group {} in repository", principalId, group);
 					((Group)userManager.getAuthorizable(group)).removeMember(userManager.getAuthorizable(principalId));
 				}
 			}
+			for(String group : membershipGroupsFromConfig){
 
-			//  group in repo does have members and group in config does have members
+				// is current group also contained in memberOf-groups property of repo group?
 
-			else if(isMemberOfOtherGroup(currentGroupFromRepository) && !membershipGroupsFromConfig.isEmpty()){
-				// are both groups members of exactly the same groups?
-				if(membershipGroupsFromRepository.equals(membershipGroupsFromConfig)){
-					// do nothing!
-					LOG.info("{}: authorizable in repo  and authorizable in config are members of the same group(s). No change necessary here!", principalId);
+				if(membershipGroupsFromRepository.contains(group)){
+					continue;
 				}else{
-					LOG.info("{}: authorizable in repo is member of at least one other group and authorizable in config is member of at least one other group", principalId);
 
-					// loop through memberOf-groups of group from config 
+					// if not add that group to membersOf-property of existing group
 
-					for(String group : membershipGroupsFromRepository){
-						// is current group also contained in memberOf-groups property of existing group?
-						if(membershipGroupsFromConfig.contains(group)){
-							continue;
-
+					LOG.info("add {} to members of group {} in repository", principalId, group);
+					if(StringUtils.equals(group, principalId)){
+						String warning = "Attempt to add a group as member of itself (" + group + ").";
+						LOG.warn(warning);
+						status.addWarning(warning);
+					}else{
+						if(userManager.getAuthorizable(group) != null && userManager.getAuthorizable(principalId) != null){
+							((Group)userManager.getAuthorizable(group)).addMember(userManager.getAuthorizable(principalId));
 						}else{
-							// if not delete that group of membersOf-property of existing group
-
-							LOG.info("delete {} from members of group {} in repository", principalId, group);
-							((Group)userManager.getAuthorizable(group)).removeMember(userManager.getAuthorizable(principalId));
-						}
-					}
-					for(String group : membershipGroupsFromConfig){
-
-						// is current group also contained in memberOf-groups property of repo group?
-
-						if(membershipGroupsFromRepository.contains(group)){
-							continue;
-						}else{
-
-							// if not add that group to membersOf-property of existing group
-
-							LOG.info("add {} to members of group {} in repository", principalId, group);
-							if(StringUtils.equals(group, principalId)){
-								String warning = "Attempt to add a group as member of itself (" + group + ").";
-								LOG.warn(warning);
-								status.addWarning(warning);
-							}else{
+							if(userManager.getAuthorizable(group) == null){
+								String errorMessage = "Could not find group: " + group + " via userManager while trying to add authorizable: " +principalId + " as member. Creating it.";
+								LOG.info(errorMessage);
+								userManager.createGroup(group);
 								((Group)userManager.getAuthorizable(group)).addMember(userManager.getAuthorizable(principalId));
+							}
+							if(userManager.getAuthorizable(principalId) == null){
+								String errorMessage = "Could not find authorizable: " + principalId + " via userManager while trying to add it as member to group: " + group + "! Abort Installation!";
+								LOG.error(errorMessage);
+								throw new AuthorizableCreatorException(errorMessage);
 							}
 						}
 					}
