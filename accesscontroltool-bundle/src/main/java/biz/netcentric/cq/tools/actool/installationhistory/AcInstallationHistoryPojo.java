@@ -81,7 +81,7 @@ public class AcInstallationHistoryPojo {
 		if(this.rendition.equals(Rendition.HTML)){
 		this.exceptions.add(new HistoryEntry(msgIndex, new Timestamp(new Date().getTime()), "<font color='red'><b>" + MSG_IDENTIFIER_EXCEPTION +"</b>"+ " " + exception+"</b></font>"));
 		}else if(this.rendition.equals(Rendition.TXT)){
-			this.exceptions.add(new HistoryEntry(msgIndex, new Timestamp(new Date().getTime()), MSG_IDENTIFIER_EXCEPTION + "</b>" + " " + exception));
+			this.exceptions.add(new HistoryEntry(msgIndex, new Timestamp(new Date().getTime()), MSG_IDENTIFIER_EXCEPTION + " " + exception));
 
 		}
 		this.success = false;
