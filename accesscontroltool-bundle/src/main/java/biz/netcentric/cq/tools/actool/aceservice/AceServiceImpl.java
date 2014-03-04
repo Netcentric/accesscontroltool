@@ -12,21 +12,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import javax.jcr.AccessDeniedException;
 import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
-import javax.jcr.lock.LockException;
-import javax.jcr.query.InvalidQueryException;
-import javax.jcr.security.AccessControlEntry;
-import javax.jcr.security.AccessControlException;
-import javax.jcr.security.AccessControlManager;
-import javax.jcr.version.VersionException;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -40,13 +30,19 @@ import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.resource.LoginException;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.day.cq.commons.Externalizer;
+
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreator;
+import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
+import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableDumpUtils;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
 import biz.netcentric.cq.tools.actool.comparators.NodeCreatedComparator;
@@ -77,12 +73,20 @@ public class AceServiceImpl implements AceService{
 
 	static final String ACE_SERVICE_CONFIGURATION_PATH = "AceService.configurationPath";
 	static final String ACE_SERVICE_EXCLUDE_PATHS_PATH = "AceService.queryExcludePaths";
-
+	
+	@Reference
+	AuthorizableCreatorService authorizableCreatorService;
+	
 	@Reference
 	private SlingRepository repository;
 
 	@Reference
 	AcHistoryService acHistoryService;
+	
+//	@Reference
+//    private ResourceResolverFactory resourceResolverFactory;
+	
+	
 
 	private static final Logger LOG = LoggerFactory.getLogger(AceServiceImpl.class);
 	private static final String PROPERTY_CONFIGURATION_PATH = "AceService.configurationPath";
@@ -129,12 +133,21 @@ public class AceServiceImpl implements AceService{
 
 	private String getCompleteDump(int aclMapKeyOrder, int mapOrder){
 		Session session = null;
+		ResourceResolver resourceResolver = null;
+	
 		try {
 			session = repository.loginAdministrative(null);
+			
+			
+			
 			Map<String, Set<AceBean>> aclDumpMap = AcHelper.getCorrectedAceDump(AclDumpUtils.createAclDumpMap(session, aclMapKeyOrder, AcHelper.ACE_ORDER_ALPHABETICAL, queryExcludePaths));
 			Set <String> groups = QueryHelper.getGroupsFromHome(session);
 			Set<AuthorizableConfigBean> authorizableBeans = AuthorizableDumpUtils.returnGroupBeans(session);
-
+			
+//			resourceResolver = this.resourceResolverFactory.getAdministrativeResourceResolver(null);
+//			Externalizer externalizer = resourceResolver.adaptTo(Externalizer.class);
+//			String serverUrl = externalizer.authorLink(resourceResolver, "");
+			
 			return AclDumpUtils.returnConfigurationDumpAsString(aclDumpMap, authorizableBeans, mapOrder);
 		} catch (ValueFormatException e) {
 			LOG.error("ValueFormatException in AceServiceImpl: {}", e);
@@ -147,6 +160,9 @@ public class AceServiceImpl implements AceService{
 		}finally{
 			if(session != null){
 				session.logout();
+			}
+			if(resourceResolver != null){
+				resourceResolver.close();
 			}
 		}
 		return null;
@@ -213,10 +229,9 @@ public class AceServiceImpl implements AceService{
 			// only save session if no exceptions occured
 			AuthorizableInstallationHistory authorizableInstallationHistory = new AuthorizableInstallationHistory();
 			authorizableHistorySet.add(authorizableInstallationHistory);
-			AuthorizableCreator.createNewAuthorizables(authorizablesMapfromConfig, authorizableInstallationSession, history, authorizableInstallationHistory);
+			authorizableCreatorService.createNewAuthorizables(authorizablesMapfromConfig, authorizableInstallationSession, history, authorizableInstallationHistory);
 			authorizableInstallationSession.save();
 		}catch (Exception e){
-			history.setException(e.toString());
 			throw e;
 		}finally{
 			if(authorizableInstallationSession != null){
@@ -234,14 +249,15 @@ public class AceServiceImpl implements AceService{
 	@Override
 	public AcInstallationHistoryPojo execute() { 
 		
-		if(this.isReadyToStart() == false){
-			AcInstallationHistoryPojo acp = new AcInstallationHistoryPojo();
-			acp.addWarning("Cannot perform installation, service not ready to start!");
+		AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
+		
+		if(!this.isReadyToStart()){
+			history.addWarning("Cannot perform installation, service not ready to start!");
 			if(this.getCurrentConfigurationPaths().isEmpty()){
-				acp.addWarning("no configuration files found in repository!");
-				acp.setSuccess(false);
+				history.addWarning("no configuration files found in repository!");
+				history.setSuccess(false);
 			}
-			return acp;
+			return history;
 		}
 		
 		String path = this.getConfigurationRootPath();
@@ -249,8 +265,7 @@ public class AceServiceImpl implements AceService{
 		sw.start();
 		this.isExecuting = true;
 		Session session = null;
-		AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
-
+	
 		Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet = new LinkedHashSet<AuthorizableInstallationHistory>();
 
 		try {
@@ -281,7 +296,11 @@ public class AceServiceImpl implements AceService{
 
 
 			}
-		} catch (Exception e) {
+		} catch(AuthorizableCreatorException e){
+			history.setException(e.toString());
+			// here no rollback of authorizables necessary since session wasn't saved
+		}
+		catch (Exception e) {
 			// in case an installation of an ACE configuration
 			// threw an exception, logout from this session
 			// otherwise changes made on the ACLs would get persisted
@@ -296,7 +315,7 @@ public class AceServiceImpl implements AceService{
 					String message = "performing authorizable installation rollback(s)";
 					LOG.info(message);
 					history.addMessage(message);
-					AuthorizableCreator.performRollback(repository, authorizableInstallationHistory, history);
+					authorizableCreatorService.performRollback(repository, authorizableInstallationHistory, history);
 				} catch (RepositoryException e1) {
 					LOG.error("Exception: ", e1);
 				}
