@@ -83,8 +83,8 @@ public class AceServiceImpl implements AceService{
 	@Reference
 	AcHistoryService acHistoryService;
 	
-//	@Reference
-//    private ResourceResolverFactory resourceResolverFactory;
+	@Reference
+    private ResourceResolverFactory resourceResolverFactory;
 	
 	
 
@@ -144,11 +144,11 @@ public class AceServiceImpl implements AceService{
 			Set <String> groups = QueryHelper.getGroupsFromHome(session);
 			Set<AuthorizableConfigBean> authorizableBeans = AuthorizableDumpUtils.returnGroupBeans(session);
 			
-//			resourceResolver = this.resourceResolverFactory.getAdministrativeResourceResolver(null);
-//			Externalizer externalizer = resourceResolver.adaptTo(Externalizer.class);
-//			String serverUrl = externalizer.authorLink(resourceResolver, "");
+			resourceResolver = this.resourceResolverFactory.getAdministrativeResourceResolver(null);
+			Externalizer externalizer = resourceResolver.adaptTo(Externalizer.class);
+			String serverUrl = externalizer.authorLink(resourceResolver, "");
 			
-			return AclDumpUtils.returnConfigurationDumpAsString(aclDumpMap, authorizableBeans, mapOrder);
+			return AclDumpUtils.returnConfigurationDumpAsString(aclDumpMap, authorizableBeans, mapOrder, serverUrl);
 		} catch (ValueFormatException e) {
 			LOG.error("ValueFormatException in AceServiceImpl: {}", e);
 		} catch (IllegalStateException e) {
@@ -157,6 +157,8 @@ public class AceServiceImpl implements AceService{
 			LOG.error("IOException in AceServiceImpl: {}", e);
 		} catch (RepositoryException e) {
 			LOG.error("RepositoryException in AceServiceImpl: {}", e);
+		} catch (LoginException e) {
+			LOG.error("LoginException in AceServiceImpl: {}", e);
 		}finally{
 			if(session != null){
 				session.logout();

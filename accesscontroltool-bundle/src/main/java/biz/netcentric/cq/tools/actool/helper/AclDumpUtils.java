@@ -119,9 +119,12 @@ public class AclDumpUtils {
 		}
 	}
 
-	public static String returnConfigurationDumpAsString(final Map<String, Set<AceBean>> aceMap, final Set<AuthorizableConfigBean> authorizableSet, final int mapOrder) throws IOException{
+	public static String returnConfigurationDumpAsString(final Map<String, Set<AceBean>> aceMap, final Set<AuthorizableConfigBean> authorizableSet, final int mapOrder, final String serverUrl) throws IOException{
 
 		StringBuilder sb = new StringBuilder(20000);
+		sb.append("# Dump created: " + new Date() + " on: " + serverUrl);
+		sb.append("\n\n");
+		
 		AuthorizableDumpUtils.getAuthorizableConfigAsString(sb, authorizableSet);
 		returnAceDumpAsString(sb, aceMap, mapOrder);
 
@@ -314,7 +317,7 @@ public class AclDumpUtils {
 			for(AccessControlEntry ace : aclBean.getAcl().getAccessControlEntries()){
 				AceWrapper tmpBean = new AceWrapper(ace, aclBean.getJcrPath());
 				AceBean tmpAceBean = AcHelper.getAceBean(tmpBean);
-				//CqActionsMapping.getAggregatedPrivilegesBean(tmpAceBean);
+				CqActionsMapping.getAggregatedPrivilegesBean(tmpAceBean);
 				
 				
 
