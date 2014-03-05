@@ -273,12 +273,26 @@ public class ConfigReader {
 								
 								// validate privileges
 								else if(StringUtils.equals(ACE_CONFIG_PROPERTY_PRIVILEGES, entry )){
-									// TO DO: validation
-									if("null".equals(currentEntryValue)){
-										tmpAclBean.setPrivilegesString("");
-									}else if(!currentEntryValue.isEmpty()){
-									    tmpAclBean.setPrivilegesString(currentEntryValue);
-									    isActionOrPrivilegeDefined = true;
+									if(StringUtils.isNotBlank(currentEntryValue)){
+										
+										// validation
+										if("null".equals(currentEntryValue)){
+											tmpAclBean.setPrivilegesString("");
+										}else if(!currentEntryValue.isEmpty()){
+											String[] privileges = currentEntryValue.split(",");
+											for(int i = 0; i < privileges.length; i++){
+												
+												// remove leading and trailing blanks from privilege name
+												privileges[i] = StringUtils.strip(privileges[i]);
+												
+												if(!Validators.isValidJcrPrivilege(privileges[i])){
+													LOG.error("Validation error while reading ACE data: invalid jcr privilege: {}", privileges[i]);
+													throw new IllegalArgumentException("Validation error while reading ACE definition nr." + counter + " of authorizable: " + principal + ",  invalid jcr privilege: " + privileges[i]);
+												}
+											}
+											tmpAclBean.setPrivilegesString(currentEntryValue);
+											isActionOrPrivilegeDefined = true;
+										}
 									}
 								}
 								

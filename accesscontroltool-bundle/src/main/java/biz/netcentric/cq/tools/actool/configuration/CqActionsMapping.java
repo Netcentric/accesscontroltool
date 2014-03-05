@@ -23,24 +23,27 @@ public class CqActionsMapping {
 	static List <String> repWriteList = new ArrayList<String>(Arrays.asList(new String[] {"rep:write"}));
 	static List <String> jcrAllList = new ArrayList<String>(Arrays.asList(new String[] {"jcr:all"}));
 	static List <String> jcrWriteList = new ArrayList<String>(Arrays.asList(new String[] {"jcr:write"}));
+	static List <String> jcrAggregatedPrivileges = new ArrayList<String>(Arrays.asList(new String[] {"jcr:all","jcr:write","rep:write"}));
+	static List <String> jcrAllPrivileges = new ArrayList<String>(Arrays.asList(new String[] {"jcr:workspaceManagement",
+																							  "jcr:lifecycleManagement",
+																							  "jcr:versionManagement",
+																							  "jcr:lockManagement",
+																							  "crx:replicate",
+																							  "jcr:read",
+																							  "jcr:modifyAccessControl",
+																							  "rep:write",
+																							  "rep:privilegeManagement",
+																							  "jcr:nodeTypeManagement",
+																							  "jcr:namespaceManagement",
+																							  "jcr:write",
+																							  "jcr:nodeTypeDefinitionManagement",
+																							  "jcr:retentionManagement",
+																							  "jcr:readAccessControl"}));
+	
 	static { 
 		map.put("rep:write", new ArrayList<String>( Arrays.asList(new String[] { "jcr:modifyProperties","jcr:addChildNodes","jcr:removeNode","jcr:removeChildNodes","jcr:nodeTypeManagement"})));
 		map.put("jcr:write", new ArrayList<String>( Arrays.asList(new String[] { "jcr:addChildNodes","jcr:removeNode","jcr:modifyProperties","jcr:removeChildNodes"})));
-		map.put("jcr:all", new ArrayList<String>( Arrays.asList(new String[] { "jcr:workspaceManagement",
-				"jcr:lifecycleManagement",
-				"jcr:versionManagement",
-				"jcr:lockManagement",
-				"crx:replicate",
-				"jcr:read",
-				"jcr:modifyAccessControl",
-				"rep:write",
-				"rep:privilegeManagement",
-				"jcr:nodeTypeManagement",
-				"jcr:namespaceManagement",
-				"jcr:write",
-				"jcr:nodeTypeDefinitionManagement",
-				"jcr:retentionManagement",
-				"jcr:readAccessControl"})));
+		map.put("jcr:all", jcrAllPrivileges);
 
 		map.put("read",new ArrayList<String>( Arrays.asList(new String[] {"jcr:read"})));
 		map.put("modify", new ArrayList<String>( Arrays.asList(new String[] { "jcr:modifyProperties", "jcr:lockManagement", "jcr:versionManagement" })));
@@ -50,6 +53,13 @@ public class CqActionsMapping {
 		map.put("acl_edit", new ArrayList<String>( Arrays.asList(new String[] { "jcr:modifyAccessControl"})));
 		map.put("replicate", new ArrayList<String>( Arrays.asList(new String[] { "crx:replicate"})));
 
+	}
+	
+	public static List <String> getJcrAggregatedPrivilegesList(){
+		return jcrAggregatedPrivileges;
+	}
+	public static List <String> getJcrAllPrivilegesList(){
+		return jcrAllPrivileges;
 	}
 	
 	public static String getCqActions(final Privilege[] jcrPrivileges){

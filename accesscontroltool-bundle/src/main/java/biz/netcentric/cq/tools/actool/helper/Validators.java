@@ -71,7 +71,17 @@ public class Validators {
 
 		return true;
 	}
+	public static boolean isValidJcrPrivilege(String privilege){
+		if(privilege == null){
+			return false;
+		}
 
+		if(!CqActionsMapping.getJcrAggregatedPrivilegesList().contains(privilege) && !CqActionsMapping.getJcrAllPrivilegesList().contains(privilege)){
+			return false;
+		}
+
+		return true;
+	}
 	public static boolean isValidPermission(String permission){
 		if(permission == null){
 			return false;
