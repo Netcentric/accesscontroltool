@@ -106,7 +106,7 @@ public class AceServiceImpl implements AceService{
 	@Override
 	public void returnAceDumpAsFile(final SlingHttpServletRequest request, final SlingHttpServletResponse response, Session session, int mapOrder, int aceOrder) {
 		try {
-			Map<String, Set<AceBean>> aclDumpMap = AcHelper.getCorrectedAceDump(AcHelper.createAceMap(request, mapOrder, aceOrder, this.queryExcludePaths));
+			Map<String, Set<AceBean>> aclDumpMap = AcHelper.createAceMap(request, mapOrder, aceOrder, this.queryExcludePaths);
 			AclDumpUtils.returnAceDumpAsFile(response, aclDumpMap , mapOrder);
 		} catch (ValueFormatException e) {
 			LOG.error("ValueFormatException in AceServiceImpl: {}", e);
@@ -140,7 +140,7 @@ public class AceServiceImpl implements AceService{
 			
 			
 			
-			Map<String, Set<AceBean>> aclDumpMap = AcHelper.getCorrectedAceDump(AclDumpUtils.createAclDumpMap(session, aclMapKeyOrder, AcHelper.ACE_ORDER_ALPHABETICAL, queryExcludePaths));
+			Map<String, Set<AceBean>> aclDumpMap = AclDumpUtils.createAclDumpMap(session, aclMapKeyOrder, AcHelper.ACE_ORDER_ALPHABETICAL, queryExcludePaths);
 			Set <String> groups = QueryHelper.getGroupsFromHome(session);
 			Set<AuthorizableConfigBean> authorizableBeans = AuthorizableDumpUtils.returnGroupBeans(session);
 			

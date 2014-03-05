@@ -269,38 +269,8 @@ public class AcHelper {
 		Session session = request.getResourceResolver().adaptTo(Session.class);
 		return AclDumpUtils.createAclDumpMap(session, keyOrdering, aclOrdering, excludePaths);
 	}
-	/**
-	 * Method that removes one of the 2 ACEs which belong to the cq actions "create" and "modify" in an AceDump containing a repGlob. Reason is 
-	 * the fact that each of these 2 actions use 2 identical ACEs. one with an additional repGlob and one without. In a dump we only want to have one ACE
-	 * for each of these actions without a repGlob.
-	 * @param rawAceDump map containing a dump from repository
-	 * @return map containing the corrected dump
-	 */
+	
 
-	public static Map <String, Set<AceBean>> getCorrectedAceDump(final Map <String, Set<AceBean>> rawAceDump){
-
-		for(Map.Entry<String, Set<AceBean>> entry : rawAceDump.entrySet()){
-			Set<AceBean> aceSet = entry.getValue();
-			Iterator <AceBean> it = aceSet.iterator();
-			Set <AceBean> deleteSet = new HashSet <AceBean>();
-
-			while(it.hasNext()){
-				AceBean aceBean = it.next();
-				if(StringUtils.equals(aceBean.getRepGlob(), "*/jcr:content*")){
-					// action allow:create
-					if(aceBean.getPrivilegesString().contains("jcr:addChildNodes") && aceBean.getPrivilegesString().contains("jcr:nodeTypeManagement")){
-						deleteSet.add(aceBean);
-					}
-					// action allow:delete
-					else if(aceBean.getPrivilegesString().contains("jcr:removeNode") && aceBean.getPrivilegesString().contains("jcr:removeChildNodes")){
-						deleteSet.add(aceBean);
-					}
-				}
-			}
-			aceSet.removeAll(deleteSet);
-		}
-		return rawAceDump;
-	}
 
 	/**
 	 * changes a group based ACE map into a path based ACE map

@@ -171,11 +171,33 @@ public class CqActionsMapping {
 		return bean;
 
 	}
+	public static void getAggregatedPrivilegesBean(AceBean aceBean){
+		
+		Set <String> privileges = new HashSet<String>(new ArrayList(Arrays.asList(aceBean.getPrivileges())));
+		privileges = replaceAggregatedPrivileges(privileges,"jcr:all");
+		privileges = replaceAggregatedPrivileges(privileges,"rep:write");
+		privileges = replaceAggregatedPrivileges(privileges,"jcr:write");
+		String privilegesString = "";
+		for(String privilege:privileges){
+			privilegesString = privilegesString + privilege + ",";
+		}
+		
+		aceBean.setPrivilegesString(StringUtils.chop(privilegesString));
+		
+	}
+	private static Set<String> replaceAggregatedPrivileges(Set <String> jcrPrivileges, String aggregatedPrivilege){
+		if(jcrPrivileges.containsAll(map.get(aggregatedPrivilege))){
+			jcrPrivileges.removeAll(map.get(aggregatedPrivilege));
+			jcrPrivileges.add(aggregatedPrivilege);
+		}
+		return jcrPrivileges;
+	}
 	
 	public static AceBean getConvertedPrivilegeBean(AceBean bean){
 		Set <String> actions = new HashSet<String>();
 		Set <String> privileges = new HashSet<String>();
 		
+	
 		if(bean.getActions() != null){
 			actions = new HashSet<String>(Arrays.asList(bean.getActions()));
 		}
@@ -183,8 +205,21 @@ public class CqActionsMapping {
 			privileges = new HashSet<String>(Arrays.asList(bean.getPrivileges()));
 		}
 		
+		// convert cq:actions to their jcr:privileges
 		for(String action : actions){
 			privileges.addAll(map.get(action));
+		}
+		// after converting all actions to privileges we can still have aggregated privileges in the privileges variable
+		// these also have to be replaced by their single jcr:privileges
+		
+		if(privileges.contains("jcr:all")){
+			privileges.addAll(map.get("jcr:all"));
+		}
+		if(privileges.contains("jcr:write")){
+			privileges.addAll(map.get("jcr:write"));
+		}
+		if(privileges.contains("rep:write")){
+			privileges.addAll(map.get("rep:write"));
 		}
 		bean.clearActions();
 		bean.setActionsString("");

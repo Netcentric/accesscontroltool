@@ -2,6 +2,7 @@ package biz.netcentric.cq.tools.actool.helper;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -23,6 +24,7 @@ import javax.jcr.ValueFormatException;
 import javax.jcr.security.AccessControlEntry;
 import javax.servlet.ServletOutputStream;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.principal.PrincipalManager;
 import org.apache.jackrabbit.api.security.user.Authorizable;
@@ -30,6 +32,8 @@ import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.day.cq.commons.predicate.IsUnstructuredPredicate;
 
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableDumpUtils;
@@ -319,8 +323,10 @@ public class AclDumpUtils {
 				AceBean tmpAceBean = AcHelper.getAceBean(tmpBean);
 				CqActionsMapping.getAggregatedPrivilegesBean(tmpAceBean);
 				
+				if(isUnwantedAce(tmpAceBean)){
+					continue;
+				}
 				
-
 				// only add bean if authorizable is a group
 				Authorizable authorizable = um.getAuthorizable(tmpAceBean.getPrincipalName());
 				
@@ -350,7 +356,36 @@ public class AclDumpUtils {
 
 		return aceMap;
 	}
+	/**
+	 * Method that checks if passed ace is  one of the 2 ACEs which belong to the cq actions "create", "delete" and "modify" in an AceDump containing a repGlob. Reason is 
+	 * the fact that each of these 2 actions use 2 identical ACEs. one with an additional repGlob and one without. In a dump we only want to have one ACE
+	 * for each of these actions without a repGlob.
+	 * @param aceBean bean holding the properties of an ACE
+	 * @return true if ace belongs to one of the 3 actions
+	 */
+	private static boolean isUnwantedAce(final AceBean aceBean){
+		boolean ret = false;
+		List <String> tmpList = null;
+		if(StringUtils.equals(aceBean.getRepGlob(), "*/jcr:content*")){
+			tmpList = new ArrayList<String>(Arrays.asList(aceBean.getPrivilegesString().split(",")));
 
+			// set when action allow/deny:create is used
+			if(tmpList.containsAll(CqActionsMapping.map.get("create")) && tmpList.size() == CqActionsMapping.map.get("create").size()){
+				ret =  true;
+			}
+			// set when action allow/deny:delete is used
+			else if(tmpList.containsAll(CqActionsMapping.map.get("delete")) && tmpList.size() == CqActionsMapping.map.get("delete").size()){	
+				ret = true;
+			}
+			// set when  action allow/deny:modify and allow create,delete and allow modify,create,delete are used
+			else if(tmpList.containsAll(CqActionsMapping.map.get("create")) && tmpList.containsAll(CqActionsMapping.map.get("delete")) && tmpList.size() == (CqActionsMapping.map.get("create").size() + CqActionsMapping.map.get("delete").size())){	
+
+				ret = true;
+			}
+
+		}
+		return ret;
+	}
 	private static Set<AceBean> getNewAceSet(final int aclOrdering) {
 		Set<AceBean> aceSet = null;
 
