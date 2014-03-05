@@ -14,6 +14,7 @@ import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.servlet.ServletOutputStream;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
@@ -34,7 +35,7 @@ public class AuthorizableDumpUtils {
 		UserManager userManager = js.getUserManager();
 		
 		Set <String> groups = QueryHelper.getGroupsFromHome(session);
-		Set <AuthorizableConfigBean> userBeans = new LinkedHashSet<AuthorizableConfigBean>();
+		Set <AuthorizableConfigBean> groupBeans = new LinkedHashSet<AuthorizableConfigBean>();
 		
 		for(String groupId : groups){
 		
@@ -49,12 +50,25 @@ public class AuthorizableDumpUtils {
 			}
 			bean.setMemberOf(memberOfList.toArray(new String[memberOfList.size()]));
 			bean.setIsGroup(group.isGroup());
-			bean.setPath(group.getPath());
+			bean.setPath(getCorrectIntermediatePath(group.getPath(),group.getID()));
 			
-			userBeans.add(bean);
+			groupBeans.add(bean);
 		}
-		return userBeans;
+		return groupBeans;
 		
+	}
+	/**
+	 * removes the name of the group node itself (groupID) from the intermediate path 
+	 * @param intermediatePath 
+	 * @param groupID
+	 * @return corrected path if groupID was found at the end of the intermediatePath, otherwise original path
+	 */
+	private static String getCorrectIntermediatePath(String intermediatePath, final String groupID){
+		int index = StringUtils.lastIndexOf(intermediatePath, "/"+ groupID);
+		if(index != -1){
+			intermediatePath = intermediatePath.replace(intermediatePath.substring(index), "");
+		}
+		return intermediatePath;
 	}
 	
 	public static void returnAuthorizableDumpAsFile(final SlingHttpServletResponse response,
