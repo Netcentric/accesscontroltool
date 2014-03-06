@@ -76,7 +76,8 @@ public class Validators {
 			return false;
 		}
 
-		if(!CqActionsMapping.getJcrAggregatedPrivilegesList().contains(privilege) && !CqActionsMapping.getJcrAllPrivilegesList().contains(privilege)){
+		if(!CqActionsMapping.getJcrAggregatedPrivilegesList().contains(privilege) && !CqActionsMapping.getJcrAllPrivilegesList().contains(privilege)
+				&& !CqActionsMapping.map.get("rep:write").contains(privilege) && !CqActionsMapping.map.get("jcr:write").contains(privilege) ){
 			return false;
 		}
 
