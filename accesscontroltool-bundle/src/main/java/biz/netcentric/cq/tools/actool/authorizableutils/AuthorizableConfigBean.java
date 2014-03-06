@@ -13,6 +13,7 @@ public class AuthorizableConfigBean {
 	private String description;
 	private String path;
 	private String password;
+	private boolean isGroup = true;
 	
 	public String getPassword() {
 		return password;
@@ -22,7 +23,7 @@ public class AuthorizableConfigBean {
 		this.password = password;
 	}
 
-	private boolean isGroup;
+	
 	
 	public boolean isGroup() {
 		return isGroup;
