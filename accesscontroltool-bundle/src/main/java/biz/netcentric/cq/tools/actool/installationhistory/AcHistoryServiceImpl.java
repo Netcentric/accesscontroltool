@@ -1,11 +1,15 @@
 package biz.netcentric.cq.tools.actool.installationhistory;
 
+
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Properties;
@@ -16,6 +20,8 @@ import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
 
 import com.day.cq.commons.jcr.JcrUtil;
 
@@ -39,6 +45,7 @@ public class AcHistoryServiceImpl implements AcHistoryService{
 	private static final String INSTALLED_CONFIGS_NODE_NAME = "installedConfigs";
 	private static final int NR_OF_HISTORIES_TO_SAVE_DEFAULT = 5;
 	private static final Logger LOG = LoggerFactory.getLogger(AcHistoryServiceImpl.class);
+	private final static String PURGE_HISTORY_NODE_NAME_PREFIX = "purgeACL";
 	private int nrOfSavedHistories;
 
 	@Reference
@@ -185,4 +192,60 @@ public class AcHistoryServiceImpl implements AcHistoryService{
 		return history;
 	}
 
+	@Override
+	public void persistAcePurgeHistory(AcInstallationHistoryPojo history) {
+		Session session = null;
+		
+		try {
+			session = repository.loginAdministrative(null);
+			Node acHistoryRootNode = HistoryUtils.getAcHistoryRootNode(session);
+		    NodeIterator nodeIterator = acHistoryRootNode.getNodes();
+		    Set<Node> historyNodes = new TreeSet<Node>(new TimestampPropertyComparator());
+		    Node newestHistoryNode = null;
+		    while(nodeIterator.hasNext()){
+		    	historyNodes.add(nodeIterator.nextNode());
+		    }
+		    if(!historyNodes.isEmpty()){
+		    	newestHistoryNode = historyNodes.iterator().next();
+		    	persistPurgeAceHistory(session, history, newestHistoryNode);
+		    	session.save();
+		    }else{
+		    	// TODO:create history node
+		    }
+		    
+		} catch (RepositoryException e) {
+			LOG.error("Exception: ",e);
+		}finally{
+			if(session != null){
+				session.logout();
+			}
+		}
+	}
+	
+	private static Node persistPurgeAceHistory(final Session session, AcInstallationHistoryPojo history, final Node historyNode) throws RepositoryException{
+
+		Node purgeHistoryNode = historyNode.addNode("purge_" + System.currentTimeMillis(), HistoryUtils.NODETYPE_NT_UNSTRUCTURED);
+		
+		// if there is already a purge history node, order the new one before so the newest one is always on top
+		NodeIterator nodeIt = historyNode.getNodes();
+		Node previousPurgeNode = null;
+		while(nodeIt.hasNext()){
+			Node currNode = nodeIt.nextNode();
+			// get previous purgeHistory node
+			if(currNode.getName().contains("purge_")){
+				previousPurgeNode = currNode;
+				break;
+			}
+		}
+		
+		if(previousPurgeNode != null){
+			historyNode.orderBefore(purgeHistoryNode.getName(), previousPurgeNode.getName());
+		}
+
+		String message = "saved history in node: " + purgeHistoryNode.getPath();
+		history.addMessage(message);
+		LOG.info(message);
+		HistoryUtils.setHistoryNodeProperties(purgeHistoryNode, history);
+		return historyNode;
+	}
 }

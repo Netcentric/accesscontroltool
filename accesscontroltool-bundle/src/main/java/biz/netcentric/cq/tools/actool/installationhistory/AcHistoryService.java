@@ -7,6 +7,8 @@ import javax.jcr.Session;
 public interface AcHistoryService {
 	
 	public void persistHistory(AcInstallationHistoryPojo history, final String configurationRootPath);
+	
+	public void persistAcePurgeHistory(AcInstallationHistoryPojo history);
 
 	public String[] getInstallationLogPaths();
 

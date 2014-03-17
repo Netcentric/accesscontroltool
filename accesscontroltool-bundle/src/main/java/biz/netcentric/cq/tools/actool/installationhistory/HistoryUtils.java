@@ -26,11 +26,11 @@ import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
 
 public class HistoryUtils {
 
-	private static final String HISTORY_NODE_NAME_PREFIX = "history_";
-	private static final String NODETYPE_NT_UNSTRUCTURED = "nt:unstructured";
+	public static final String HISTORY_NODE_NAME_PREFIX = "history_";
+	public static final String NODETYPE_NT_UNSTRUCTURED = "nt:unstructured";
 	private static final String PROPERTY_SLING_RESOURCE_TYPE = "sling:resourceType";
-	private static final String ACHISTORY_ROOT_NODE = "achistory";
-	private static final String STATISTICS_ROOT_NODE = "var/statistics";
+	public static final String ACHISTORY_ROOT_NODE = "achistory";
+	public static final String STATISTICS_ROOT_NODE = "var/statistics";
 
 	private static final String PROPERTY_TIMESTAMP = "timestamp";
 	private static final String PROPERTY_MESSAGES = "messages";
@@ -86,7 +86,7 @@ public class HistoryUtils {
 		}
 	}
 
-	private static void setHistoryNodeProperties(final Node historyNode, AcInstallationHistoryPojo history) throws ValueFormatException, VersionException, LockException, ConstraintViolationException, RepositoryException{
+	public static void setHistoryNodeProperties(final Node historyNode, AcInstallationHistoryPojo history) throws ValueFormatException, VersionException, LockException, ConstraintViolationException, RepositoryException{
 
 		historyNode.setProperty(PROPERTY_INSTALLATION_DATE, history.getInstallationDate().toString());
 		historyNode.setProperty(PROPERTY_SUCCESS, history.isSuccess());

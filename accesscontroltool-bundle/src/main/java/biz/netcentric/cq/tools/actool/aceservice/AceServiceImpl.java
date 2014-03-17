@@ -448,7 +448,14 @@ public class AceServiceImpl implements AceService{
 			}
 		}
 		if(flag){
-			return message = "Deleted AccessControlList of node: " + path;
+			//TODO: save purge history under current history node
+			
+			message = "Deleted AccessControlList of node: " + path;
+			AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
+			history.addMessage("purge method: purgeACL()");
+			history.addMessage(message);
+			acHistoryService.persistAcePurgeHistory(history);
+			return message;
 		}
 		return "Deletion of ACL failed! Reason:" + message;
 	}
@@ -461,6 +468,10 @@ public class AceServiceImpl implements AceService{
 		try {
 			session = repository.loginAdministrative(null);
 			message = PurgeHelper.purgeACLs(session, path);
+			AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
+			history.addMessage("purge method: purgeACLs()");
+			history.addMessage(message);
+			acHistoryService.persistAcePurgeHistory(history);
 			session.save();
 		} catch (Exception e) {
 			LOG.error("Exception: ", e);
@@ -486,6 +497,10 @@ public class AceServiceImpl implements AceService{
 
 			Set<String> authorizabesFromConfigurations = this.getAllAuthorizablesFromConfig(session);
 			message = purgeAuthorizables(authorizabesFromConfigurations, session);
+			AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
+			history.addMessage("purge method: purgAuthorizablesFromConfig()");
+			history.addMessage(message);
+			acHistoryService.persistAcePurgeHistory(history);
 		} catch (RepositoryException e) {
 			LOG.error("RepositoryException: ", e);
 		} catch (Exception e) {
@@ -507,6 +522,10 @@ public class AceServiceImpl implements AceService{
 				authorizableIds = authorizableIds.trim();
 				Set <String> authorizablesSet = new HashSet<String> (new ArrayList(Arrays.asList(authorizableIds.split(","))));
 				message = purgeAuthorizables(authorizablesSet, session);
+				AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
+				history.addMessage("purge method: purgeAuthorizables()");
+				history.addMessage(message);
+				acHistoryService.persistAcePurgeHistory(history);
 			} catch (RepositoryException e) {
 				LOG.error("Exception: ", e);
 				
