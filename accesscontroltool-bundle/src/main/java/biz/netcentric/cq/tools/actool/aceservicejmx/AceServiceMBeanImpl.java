@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import com.adobe.granite.jmx.annotation.AnnotatedStandardMBean;
 
 import biz.netcentric.cq.tools.actool.aceservice.AceService;
+import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 
 @Service
@@ -40,6 +41,9 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
 
 	@Reference
 	AcHistoryService acHistoryService;
+	
+	@Reference
+	Dumpservice dumpservice;
 
 	@Override
 	public String execute() {
@@ -94,7 +98,7 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
 	public String pathBasedDump() {
 		StopWatch sw = new StopWatch();
 		sw.start();
-		String dump =  aceService.getCompletePathBasedDumpsAsString();
+		String dump =  dumpservice.getCompletePathBasedDumpsAsString();
 		sw.stop();
 		LOG.info("path based dump took: " + sw.getTime() + " ms");
 		return dump;
@@ -102,8 +106,14 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
 
 	@Override
 	public String groupBasedDump() {
-		return aceService.getCompletePrincipalBasedDumpsAsString();
+		StopWatch sw = new StopWatch();
+		sw.start();
+		String dump = dumpservice.getCompletePrincipalBasedDumpsAsString();
+		sw.stop();
+		LOG.info("group based dump took: " + sw.getTime() + " ms");
+		return dump;
 	}
+	
 
 	@Override
 	public String showHistoryLog(final String n) {

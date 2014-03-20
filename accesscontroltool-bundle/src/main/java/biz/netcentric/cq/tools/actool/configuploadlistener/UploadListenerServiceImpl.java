@@ -29,7 +29,7 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 
 @Component(
 		metatype = true,
-		label = "ACL Configuration Upload Listener Service",
+		label = "AC Configuration Upload Listener Service",
 		immediate = true,
 		description = "Listens for ACL configuration uploads and triggers ACL Service.")
 

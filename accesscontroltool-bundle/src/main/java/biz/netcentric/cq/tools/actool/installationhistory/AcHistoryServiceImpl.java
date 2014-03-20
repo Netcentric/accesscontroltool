@@ -30,7 +30,7 @@ import com.day.cq.commons.jcr.JcrUtil;
 @Service
 @Component(
 		metatype = true,
-		label = "AcHistory Service",
+		label = "AC History Service",
 		immediate = true,
 		description = "Service that writes & fetches Ac installation histories")
 
@@ -209,8 +209,6 @@ public class AcHistoryServiceImpl implements AcHistoryService{
 		    	newestHistoryNode = historyNodes.iterator().next();
 		    	persistPurgeAceHistory(session, history, newestHistoryNode);
 		    	session.save();
-		    }else{
-		    	// TODO:create history node
 		    }
 		    
 		} catch (RepositoryException e) {

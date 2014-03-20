@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -14,14 +13,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
-
-import javax.jcr.AccessDeniedException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
-import javax.jcr.security.AccessControlEntry;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
@@ -30,17 +25,17 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
-
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
 import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
+import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 public class AcHelper {
 	
 	private AcHelper() {}
 
-	static final Logger LOG = LoggerFactory.getLogger(AcHelper.class);
+	public static final Logger LOG = LoggerFactory.getLogger(AcHelper.class);
 
 	public static int ACE_ORDER_DENY_ALLOW = 1;
 	public static int ACE_ORDER_NONE = 2;
@@ -49,45 +44,45 @@ public class AcHelper {
 	public static int PRINCIPAL_BASED_ORDER = 1;
 	public static int PATH_BASED_ORDER = 2;
 
-	public static Map <String, Set<AceBean>> createPrincipalBasedAceDump(final Session session, final String[] excludePaths) throws AccessDeniedException, UnsupportedRepositoryOperationException, IllegalArgumentException, RepositoryException{
+//	public static Map <String, Set<AceBean>> createPrincipalBasedAceDump(final Session session, final String[] excludePaths) throws AccessDeniedException, UnsupportedRepositoryOperationException, IllegalArgumentException, RepositoryException{
+//
+//		Map <String, Set<AceBean>> groupBasedAceMap = new HashMap<String, Set<AceBean>>();
+//
+//		Set<AclBean> aclBeanSet = DumpserviceImpl.getACLDump(session, excludePaths);
+//
+//
+//		JackrabbitSession js = (JackrabbitSession) session;
+//		PrincipalManager pm = js.getPrincipalManager();
+//		Iterator<Principal> pmIter = pm.getPrincipals( PrincipalManager.SEARCH_TYPE_GROUP);
+//
+//		// predefine keys based on found groups and add empty sets for storing ACEs
+//		while(pmIter.hasNext()){
+//			Set<AceBean> aceSet = null;
+//			aceSet  = new HashSet<AceBean>();
+//			groupBasedAceMap.put(pmIter.next().getName(), aceSet);
+//		}
+//
+//
+//		// loop through all aclBeans and build up hash map which contains found groups as keys and set of respective ACEs as value
+//		for(AclBean aclBean : aclBeanSet){
+//			if(aclBean.getAcl() != null){
+//				for(AccessControlEntry ace : aclBean.getAcl().getAccessControlEntries()){
+//
+//					if(groupBasedAceMap.get(ace.getPrincipal().getName()) != null){
+//						AceWrapper tmpBean = new AceWrapper(ace, aclBean.getJcrPath());
+//						AceBean tmpAceBean = getAceBean(tmpBean);
+//						groupBasedAceMap.get(ace.getPrincipal().getName()).add(tmpAceBean);
+//
+//					}else{
+//						LOG.warn("Found Principal without entry under home/groups: {}", ace.getPrincipal().getName());
+//					}
+//				}
+//			}
+//		}
+//		return groupBasedAceMap;
+//	}
 
-		Map <String, Set<AceBean>> groupBasedAceMap = new HashMap<String, Set<AceBean>>();
-
-		Set<AclBean> aclBeanSet = AclDumpUtils.getACLDump(session, excludePaths);
-
-
-		JackrabbitSession js = (JackrabbitSession) session;
-		PrincipalManager pm = js.getPrincipalManager();
-		Iterator<Principal> pmIter = pm.getPrincipals( PrincipalManager.SEARCH_TYPE_GROUP);
-
-		// predefine keys based on found groups and add empty sets for storing ACEs
-		while(pmIter.hasNext()){
-			Set<AceBean> aceSet = null;
-			aceSet  = new HashSet<AceBean>();
-			groupBasedAceMap.put(pmIter.next().getName(), aceSet);
-		}
-
-
-		// loop through all aclBeans and build up hash map which contains found groups as keys and set of respective ACEs as value
-		for(AclBean aclBean : aclBeanSet){
-			if(aclBean.getAcl() != null){
-				for(AccessControlEntry ace : aclBean.getAcl().getAccessControlEntries()){
-
-					if(groupBasedAceMap.get(ace.getPrincipal().getName()) != null){
-						AceWrapper tmpBean = new AceWrapper(ace, aclBean.getJcrPath());
-						AceBean tmpAceBean = getAceBean(tmpBean);
-						groupBasedAceMap.get(ace.getPrincipal().getName()).add(tmpAceBean);
-
-					}else{
-						LOG.warn("Found Principal without entry under home/groups: {}", ace.getPrincipal().getName());
-					}
-				}
-			}
-		}
-		return groupBasedAceMap;
-	}
-
-	static AceBean getAceBean(final AceWrapper ace) throws ValueFormatException, IllegalStateException, RepositoryException{
+	public static AceBean getAceBean(final AceWrapper ace) throws ValueFormatException, IllegalStateException, RepositoryException{
 		AceBean aceBean = new AceBean();
 
 		aceBean.setActions(CqActionsMapping.getCqActions(ace.getPrivilegesString()).split(","));
@@ -265,9 +260,9 @@ public class AcHelper {
 		return orderedMergedAceSet;
 	}
 
-	public static Map <String, Set<AceBean>> createAceMap(final SlingHttpServletRequest request, final int keyOrdering, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalStateException, RepositoryException{
+	public static Map <String, Set<AceBean>> createAceMap(final SlingHttpServletRequest request, final int keyOrdering, final int aclOrdering, final String[] excludePaths, Dumpservice dumpservice) throws ValueFormatException, IllegalStateException, RepositoryException{
 		Session session = request.getResourceResolver().adaptTo(Session.class);
-		return AclDumpUtils.createAclDumpMap(session, keyOrdering, aclOrdering, excludePaths);
+		return dumpservice.createAclDumpMap(session, keyOrdering, aclOrdering, excludePaths);
 	}
 	
 

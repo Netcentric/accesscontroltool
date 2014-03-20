@@ -135,13 +135,12 @@ public class HistoryUtils {
 		int cnt = 1;
 		for (NodeIterator iterator =  acHistoryRootNode.getNodes(); iterator.hasNext();) {
 			Node node = (Node) iterator.next();
-			if(node != null){
+			if(node != null && node.getName().startsWith("history_")){
 				String successStatusString = "failed";
 				if(node.getProperty(PROPERTY_SUCCESS).getBoolean()){
 					successStatusString = "ok";
 				}
 				String installationDate = node.getProperty(PROPERTY_INSTALLATION_DATE).getString();
-				
 				messages.add(cnt + ". " + node.getPath() + " " + ""+ "(" + installationDate +")" + "(" + successStatusString + ")" );
 			}
 			cnt++;

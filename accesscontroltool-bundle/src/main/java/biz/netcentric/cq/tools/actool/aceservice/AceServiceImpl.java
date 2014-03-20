@@ -1,6 +1,6 @@
 package biz.netcentric.cq.tools.actool.aceservice;
 
-import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -11,12 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.ValueFormatException;
-
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -28,28 +25,19 @@ import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.principal.PrincipalManager;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.UserManager;
-import org.apache.sling.api.SlingHttpServletRequest;
-import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.resource.LoginException;
-import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.day.cq.commons.Externalizer;
-
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableDumpUtils;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
 import biz.netcentric.cq.tools.actool.comparators.NodeCreatedComparator;
+import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AclBean;
-import biz.netcentric.cq.tools.actool.helper.AclDumpUtils;
 import biz.netcentric.cq.tools.actool.helper.PurgeHelper;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
@@ -60,19 +48,19 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryP
 
 @Component(
 		metatype = true,
-		label = "ACE Service",
+		label = "AC Installation Service",
 		description = "Service that installs groups & ACEs according to textual configuration files")
 
 
 @Properties({
-	@Property(label = "Configuration storage path", description = "enter CRX path where ACE configuration gets stored", name = AceServiceImpl.ACE_SERVICE_CONFIGURATION_PATH, value = ""),
-	@Property(label = "ACL query exclude paths", name = AceServiceImpl.ACE_SERVICE_EXCLUDE_PATHS_PATH, value = {"/home", "/jcr:system", "/tmp"})
+	@Property(label = "Configuration storage path", description = "enter CRX path where ACE configuration gets stored", name = AceServiceImpl.ACE_SERVICE_CONFIGURATION_PATH, value = "")
+
 })
 
 public class AceServiceImpl implements AceService{
 
 	static final String ACE_SERVICE_CONFIGURATION_PATH = "AceService.configurationPath";
-	static final String ACE_SERVICE_EXCLUDE_PATHS_PATH = "AceService.queryExcludePaths";
+	
 	
 	@Reference
 	AuthorizableCreatorService authorizableCreatorService;
@@ -84,7 +72,8 @@ public class AceServiceImpl implements AceService{
 	AcHistoryService acHistoryService;
 	
 	@Reference
-    private ResourceResolverFactory resourceResolverFactory;
+    private Dumpservice dumpservice;
+	
 	
 	
 
@@ -92,84 +81,84 @@ public class AceServiceImpl implements AceService{
 	private static final String PROPERTY_CONFIGURATION_PATH = "AceService.configurationPath";
 	private boolean isExecuting = false;
 	private String configurationPath;
-	private String[] queryExcludePaths;
+	
 
 
 	@Activate
 	public void activate(@SuppressWarnings("rawtypes") final Map properties) throws Exception {
 		this.configurationPath = PropertiesUtil.toString(properties.get(PROPERTY_CONFIGURATION_PATH), "");
-		this.queryExcludePaths = PropertiesUtil.toStringArray(properties.get("AceService.queryExcludePaths"),null);
+		
 	}
 
 	
 
-	@Override
-	public void returnAceDumpAsFile(final SlingHttpServletRequest request, final SlingHttpServletResponse response, Session session, int mapOrder, int aceOrder) {
-		try {
-			Map<String, Set<AceBean>> aclDumpMap = AcHelper.createAceMap(request, mapOrder, aceOrder, this.queryExcludePaths);
-			AclDumpUtils.returnAceDumpAsFile(response, aclDumpMap , mapOrder);
-		} catch (ValueFormatException e) {
-			LOG.error("ValueFormatException in AceServiceImpl: {}", e);
-		} catch (IllegalStateException e) {
-			LOG.error("IllegalStateException in AceServiceImpl: {}", e);
-		} catch (IOException e) {
-			LOG.error("IOException in AceServiceImpl: {}", e);
-		} catch (RepositoryException e) {
-			LOG.error("RepositoryException in AceServiceImpl: {}", e);
-		}
-
-	}
-
-	@Override
-	public String getCompletePathBasedDumpsAsString() {
-		return getCompleteDump(2,2);
-	}
-
-	@Override
-	public String getCompletePrincipalBasedDumpsAsString() {
-		return getCompleteDump(1,1);
-	}
-
-
-	private String getCompleteDump(int aclMapKeyOrder, int mapOrder){
-		Session session = null;
-		ResourceResolver resourceResolver = null;
-	
-		try {
-			session = repository.loginAdministrative(null);
-			
-			
-			
-			Map<String, Set<AceBean>> aclDumpMap = AclDumpUtils.createAclDumpMap(session, aclMapKeyOrder, AcHelper.ACE_ORDER_ALPHABETICAL, queryExcludePaths);
-			Set <String> groups = QueryHelper.getGroupsFromHome(session);
-			Set<AuthorizableConfigBean> authorizableBeans = AuthorizableDumpUtils.returnGroupBeans(session);
-			
-			resourceResolver = this.resourceResolverFactory.getAdministrativeResourceResolver(null);
-			Externalizer externalizer = resourceResolver.adaptTo(Externalizer.class);
-			String serverUrl = externalizer.authorLink(resourceResolver, "");
-			
-			return AclDumpUtils.returnConfigurationDumpAsString(aclDumpMap, authorizableBeans, mapOrder, serverUrl);
-		} catch (ValueFormatException e) {
-			LOG.error("ValueFormatException in AceServiceImpl: {}", e);
-		} catch (IllegalStateException e) {
-			LOG.error("IllegalStateException in AceServiceImpl: {}", e);
-		} catch (IOException e) {
-			LOG.error("IOException in AceServiceImpl: {}", e);
-		} catch (RepositoryException e) {
-			LOG.error("RepositoryException in AceServiceImpl: {}", e);
-		} catch (LoginException e) {
-			LOG.error("LoginException in AceServiceImpl: {}", e);
-		}finally{
-			if(session != null){
-				session.logout();
-			}
-			if(resourceResolver != null){
-				resourceResolver.close();
-			}
-		}
-		return null;
-
-	}
+//	@Override
+//	public void returnAceDumpAsFile(final SlingHttpServletRequest request, final SlingHttpServletResponse response, Session session, int mapOrder, int aceOrder) {
+//		try {
+//			Map<String, Set<AceBean>> aclDumpMap = AcHelper.createAceMap(request, mapOrder, aceOrder, this.queryExcludePaths, dumpservice);
+//			dumpservice.returnAceDumpAsFile(response, aclDumpMap, mapOrder);
+//		} catch (ValueFormatException e) {
+//			LOG.error("ValueFormatException in AceServiceImpl: {}", e);
+//		} catch (IllegalStateException e) {
+//			LOG.error("IllegalStateException in AceServiceImpl: {}", e);
+//		} catch (IOException e) {
+//			LOG.error("IOException in AceServiceImpl: {}", e);
+//		} catch (RepositoryException e) {
+//			LOG.error("RepositoryException in AceServiceImpl: {}", e);
+//		}
+//
+//	}
+//
+//	@Override
+//	public String getCompletePathBasedDumpsAsString() {
+//		return getCompleteDump(2,2);
+//	}
+//
+//	@Override
+//	public String getCompletePrincipalBasedDumpsAsString() {
+//		return getCompleteDump(1,1);
+//	}
+//
+//
+//	private String getCompleteDump(int aclMapKeyOrder, int mapOrder){
+//		Session session = null;
+//		ResourceResolver resourceResolver = null;
+//	
+//		try {
+//			session = repository.loginAdministrative(null);
+//			
+//			
+//			
+//			Map<String, Set<AceBean>> aclDumpMap = dumpservice.createAclDumpMap(session, aclMapKeyOrder, AcHelper.ACE_ORDER_ALPHABETICAL, queryExcludePaths);
+//			Set <String> groups = QueryHelper.getGroupsFromHome(session);
+//			Set<AuthorizableConfigBean> authorizableBeans = AuthorizableDumpUtils.returnGroupBeans(session);
+//			
+//			resourceResolver = this.resourceResolverFactory.getAdministrativeResourceResolver(null);
+//			Externalizer externalizer = resourceResolver.adaptTo(Externalizer.class);
+//			String serverUrl = externalizer.authorLink(resourceResolver, "");
+//			
+//			return dumpservice.returnConfigurationDumpAsString(aclDumpMap, authorizableBeans, mapOrder, serverUrl);
+//		} catch (ValueFormatException e) {
+//			LOG.error("ValueFormatException in AceServiceImpl: {}", e);
+//		} catch (IllegalStateException e) {
+//			LOG.error("IllegalStateException in AceServiceImpl: {}", e);
+//		} catch (IOException e) {
+//			LOG.error("IOException in AceServiceImpl: {}", e);
+//		} catch (RepositoryException e) {
+//			LOG.error("RepositoryException in AceServiceImpl: {}", e);
+//		} catch (LoginException e) {
+//			LOG.error("LoginException in AceServiceImpl: {}", e);
+//		}finally{
+//			if(session != null){
+//				session.logout();
+//			}
+//			if(resourceResolver != null){
+//				resourceResolver.close();
+//			}
+//		}
+//		return null;
+//
+//	}
 	
 
 	private void installConfigurationFromYamlList(final List mergedConfigurations, AcInstallationHistoryPojo history, final Session session, Set<AuthorizableInstallationHistory> authorizableHistorySet, Map<String, Set<AceBean>> repositoryDumpAceMap) throws Exception  {
@@ -284,7 +273,7 @@ public class AceServiceImpl implements AceService{
 
 				Map<String, Set<AceBean>> repositoryDumpAceMap = null;
 				LOG.info("start building dump from repository");
-				repositoryDumpAceMap = AclDumpUtils.createAclDumpMap(session, AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE, this.queryExcludePaths);
+				repositoryDumpAceMap = dumpservice.createAclDumpMap(session, AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE, dumpservice.getQueryExcludePaths());
 				
 				installConfigurationFromYamlList(mergedConfigurations, history, session, authorizableInstallationHistorySet, repositoryDumpAceMap);
 
@@ -631,15 +620,7 @@ public class AceServiceImpl implements AceService{
 		return message;
 	}
 
-	@Override
-	public void returnCompleteDumpAsFile(
-			SlingHttpServletResponse response,
-			Map<String, Set<AceBean>> aceMap,
-			Set<AuthorizableConfigBean> authorizableSet, Session session,
-			int mapOrder, int aceOrder) throws IOException {
-		AclDumpUtils.returnConfigurationDumpAsFile(response, aceMap, authorizableSet, mapOrder);
-
-	}
+	
 
 	@Override
 	public boolean isExecuting() {
@@ -648,10 +629,7 @@ public class AceServiceImpl implements AceService{
 
 	
 
-	@Override
-	public String[] getQueryExcludePaths() {
-		return this.queryExcludePaths;
-	}
+	
 
 	@Override
 	public String getConfigurationRootPath() {
