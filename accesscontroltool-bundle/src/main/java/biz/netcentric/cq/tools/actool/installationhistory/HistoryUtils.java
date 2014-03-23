@@ -108,7 +108,10 @@ public class HistoryUtils {
 		Set<Node> historyChildNodes = new TreeSet<Node>(new TimestampPropertyComparator());
 
 		while(childNodeIt.hasNext()){
-			historyChildNodes.add(childNodeIt.nextNode());
+			Node node = childNodeIt.nextNode();
+			if(node.getName().startsWith(HISTORY_NODE_NAME_PREFIX)){
+				historyChildNodes.add(node);
+			}
 		}
 		int index = 1;
 		for(Node node : historyChildNodes){
