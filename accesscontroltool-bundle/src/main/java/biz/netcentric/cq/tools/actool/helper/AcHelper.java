@@ -13,10 +13,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
+
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
@@ -25,6 +27,7 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
+
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
 import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
@@ -329,28 +332,20 @@ public class AcHelper {
 
 		for(Map.Entry<String, String> entry : newestConfigurations.entrySet()){
 			String message = "start merging configuration data from: " + entry.getKey();
-			history.addVerboseMessage(message);
+			
+			validateSectionIdentifiers(entry);
+			
+			history.addMessage(message);
 			Yaml yaml = new Yaml();
 			List<LinkedHashMap>  yamlList =  (List<LinkedHashMap>) yaml.load(entry.getValue());
-
+			
+			validateSectionContentExistence(entry.getKey(), yamlList);
+			
 			Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig = ConfigReader.getAuthorizableConfigurationBeans(yamlList);
 			Set<String> groupsFromCurrentConfig = authorizablesMapfromConfig.keySet();
 
-			// check if any group contained in the current configuration is already contained in one of the previous ones
-			// if this is the case the installation gets aborted!
-			if(CollectionUtils.containsAny(groupsFromAllConfig, groupsFromCurrentConfig))  {
-				String errorMessage = "double group definition found: ";
-
-				// find the name of the doubled defined group and add it to error message
-				for(String group : groupsFromCurrentConfig){
-					if(groupsFromAllConfig.contains(group)){
-						errorMessage = errorMessage + group;
-						break;
-					}
-				}
-				throw new IllegalArgumentException(errorMessage);
-
-			}
+			validateDoubleGroups(groupsFromAllConfig, groupsFromCurrentConfig, entry.getKey());
+			
 			groupsFromAllConfig.addAll(groupsFromCurrentConfig);
 			Map<String, Set<AceBean>> aceMapFromConfig = ConfigReader.getAceConfigurationBeans(session, yamlList, groupsFromCurrentConfig);
 
@@ -360,6 +355,67 @@ public class AcHelper {
 		c.add(mergedAuthorizablesMapfromConfig);
 		c.add(mergedAceMapFromConfig);
 		return c;
+	}
+
+
+	/**
+	 * Method that checks if a group in the current configuration file was already defined in another configuration file
+	 * which has been already processed
+	 * @param groupsFromAllConfig set holding all names of groups of all config files which have already been processed 
+	 * @param groupsFromCurrentConfig set holding all names of the groups from the current configuration
+	 * @param configPath repository path of current config
+	 * @throws IllegalArgumentException
+	 */
+	private static void validateDoubleGroups(Set<String> groupsFromAllConfig,
+			Set<String> groupsFromCurrentConfig, final String configPath) throws IllegalArgumentException{
+		
+		if(CollectionUtils.containsAny(groupsFromAllConfig, groupsFromCurrentConfig))  {
+			String errorMessage = "already defined group: ";
+
+			// find the name of the doubled defined group and add it to error message
+			for(String group : groupsFromCurrentConfig){
+				if(groupsFromAllConfig.contains(group)){
+					errorMessage = errorMessage + group + " found in configuration file: " + configPath + "!";
+					errorMessage = errorMessage + " This group was already defined in another configuration file on the system!";
+					break;
+				}
+			}
+			throw new IllegalArgumentException(errorMessage);
+		}
+	}
+
+
+	/**
+	 * Method that checks if both configuration sections (group and ACE) have content
+	 * @param configPath repository path of current config
+	 * @param yamlList list holding the group and ACE configuration as LinkedHashMap (as returned by YAML parser)
+	 * @throws IllegalArgumentException
+	 */
+	private static void validateSectionContentExistence (
+			final String configPath, List<LinkedHashMap> yamlList) throws IllegalArgumentException{
+		
+		if(yamlList.get(0).get(Constants.GROUP_CONFIGURATION_KEY) == null){
+			throw new IllegalArgumentException("Empty group section in configuration file: " + configPath);
+		}
+		if(yamlList.get(1).get(Constants.ACE_CONFIGURATION_KEY) == null){
+			throw new IllegalArgumentException("Empty ACE section in configuration file: " + configPath);
+		}
+	}
+	
+
+	/**
+	 * Method that checks if both configuration section identifiers (group and ACE) exist in the current configuration file
+	 * @param entry Map.Entry containing a configuration
+	 * @throws IllegalArgumentException
+	 */
+	private static void validateSectionIdentifiers(Map.Entry<String, String> entry) throws IllegalArgumentException{
+		
+		if(!entry.getValue().contains(Constants.GROUP_CONFIGURATION_KEY)){
+			throw new IllegalArgumentException("group section identifier ('" + Constants.GROUP_CONFIGURATION_KEY + "') missing in configuration file: " + entry.getKey());
+		}
+		if(!entry.getValue().contains(Constants.ACE_CONFIGURATION_KEY)){
+			throw new IllegalArgumentException("ACE section identifier ('" + Constants.ACE_CONFIGURATION_KEY + "') missing in configuration file: " + entry.getKey());
+		}
 	}
 
 
