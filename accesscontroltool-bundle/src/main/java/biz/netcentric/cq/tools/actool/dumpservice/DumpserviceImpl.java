@@ -546,9 +546,10 @@ public class DumpserviceImpl implements Dumpservice{
 					continue;
 				}
 
-				// only add bean if authorizable is a group
+				
 				Authorizable authorizable = um.getAuthorizable(tmpAceBean.getPrincipalName());
-
+				
+				// only add bean if authorizable is a group and if this group exists under home
 				if(authorizable != null && authorizable.isGroup()){
 
 
