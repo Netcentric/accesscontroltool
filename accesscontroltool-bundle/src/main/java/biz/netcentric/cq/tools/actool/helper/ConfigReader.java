@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.query.InvalidQueryException;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -46,8 +47,8 @@ public class ConfigReader {
 			LOG.error("ACL configuration not found in YAML configuration file");
 			return null;
 		}
-		
-		
+
+
 		Map<String, Set<AceBean>> aceMapFromConfig = getPreservedOrderdAceMap(session, aclList, groupsFromConfig); // group based Map from config file
 		return aceMapFromConfig;
 	}
@@ -65,10 +66,8 @@ public class ConfigReader {
 		return principalsMap;
 	}
 
-
-
 	private static Map<String, LinkedHashSet<AuthorizableConfigBean>> getAuthorizablesMap(final List <LinkedHashMap> yamlMap) {
-
+		Set<String> alreadyProcessedGroups = new HashSet<String>();
 		Map<String, LinkedHashSet<AuthorizableConfigBean>> principalMap = new LinkedHashMap <String, LinkedHashSet<AuthorizableConfigBean>>();
 
 		if(yamlMap != null){
@@ -79,12 +78,16 @@ public class ConfigReader {
 				// loop through authorizables (keys of the map)
 				for(Object currentPrincipalKey : principalSet){
 
+
 					// explicit cast to String since value is object
 					String currentPrincipal = String.valueOf(currentPrincipalKey);
 
+					if(!alreadyProcessedGroups.add(currentPrincipal)){
+						throw new IllegalArgumentException("There is more than one group definition for group: " + currentPrincipal);
+					}
 					LOG.info("start reading group configuration");
 					LOG.info("Found principal: {} in config", currentPrincipal);
-					
+
 
 					LinkedHashSet<AuthorizableConfigBean> tmpSet = new LinkedHashSet<AuthorizableConfigBean>();
 					principalMap.put((String)currentPrincipal,  tmpSet);
@@ -97,15 +100,7 @@ public class ConfigReader {
 							Set<String> principalDataKeySet = currentPrincipalDataMap.keySet();
 							AuthorizableConfigBean tmpPrincipalConfigBean = new AuthorizableConfigBean();
 
-							if(Validators.isValidAuthorizableName((String)currentPrincipal)){
-								tmpPrincipalConfigBean.setPrincipalID((String)currentPrincipal);
-							}
-							else{
-								String message = "Validation error while reading group data: invalid authorizable name: " + (String)currentPrincipal;
-								LOG.error(message);
-								throw new IllegalArgumentException(message);
-
-							}
+							validateAuthorizableName(currentPrincipal, tmpPrincipalConfigBean);
 
 							for(String entry : principalDataKeySet){
 
@@ -116,7 +111,7 @@ public class ConfigReader {
 								}
 
 								tmpPrincipalConfigBean.setPrincipalID((String)currentPrincipal);
-								
+
 								if(StringUtils.equals(GROUP_CONFIG_PROPERTY_NAME, entry )){
 									String nameValue = "";
 									if(!StringUtils.equals("null", currentEntryValue)){
@@ -125,26 +120,8 @@ public class ConfigReader {
 									tmpPrincipalConfigBean.setAuthorizableName(nameValue);	
 								}
 								else if(StringUtils.equals(GROUP_CONFIG_PROPERTY_MEMBER_OF, entry )){
-									
-									if(StringUtils.isNotBlank(currentEntryValue)){
-										if(currentEntryValue != null){
-											
-											String[] groups = currentEntryValue.split(",");
-											
-											for(int i = 0; i < groups.length; i++){
-												
-												// remove leading and trailing blanks from groupname
-												groups[i] = StringUtils.strip(groups[i]);
-											
-												if(!Validators.isValidAuthorizableName(groups[i])){
-													LOG.error("Validation error while reading group property of authorizable:{}, invalid authorizable name: {}", currentPrincipal, groups[i]);
-													throw new IllegalArgumentException("Validation error while reading group property of authorizable: " + currentPrincipal + ", invalid authorizable name: " + groups[i]);
-												}
-											}
 
-											tmpPrincipalConfigBean.setMemberOf(groups);
-										}
-									}
+									validateMemberOf(currentPrincipal, tmpPrincipalConfigBean, currentEntryValue);
 								}
 								// TODO: validation
 								else if(StringUtils.equals(GROUP_CONFIG_PROPERTY_PATH, entry )){
@@ -154,7 +131,7 @@ public class ConfigReader {
 								else if(StringUtils.equals(GROUP_CONFIG_PROPERTY_IS_GROUP, entry )){
 									tmpPrincipalConfigBean.memberOf(new Boolean(currentEntryValue));
 								}
-								// TODO: validation
+								
 								else if(StringUtils.equals(GROUP_CONFIG_PROPERTY_PASSWORD, entry )){
 									tmpPrincipalConfigBean.setPassword(currentEntryValue);
 								}
@@ -166,24 +143,63 @@ public class ConfigReader {
 				}
 			}
 			Set<String> keySet = principalMap.keySet();
-			
+
 		}
 		return principalMap;
 	}
 
-	private static Map<String, Set<AceBean>> getPreservedOrderdAceMap(final Session session, final List <LinkedHashMap> aceYamlMap, Set<String> groupsFromCurrentConfig) throws RepositoryException {
+	private static void validateMemberOf(String currentPrincipal,
+			AuthorizableConfigBean tmpPrincipalConfigBean,
+			String currentEntryValue) {
+		if(StringUtils.isNotBlank(currentEntryValue)){
+			if(currentEntryValue != null){
 
+				String[] groups = currentEntryValue.split(",");
+
+				for(int i = 0; i < groups.length; i++){
+
+					// remove leading and trailing blanks from groupname
+					groups[i] = StringUtils.strip(groups[i]);
+
+					if(!Validators.isValidAuthorizableName(groups[i])){
+						LOG.error("Validation error while reading group property of authorizable:{}, invalid authorizable name: {}", currentPrincipal, groups[i]);
+						throw new IllegalArgumentException("Validation error while reading group property of authorizable: " + currentPrincipal + ", invalid authorizable name: " + groups[i]);
+					}
+				}
+
+				tmpPrincipalConfigBean.setMemberOf(groups);
+			}
+		}
+	}
+
+	private static void validateAuthorizableName(String currentPrincipal,
+			AuthorizableConfigBean tmpPrincipalConfigBean) {
+		if(Validators.isValidAuthorizableName((String)currentPrincipal)){
+			tmpPrincipalConfigBean.setPrincipalID((String)currentPrincipal);
+		}
+		else{
+			String message = "Validation error while reading group data: invalid authorizable name: " + (String)currentPrincipal;
+			LOG.error(message);
+			throw new IllegalArgumentException(message);
+
+		}
+	}
+
+	private static Map<String, Set<AceBean>> getPreservedOrderdAceMap(final Session session, final List <LinkedHashMap> aceYamlMap, Set<String> groupsFromCurrentConfig) throws RepositoryException {
+		Set<String> alreadyProcessedGroups = new HashSet<String>();
 		Map<String, Set<AceBean>> aceMap = new LinkedHashMap <String, Set<AceBean>>();
-		
+
 		if(aceYamlMap != null){
 			for(LinkedHashMap currentPrincipalAceMap : aceYamlMap){
 
 				Set<Object> keySet = currentPrincipalAceMap.keySet();
-				
-				
+
 				for(Object principalKey : keySet){
 					String principal = String.valueOf(principalKey);
 
+					if(!alreadyProcessedGroups.add(principal)){
+						throw new IllegalArgumentException("There is more than one ACE definition block for group: " + principal);
+					}
 					List<LinkedHashMap> aceData = (List<LinkedHashMap>) currentPrincipalAceMap.get(principal);
 					LOG.info("start reading ACE configuration of authorizable: {}", principal);
 
@@ -207,156 +223,52 @@ public class ConfigReader {
 
 							for(String entry : keySet2){
 								String logString = "\n" + " " + entry + ": " + map2.get(entry);
-								
+
 								LOG.info(logString);
-								
-								
+
+
 								String currentEntryValue = (String)map2.get(entry);
 								if(currentEntryValue == null){
 									currentEntryValue = "";
 								}
-								
-								// validate authorizable name format
-								if(Validators.isValidAuthorizableName(principal)){
-									
-									// validate if authorizable is contained in config
-									if(!groupsFromCurrentConfig.contains(principal)){
-										String message = "Validation error while reading ACE definition, authorizable: " + principal + " is not contained in group configuration";
-										throw new IllegalArgumentException(message);
 
-									}
-									tmpAclBean.setPrincipal(principal);
-								}
-								else{
+								validateAuthorizableName(
+										groupsFromCurrentConfig, principal,
+										tmpAclBean);
 
-									LOG.error("Validation error while reading ACE data: invalid authorizable name: {}", principal);
-									throw new IllegalArgumentException("Validation error while reading ACE definition, invalid authorizable name: " + principal);
-
-								}
-								
 								// validate path
 								if(StringUtils.equals(ACE_CONFIG_PROPERTY_PATH, entry )){
-
-									if(Validators.isValidNodePath(currentEntryValue)){
-										tmpAclBean.setJcrPath(currentEntryValue);	
-										isPathDefined = true;
-									}
-									else{
-
-										LOG.error("Validation error while reading ACE data: invalid path: {}", currentEntryValue);
-										throw new IllegalArgumentException("Validation error while reading ACE definition nr." + counter + " of authorizable: " + principal + ", invalid path: " + currentEntryValue);
-									}
+									isPathDefined = validateAcePath(principal,isPathDefined, counter, tmpAclBean,currentEntryValue);
 								}
-								
+
 								// validate actions
 								else if(StringUtils.equals(ACE_CONFIG_PROPERTY_ACTIONS, entry )){
-									if(StringUtils.isNotBlank(currentEntryValue)){
-									
-									String[] actions = currentEntryValue.split(",");
-
-									for(int i = 0; i < actions.length; i++){
-										
-										// remove leading and trailing blanks from action name
-										actions[i] = StringUtils.strip(actions[i]);
-										
-										if(!Validators.isValidAction(actions[i])){
-											LOG.error("Validation error while reading ACE data: invalid action: {}", actions[i]);
-											throw new IllegalArgumentException("Validation error while reading ACE definition nr." + counter + " of authorizable: " + principal + ",  invalid action: " + actions[i]);
-										}
-									}
-
-									tmpAclBean.setActions(actions);
-									isActionOrPrivilegeDefined = true;
-									
-									}
+									isActionOrPrivilegeDefined = validateActions(principal,isActionOrPrivilegeDefined,counter, tmpAclBean,currentEntryValue);
 								}
-								
+
 								// validate privileges
 								else if(StringUtils.equals(ACE_CONFIG_PROPERTY_PRIVILEGES, entry )){
-									if(StringUtils.isNotBlank(currentEntryValue)){
-										
-										// validation
-										if("null".equals(currentEntryValue)){
-											tmpAclBean.setPrivilegesString("");
-										}else if(!currentEntryValue.isEmpty()){
-											String[] privileges = currentEntryValue.split(",");
-											for(int i = 0; i < privileges.length; i++){
-												
-												// remove leading and trailing blanks from privilege name
-												privileges[i] = StringUtils.strip(privileges[i]);
-												
-												if(!Validators.isValidJcrPrivilege(privileges[i])){
-													LOG.error("Validation error while reading ACE data: invalid jcr privilege: {}", privileges[i]);
-													throw new IllegalArgumentException("Validation error while reading ACE definition nr." + counter + " of authorizable: " + principal + ",  invalid jcr privilege: " + privileges[i]);
-												}
-											}
-											tmpAclBean.setPrivilegesString(currentEntryValue);
-											isActionOrPrivilegeDefined = true;
-										}
-									}
+									isActionOrPrivilegeDefined = validatePrivileges(principal,isActionOrPrivilegeDefined,counter, tmpAclBean,currentEntryValue);
 								}
-								
+
 								// validate permission
 								else if(StringUtils.equals(ACE_CONFIG_PROPERTY_PERMISSION, entry )){
-									if(Validators.isValidPermission(currentEntryValue)){
-										tmpAclBean.setAllow(new Boolean(StringUtils.equals("allow", currentEntryValue) ? "true" : "deny"));
-										tmpAclBean.setIsAllowProvide(true);
-									}
-									else{
-
-										LOG.error("Validation error while reading ACE data: invalid permission: {}", currentEntryValue);
-										throw new IllegalArgumentException("Validation error while reading ACE definition nr." + counter + " of authorizable: " + principal + ", invalid permission: " + currentEntryValue);
-									}
+									validatePermission(principal, counter, tmpAclBean, currentEntryValue);
 								}
-								
+
 								// validate globbing
 								else if(StringUtils.equals(ACE_CONFIG_PROPERTY_GLOB, entry )){
-									if(Validators.isValidRegex(currentEntryValue)){
-										tmpAclBean.setRepGlob(currentEntryValue);
-									}
-									else{
-
-										LOG.error("Validation error while reading ACE data: invalid globbing expression: {}", currentEntryValue);
-										throw new IllegalArgumentException("Validation error while reading ACE definition nr." + counter + " of authorizable: " + principal + ",  invalid globbing expression: " + currentEntryValue);
-									}
+									validateGlobbing(principal, counter, tmpAclBean, currentEntryValue);
 								}
 							}
 
 							String missingPropertiesString = getMissingPropertiesString(isPathDefined,  isActionOrPrivilegeDefined);
 
 							if(missingPropertiesString.isEmpty()){
-								
+
 								// --- handle wildcards ---
 								if(tmpAclBean.getJcrPath().contains("*")){
-									
-									// perform query using the path containing wildcards
-									String query = "/jcr:root" + tmpAclBean.getJcrPath();
-									Set<Node> result = QueryHelper.getNodes(session, query); 
-
-									// if there are nodes in repository matching the wildcard-query
-									// replace the bean holding the wildcard path by beans having the found paths
-									Set<AceBean> replaceBeans = new HashSet<AceBean>();
-									
-									if(!result.isEmpty()){
-										
-										for(Node node : result){
-											if(!node.getPath().contains("/rep:policy")){
-												AceBean replaceBean = new AceBean();
-												replaceBean.setJcrPath(node.getPath());
-												replaceBean.setActions(tmpAclBean.getActions());
-												replaceBean.setAllow(tmpAclBean.isAllow());
-												replaceBean.setPrincipal(tmpAclBean.getPrincipalName());
-												replaceBean.setPrivilegesString(tmpAclBean.getPrivilegesString());
-
-												if(!aceMap.get(principal).add(replaceBean)){
-													LOG.warn("wildcard replacement: replacing bean: " + tmpAclBean + ", with bean " + replaceBean + " went wrong!");
-												}else{
-													LOG.info("wildcard replacement: replaced bean: " + tmpAclBean + ", with bean " + replaceBean);
-												}
-											}
-										}
-									}
-
+									handleWildcards(session, aceMap, principal, tmpAclBean);
 								}else{
 									aceMap.get(principal).add(tmpAclBean);
 								}
@@ -365,16 +277,158 @@ public class ConfigReader {
 								LOG.error("Mandatory property/properties in ACE definition nr." + counter + " of authorizable : {} missing: {}! Installation aborted!", principal, missingPropertiesString);
 								throw new IllegalArgumentException("Mandatory property/properties in ACE definition nr." + counter + " of authorizable: " + principal + " missing: " + missingPropertiesString + "! Installation aborted!");
 							}
-
-							
 						}
-
 					}
 				}
 			}
-			
+
 		}
 		return aceMap;
+	}
+
+	private static void handleWildcards(final Session session, Map<String, Set<AceBean>> aceMap, String principal, AceBean tmpAclBean) throws InvalidQueryException,
+			RepositoryException {
+		// perform query using the path containing wildcards
+		String query = "/jcr:root" + tmpAclBean.getJcrPath();
+		Set<Node> result = QueryHelper.getNodes(session, query); 
+
+		// if there are nodes in repository matching the wildcard-query
+		// replace the bean holding the wildcard path by beans having the found paths
+		Set<AceBean> replaceBeans = new HashSet<AceBean>();
+
+		if(!result.isEmpty()){
+
+			for(Node node : result){
+				if(!node.getPath().contains("/rep:policy")){
+					AceBean replaceBean = new AceBean();
+					replaceBean.setJcrPath(node.getPath());
+					replaceBean.setActions(tmpAclBean.getActions());
+					replaceBean.setAllow(tmpAclBean.isAllow());
+					replaceBean.setPrincipal(tmpAclBean.getPrincipalName());
+					replaceBean.setPrivilegesString(tmpAclBean.getPrivilegesString());
+
+					if(!aceMap.get(principal).add(replaceBean)){
+						LOG.warn("wildcard replacement: replacing bean: " + tmpAclBean + ", with bean " + replaceBean + " failed!");
+					}else{
+						LOG.info("wildcard replacement: replaced bean: " + tmpAclBean + ", with bean " + replaceBean);
+					}
+				}
+			}
+		}
+	}
+
+	private static void validateGlobbing(String principal, long counter,
+			AceBean tmpAclBean, String currentEntryValue) {
+		if(Validators.isValidRegex(currentEntryValue)){
+			tmpAclBean.setRepGlob(currentEntryValue);
+		}
+		else{
+
+			LOG.error("Validation error while reading ACE data: invalid globbing expression: {}", currentEntryValue);
+			throw new IllegalArgumentException("Validation error while reading ACE definition nr." + counter + " of authorizable: " + principal + ",  invalid globbing expression: " + currentEntryValue);
+		}
+	}
+
+	private static void validatePermission(String principal, long counter,
+			AceBean tmpAclBean, String currentEntryValue) {
+		if(Validators.isValidPermission(currentEntryValue)){
+			tmpAclBean.setAllow(new Boolean(StringUtils.equals("allow", currentEntryValue) ? "true" : "deny"));
+			tmpAclBean.setIsAllowProvide(true);
+		}
+		else{
+
+			LOG.error("Validation error while reading ACE data: invalid permission: {}", currentEntryValue);
+			throw new IllegalArgumentException("Validation error while reading ACE definition nr." + counter + " of authorizable: " + principal + ", invalid permission: " + currentEntryValue);
+		}
+	}
+
+	private static boolean validatePrivileges(String principal,
+			boolean isActionOrPrivilegeDefined, long counter,
+			AceBean tmpAclBean, String currentEntryValue) {
+		if(StringUtils.isNotBlank(currentEntryValue)){
+
+			// validation
+			if("null".equals(currentEntryValue)){
+				tmpAclBean.setPrivilegesString("");
+			}else if(!currentEntryValue.isEmpty()){
+				String[] privileges = currentEntryValue.split(",");
+				for(int i = 0; i < privileges.length; i++){
+
+					// remove leading and trailing blanks from privilege name
+					privileges[i] = StringUtils.strip(privileges[i]);
+
+					if(!Validators.isValidJcrPrivilege(privileges[i])){
+						LOG.error("Validation error while reading ACE data: invalid jcr privilege: {}", privileges[i]);
+						throw new IllegalArgumentException("Validation error while reading ACE definition nr." + counter + " of authorizable: " + principal + ",  invalid jcr privilege: " + privileges[i]);
+					}
+				}
+				tmpAclBean.setPrivilegesString(currentEntryValue);
+				isActionOrPrivilegeDefined = true;
+			}
+		}
+		return isActionOrPrivilegeDefined;
+	}
+
+	private static boolean validateActions(String principal,
+			boolean isActionOrPrivilegeDefined, long counter,
+			AceBean tmpAclBean, String currentEntryValue) {
+		if(StringUtils.isNotBlank(currentEntryValue)){
+
+			String[] actions = currentEntryValue.split(",");
+
+			for(int i = 0; i < actions.length; i++){
+
+				// remove leading and trailing blanks from action name
+				actions[i] = StringUtils.strip(actions[i]);
+
+				if(!Validators.isValidAction(actions[i])){
+					LOG.error("Validation error while reading ACE data: invalid action: {}", actions[i]);
+					throw new IllegalArgumentException("Validation error while reading ACE definition nr." + counter + " of authorizable: " + principal + ",  invalid action: " + actions[i]);
+				}
+			}
+
+			tmpAclBean.setActions(actions);
+			isActionOrPrivilegeDefined = true;
+
+		}
+		return isActionOrPrivilegeDefined;
+	}
+
+	private static boolean validateAcePath(String principal,
+			boolean isPathDefined, long counter, AceBean tmpAclBean,
+			String currentEntryValue) {
+		if(Validators.isValidNodePath(currentEntryValue)){
+			tmpAclBean.setJcrPath(currentEntryValue);	
+			isPathDefined = true;
+		}
+		else{
+
+			LOG.error("Validation error while reading ACE data: invalid path: {}", currentEntryValue);
+			throw new IllegalArgumentException("Validation error while reading ACE definition nr." + counter + " of authorizable: " + principal + ", invalid path: " + currentEntryValue);
+		}
+		return isPathDefined;
+	}
+
+	private static void validateAuthorizableName(
+			Set<String> groupsFromCurrentConfig, String principal,
+			AceBean tmpAclBean) {
+		// validate authorizable name format
+		if(Validators.isValidAuthorizableName(principal)){
+
+			// validate if authorizable is contained in config
+			if(!groupsFromCurrentConfig.contains(principal)){
+				String message = "Validation error while reading ACE definition, authorizable: " + principal + " is not contained in group configuration";
+				throw new IllegalArgumentException(message);
+
+			}
+			tmpAclBean.setPrincipal(principal);
+		}
+		else{
+
+			LOG.error("Validation error while reading ACE data: invalid authorizable name: {}", principal);
+			throw new IllegalArgumentException("Validation error while reading ACE definition, invalid authorizable name: " + principal);
+
+		}
 	}
 
 	private static String getMissingPropertiesString(final boolean isPathDefined,  final boolean isActionOrPermissionDefined) {
@@ -382,7 +436,7 @@ public class ConfigReader {
 		if(!isPathDefined) {
 			missingPropertiesString = missingPropertiesString + "path,";
 		}
-		
+
 		if(!isActionOrPermissionDefined) {
 			missingPropertiesString = missingPropertiesString + "actions or permissions,";
 		}
@@ -395,7 +449,7 @@ public class ConfigReader {
 
 		for(LinkedHashMap map:yamlMap){
 			Set<String> keySet = map.keySet();
-			
+
 			for(String principal : keySet){
 				List<LinkedHashMap> principalData = (List<LinkedHashMap>) map.get(principal);
 				LinkedHashSet<AceBean> tmpSet = new LinkedHashSet<AceBean>();
