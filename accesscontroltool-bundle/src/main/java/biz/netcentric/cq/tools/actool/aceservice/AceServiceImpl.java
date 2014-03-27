@@ -273,7 +273,7 @@ public class AceServiceImpl implements AceService{
 
 				Map<String, Set<AceBean>> repositoryDumpAceMap = null;
 				LOG.info("start building dump from repository");
-				repositoryDumpAceMap = dumpservice.createAclDumpMap(session, AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE, dumpservice.getQueryExcludePaths());
+				repositoryDumpAceMap = dumpservice.createUnfilteredAclDumpMap(session, AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE, dumpservice.getQueryExcludePaths());
 				
 				installConfigurationFromYamlList(mergedConfigurations, history, session, authorizableInstallationHistorySet, repositoryDumpAceMap);
 

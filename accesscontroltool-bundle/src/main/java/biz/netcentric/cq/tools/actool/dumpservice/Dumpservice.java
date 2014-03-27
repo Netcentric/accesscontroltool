@@ -71,7 +71,11 @@ public interface Dumpservice {
 	 * @throws IllegalStateException
 	 * @throws RepositoryException
 	 */
-	public Map <String, Set<AceBean>> createAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException;
+	public Map <String, Set<AceBean>> createFilteredAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException;
+
+    public Map <String, Set<AceBean>> createUnfilteredAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException;
+
+//	public Map <String, Set<AceBean>> createAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths, final boolean isFilterACEs) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException;
 	
 	/**
 	 * method that return a dump comprising of all groups and all aces in path based view

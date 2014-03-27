@@ -231,7 +231,7 @@ public class DumpserviceImpl implements Dumpservice{
 		this.returnConfigurationDumpAsFile(response, aceMap, authorizableSet, mapOrder);
 
 	}
-
+    
 	/**
 	 * returns the complete AC dump (groups&ACEs) as String in YAML format
 	 * @param keyOrder either principals (AceHelper.PRINCIPAL_BASED_ORDERING) or node paths (AceHelper.PATH_BASED_ORDERING) as keys
@@ -245,7 +245,7 @@ public class DumpserviceImpl implements Dumpservice{
 		try {
 			session = repository.loginAdministrative(null);
 
-			Map<String, Set<AceBean>> aclDumpMap = this.createAclDumpMap(session, aclMapKeyOrder, AcHelper.ACE_ORDER_ALPHABETICAL, this.queryExcludePaths);
+			Map<String, Set<AceBean>> aclDumpMap = this.createAclDumpMap(session, aclMapKeyOrder, AcHelper.ACE_ORDER_ALPHABETICAL, this.queryExcludePaths, true);
 			Set <String> groups = QueryHelper.getGroupsFromHome(session);
 			Set<AuthorizableConfigBean> authorizableBeans = AuthorizableDumpUtils.returnGroupBeans(session);
 
@@ -508,7 +508,12 @@ public class DumpserviceImpl implements Dumpservice{
 		}
 		return accessControBeanSet;
 	}
-
+	public Map <String, Set<AceBean>> createFilteredAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException{
+		return createAclDumpMap(session, keyOrder, aclOrdering, excludePaths, true);
+	}
+    public Map <String, Set<AceBean>> createUnfilteredAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException{
+    	return createAclDumpMap(session, keyOrder, aclOrdering, excludePaths, false);
+	}
 	/**
 	 * returns a Map with holds either principal or path based ACE data
 	 * @param request
@@ -519,7 +524,7 @@ public class DumpserviceImpl implements Dumpservice{
 	 * @throws IllegalStateException
 	 * @throws RepositoryException
 	 */
-	public Map <String, Set<AceBean>> createAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException{
+	private Map <String, Set<AceBean>> createAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths, final boolean isFilterACEs) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException{
 
 		UserManager um = ((JackrabbitSession)session).getUserManager();
 		Map <String, Set<AceBean>> aceMap = null;
@@ -542,7 +547,7 @@ public class DumpserviceImpl implements Dumpservice{
 				AceBean tmpAceBean = AcHelper.getAceBean(tmpBean);
 				CqActionsMapping.getAggregatedPrivilegesBean(tmpAceBean);
 
-				if(isUnwantedAce(tmpAceBean)){
+				if(isUnwantedAce(tmpAceBean) && isFilterACEs){
 					continue;
 				}
 
@@ -550,8 +555,10 @@ public class DumpserviceImpl implements Dumpservice{
 				Authorizable authorizable = um.getAuthorizable(tmpAceBean.getPrincipalName());
 				
 				// only add bean if authorizable is a group and if this group exists under home
-				if(authorizable != null && authorizable.isGroup()){
-
+				
+				if(authorizable != null){
+					
+					if(authorizable.isGroup() || !isFilterACEs){
 
 					if(keyOrder == AcHelper.PRINCIPAL_BASED_ORDER){
 						if(!aceMap.containsKey(tmpAceBean.getPrincipalName())){
@@ -570,6 +577,7 @@ public class DumpserviceImpl implements Dumpservice{
 							aceMap.get(tmpBean.getJcrPath()).add(tmpAceBean);
 						}
 					}
+				}
 				}
 			}
 		}

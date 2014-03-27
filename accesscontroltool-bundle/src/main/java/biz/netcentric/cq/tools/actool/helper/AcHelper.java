@@ -134,7 +134,7 @@ public class AcHelper {
 				history.addVerboseMessage("\n installing ACE: " + aceBeanSetFromConfig.toString());
 
 				// get merged ACL
-				aceBeanSetFromConfig = getMergedACL(aceBeanSetFromConfig, aceBeanSetFromRepo, authorizablesSet);
+				aceBeanSetFromConfig = getMergedACL(aceBeanSetFromConfig, aceBeanSetFromRepo, authorizablesSet, history);
 
 				// delete ACL in repo
 				PurgeHelper.purgeAcl(session, path);
@@ -232,10 +232,10 @@ public class AcHelper {
 	 * by ACEs from the configuration. Other ACEs don't get changed.
 	 * @param aclfromConfig Set containing an ACL from configuration
 	 * @param aclFomRepository Set containing an ACL from repository dump
-	 * @param authorizablesSet Set containing the names of all groups contained in the configurations(s)
+	 * @param allAuthorizablesFromConfigsSet Set containing the names of all groups contained in the configurations(s)
 	 * @return merged Set
 	 */
-	static Set<AceBean> getMergedACL(final Set<AceBean> aclfromConfig, final Set<AceBean> aclFomRepository, final Set<String> authorizablesSet) {
+	static Set<AceBean> getMergedACL(final Set<AceBean> aclfromConfig, final Set<AceBean> aclFomRepository, final Set<String> allAuthorizablesFromConfigsSet, final AcInstallationHistoryPojo history) {
 
 		// build a Set which contains all authorizable ids from the current ACL from config for the current node
 		Set<String> authorizablesInAclFromConfig = new LinkedHashSet<String>();
@@ -252,20 +252,24 @@ public class AcHelper {
 		// loop through the ACL from repository
 		for(AceBean aceBeanFromRepository : aclFomRepository){
 			// if the ACL from config doesn't contain an ACE from the current authorizable
-
+			
 			// if the ACL from repo contains an authorizable from the groups config but the ACL from the config does not - "delete" the respective ACE by not adding it to the orderedMergedSet
-			if(!authorizablesInAclFromConfig.contains(aceBeanFromRepository.getPrincipalName()) && !authorizablesSet.contains(aceBeanFromRepository.getPrincipalName())){
+			if(!authorizablesInAclFromConfig.contains(aceBeanFromRepository.getPrincipalName()) && !allAuthorizablesFromConfigsSet.contains(aceBeanFromRepository.getPrincipalName())){
 				// add the ACE from repo
 				orderedMergedAceSet.add(aceBeanFromRepository);
+				String message = "add following ACE to the merged ACL: " + aceBeanFromRepository;
+				LOG.debug(message);
+			}else{
+				String message = "following ACE bean doesn't get added to the merged ACL and thus deleted from repository: " + aceBeanFromRepository;
+				LOG.debug(message);
 			}
-
 		}
 		return orderedMergedAceSet;
 	}
 
 	public static Map <String, Set<AceBean>> createAceMap(final SlingHttpServletRequest request, final int keyOrdering, final int aclOrdering, final String[] excludePaths, Dumpservice dumpservice) throws ValueFormatException, IllegalStateException, RepositoryException{
 		Session session = request.getResourceResolver().adaptTo(Session.class);
-		return dumpservice.createAclDumpMap(session, keyOrdering, aclOrdering, excludePaths);
+		return dumpservice.createFilteredAclDumpMap(session, keyOrdering, aclOrdering, excludePaths);
 	}
 	
 
