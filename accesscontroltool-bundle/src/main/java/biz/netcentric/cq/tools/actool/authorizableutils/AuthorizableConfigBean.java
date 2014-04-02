@@ -2,6 +2,8 @@ package biz.netcentric.cq.tools.actool.authorizableutils;
 
 
 
+import java.util.List;
+
 import org.apache.commons.lang.StringUtils;
 
 public class AuthorizableConfigBean {
@@ -72,6 +74,11 @@ public class AuthorizableConfigBean {
 
 	public void setMemberOf(final String[] memberOf) {
 		this.memberOf = memberOf;
+	}
+	public void setMemberOf(final List<String> memberOf) {
+		if(memberOf != null && !memberOf.isEmpty()){
+			this.memberOf = memberOf.toArray(new String[memberOf.size()]);
+		}
 	}
 
 	public String getDescription() {

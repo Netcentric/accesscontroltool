@@ -332,7 +332,7 @@ public class AcHelper {
 		List c = new ArrayList<Map>();
 		Map<String, LinkedHashSet<AuthorizableConfigBean>> mergedAuthorizablesMapfromConfig = new LinkedHashMap<String, LinkedHashSet<AuthorizableConfigBean>>();
 		Map<String, Set<AceBean>> mergedAceMapFromConfig = new LinkedHashMap<String, Set<AceBean>>();
-		Set<String> groupsFromAllConfig = new HashSet<String>();
+		Set<String> groupIdsFromAllConfig = new HashSet<String>();
 
 		for(Map.Entry<String, String> entry : newestConfigurations.entrySet()){
 			String message = "start merging configuration data from: " + entry.getKey();
@@ -346,12 +346,12 @@ public class AcHelper {
 			validateSectionContentExistence(entry.getKey(), yamlList);
 			
 			Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig = ConfigReader.getAuthorizableConfigurationBeans(yamlList);
-			Set<String> groupsFromCurrentConfig = authorizablesMapfromConfig.keySet();
+			Set<String> groupIdsFromCurrentConfig = authorizablesMapfromConfig.keySet();
 
-			validateDoubleGroups(groupsFromAllConfig, groupsFromCurrentConfig, entry.getKey());
+			validateDoubleGroups(groupIdsFromAllConfig, groupIdsFromCurrentConfig, entry.getKey());
 			
-			groupsFromAllConfig.addAll(groupsFromCurrentConfig);
-			Map<String, Set<AceBean>> aceMapFromConfig = ConfigReader.getAceConfigurationBeans(session, yamlList, groupsFromCurrentConfig);
+			groupIdsFromAllConfig.addAll(groupIdsFromCurrentConfig);
+			Map<String, Set<AceBean>> aceMapFromConfig = ConfigReader.getAceConfigurationBeans(session, yamlList, groupIdsFromCurrentConfig);
 
 			mergedAuthorizablesMapfromConfig.putAll(authorizablesMapfromConfig);
 			mergedAceMapFromConfig.putAll(aceMapFromConfig);

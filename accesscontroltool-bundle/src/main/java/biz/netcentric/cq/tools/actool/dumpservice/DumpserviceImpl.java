@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -21,6 +22,7 @@ import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
 import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
@@ -38,6 +40,8 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
+import org.apache.jackrabbit.api.security.user.Group;
+import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -55,6 +59,7 @@ import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableDumpUtils;
 import biz.netcentric.cq.tools.actool.comparators.AcePathComparator;
 import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
+import biz.netcentric.cq.tools.actool.comparators.AuthorizableBeanIDComparator;
 import biz.netcentric.cq.tools.actool.comparators.JcrCreatedComparator;
 import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
@@ -71,11 +76,13 @@ import biz.netcentric.cq.tools.actool.installationhistory.HistoryUtils;
 @Component(
 		metatype = true,
 		label = "AC Dump Service",
-		description = "Service that creates dumps of the current AC configurations (groups&ACEs")
+		description = "Service that creates dumps of the current AC configurations (groups&ACEs)")
 @Properties({
 
-	@Property(label = "Number of dumps to save", name = DumpserviceImpl.DUMP_SERVICE_NR_OF_SAVED_DUMPS, value = "5"),
-	@Property(label = "AC query exclude paths", name = DumpserviceImpl.DUMP_SERVICE_EXCLUDE_PATHS_PATH, value = {"/home", "/jcr:system", "/tmp"})
+	@Property(label = "Number of dumps to save", name = DumpserviceImpl.DUMP_SERVICE_NR_OF_SAVED_DUMPS, value = "5", description = "number of last dumps which get saved in CRX under /var/statistics/achistory"),
+	@Property(label = "Include user ACEs in dumps", name = DumpserviceImpl.DUMP_INCLUDE_USERS, boolValue = false, description = "if selected, also user based ACEs get added to dumps"),
+	@Property(label = "filtered dump", name = DumpserviceImpl.DUMP_IS_FILTERED, boolValue = true, description = "if selected, ACEs of cq actions modify, create and delete containing a repGlob get also added to dumps"),
+	@Property(label = "AC query exclude paths", name = DumpserviceImpl.DUMP_SERVICE_EXCLUDE_PATHS_PATH, value = {"/home", "/jcr:system", "/tmp"}, description = "direct children of jcr:root which get excluded from all dumps (also from internal dumps)")
 })
 
 public class DumpserviceImpl implements Dumpservice{
@@ -94,9 +101,14 @@ public class DumpserviceImpl implements Dumpservice{
 	protected static final int NR_OF_DUMPS_TO_SAVE_DEFAULT = 5;
 	static final String DUMP_SERVICE_EXCLUDE_PATHS_PATH = "DumpService.queryExcludePaths";
 	static final String DUMP_SERVICE_NR_OF_SAVED_DUMPS = "DumpService.nrOfSavedDumps";
+	static final String DUMP_INCLUDE_USERS = "DumpService.includeUsers";
+	static final String DUMP_IS_FILTERED = "DumpService.isFiltered";
+	
 	private String[] queryExcludePaths;
 	private int nrOfSavedDumps;
-
+	private boolean includeUsersInDumps = false;
+	private boolean isFilteredDump= false;
+	
 	@Reference
 	private SlingRepository repository;
 
@@ -107,6 +119,8 @@ public class DumpserviceImpl implements Dumpservice{
 	public void activate(@SuppressWarnings("rawtypes") final Map properties) throws Exception {
 		this.queryExcludePaths = PropertiesUtil.toStringArray(properties.get(DUMP_SERVICE_EXCLUDE_PATHS_PATH),null);
 		this.nrOfSavedDumps = PropertiesUtil.toInteger(properties.get(DUMP_SERVICE_NR_OF_SAVED_DUMPS), NR_OF_DUMPS_TO_SAVE_DEFAULT);
+		this.includeUsersInDumps = PropertiesUtil.toBoolean(properties.get(DUMP_INCLUDE_USERS), false);
+		this.isFilteredDump = PropertiesUtil.toBoolean(properties.get(DUMP_IS_FILTERED), true);
 	}
 	
 	@Override
@@ -245,15 +259,16 @@ public class DumpserviceImpl implements Dumpservice{
 		try {
 			session = repository.loginAdministrative(null);
 
-			Map<String, Set<AceBean>> aclDumpMap = this.createAclDumpMap(session, aclMapKeyOrder, AcHelper.ACE_ORDER_ALPHABETICAL, this.queryExcludePaths, true);
-			Set <String> groups = QueryHelper.getGroupsFromHome(session);
-			Set<AuthorizableConfigBean> authorizableBeans = AuthorizableDumpUtils.returnGroupBeans(session);
-
+			Map<String, Set<AceBean>> aclDumpMap = this.createFilteredAclDumpMap(session, aclMapKeyOrder, AcHelper.ACE_ORDER_ALPHABETICAL, this.queryExcludePaths);
+			Set<AuthorizableConfigBean> groupBeans = AuthorizableDumpUtils.returnGroupBeans(session);
+			Set<User> usersFromACEs = getUsersFromAces(mapOrder, session, aclDumpMap);
+			Set<AuthorizableConfigBean> userBeans = AuthorizableDumpUtils.getUserBeans(usersFromACEs);
+			
 			resourceResolver = this.resourceResolverFactory.getAdministrativeResourceResolver(null);
 			Externalizer externalizer = resourceResolver.adaptTo(Externalizer.class);
 			String serverUrl = externalizer.authorLink(resourceResolver, "");
 
-			return this.getConfigurationDumpAsString(aclDumpMap, authorizableBeans, mapOrder, serverUrl);
+			return this.getConfigurationDumpAsString(aclDumpMap, groupBeans, userBeans, mapOrder, serverUrl);
 		} catch (ValueFormatException e) {
 			LOG.error("ValueFormatException in AceServiceImpl: {}", e);
 		} catch (IllegalStateException e) {
@@ -273,6 +288,38 @@ public class DumpserviceImpl implements Dumpservice{
 			}
 		}
 		return null;
+	}
+
+	private Set<User> getUsersFromAces(int mapOrder, Session session, Map<String, Set<AceBean>> aclDumpMap) throws AccessDeniedException,
+			UnsupportedRepositoryOperationException, RepositoryException {
+		// get users from ACEs
+		Set<User> usersFromACEs = new HashSet<User>();
+		UserManager um = ((JackrabbitSession)session).getUserManager();
+		
+		// if we have a principal ordered ACE map, all authorizables are contained in the keySet of the map
+		if(mapOrder == PRINCIPAL_BASED_SORTING){
+			Set<String> userIds = new HashSet<String>();
+			userIds = aclDumpMap.keySet();
+			for(String id : userIds){
+				Authorizable authorizable = um.getAuthorizable(id);
+				if(!authorizable.isGroup()){
+					usersFromACEs.add((User)authorizable);
+				}
+			}
+		// if we have a path ordered ACE map, all authorizables are contained in AceBean properties
+		}else if(mapOrder == PATH_BASED_SORTING){
+			for(Map.Entry<String, Set<AceBean>> entry : aclDumpMap.entrySet()){
+				Set<AceBean> aceBeanSet =  entry.getValue();
+				for(AceBean aceBean : aceBeanSet){
+					String principalId = aceBean.getPrincipalName();
+					Authorizable authorizable = um.getAuthorizable(principalId);
+					if(!authorizable.isGroup()){
+						usersFromACEs.add((User)authorizable);
+					}
+				}
+			}
+		}
+		return usersFromACEs;
 	}
 
 
@@ -344,7 +391,7 @@ public class DumpserviceImpl implements Dumpservice{
 		}
 	}
 
-	public String getConfigurationDumpAsString(final Map<String, Set<AceBean>> aceMap, final Set<AuthorizableConfigBean> authorizableSet, final int mapOrder, final String serverUrl) throws IOException{
+	public String getConfigurationDumpAsString(final Map<String, Set<AceBean>> aceMap, final Set<AuthorizableConfigBean> groupSet, final Set<AuthorizableConfigBean> userSet, final int mapOrder, final String serverUrl) throws IOException{
 
 		StringBuilder sb = new StringBuilder(20000);
 
@@ -352,7 +399,8 @@ public class DumpserviceImpl implements Dumpservice{
 		sb.append("# Dump created: " + new Date() + " on: " + serverUrl);
 		sb.append("\n\n");
 
-		AuthorizableDumpUtils.getAuthorizableConfigAsString(sb, authorizableSet);
+		AuthorizableDumpUtils.getGroupConfigAsString(sb, groupSet);
+		AuthorizableDumpUtils.getUserConfigAsString(sb, userSet);
 		getAceDumpAsString(sb, aceMap, mapOrder);
 
 		return sb.toString();
@@ -509,22 +557,24 @@ public class DumpserviceImpl implements Dumpservice{
 		return accessControBeanSet;
 	}
 	public Map <String, Set<AceBean>> createFilteredAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException{
-		return createAclDumpMap(session, keyOrder, aclOrdering, excludePaths, true);
+		return createAclDumpMap(session, keyOrder, aclOrdering, excludePaths, this.isFilteredDump, this.includeUsersInDumps);
 	}
     public Map <String, Set<AceBean>> createUnfilteredAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException{
-    	return createAclDumpMap(session, keyOrder, aclOrdering, excludePaths, false);
+    	return createAclDumpMap(session, keyOrder, aclOrdering, excludePaths, false, false);
 	}
 	/**
 	 * returns a Map with holds either principal or path based ACE data
 	 * @param request
 	 * @param keyOrder either principals (AceHelper.PRINCIPAL_BASED_ORDERING) or node paths (AceHelper.PATH_BASED_ORDERING) as keys
 	 * @param aclOrdering specifies whether the allow and deny ACEs within an ACL should be divided in separate blocks (first deny then allow)
+	 * @param isFilterACEs
+	 * @param isExcludeUsers
 	 * @return
 	 * @throws ValueFormatException
 	 * @throws IllegalStateException
 	 * @throws RepositoryException
 	 */
-	private Map <String, Set<AceBean>> createAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths, final boolean isFilterACEs) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException{
+	private Map <String, Set<AceBean>> createAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths, final boolean isFilterACEs, final boolean isExcludeUsers) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException{
 
 		UserManager um = ((JackrabbitSession)session).getUserManager();
 		Map <String, Set<AceBean>> aceMap = null;
@@ -555,29 +605,29 @@ public class DumpserviceImpl implements Dumpservice{
 				Authorizable authorizable = um.getAuthorizable(tmpAceBean.getPrincipalName());
 				
 				// only add bean if authorizable is a group and if this group exists under home
-				
-				if(authorizable != null){
-					
-					if(authorizable.isGroup() || !isFilterACEs){
 
-					if(keyOrder == AcHelper.PRINCIPAL_BASED_ORDER){
-						if(!aceMap.containsKey(tmpAceBean.getPrincipalName())){
-							Set<AceBean> aceSet = getNewAceSet(aclOrdering);
-							aceSet.add(tmpAceBean);
-							aceMap.put(tmpBean.getPrincipal().getName(), aceSet);
-						}else{
-							aceMap.get(tmpBean.getPrincipal().getName()).add(tmpAceBean);
-						}
-					}else if(keyOrder == AcHelper.PATH_BASED_ORDER){ 
-						if(!aceMap.containsKey(tmpBean.getJcrPath())){
-							Set<AceBean> aceSet = getNewAceSet(aclOrdering);
-							aceSet.add(tmpAceBean);
-							aceMap.put(tmpBean.getJcrPath(), aceSet);
-						}else{
-							aceMap.get(tmpBean.getJcrPath()).add(tmpAceBean);
+				if(authorizable != null){
+
+					if(authorizable.isGroup() || isExcludeUsers){
+
+						if(keyOrder == AcHelper.PRINCIPAL_BASED_ORDER){
+							if(!aceMap.containsKey(tmpAceBean.getPrincipalName())){
+								Set<AceBean> aceSet = getNewAceSet(aclOrdering);
+								aceSet.add(tmpAceBean);
+								aceMap.put(tmpBean.getPrincipal().getName(), aceSet);
+							}else{
+								aceMap.get(tmpBean.getPrincipal().getName()).add(tmpAceBean);
+							}
+						}else if(keyOrder == AcHelper.PATH_BASED_ORDER){ 
+							if(!aceMap.containsKey(tmpBean.getJcrPath())){
+								Set<AceBean> aceSet = getNewAceSet(aclOrdering);
+								aceSet.add(tmpAceBean);
+								aceMap.put(tmpBean.getJcrPath(), aceSet);
+							}else{
+								aceMap.get(tmpBean.getJcrPath()).add(tmpAceBean);
+							}
 						}
 					}
-				}
 				}
 			}
 		}

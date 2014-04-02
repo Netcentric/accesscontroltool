@@ -34,7 +34,7 @@ public interface Dumpservice {
 	 * @return
 	 * @throws IOException
 	 */
-	public String getConfigurationDumpAsString(final Map<String, Set<AceBean>> aceMap, final Set<AuthorizableConfigBean> authorizableSet, final int mapOrder, final String serverUrl) throws IOException;
+	public String getConfigurationDumpAsString(final Map<String, Set<AceBean>> aceMap, final Set<AuthorizableConfigBean> groupSet,final Set<AuthorizableConfigBean> userSet, final int mapOrder, final String serverUrl) throws IOException;
 	
 	/**
 	 * 
