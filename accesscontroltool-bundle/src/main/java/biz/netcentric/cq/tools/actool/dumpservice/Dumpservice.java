@@ -5,8 +5,10 @@ import java.io.PrintWriter;
 import java.util.Map;
 import java.util.Set;
 
+import javax.jcr.AccessDeniedException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
 
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -17,6 +19,8 @@ import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.helper.AclBean;
 
 public interface Dumpservice {
+	
+	public Set<AuthorizableConfigBean> getGroupBeans(Session session) throws AccessDeniedException, UnsupportedRepositoryOperationException, RepositoryException;
 	
 	/**
 	 * returns the paths under jcr:root witch are excluded from search for rep:policy nodes in OSGi configuration
@@ -34,7 +38,7 @@ public interface Dumpservice {
 	 * @return
 	 * @throws IOException
 	 */
-	public String getConfigurationDumpAsString(final Map<String, Set<AceBean>> aceMap, final Set<AuthorizableConfigBean> groupSet,final Set<AuthorizableConfigBean> userSet, final int mapOrder, final String serverUrl) throws IOException;
+	public String getConfigurationDumpAsString(final AceDumpData aceDumpData, final Set<AuthorizableConfigBean> groupSet,final Set<AuthorizableConfigBean> userSet, final int mapOrder, final String serverUrl) throws IOException;
 	
 	/**
 	 * 
@@ -71,9 +75,9 @@ public interface Dumpservice {
 	 * @throws IllegalStateException
 	 * @throws RepositoryException
 	 */
-	public Map <String, Set<AceBean>> createFilteredAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException;
+	public AceDumpData createFilteredAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException;
 
-    public Map <String, Set<AceBean>> createUnfilteredAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException;
+    public AceDumpData createUnfilteredAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException;
 
 //	public Map <String, Set<AceBean>> createAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths, final boolean isFilterACEs) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException;
 	

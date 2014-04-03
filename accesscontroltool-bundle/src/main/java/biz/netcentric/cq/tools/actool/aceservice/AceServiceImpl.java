@@ -91,76 +91,6 @@ public class AceServiceImpl implements AceService{
 	}
 
 	
-
-//	@Override
-//	public void returnAceDumpAsFile(final SlingHttpServletRequest request, final SlingHttpServletResponse response, Session session, int mapOrder, int aceOrder) {
-//		try {
-//			Map<String, Set<AceBean>> aclDumpMap = AcHelper.createAceMap(request, mapOrder, aceOrder, this.queryExcludePaths, dumpservice);
-//			dumpservice.returnAceDumpAsFile(response, aclDumpMap, mapOrder);
-//		} catch (ValueFormatException e) {
-//			LOG.error("ValueFormatException in AceServiceImpl: {}", e);
-//		} catch (IllegalStateException e) {
-//			LOG.error("IllegalStateException in AceServiceImpl: {}", e);
-//		} catch (IOException e) {
-//			LOG.error("IOException in AceServiceImpl: {}", e);
-//		} catch (RepositoryException e) {
-//			LOG.error("RepositoryException in AceServiceImpl: {}", e);
-//		}
-//
-//	}
-//
-//	@Override
-//	public String getCompletePathBasedDumpsAsString() {
-//		return getCompleteDump(2,2);
-//	}
-//
-//	@Override
-//	public String getCompletePrincipalBasedDumpsAsString() {
-//		return getCompleteDump(1,1);
-//	}
-//
-//
-//	private String getCompleteDump(int aclMapKeyOrder, int mapOrder){
-//		Session session = null;
-//		ResourceResolver resourceResolver = null;
-//	
-//		try {
-//			session = repository.loginAdministrative(null);
-//			
-//			
-//			
-//			Map<String, Set<AceBean>> aclDumpMap = dumpservice.createAclDumpMap(session, aclMapKeyOrder, AcHelper.ACE_ORDER_ALPHABETICAL, queryExcludePaths);
-//			Set <String> groups = QueryHelper.getGroupsFromHome(session);
-//			Set<AuthorizableConfigBean> authorizableBeans = AuthorizableDumpUtils.returnGroupBeans(session);
-//			
-//			resourceResolver = this.resourceResolverFactory.getAdministrativeResourceResolver(null);
-//			Externalizer externalizer = resourceResolver.adaptTo(Externalizer.class);
-//			String serverUrl = externalizer.authorLink(resourceResolver, "");
-//			
-//			return dumpservice.returnConfigurationDumpAsString(aclDumpMap, authorizableBeans, mapOrder, serverUrl);
-//		} catch (ValueFormatException e) {
-//			LOG.error("ValueFormatException in AceServiceImpl: {}", e);
-//		} catch (IllegalStateException e) {
-//			LOG.error("IllegalStateException in AceServiceImpl: {}", e);
-//		} catch (IOException e) {
-//			LOG.error("IOException in AceServiceImpl: {}", e);
-//		} catch (RepositoryException e) {
-//			LOG.error("RepositoryException in AceServiceImpl: {}", e);
-//		} catch (LoginException e) {
-//			LOG.error("LoginException in AceServiceImpl: {}", e);
-//		}finally{
-//			if(session != null){
-//				session.logout();
-//			}
-//			if(resourceResolver != null){
-//				resourceResolver.close();
-//			}
-//		}
-//		return null;
-//
-//	}
-	
-
 	private void installConfigurationFromYamlList(final List mergedConfigurations, AcInstallationHistoryPojo history, final Session session, Set<AuthorizableInstallationHistory> authorizableHistorySet, Map<String, Set<AceBean>> repositoryDumpAceMap) throws Exception  {
 
 		Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig  = (Map<String, LinkedHashSet<AuthorizableConfigBean>>) mergedConfigurations.get(0);
@@ -273,7 +203,7 @@ public class AceServiceImpl implements AceService{
 
 				Map<String, Set<AceBean>> repositoryDumpAceMap = null;
 				LOG.info("start building dump from repository");
-				repositoryDumpAceMap = dumpservice.createUnfilteredAclDumpMap(session, AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE, dumpservice.getQueryExcludePaths());
+				repositoryDumpAceMap = dumpservice.createUnfilteredAclDumpMap(session, AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE, dumpservice.getQueryExcludePaths()).getAceDump();
 				
 				installConfigurationFromYamlList(mergedConfigurations, history, session, authorizableInstallationHistorySet, repositoryDumpAceMap);
 
@@ -555,54 +485,6 @@ public class AceServiceImpl implements AceService{
 		return message+message2;
 	}
 	
-//	@Override
-//	public String purgeAuthorizable(String authorizableId) {
-//		Session session = null;
-//		String message = "";
-//		String message2 = "";
-//		try {
-//
-//			session = repository.loginAdministrative(null);
-//			JackrabbitSession js = (JackrabbitSession) session;
-//			UserManager userManager = js.getUserManager();
-//			userManager.autoSave(false);
-//			PrincipalManager principalManager = js.getPrincipalManager();
-//
-//			// deletion of authorizable from /home
-//
-//			message = deleteAuthorizableFromHome(authorizableId,
-//					userManager, principalManager);
-//
-//			
-//			// deletion of all ACE of that autorizable
-//			try {
-//				Set<AclBean> nodes =  QueryHelper.getAuthorizablesAcls(session, authorizableId);
-//				if(!nodes.isEmpty()){
-//					message2 =  PurgeHelper.deleteAcesFromAuthorizable(session, nodes, authorizableId);
-//					session.save();
-//				}else{
-//					message2 = "did not find any ACEs for this principal in repository!";
-//				}
-//			} catch (InvalidQueryException e) {
-//				message2 = "\n deletion of ACEs failed! Reason: InvalidQueryException: " + e.toString() + "\n";
-//				e.printStackTrace();
-//
-//
-//			}
-//		} catch (RepositoryException e) {
-//			message2 = message2 + " deletion of ACEs failed! reason: RepositoryException: " + e.toString();
-//			e.printStackTrace();
-//		}
-//		finally{
-//			if(session != null){
-//				session.logout();
-//			}
-//		}
-//		return message + message2;
-//	}
-
-
-
 	private String deleteAuthorizableFromHome(final String authorizableId, final UserManager userManager, final PrincipalManager principalManager) {
 		String message;
 		if(principalManager.hasPrincipal(authorizableId)){
@@ -620,16 +502,11 @@ public class AceServiceImpl implements AceService{
 		return message;
 	}
 
-	
-
 	@Override
 	public boolean isExecuting() {
 		return this.isExecuting;
 	}
 
-	
-
-	
 
 	@Override
 	public String getConfigurationRootPath() {
@@ -660,6 +537,4 @@ public class AceServiceImpl implements AceService{
 		List mergedConfigurations = AcHelper.getMergedConfigurations(session, newestConfigurations, history);
 		return ((Map<String, Set<AceBean>>) mergedConfigurations.get(0)).keySet();
 	}
-    
-
 }

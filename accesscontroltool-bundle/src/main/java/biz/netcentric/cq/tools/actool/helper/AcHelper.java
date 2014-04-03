@@ -269,7 +269,7 @@ public class AcHelper {
 
 	public static Map <String, Set<AceBean>> createAceMap(final SlingHttpServletRequest request, final int keyOrdering, final int aclOrdering, final String[] excludePaths, Dumpservice dumpservice) throws ValueFormatException, IllegalStateException, RepositoryException{
 		Session session = request.getResourceResolver().adaptTo(Session.class);
-		return dumpservice.createFilteredAclDumpMap(session, keyOrdering, aclOrdering, excludePaths);
+		return dumpservice.createFilteredAclDumpMap(session, keyOrdering, aclOrdering, excludePaths).getAceDump();
 	}
 	
 

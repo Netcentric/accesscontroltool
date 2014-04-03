@@ -114,7 +114,7 @@ public class QueryHelper {
 
 	public static Set <String> getGroupsFromHome(final Session session) throws InvalidQueryException, RepositoryException{
 		Set <String> groups = new TreeSet<String>();
-		String queryStringGroups = "//*[(@jcr:primaryType = 'rep:Group')]" ;
+		String queryStringGroups = "//*[(@jcr:primaryType = 'rep:Group')]";
 		Query queryGroups = session.getWorkspace().getQueryManager().createQuery(queryStringGroups, Query.XPATH);
 		QueryResult queryResultGroups = queryGroups.execute();
 		NodeIterator nitGroups = queryResultGroups.getNodes();
