@@ -504,7 +504,7 @@ public class AuthorizableCreatorServiceImpl implements AuthorizableCreatorServic
 					authorizableInstallationHistory.addNewCreatedAuthorizabe(newGroup.getID());
 					LOG.warn("Failed to add group: {} to authorizable: {}. Didn't find this authorizable under /home! Created group", authorizablelID, principal);
 				}else{
-					String message = "Failed to add group: " + authorizablelID + " to authorizable: " + principal + ". Neither found this authorizable ("+principal+") in any of the configurations nor installed in the system!";
+					String message = "Failed to add group: " + authorizablelID + " as member to authorizable: " + principal + ". Neither found this authorizable (" + principal + ") in any of the configurations nor installed in the system!";
 					LOG.error(message);
 
 					throw new AuthorizableCreatorException(message);
