@@ -121,7 +121,12 @@ public class DumpserviceImpl implements Dumpservice{
 		this.isFilteredDump = PropertiesUtil.toBoolean(properties.get(DUMP_IS_FILTERED), true);
 		this.isShowLegacyAces = PropertiesUtil.toBoolean(properties.get(DUMP_IS_SHOW_LEGACY_ACES), true);
 	}
-	
+	public boolean isIncludeUsers(){
+		return this.includeUsersInDumps;
+	}
+	public boolean isShowLegacyAces(){
+		return this.isShowLegacyAces;
+	}
 	@Override
 	public String[] getQueryExcludePaths() {
 		return this.queryExcludePaths;
@@ -403,72 +408,59 @@ public class DumpserviceImpl implements Dumpservice{
 	}
 
 	public String getConfigurationDumpAsString(AceDumpData aceDumpData, final Set<AuthorizableConfigBean> groupSet, final Set<AuthorizableConfigBean> userSet, final int mapOrder, final String serverUrl) throws IOException{
-		
-		Map<String, Set<AceBean>> aceMap = aceDumpData.getAceDump();
-		Map<String, Set<AceBean>> legacyAceMap = aceDumpData.getLegacyAceDump();
 		StringBuilder sb = new StringBuilder(20000);
 
 		// add creation date and URL of current author instance as first line 
-		sb.append("# Dump created: " + new Date() + " on: " + serverUrl);
-		sb.append("\n\n");
-
-		getGroupConfigAsString(sb, groupSet);
-		getUserConfigAsString(sb, userSet);
-		
-		getValidAceDumpAsString(mapOrder, aceMap, sb);
-		
-		if(this.isShowLegacyAces){
-			getLegacyAceDumpAsString(mapOrder, legacyAceMap, sb);
-		}
-
+		String dumpComment = "# Dump created: " + new Date() + " on: " + serverUrl;
+		new CompleteAcDump(aceDumpData, groupSet, userSet, mapOrder, serverUrl, dumpComment, this).accept(new AcDumpElementYamlVisitor(mapOrder, sb));
 		return sb.toString();
 	}
 
-	private void getValidAceDumpAsString(final int mapOrder, Map<String, Set<AceBean>> aceMap, StringBuilder sb) throws IOException {
-		sb.append("- " + Constants.ACE_CONFIGURATION_KEY + ":") ;
-		sb.append("\n\n");
-		getAceDumpAsString(sb, aceMap, mapOrder);
-	}
+//	private void getValidAceDumpAsString(final int mapOrder, Map<String, Set<AceBean>> aceMap, StringBuilder sb) throws IOException {
+//		sb.append("- " + Constants.ACE_CONFIGURATION_KEY + ":") ;
+//		sb.append("\n\n");
+//		getAceDumpAsString(sb, aceMap, mapOrder);
+//	}
+//
+//	private void getLegacyAceDumpAsString(final int mapOrder, Map<String, Set<AceBean>> legacyAceMap, StringBuilder sb) throws IOException {
+//		sb.append("- " + Constants.LEGACY_ACE_DUMP_SECTION_KEY+ ":") ;
+//		sb.append("\n\n");
+//		getAceDumpAsString(sb, legacyAceMap, mapOrder);
+//	}
 
-	private void getLegacyAceDumpAsString(final int mapOrder, Map<String, Set<AceBean>> legacyAceMap, StringBuilder sb) throws IOException {
-		sb.append("- " + Constants.LEGACY_ACE_DUMP_SECTION_KEY+ ":") ;
-		sb.append("\n\n");
-		getAceDumpAsString(sb, legacyAceMap, mapOrder);
-	}
-
-	public StringBuilder getAceDumpAsString(final StringBuilder sb, final Map<String, Set<AceBean>> aceMap, final int mapOrder) throws IOException{
-
-		Set<String> keys = aceMap.keySet();
-		
-		for(String mapKey : keys){
-
-			Set<AceBean> aceBeanSet = aceMap.get(mapKey);
-
-			sb.append(Constants.DUMP_INDENTATION_KEY + "- " + mapKey + ":");
-			sb.append("\n");
-			for(AceBean bean : aceBeanSet){
-				bean = CqActionsMapping.getAlignedPermissionBean(bean);
-
-				sb.append("\n");
-				if(mapOrder == PATH_BASED_SORTING){
-					sb.append(Constants.DUMP_INDENTATION_FIRST_PROPERTY + "- principal: " + bean.getPrincipalName()).append("\n");
-				}else if(mapOrder == PRINCIPAL_BASED_SORTING){
-					sb.append(Constants.DUMP_INDENTATION_FIRST_PROPERTY + "- path: " + bean.getJcrPath()).append("\n");
-				}
-				sb.append(Constants.DUMP_INDENTATION_PROPERTY + "permission: " + bean.getPermission()).append("\n");
-				sb.append(Constants.DUMP_INDENTATION_PROPERTY + "actions: " + bean.getActionsString()).append("\n");
-				sb.append(Constants.DUMP_INDENTATION_PROPERTY + "privileges: " + bean.getPrivilegesString()).append("\n");
-				sb.append(Constants.DUMP_INDENTATION_PROPERTY + "repGlob: ");
-				if(!bean.getRepGlob().isEmpty()){
-					sb.append("'" + bean.getRepGlob() + "'");
-				}
-				sb.append("\n");
-			}
-			sb.append("\n");
-		}
-		sb.append("\n");
-		return sb;
-	}
+//	public StringBuilder getAceDumpAsString(final StringBuilder sb, final Map<String, Set<AceBean>> aceMap, final int mapOrder) throws IOException{
+//
+//		Set<String> keys = aceMap.keySet();
+//		
+//		for(String mapKey : keys){
+//
+//			Set<AceBean> aceBeanSet = aceMap.get(mapKey);
+//
+//			sb.append(Constants.DUMP_INDENTATION_KEY + "- " + mapKey + ":");
+//			sb.append("\n");
+//			for(AceBean bean : aceBeanSet){
+//				bean = CqActionsMapping.getAlignedPermissionBean(bean);
+//
+//				sb.append("\n");
+//				if(mapOrder == PATH_BASED_SORTING){
+//					sb.append(Constants.DUMP_INDENTATION_FIRST_PROPERTY + "- principal: " + bean.getPrincipalName()).append("\n");
+//				}else if(mapOrder == PRINCIPAL_BASED_SORTING){
+//					sb.append(Constants.DUMP_INDENTATION_FIRST_PROPERTY + "- path: " + bean.getJcrPath()).append("\n");
+//				}
+//				sb.append(Constants.DUMP_INDENTATION_PROPERTY + "permission: " + bean.getPermission()).append("\n");
+//				sb.append(Constants.DUMP_INDENTATION_PROPERTY + "actions: " + bean.getActionsString()).append("\n");
+//				sb.append(Constants.DUMP_INDENTATION_PROPERTY + "privileges: " + bean.getPrivilegesString()).append("\n");
+//				sb.append(Constants.DUMP_INDENTATION_PROPERTY + "repGlob: ");
+//				if(!bean.getRepGlob().isEmpty()){
+//					sb.append("'" + bean.getRepGlob() + "'");
+//				}
+//				sb.append("\n");
+//			}
+//			sb.append("\n");
+//		}
+//		sb.append("\n");
+//		return sb;
+//	}
 
 	public void returnConfigurationDumpAsFile(final SlingHttpServletResponse response,
 			Map<String, Set<AceBean>> aceMap, Set<AuthorizableConfigBean> authorizableSet, final int mapOrder) throws IOException{
@@ -586,7 +578,7 @@ public class DumpserviceImpl implements Dumpservice{
 		return createAclDumpMap(session, keyOrder, aclOrdering, excludePaths, this.isFilteredDump, this.includeUsersInDumps);
 	}
     public AceDumpData createUnfilteredAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException{
-    	return createAclDumpMap(session, keyOrder, aclOrdering, excludePaths, false, false);
+    	return createAclDumpMap(session, keyOrder, aclOrdering, excludePaths, false, true);
 	}
     
 	/**
@@ -595,13 +587,13 @@ public class DumpserviceImpl implements Dumpservice{
 	 * @param keyOrder either principals (AceHelper.PRINCIPAL_BASED_ORDERING) or node paths (AceHelper.PATH_BASED_ORDERING) as keys
 	 * @param aclOrdering specifies whether the allow and deny ACEs within an ACL should be divided in separate blocks (first deny then allow)
 	 * @param isFilterACEs
-	 * @param isExcludeUsers
+	 * @param isIncludeUsers
 	 * @return
 	 * @throws ValueFormatException
 	 * @throws IllegalStateException
 	 * @throws RepositoryException
 	 */
-	private AceDumpData createAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths, final boolean isFilterACEs, final boolean isExcludeUsers) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException{
+	private AceDumpData createAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths, final boolean isFilterACEs, final boolean isIncludeUsers) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException{
 		AceDumpData aceDumpData = new AceDumpData();
 		UserManager um = ((JackrabbitSession)session).getUserManager();
 		Map <String, Set<AceBean>> aceMap = null;
@@ -635,7 +627,7 @@ public class DumpserviceImpl implements Dumpservice{
 
 				// if this group exists under home
 				if(authorizable != null){
-					if(authorizable.isGroup() || isExcludeUsers){
+					if(authorizable.isGroup() || isIncludeUsers){
 						addBeanToMap(keyOrder, aclOrdering, aceMap, tmpAceBean);
 					}
 				}

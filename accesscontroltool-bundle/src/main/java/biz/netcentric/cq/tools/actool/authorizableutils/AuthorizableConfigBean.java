@@ -6,7 +6,10 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 
-public class AuthorizableConfigBean {
+import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElement;
+import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementVisitor;
+
+public class AuthorizableConfigBean implements AcDumpElement{
 
 	private String principalID;
 	private String principalName;
@@ -105,5 +108,10 @@ public class AuthorizableConfigBean {
 		sb.append("path: " + this.path + "\n");
 		sb.append("memberOf: " + this.getMemberOfString() + "\n");
 		return sb.toString();
+	}
+
+	@Override
+	public void accept(AcDumpElementVisitor acDumpElementVisitor) {
+		acDumpElementVisitor.visit(this);
 	}
 }

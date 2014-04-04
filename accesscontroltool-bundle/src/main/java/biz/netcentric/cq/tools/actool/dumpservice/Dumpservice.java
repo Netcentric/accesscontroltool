@@ -22,6 +22,12 @@ public interface Dumpservice {
 	
 	public Set<AuthorizableConfigBean> getGroupBeans(Session session) throws AccessDeniedException, UnsupportedRepositoryOperationException, RepositoryException;
 	
+	
+	
+	public boolean isIncludeUsers();
+	
+	public boolean isShowLegacyAces();
+	
 	/**
 	 * returns the paths under jcr:root witch are excluded from search for rep:policy nodes in OSGi configuration
 	 * @return String array containing the paths
@@ -48,7 +54,7 @@ public interface Dumpservice {
 	 * @return
 	 * @throws IOException
 	 */
-	public StringBuilder getAceDumpAsString(final StringBuilder sb, final Map<String, Set<AceBean>> aceMap, final int mapOrder) throws IOException;
+//	public StringBuilder getAceDumpAsString(final StringBuilder sb, final Map<String, Set<AceBean>> aceMap, final int mapOrder) throws IOException;
 	
 	
 	/**
