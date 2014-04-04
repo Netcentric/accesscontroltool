@@ -2,6 +2,7 @@ package biz.netcentric.cq.tools.actool.helper;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -9,8 +10,11 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+
 import org.junit.Before;
 import org.junit.Test;
+
+import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 public class AcHelperTest {
 
@@ -131,8 +135,8 @@ public class AcHelperTest {
 
 		resultSet.add(aceBeanGroupA_1);
 		resultSet.add(aceBeanGroupB_1);
-
-		assertEquals(resultSet, AcHelper.getMergedACL(aclfromConfig, aclFomRepository, authorizablesSet)); 
+		AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
+		assertEquals(resultSet, AcHelper.getMergedACL(aclfromConfig, aclFomRepository, authorizablesSet, history)); 
 
 
 		aclFomRepository.clear();
@@ -146,7 +150,7 @@ public class AcHelperTest {
 		resultSet.add(aceBeanGroupA_1);
 		resultSet.add(aceBeanGroupB_1);
 
-		assertEquals(resultSet, AcHelper.getMergedACL(aclfromConfig, aclFomRepository, authorizablesSet)); 
+		assertEquals(resultSet, AcHelper.getMergedACL(aclfromConfig, aclFomRepository, authorizablesSet, history)); 
 
 		aclFomRepository.clear();
 		resultSet.clear();
@@ -161,7 +165,7 @@ public class AcHelperTest {
 		resultSet.add(aceBeanGroupB_1); // Group-B
 		resultSet.add(aceBeanGroupD_1); // Group-D
 
-		assertEquals(resultSet, AcHelper.getMergedACL(aclfromConfig, aclFomRepository, authorizablesSet)); 
+		assertEquals(resultSet, AcHelper.getMergedACL(aclfromConfig, aclFomRepository, authorizablesSet, history)); 
 
 
 		// case4: D_1 AND(!) E_1 stay since they're no groups from config,
@@ -174,7 +178,7 @@ public class AcHelperTest {
 		resultSet.add(aceBeanGroupD_1); 
 		// E_1 not in result set -> wrong
 
-		assertNotEquals(resultSet, AcHelper.getMergedACL(aclfromConfig, aclFomRepository, authorizablesSet)); 
+		assertNotEquals(resultSet, AcHelper.getMergedACL(aclfromConfig, aclFomRepository, authorizablesSet, history)); 
 
 		// case4: empty ACL in repository -> A_1 and B_1 get added
 
@@ -184,7 +188,7 @@ public class AcHelperTest {
 		resultSet.add(aceBeanGroupA_1); // Group-A
 		resultSet.add(aceBeanGroupB_1); // Group-B
 
-		assertEquals(resultSet, AcHelper.getMergedACL(aclfromConfig, aclFomRepository, authorizablesSet));
+		assertEquals(resultSet, AcHelper.getMergedACL(aclfromConfig, aclFomRepository, authorizablesSet, history));
 	}
 
 	@Test
