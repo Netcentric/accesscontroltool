@@ -12,7 +12,7 @@ import biz.netcentric.cq.tools.actool.helper.AceBean;
 public class CqActionsMappingTest {
 	AceBean aceBean1;
 	AceBean aceBean2;
-	
+	AceBean aceBean3;
 
 	@Before
 	public void setup() {
@@ -34,6 +34,10 @@ public class CqActionsMappingTest {
 		aceBean2.setJcrPath("/content");
 		aceBean2.setPrivilegesString("");
 		aceBean2.setRepGlob("");
+		
+		aceBean3 = new AceBean();
+		
+	
 	}
 	@Test
 	public void getConvertedPrivilegeBeanTest(){
@@ -41,5 +45,25 @@ public class CqActionsMappingTest {
 
 		assertArrayEquals(aceBean1.getActions(), aceBean2.getActions());
 		assertEquals(aceBean1.getPrivilegesString(), aceBean2.getPrivilegesString());
+	}
+	@Test
+	public void getAggregatedPrivilegesBeanTest(){
+		aceBean3.setPrivilegesString("jcr:addChildNodes,jcr:removeNode,jcr:modifyProperties,jcr:removeChildNodes");
+		CqActionsMapping.getAggregatedPrivilegesBean(aceBean3);
+		assertEquals(aceBean3.getPrivilegesString(),"jcr:write");
+		
+		aceBean3.setPrivilegesString("jcr:addChildNodes,jcr:removeNode,jcr:modifyProperties,jcr:removeChildNodes,jcr:write");
+		CqActionsMapping.getAggregatedPrivilegesBean(aceBean3);
+		assertEquals(aceBean3.getPrivilegesString(),"jcr:write");
+		
+		aceBean3.setPrivilegesString("jcr:workspaceManagement,jcr:lifecycleManagement,jcr:versionManagement,jcr:lockManagement,crx:replicate,jcr:read,jcr:modifyAccessControl,rep:write,rep:privilegeManagement,jcr:nodeTypeManagement,jcr:namespaceManagement,jcr:write,jcr:nodeTypeDefinitionManagement,jcr:retentionManagement,jcr:readAccessControl");
+		CqActionsMapping.getAggregatedPrivilegesBean(aceBean3);
+		assertEquals(aceBean3.getPrivilegesString(),"jcr:all");
+
+		
+		
+		aceBean3.setPrivilegesString("jcr:modifyProperties,jcr:addChildNodes,jcr:removeNode,jcr:removeChildNodes,jcr:nodeTypeManagement");
+		CqActionsMapping.getAggregatedPrivilegesBean(aceBean3);
+		assertEquals(aceBean3.getPrivilegesString(),"rep:write");
 	}
 }
