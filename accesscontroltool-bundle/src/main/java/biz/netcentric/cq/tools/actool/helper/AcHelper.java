@@ -98,7 +98,9 @@ public class AcHelper {
 		return aceBean;
 	}
 
-
+	public static String getBlankString(final int nrOfBlanks){
+		return StringUtils.repeat(" ", nrOfBlanks);
+	}
 
 	/**
 	 * Method which installs all ACE contained in the configurations. if an ACL is already existing in CRX the ACEs from the config get merged into the ACL (the ones from config overwrite the ones in CRX)
@@ -320,8 +322,8 @@ public class AcHelper {
 
 
 	/**
-	 * Method that merges several textual AccessControlConfigurations written in YAML format, each consisting of a groups and ACE configuration.
-	 * Overall validation ensures that no doubled defined groups in different configuration files are possible
+	 * Method that merges several textual AccessControlConfigurations written in YAML format, each comprising of a groups and ACE configuration.
+	 * Validation ensures that no doubled defined groups and only valid section identifiers in configuration files are possible
 	 * @param session 
 	 * @param newestConfigurations map which contains all paths and configuration in YAML format. key is the node path in CRX under which the respective configuration is stored, entry is the textual configuration
 	 * @param history history object
@@ -332,28 +334,43 @@ public class AcHelper {
 		List c = new ArrayList<Map>();
 		Map<String, LinkedHashSet<AuthorizableConfigBean>> mergedAuthorizablesMapfromConfig = new LinkedHashMap<String, LinkedHashSet<AuthorizableConfigBean>>();
 		Map<String, Set<AceBean>> mergedAceMapFromConfig = new LinkedHashMap<String, Set<AceBean>>();
-		Set<String> groupIdsFromAllConfig = new HashSet<String>();
+		Set<String> groupIdsFromAllConfig = new HashSet<String>(); // needed for detection of doubled defined groups in configurations
 
 		for(Map.Entry<String, String> entry : newestConfigurations.entrySet()){
 			String message = "start merging configuration data from: " + entry.getKey();
 			
-			validateSectionIdentifiers(entry);
+			validateMandatorySectionIdentifiersExistence(entry.getValue(), entry.getKey());
 			
 			history.addMessage(message);
 			Yaml yaml = new Yaml();
 			List<LinkedHashMap>  yamlList =  (List<LinkedHashMap>) yaml.load(entry.getValue());
 			
+			Set<String> sectionIdentifiers = new LinkedHashSet<String>();
+			
+			// put all section identifiers of current configuration into a set
+			for(int i = 0; i < yamlList.size();i++){
+				sectionIdentifiers.addAll(yamlList.get(i).keySet());
+			}
+			validateSectionIdentifiers(sectionIdentifiers, entry.getKey());
+			
 			validateSectionContentExistence(entry.getKey(), yamlList);
 			
+			// build AuthorizableConfigBeans from current configurations
 			Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig = ConfigReader.getAuthorizableConfigurationBeans(yamlList);
 			Set<String> groupIdsFromCurrentConfig = authorizablesMapfromConfig.keySet();
 
 			validateDoubleGroups(groupIdsFromAllConfig, groupIdsFromCurrentConfig, entry.getKey());
 			
+			// add IDs from authorizables from current configuration to set
 			groupIdsFromAllConfig.addAll(groupIdsFromCurrentConfig);
+			
+			// build AceBeans from current configuration
 			Map<String, Set<AceBean>> aceMapFromConfig = ConfigReader.getAceConfigurationBeans(session, yamlList, groupIdsFromCurrentConfig);
-
+			
+			// add AuthorizableConfigBeans built from current configuration to set containing AuthorizableConfigBeans from all configurations
 			mergedAuthorizablesMapfromConfig.putAll(authorizablesMapfromConfig);
+			
+			// add AceBeans built from current configuration to set containing AceBeans from all configurations
 			mergedAceMapFromConfig.putAll(aceMapFromConfig);
 		}
 		c.add(mergedAuthorizablesMapfromConfig);
@@ -395,30 +412,50 @@ public class AcHelper {
 	 * @param yamlList list holding the group and ACE configuration as LinkedHashMap (as returned by YAML parser)
 	 * @throws IllegalArgumentException
 	 */
-	private static void validateSectionContentExistence (
-			final String configPath, List<LinkedHashMap> yamlList) throws IllegalArgumentException{
+	private static void validateSectionContentExistence (final String configPath, List<LinkedHashMap> yamlList) throws IllegalArgumentException{
 		
 		if(yamlList.get(0).get(Constants.GROUP_CONFIGURATION_KEY) == null){
-			throw new IllegalArgumentException("Empty group section in configuration file: " + configPath);
+			throw new IllegalArgumentException("Empty " + Constants.GROUP_CONFIGURATION_KEY + " section in configuration file: " + configPath);
 		}
 		if(yamlList.get(1).get(Constants.ACE_CONFIGURATION_KEY) == null){
-			throw new IllegalArgumentException("Empty ACE section in configuration file: " + configPath);
+			throw new IllegalArgumentException("Empty " + Constants.ACE_CONFIGURATION_KEY + " section in configuration file: " + configPath);
 		}
 	}
 	
-
 	/**
-	 * Method that checks if both configuration section identifiers (group and ACE) exist in the current configuration file
+	 * Method that checks if mandatory configuration section identifiers (group and ACE) exist in the current configuration file
 	 * @param entry Map.Entry containing a configuration
 	 * @throws IllegalArgumentException
 	 */
-	private static void validateSectionIdentifiers(Map.Entry<String, String> entry) throws IllegalArgumentException{
+	private static void validateMandatorySectionIdentifiersExistence(final String configuration, final String filePath){
+			// check if mandatory section identifiers are there
 		
-		if(!entry.getValue().contains(Constants.GROUP_CONFIGURATION_KEY)){
-			throw new IllegalArgumentException("group section identifier ('" + Constants.GROUP_CONFIGURATION_KEY + "') missing in configuration file: " + entry.getKey());
-		}
-		if(!entry.getValue().contains(Constants.ACE_CONFIGURATION_KEY)){
-			throw new IllegalArgumentException("ACE section identifier ('" + Constants.ACE_CONFIGURATION_KEY + "') missing in configuration file: " + entry.getKey());
+				if(!configuration.contains(Constants.GROUP_CONFIGURATION_KEY) && !configuration.contains(Constants.USER_CONFIGURATION_KEY) ){
+					throw new IllegalArgumentException(Constants.GROUP_CONFIGURATION_KEY + " section identifier ('" + Constants.GROUP_CONFIGURATION_KEY + "') missing in configuration file: " + filePath);
+				}
+				if(!configuration.contains(Constants.ACE_CONFIGURATION_KEY)){
+					throw new IllegalArgumentException(Constants.ACE_CONFIGURATION_KEY + "section identifier ('" + Constants.ACE_CONFIGURATION_KEY + "') missing in configuration file: " + filePath);
+				}
+	}
+
+	/**
+	 * Method that checks if only valid configuration section identifiers (group (and optional users) and ACE) exist in the current configuration file
+	 * @param sectionIdentifiers
+	 * @param filePath
+	 * @throws IllegalArgumentException
+	 */
+	private static void validateSectionIdentifiers(final Set<String> sectionIdentifiers, final String filePath) throws IllegalArgumentException{
+		
+		// check for invalid section identifiers
+		
+		if(!Constants.VALID_CONFIG_SECTION_IDENTIFIERS.containsAll(sectionIdentifiers)){
+
+			for(String identifier : sectionIdentifiers){
+				if(!Constants.VALID_CONFIG_SECTION_IDENTIFIERS.contains(identifier)){
+					throw new IllegalArgumentException("invalid section identifier: " + identifier + " in configuration file: " + filePath + "\n" +
+				                                       "valid configuration section identifiers are: " + Constants.VALID_CONFIG_SECTION_IDENTIFIERS);
+				}
+			}
 		}
 	}
 
