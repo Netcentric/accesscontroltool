@@ -32,8 +32,6 @@ public class PurgeHelper {
 		StringBuilder message = new StringBuilder();
 		if (StringUtils.isNotBlank(path)) {
 			String queryString = "/jcr:root" + path.trim() + "//rep:policy";
-			Node startNode = session.getNode(path);
-			//				Iterator<Node> results = resourceResolver.findResources(query, Query.XPATH);
 			Query query = session.getWorkspace().getQueryManager().createQuery(queryString, Query.XPATH );
 			QueryResult result = query.execute();
 			NodeIterator nodeIterator = result.getNodes();
@@ -44,7 +42,7 @@ public class PurgeHelper {
 				Node res = nodeIterator.nextNode().getParent();
 				if (res != null) {
 					AccessControlPolicy[] policies = accessManager.getPolicies(res.getPath());
-					for (int j = 0; j<policies.length; j++) {
+					for (int j = 0; j < policies.length; j++) {
 						accessManager.removePolicy(res.getPath(), policies[j]);   
 					}
 					message.append("Removed all policies from node " + res.getPath() + ".\n");
