@@ -411,56 +411,11 @@ public class DumpserviceImpl implements Dumpservice{
 		StringBuilder sb = new StringBuilder(20000);
 
 		// add creation date and URL of current author instance as first line 
-		String dumpComment = "# Dump created: " + new Date() + " on: " + serverUrl;
-		new CompleteAcDump(aceDumpData, groupSet, userSet, mapOrder, serverUrl, dumpComment, this).accept(new AcDumpElementYamlVisitor(mapOrder, sb));
+		String dumpComment = "Dump created: " + new Date() + " on: " + serverUrl;
+		new CompleteAcDump(aceDumpData, groupSet, userSet, mapOrder, dumpComment, this).accept(new AcDumpElementYamlVisitor(mapOrder, sb));
 		return sb.toString();
 	}
 
-//	private void getValidAceDumpAsString(final int mapOrder, Map<String, Set<AceBean>> aceMap, StringBuilder sb) throws IOException {
-//		sb.append("- " + Constants.ACE_CONFIGURATION_KEY + ":") ;
-//		sb.append("\n\n");
-//		getAceDumpAsString(sb, aceMap, mapOrder);
-//	}
-//
-//	private void getLegacyAceDumpAsString(final int mapOrder, Map<String, Set<AceBean>> legacyAceMap, StringBuilder sb) throws IOException {
-//		sb.append("- " + Constants.LEGACY_ACE_DUMP_SECTION_KEY+ ":") ;
-//		sb.append("\n\n");
-//		getAceDumpAsString(sb, legacyAceMap, mapOrder);
-//	}
-
-//	public StringBuilder getAceDumpAsString(final StringBuilder sb, final Map<String, Set<AceBean>> aceMap, final int mapOrder) throws IOException{
-//
-//		Set<String> keys = aceMap.keySet();
-//		
-//		for(String mapKey : keys){
-//
-//			Set<AceBean> aceBeanSet = aceMap.get(mapKey);
-//
-//			sb.append(Constants.DUMP_INDENTATION_KEY + "- " + mapKey + ":");
-//			sb.append("\n");
-//			for(AceBean bean : aceBeanSet){
-//				bean = CqActionsMapping.getAlignedPermissionBean(bean);
-//
-//				sb.append("\n");
-//				if(mapOrder == PATH_BASED_SORTING){
-//					sb.append(Constants.DUMP_INDENTATION_FIRST_PROPERTY + "- principal: " + bean.getPrincipalName()).append("\n");
-//				}else if(mapOrder == PRINCIPAL_BASED_SORTING){
-//					sb.append(Constants.DUMP_INDENTATION_FIRST_PROPERTY + "- path: " + bean.getJcrPath()).append("\n");
-//				}
-//				sb.append(Constants.DUMP_INDENTATION_PROPERTY + "permission: " + bean.getPermission()).append("\n");
-//				sb.append(Constants.DUMP_INDENTATION_PROPERTY + "actions: " + bean.getActionsString()).append("\n");
-//				sb.append(Constants.DUMP_INDENTATION_PROPERTY + "privileges: " + bean.getPrivilegesString()).append("\n");
-//				sb.append(Constants.DUMP_INDENTATION_PROPERTY + "repGlob: ");
-//				if(!bean.getRepGlob().isEmpty()){
-//					sb.append("'" + bean.getRepGlob() + "'");
-//				}
-//				sb.append("\n");
-//			}
-//			sb.append("\n");
-//		}
-//		sb.append("\n");
-//		return sb;
-//	}
 
 	public void returnConfigurationDumpAsFile(final SlingHttpServletResponse response,
 			Map<String, Set<AceBean>> aceMap, Set<AuthorizableConfigBean> authorizableSet, final int mapOrder) throws IOException{
@@ -502,21 +457,21 @@ public class DumpserviceImpl implements Dumpservice{
 
 			Set<AceBean> aceBeanSet = aceMap.get(mapKey);
 
-			outStream.println(Constants.DUMP_INDENTATION_KEY + "- " + mapKey + ":");
+			outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_KEY) + "- " + mapKey + ":");
 
 			for(AceBean bean : aceBeanSet){
 				bean = CqActionsMapping.getAlignedPermissionBean(bean);
 
 				outStream.println();
 				if(mapOrder == PATH_BASED_SORTING){
-					outStream.println(Constants.DUMP_INDENTATION_FIRST_PROPERTY + "- principal: " + bean.getPrincipalName());
+					outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_FIRST_PROPERTY) + "- principal: " + bean.getPrincipalName());
 				}else if(mapOrder == PRINCIPAL_BASED_SORTING){
-					outStream.println(Constants.DUMP_INDENTATION_FIRST_PROPERTY + "- path: " + bean.getJcrPath());
+					outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_FIRST_PROPERTY) + "- path: " + bean.getJcrPath());
 				}
-				outStream.println(Constants.DUMP_INDENTATION_PROPERTY + "permission: " + bean.getPermission());
-				outStream.println(Constants.DUMP_INDENTATION_PROPERTY + "actions: " + bean.getActionsString());
-				outStream.println(Constants.DUMP_INDENTATION_PROPERTY + "privileges: " + bean.getPrivilegesString());
-				outStream.print(Constants.DUMP_INDENTATION_PROPERTY + "repGlob: ");
+				outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY ) + "permission: " + bean.getPermission());
+				outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY ) + "actions: " + bean.getActionsString());
+				outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY ) + "privileges: " + bean.getPrivilegesString());
+				outStream.print(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY ) + "repGlob: ");
 				if(!bean.getRepGlob().isEmpty()){
 					outStream.println("'" + bean.getRepGlob() + "'");
 				}else{
@@ -664,32 +619,7 @@ public class DumpserviceImpl implements Dumpservice{
 			}
 		}
 	}
-	private StringBuilder getGroupConfigAsString(final StringBuilder sb, final Set<AuthorizableConfigBean> groupSet){
-		sb.append("- " + Constants.GROUP_CONFIGURATION_KEY + ":").append("\n");
-		sb.append("\n");
-	
-		return getAuthorizableConfigAsString(sb, groupSet);
-	}
 
-	private StringBuilder getUserConfigAsString(final StringBuilder sb, final Set<AuthorizableConfigBean> userSet){
-		sb.append("- " + Constants.USER_CONFIGURATION_KEY + ":").append("\n");
-		sb.append("\n");
-	
-		return getAuthorizableConfigAsString(sb, userSet);
-	}
-
-	private StringBuilder getAuthorizableConfigAsString(final StringBuilder sb, final Set<AuthorizableConfigBean> authorizableSet) {
-		for(AuthorizableConfigBean bean : authorizableSet){
-			sb.append(Constants.DUMP_INDENTATION_KEY + "- " + bean.getPrincipalID() + ":").append("\n");
-			sb.append("\n");
-			sb.append(Constants.DUMP_INDENTATION_FIRST_PROPERTY + "- name: ").append("\n");
-			sb.append(Constants.DUMP_INDENTATION_PROPERTY + "memberOf: " + bean.getMemberOfString()).append("\n");
-			sb.append(Constants.DUMP_INDENTATION_PROPERTY + "path: " + bean.getPath()).append("\n");
-			sb.append(Constants.DUMP_INDENTATION_PROPERTY + "isGroup: " + "'" + bean.isGroup() + "'").append("\n");
-			sb.append("\n");
-		}
-		return sb;
-	}
 
 	/**
 	 * removes the name of the group node itself (groupID) from the intermediate path 
@@ -735,12 +665,12 @@ public class DumpserviceImpl implements Dumpservice{
 		outStream.println();
 	
 		for(AuthorizableConfigBean bean:authorizableSet){
-			outStream.println(Constants.DUMP_INDENTATION_KEY + "- " + bean.getPrincipalID() + ":");
+			outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_KEY) + "- " + bean.getPrincipalID() + ":");
 			outStream.println();
-			outStream.println(Constants.DUMP_INDENTATION_FIRST_PROPERTY + "- name: ");
-			outStream.println(Constants.DUMP_INDENTATION_PROPERTY + "memberOf: " + bean.getMemberOfString());
-			outStream.println(Constants.DUMP_INDENTATION_PROPERTY + "path: " + bean.getPath());
-			outStream.println(Constants.DUMP_INDENTATION_PROPERTY + "isGroup: " + "'" + bean.isGroup() + "'");
+			outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_FIRST_PROPERTY) + "- name: ");
+			outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY) + "memberOf: " + bean.getMemberOfString());
+			outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY) + "path: " + bean.getPath());
+			outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY) + "isGroup: " + "'" + bean.isGroup() + "'");
 			outStream.println();
 		}
 	}
