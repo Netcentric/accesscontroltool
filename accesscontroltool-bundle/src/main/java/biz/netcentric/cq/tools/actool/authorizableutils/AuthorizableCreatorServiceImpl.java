@@ -99,7 +99,12 @@ public class AuthorizableCreatorServiceImpl implements AuthorizableCreatorServic
 		UserManager userManager = js.getUserManager();
 		// Since the persistence of the installation should only take place if no error occured and certain test were successful
 		// the autosave gets disabled. Therefore an explicit session.save() is necessary to persist the changes
-		userManager.autoSave(false);
+		try{
+			userManager.autoSave(false);
+		}catch(UnsupportedRepositoryOperationException e){
+			// check added for AEM 6.0
+			LOG.warn("disabling autoSave not possible with this user manager!");
+		}
 		return userManager;
 	}
 	
