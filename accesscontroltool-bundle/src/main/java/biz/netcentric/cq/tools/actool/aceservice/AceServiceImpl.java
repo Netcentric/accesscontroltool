@@ -326,12 +326,13 @@ public class AceServiceImpl implements AceService{
 			if(configNode.hasProperty("jcr:content/jcr:data")){
 				LOG.info("found property 'jcr:content/jcr:data'");
 				configData = configNode.getProperty("jcr:content/jcr:data").getString();
+				LOG.info("found following configuration string: {}", configData);
 				if(configData != null){
 					if(!configData.isEmpty()){
 						LOG.info("found configuration data of node: {}", configNode.getPath());
 						configurations.put(configNode.getPath(),configData);
 					}else{
-						LOG.warn("config data (jcr:content/jcr:data) of node: {} not found!", configNode.getPath());
+						LOG.warn("config data (jcr:content/jcr:data) of node: {} is empty!", configNode.getPath());
 					}
 				}
 				else{
