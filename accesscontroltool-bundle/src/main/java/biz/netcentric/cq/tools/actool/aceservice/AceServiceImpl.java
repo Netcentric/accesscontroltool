@@ -320,16 +320,25 @@ public class AceServiceImpl implements AceService{
 
 		String configData;
 		Map<String,String> configurations = new LinkedHashMap<String,String>();
+		LOG.info("trying got put content of found configs into configurations map");
 		for(Node configNode : configs){
-
+			LOG.info("current config node: {}", configNode.getPath());
 			if(configNode.hasProperty("jcr:content/jcr:data")){
+				LOG.info("found property 'jcr:content/jcr:data'");
 				configData = configNode.getProperty("jcr:content/jcr:data").getString();
-				if(!configData.isEmpty()){
-					LOG.info("found configuration data of node: {}", configNode.getPath());
-					configurations.put(configNode.getPath(),configData);
-				}else{
-					LOG.warn("config data (jcr:content/jcr:data) of node: {} not found!", configNode.getPath());
+				if(configData != null){
+					if(!configData.isEmpty()){
+						LOG.info("found configuration data of node: {}", configNode.getPath());
+						configurations.put(configNode.getPath(),configData);
+					}else{
+						LOG.warn("config data (jcr:content/jcr:data) of node: {} not found!", configNode.getPath());
+					}
 				}
+				else{
+					LOG.error("configData is null!");
+				}
+			}else{
+				LOG.error("property: jcr:content/jcr:data not found under configNode: {}", configNode.getPath());
 			}
 
 		}
