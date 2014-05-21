@@ -281,22 +281,28 @@ public class AceServiceImpl implements AceService{
 		}
 
 		if(configurationRootNode != null){
+			LOG.info("found configurationRootNode: {}", configurationRootNode);
 			Iterator<Node> childNodesIterator = configurationRootNode.getNodes();
 
 			if(childNodesIterator != null){
 				while(childNodesIterator.hasNext()){
 					Node folderNode = childNodesIterator.next();
+					LOG.info("found project folder: {}. searching for configuration files...", folderNode.getPath());
 
 					if(folderNode.hasNodes()){
 						Iterator<Node> configNodesIterator = folderNode.getNodes();
 						// only take the newest
 						Set<Node> projectConfigs = new TreeSet<Node>(new NodeCreatedComparator());
 						while(configNodesIterator.hasNext()){
-							projectConfigs.add(configNodesIterator.next());
+							Node configurationNode = configNodesIterator.next();
+							LOG.info("found configuration file: {}", configurationNode);
+							projectConfigs.add(configurationNode);
 						}
 						if(!projectConfigs.isEmpty()){
 							// add first (newest) node
-							configs.add(projectConfigs.iterator().next());
+							Node newestConfigNode = projectConfigs.iterator().next();
+							LOG.info("found newest configuration node: {}", newestConfigNode.getPath());
+							configs.add(newestConfigNode);
 						}
 					}
 
@@ -309,7 +315,7 @@ public class AceServiceImpl implements AceService{
 				}
 				return null;
 			}
-			LOG.info("found following configs: ", configs);
+			LOG.info("found following configs: {}", configs);
 		}
 
 		String configData;
