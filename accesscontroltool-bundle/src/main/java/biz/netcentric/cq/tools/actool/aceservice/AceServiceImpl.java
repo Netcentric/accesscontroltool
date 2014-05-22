@@ -1,6 +1,8 @@
 package biz.netcentric.cq.tools.actool.aceservice;
 
 
+import java.io.InputStream;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -11,9 +13,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -29,6 +34,7 @@ import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
@@ -311,7 +317,7 @@ public class AceServiceImpl implements AceService{
 				String message = "ACL root configuration node " + configurationsRootPath + " doesn't have any children!";
 				LOG.warn(message);
 				if(history != null){
-			    	history.addWarning(message);
+					history.addWarning(message);
 				}
 				return null;
 			}
@@ -319,27 +325,44 @@ public class AceServiceImpl implements AceService{
 		}
 
 		String configData;
+		StringWriter writer = null;
+		InputStream configInputStream = null;
+		
 		Map<String,String> configurations = new LinkedHashMap<String,String>();
 		LOG.info("trying got put content of found configs into configurations map");
-		for(Node configNode : configs){
-			LOG.info("current config node: {}", configNode.getPath());
-			if(configNode.hasProperty("jcr:content/jcr:data")){
-				LOG.info("found property 'jcr:content/jcr:data'");
-				configData = configNode.getProperty("jcr:content/jcr:data").getString();
-				LOG.info("found following configuration string: {}", configData);
-				if(configData != null){
-					if(!configData.isEmpty()){
-						LOG.info("found configuration data of node: {}", configNode.getPath());
-						configurations.put(configNode.getPath(),configData);
-					}else{
-						LOG.warn("config data (jcr:content/jcr:data) of node: {} is empty!", configNode.getPath());
+		try{
+			for(Node configNode : configs){
+				LOG.info("current config node: {}", configNode.getPath());
+				if(configNode.hasProperty("jcr:content/jcr:data")){
+					LOG.info("found property 'jcr:content/jcr:data'");
+					writer = new StringWriter();
+					configInputStream  = configNode.getProperty("jcr:content/jcr:data").getBinary().getStream();
+					IOUtils.copy(configInputStream, writer, "UTF-8");
+					configData = writer.toString();
+					LOG.debug("found following configuration string: {}", configData);
+					if(configData != null){
+						if(!configData.isEmpty()){
+							LOG.info("found configuration data of node: {}", configNode.getPath());
+							configurations.put(configNode.getPath(),configData);
+						}else{
+							LOG.warn("config data (jcr:content/jcr:data) of node: {} is empty!", configNode.getPath());
+						}
 					}
+					else{
+						LOG.error("configData is null!");
+					}
+				}else{
+					LOG.error("property: jcr:content/jcr:data not found under configNode: {}", configNode.getPath());
 				}
-				else{
-					LOG.error("configData is null!");
-				}
-			}else{
-				LOG.error("property: jcr:content/jcr:data not found under configNode: {}", configNode.getPath());
+
+			}
+		}finally{
+			if(writer != null){
+				writer.flush();
+				writer.close();
+			}
+			if(configInputStream != null){
+				configInputStream.close();
 			}
 
 		}
