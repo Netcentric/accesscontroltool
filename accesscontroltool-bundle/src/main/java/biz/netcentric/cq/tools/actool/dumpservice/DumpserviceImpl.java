@@ -728,10 +728,12 @@ public class DumpserviceImpl implements Dumpservice{
 		Set <AuthorizableConfigBean> groupBeans = new LinkedHashSet<AuthorizableConfigBean>();
 	
 		for(String groupId : groups){
-	
+			LOG.info("trying to create groupBean for group: {}", groupId);
 			Group group = (Group)userManager.getAuthorizable(groupId);
 			AuthorizableConfigBean bean = new AuthorizableConfigBean();
-	
+			if(group == null){
+				LOG.debug("group: {} is null !!", groupId);
+			}
 			bean.setPrincipalID(group.getID());
 			Iterator <Group> it = group.declaredMemberOf();
 			List<String> memberOfList = new ArrayList<String>();
