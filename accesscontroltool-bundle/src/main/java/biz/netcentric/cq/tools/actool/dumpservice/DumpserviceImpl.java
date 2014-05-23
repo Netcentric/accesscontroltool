@@ -735,7 +735,7 @@ public class DumpserviceImpl implements Dumpservice{
 
 		Iterator<Authorizable> result = userManager.findAuthorizables(new Query() {
 			public  void build(QueryBuilder builder) {
-				builder.setSortOrder("@name", Direction.ASCENDING);
+				builder.setSortOrder("@rep:principalName", Direction.ASCENDING);
 				builder.setSelector(org.apache.jackrabbit.api.security.user.Group.class);
 			}
 		});
@@ -759,7 +759,6 @@ public class DumpserviceImpl implements Dumpservice{
 			}else{
 				LOG.debug("group is null !");
 			}
-
 		}
 		return groupBeans;
 	
