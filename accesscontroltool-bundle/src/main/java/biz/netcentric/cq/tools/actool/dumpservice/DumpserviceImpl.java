@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+
 import javax.jcr.AccessDeniedException;
 import javax.jcr.ItemExistsException;
 import javax.jcr.ItemNotFoundException;
@@ -29,6 +30,7 @@ import javax.jcr.nodetype.NoSuchNodeTypeException;
 import javax.jcr.security.AccessControlEntry;
 import javax.jcr.version.VersionException;
 import javax.servlet.ServletOutputStream;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -39,6 +41,9 @@ import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
+import org.apache.jackrabbit.api.security.user.Query;
+import org.apache.jackrabbit.api.security.user.QueryBuilder;
+import org.apache.jackrabbit.api.security.user.QueryBuilder.Direction;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -50,7 +55,9 @@ import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import com.day.cq.commons.Externalizer;
+
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.comparators.AcePathComparator;
 import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
@@ -723,29 +730,36 @@ public class DumpserviceImpl implements Dumpservice{
 	public Set<AuthorizableConfigBean> getGroupBeans(Session session) throws AccessDeniedException, UnsupportedRepositoryOperationException, RepositoryException{
 		JackrabbitSession js = (JackrabbitSession) session;
 		UserManager userManager = js.getUserManager();
-	
-		Set <String> groups = QueryHelper.getGroupsFromHome(session);
+
 		Set <AuthorizableConfigBean> groupBeans = new LinkedHashSet<AuthorizableConfigBean>();
-	
-		for(String groupId : groups){
-			LOG.info("trying to create groupBean for group: {}", groupId);
-			Group group = (Group)userManager.getAuthorizable(groupId);
-			AuthorizableConfigBean bean = new AuthorizableConfigBean();
-			if(group == null){
-				LOG.debug("group: {} is null !!", groupId);
+
+		Iterator<Authorizable> result = userManager.findAuthorizables(new Query() {
+			public  void build(QueryBuilder builder) {
+				builder.setSortOrder("@name", Direction.ASCENDING);
+				builder.setSelector(org.apache.jackrabbit.api.security.user.Group.class);
 			}
-			bean.setPrincipalID(group.getID());
-			Iterator <Group> it = group.declaredMemberOf();
-			List<String> memberOfList = new ArrayList<String>();
-	
-			while(it.hasNext()){
-				memberOfList.add(it.next().getID());
+		});
+		
+		while(result.hasNext()){
+			Group group = (Group)result.next();
+			if(group != null){
+				AuthorizableConfigBean bean = new AuthorizableConfigBean();
+				bean.setPrincipalID(group.getID());
+				Iterator <Group> it = group.declaredMemberOf();
+				List<String> memberOfList = new ArrayList<String>();
+		
+				while(it.hasNext()){
+					memberOfList.add(it.next().getID());
+				}
+				bean.setMemberOf(memberOfList.toArray(new String[memberOfList.size()]));
+				bean.setIsGroup(group.isGroup());
+				bean.setPath(getIntermediatePath(group.getPath(),group.getID()));
+		
+				groupBeans.add(bean);
+			}else{
+				LOG.debug("group is null !");
 			}
-			bean.setMemberOf(memberOfList.toArray(new String[memberOfList.size()]));
-			bean.setIsGroup(group.isGroup());
-			bean.setPath(getIntermediatePath(group.getPath(),group.getID()));
-	
-			groupBeans.add(bean);
+
 		}
 		return groupBeans;
 	
