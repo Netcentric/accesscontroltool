@@ -63,7 +63,7 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor{
 	@Override
 	public void visit(StructuralDumpElement structuralDumpElement) {
 		sb.append("\n");
-		sb.append(AcHelper.getBlankString(structuralDumpElement.getLevel() * 2) + YAML_STRUCTURAL_ELEMENT_PREFIX  + structuralDumpElement.getString());
+		sb.append(AcHelper.getBlankString(structuralDumpElement.getLevel() * 2) + YAML_STRUCTURAL_ELEMENT_PREFIX  + structuralDumpElement.getString() + MapKey.YAML_MAP_KEY_SUFFIX);
 		sb.append("\n");
 		sb.append("\n");
 	}

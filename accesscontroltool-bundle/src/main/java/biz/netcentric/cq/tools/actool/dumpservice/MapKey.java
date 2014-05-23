@@ -4,6 +4,7 @@ public class MapKey implements StructuralDumpElement{
 
 	private String key;
 	public static final String YAML_MAP_KEY_PREFIX = "- ";
+	public static final String YAML_MAP_KEY_SUFFIX = ":";
 	
 	public MapKey(final String key) {
 		this.key = key;
