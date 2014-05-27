@@ -72,6 +72,7 @@ import biz.netcentric.cq.tools.actool.helper.AclBean;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.installationhistory.HistoryUtils;
+import biz.netcentric.cq.tools.actools.comparators.AuthorizableConfigBeanId;
 
 @Service
 
@@ -325,7 +326,8 @@ public class DumpserviceImpl implements Dumpservice{
 			for(String id : userIds){
 				Authorizable authorizable = um.getAuthorizable(id);
 				if(!authorizable.isGroup()){
-					usersFromACEs.add((User)authorizable);
+					User user = (User)authorizable;
+					usersFromACEs.add(user);
 				}
 			}
 		// if we have a path ordered ACE map, all authorizables are contained in AceBean properties
@@ -337,7 +339,8 @@ public class DumpserviceImpl implements Dumpservice{
 					String principalId = aceBean.getPrincipalName();
 					Authorizable authorizable = um.getAuthorizable(principalId);
 					if(!authorizable.isGroup()){
-						usersFromACEs.add((User)authorizable);
+						User user = (User)authorizable;
+						usersFromACEs.add(user);
 					}
 				}
 			}
@@ -702,17 +705,7 @@ public class DumpserviceImpl implements Dumpservice{
 				newBean.setPath(intermediatePath);
 				newBean.setIsGroup(false);
 				Set<Authorizable> memberOf = new HashSet<Authorizable>();
-				Iterator<Group> it = user.declaredMemberOf();
-	
-				while(it.hasNext()){
-					memberOf.add(it.next());
-				}
-	
-				for(Authorizable membershipGroup : memberOf){
-					List<String> memberOfList = new ArrayList<String>();
-					memberOfList.add(membershipGroup.getID());
-					newBean.setMemberOf(memberOfList);
-				}
+				addDeclaredMembers(user, newBean);
 				userBeans.add(newBean);
 			}
 		}
@@ -745,13 +738,7 @@ public class DumpserviceImpl implements Dumpservice{
 			if(group != null){
 				AuthorizableConfigBean bean = new AuthorizableConfigBean();
 				bean.setPrincipalID(group.getID());
-				Iterator <Group> it = group.declaredMemberOf();
-				List<String> memberOfList = new ArrayList<String>();
-		
-				while(it.hasNext()){
-					memberOfList.add(it.next().getID());
-				}
-				bean.setMemberOf(memberOfList.toArray(new String[memberOfList.size()]));
+				addDeclaredMembers(group, bean);
 				bean.setIsGroup(group.isGroup());
 				bean.setPath(getIntermediatePath(group.getPath(),group.getID()));
 		
@@ -762,6 +749,16 @@ public class DumpserviceImpl implements Dumpservice{
 		}
 		return groupBeans;
 	
+	}
+	private void addDeclaredMembers(Authorizable authorizable, AuthorizableConfigBean bean)
+			throws RepositoryException {
+		Iterator <Group> it = authorizable.declaredMemberOf();
+		List<String> memberOfList = new ArrayList<String>();
+
+		while(it.hasNext()){
+			memberOfList.add(it.next().getID());
+		}
+		bean.setMemberOf(memberOfList.toArray(new String[memberOfList.size()]));
 	}
 
 	/**
