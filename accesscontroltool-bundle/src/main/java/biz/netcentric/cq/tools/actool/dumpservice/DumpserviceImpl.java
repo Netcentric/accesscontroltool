@@ -53,6 +53,7 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
+import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,15 +121,23 @@ public class DumpserviceImpl implements Dumpservice{
 
 	@Reference
 	private ResourceResolverFactory resourceResolverFactory;
-
-	@Activate
-	public void activate(@SuppressWarnings("rawtypes") final Map properties) throws Exception {
+	
+	private String bundleDescription;
+	
+	public void activate(@SuppressWarnings("rawtypes") final Map properties, final 
+			ComponentContext context) throws Exception {
 		this.queryExcludePaths = PropertiesUtil.toStringArray(properties.get(DUMP_SERVICE_EXCLUDE_PATHS_PATH),null);
 		this.nrOfSavedDumps = PropertiesUtil.toInteger(properties.get(DUMP_SERVICE_NR_OF_SAVED_DUMPS), NR_OF_DUMPS_TO_SAVE_DEFAULT);
 		this.includeUsersInDumps = PropertiesUtil.toBoolean(properties.get(DUMP_INCLUDE_USERS), false);
 		this.isFilteredDump = PropertiesUtil.toBoolean(properties.get(DUMP_IS_FILTERED), true);
 		this.isShowLegacyAces = PropertiesUtil.toBoolean(properties.get(DUMP_IS_SHOW_LEGACY_ACES), true);
+		bundleDescription = (String) context.getBundleContext().getBundle().getHeaders().get("Bundle-Description");
 	}
+	
+	public String getBundleDescription() {
+		return bundleDescription;
+	}
+
 	public boolean isIncludeUsers(){
 		return this.includeUsersInDumps;
 	}
@@ -271,7 +280,7 @@ public class DumpserviceImpl implements Dumpservice{
 			session = repository.loginAdministrative(null);
 			AceDumpData aceDumpData = this.createFilteredAclDumpMap(session, aclMapKeyOrder, AcHelper.ACE_ORDER_ALPHABETICAL, this.queryExcludePaths);
 			Map<String, Set<AceBean>> aclDumpMap = aceDumpData.getAceDump();
-			Map<String, Set<AceBean>> legacyAclDumpMap = aceDumpData.getLegacyAceDump();
+//			Map<String, Set<AceBean>> legacyAclDumpMap = aceDumpData.getLegacyAceDump();
 			Set<AuthorizableConfigBean> groupBeans = getGroupBeans(session);
 			Set<User> usersFromACEs = getUsersFromAces(mapOrder, session, aclDumpMap);
 			Set<AuthorizableConfigBean> userBeans = getUserBeans(usersFromACEs);
@@ -421,7 +430,8 @@ public class DumpserviceImpl implements Dumpservice{
 		StringBuilder sb = new StringBuilder(20000);
 
 		// add creation date and URL of current author instance as first line 
-		String dumpComment = "Dump created: " + new Date() + " on: " + serverUrl;
+		String dumpComment = bundleDescription + "\n# Dump created: " + new Date() + " on: " + serverUrl;
+		
 		new CompleteAcDump(aceDumpData, groupSet, userSet, mapOrder, dumpComment, this).accept(new AcDumpElementYamlVisitor(mapOrder, sb));
 		return sb.toString();
 	}
