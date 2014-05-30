@@ -6,8 +6,12 @@
 		<version>0.5.4-SNAPSHOT</version>
 	</parent>
   <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
+  <description>
+       Netcentric AccessControlTool, jenkins build number: ${BUILD_NUMBER}, build id ${BUILD_ID}, svn revision ${SVN_REVISION}
+    </description>
   <packaging>pom</packaging>
   <name> NETCENTRIC CQ TOOLS AC TOOL</name>
+ 
   
   <properties>
 		<package.root>/apps/netcentric/actool</package.root>
