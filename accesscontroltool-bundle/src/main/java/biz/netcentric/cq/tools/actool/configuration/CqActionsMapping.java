@@ -16,43 +16,72 @@ import biz.netcentric.cq.tools.actool.helper.AceBean;
 
 
 public class CqActionsMapping {
-	
-	
 
-	static public Map<String, List <String>> map = new HashMap <String, List <String>>();
-	static List <String> repWriteList = new ArrayList<String>(Arrays.asList(new String[] {"rep:write"}));
-	static List <String> jcrAllList = new ArrayList<String>(Arrays.asList(new String[] {"jcr:all"}));
-	static List <String> jcrWriteList = new ArrayList<String>(Arrays.asList(new String[] {"jcr:write"}));
-	static List <String> jcrAggregatedPrivileges = new ArrayList<String>(Arrays.asList(new String[] {"jcr:all","jcr:write","rep:write"}));
-	static List <String> jcrAllPrivileges = new ArrayList<String>(Arrays.asList(new String[] {"jcr:workspaceManagement",
-																							  "jcr:lifecycleManagement",
-																							  "jcr:versionManagement",
-																							  "jcr:lockManagement",
-																							  "crx:replicate",
-																							  "jcr:read",
-																							  "jcr:modifyAccessControl",
-																							  "rep:write",
-																							  "rep:privilegeManagement",
-																							  "jcr:nodeTypeManagement",
-																							  "jcr:namespaceManagement",
-																							  "jcr:write",
-																							  "jcr:nodeTypeDefinitionManagement",
-																							  "jcr:retentionManagement",
-																							  "jcr:readAccessControl"}));
+    public static final String ACTION_REPLICATE = "replicate";
+    public static final String ACTION_ACL_EDIT = "acl_edit";
+    public static final String ACTION_ACL_READ = "acl_read";
+    public static final String ACTION_DELETE = "delete";
+    public static final String ACTION_CREATE = "create";
+    public static final String ACTION_MODIFY = "modify";
+    public static final String ACTION_READ = "read";
+	
+    public static final String PRIVILEGE_JCR_REMOVE_NODE = "jcr:removeNode";
+    public static final String PRIVILEGE_JCR_REMOVE_CHILD_NODES = "jcr:removeChildNodes";
+    public static final String PRIVILEGE_JCR_ADD_CHILD_NODES = "jcr:addChildNodes";
+    public static final String PRIVILEGE_JCR_MODIFY_PROPERTIES = "jcr:modifyProperties";
+    public static final String PRIVILEGE_JCR_ALL = "jcr:all";
+    public static final String PRIVILEGE_JCR_READ_ACCESS_CONTROL = "jcr:readAccessControl";
+    public static final String PRIVILEGE_JCR_RETENTION_MANAGEMENT = "jcr:retentionManagement";
+    public static final String PRIVILEGE_JCR_NODE_TYPE_DEFINITION_MANAGEMENT = "jcr:nodeTypeDefinitionManagement";
+    public static final String PRIVILEGE_JCR_WRITE = "jcr:write";
+    public static final String PRIVILEGE_JCR_NAMESPACE_MANAGEMENT = "jcr:namespaceManagement";
+    public static final String PRIVILEGE_JCR_NODE_TYPE_MANAGEMENT = "jcr:nodeTypeManagement";
+    public static final String PRIVILEGE_REP_PRIVILEGE_MANAGEMENT = "rep:privilegeManagement";
+    public static final String PRIVILEGE_REP_WRITE = "rep:write";
+    public static final String PRIVILEGE_JCR_MODIFY_ACCESS_CONTROL = "jcr:modifyAccessControl";
+    public static final String PRIVILEGE_JCR_READ = "jcr:read";
+    public static final String PRIVILEGE_CRX_REPLICATE = "crx:replicate";
+    public static final String PRIVILEGE_JCR_LOCK_MANAGEMENT = "jcr:lockManagement";
+    public static final String PRIVILEGE_JCR_VERSION_MANAGEMENT = "jcr:versionManagement";
+    public static final String PRIVILEGE_JCR_LIFECYCLE_MANAGEMENT = "jcr:lifecycleManagement";
+    public static final String PRIVILEGE_JCR_WORKSPACE_MANAGEMENT = "jcr:workspaceManagement";
+	
+	static final public Map<String, List <String>> ACTIONS_MAP = new HashMap <String, List <String>>();
+    static final public Map<String, List <String>> PRIVILEGES_MAP = new HashMap <String, List <String>>();
+    
+	static List <String> repWriteList = new ArrayList<String>(Arrays.asList(new String[] {PRIVILEGE_REP_WRITE}));
+	static List <String> jcrAllList = new ArrayList<String>(Arrays.asList(new String[] {PRIVILEGE_JCR_ALL}));
+	static List <String> jcrWriteList = new ArrayList<String>(Arrays.asList(new String[] {PRIVILEGE_JCR_WRITE}));
+	
+	static List <String> jcrAggregatedPrivileges = new ArrayList<String>(Arrays.asList(new String[] {PRIVILEGE_JCR_ALL,PRIVILEGE_JCR_WRITE,PRIVILEGE_REP_WRITE}));
+	static List <String> jcrAllPrivileges = new ArrayList<String>(Arrays.asList(new String[] {PRIVILEGE_JCR_WORKSPACE_MANAGEMENT,
+																							  PRIVILEGE_JCR_LIFECYCLE_MANAGEMENT,
+																							  PRIVILEGE_JCR_VERSION_MANAGEMENT,
+																							  PRIVILEGE_JCR_LOCK_MANAGEMENT,
+																							  PRIVILEGE_CRX_REPLICATE,
+																							  PRIVILEGE_JCR_READ,
+																							  PRIVILEGE_JCR_MODIFY_ACCESS_CONTROL,
+																							  PRIVILEGE_REP_WRITE,
+																							  PRIVILEGE_REP_PRIVILEGE_MANAGEMENT,
+																							  PRIVILEGE_JCR_NODE_TYPE_MANAGEMENT,
+																							  PRIVILEGE_JCR_NAMESPACE_MANAGEMENT,
+																							  PRIVILEGE_JCR_WRITE,
+																							  PRIVILEGE_JCR_NODE_TYPE_DEFINITION_MANAGEMENT,
+																							  PRIVILEGE_JCR_RETENTION_MANAGEMENT,
+																							  PRIVILEGE_JCR_READ_ACCESS_CONTROL}));
 	
 	static { 
-		map.put("rep:write", new ArrayList<String>( Arrays.asList(new String[] { "jcr:modifyProperties","jcr:addChildNodes","jcr:removeNode","jcr:removeChildNodes","jcr:nodeTypeManagement"})));
-		map.put("jcr:write", new ArrayList<String>( Arrays.asList(new String[] { "jcr:addChildNodes","jcr:removeNode","jcr:modifyProperties","jcr:removeChildNodes"})));
-		map.put("jcr:all", jcrAllPrivileges);
-
-		map.put("read",new ArrayList<String>( Arrays.asList(new String[] {"jcr:read"})));
-		map.put("modify", new ArrayList<String>( Arrays.asList(new String[] { "jcr:modifyProperties", "jcr:lockManagement", "jcr:versionManagement" })));
-		map.put("create", new ArrayList<String>( Arrays.asList(new String[] { "jcr:addChildNodes", "jcr:nodeTypeManagement" })));
-		map.put("delete", new ArrayList<String>( Arrays.asList(new String[] { "jcr:removeChildNodes", "jcr:removeNode" })));
-		map.put("acl_read", new ArrayList<String>( Arrays.asList(new String[] { "jcr:readAccessControl"})));
-		map.put("acl_edit", new ArrayList<String>( Arrays.asList(new String[] { "jcr:modifyAccessControl"})));
-		map.put("replicate", new ArrayList<String>( Arrays.asList(new String[] { "crx:replicate"})));
-
+		PRIVILEGES_MAP.put(PRIVILEGE_REP_WRITE, new ArrayList<String>( Arrays.asList(new String[] { PRIVILEGE_JCR_MODIFY_PROPERTIES,PRIVILEGE_JCR_ADD_CHILD_NODES,PRIVILEGE_JCR_REMOVE_NODE,PRIVILEGE_JCR_REMOVE_CHILD_NODES,PRIVILEGE_JCR_NODE_TYPE_MANAGEMENT})));
+		PRIVILEGES_MAP.put(PRIVILEGE_JCR_WRITE, new ArrayList<String>( Arrays.asList(new String[] { PRIVILEGE_JCR_ADD_CHILD_NODES,PRIVILEGE_JCR_REMOVE_NODE,PRIVILEGE_JCR_MODIFY_PROPERTIES,PRIVILEGE_JCR_REMOVE_CHILD_NODES})));
+		PRIVILEGES_MAP.put(PRIVILEGE_JCR_ALL, jcrAllPrivileges);
+		
+		ACTIONS_MAP.put(ACTION_READ, new ArrayList<String>( Arrays.asList(new String[] {PRIVILEGE_JCR_READ})));
+		ACTIONS_MAP.put(ACTION_MODIFY, new ArrayList<String>( Arrays.asList(new String[] { PRIVILEGE_JCR_MODIFY_PROPERTIES, PRIVILEGE_JCR_LOCK_MANAGEMENT, PRIVILEGE_JCR_VERSION_MANAGEMENT })));
+		ACTIONS_MAP.put(ACTION_CREATE, new ArrayList<String>( Arrays.asList(new String[] { PRIVILEGE_JCR_ADD_CHILD_NODES, PRIVILEGE_JCR_NODE_TYPE_MANAGEMENT })));
+		ACTIONS_MAP.put(ACTION_DELETE, new ArrayList<String>( Arrays.asList(new String[] { PRIVILEGE_JCR_REMOVE_CHILD_NODES, PRIVILEGE_JCR_REMOVE_NODE })));
+		ACTIONS_MAP.put(ACTION_ACL_READ, new ArrayList<String>( Arrays.asList(new String[] { PRIVILEGE_JCR_READ_ACCESS_CONTROL})));
+		ACTIONS_MAP.put(ACTION_ACL_EDIT, new ArrayList<String>( Arrays.asList(new String[] { PRIVILEGE_JCR_MODIFY_ACCESS_CONTROL})));
+		ACTIONS_MAP.put(ACTION_REPLICATE, new ArrayList<String>( Arrays.asList(new String[] { PRIVILEGE_CRX_REPLICATE})));
 	}
 	
 	public static List <String> getJcrAggregatedPrivilegesList(){
@@ -89,30 +118,30 @@ public class CqActionsMapping {
 		// replace privilege jcr:all by the respective jcr:privileges
 		if(jcrPrivileges.containsAll(jcrAllList)){
 			jcrPrivileges.removeAll(jcrAllList); 
-			jcrPrivileges.addAll(map.get("jcr:all"));
+			jcrPrivileges.addAll(PRIVILEGES_MAP.get(PRIVILEGE_JCR_ALL));
 		}
 
 		// replace privilege rep:write by the respective jcr:privileges
 		if(jcrPrivileges.containsAll(repWriteList)){
 			jcrPrivileges.removeAll(repWriteList); 
-			jcrPrivileges.addAll(map.get("rep:write"));
+			jcrPrivileges.addAll(PRIVILEGES_MAP.get(PRIVILEGE_REP_WRITE));
 		}
 
 		// replace privilege jcr:write by the respective jcr:privileges
 		if(jcrPrivileges.containsAll(jcrWriteList)){
 			jcrPrivileges.removeAll(jcrWriteList); 
-			jcrPrivileges.addAll(map.get("jcr:write"));
+			jcrPrivileges.addAll(PRIVILEGES_MAP.get(PRIVILEGE_JCR_WRITE));
 		}
 
 
 		// loop through keySet of cqActions. Remove successively all privileges which are associated to a cq action from jcrPrivileges string 
 		// and add this actions name to actions string
 
-		Set<String> cqActions = map.keySet();
+		Set<String> cqActions = ACTIONS_MAP.keySet();
 		String actionsString = "";
 
 		for(String action : cqActions){
-			List<String> jcrPrivilegesFromMap =  map.get(action);
+			List<String> jcrPrivilegesFromMap =  ACTIONS_MAP.get(action);
 			if(jcrPrivileges.containsAll(jcrPrivilegesFromMap)){
 				jcrPrivileges.removeAll(jcrPrivilegesFromMap);
 				actionsString = actionsString + action + ",";
@@ -141,17 +170,17 @@ public class CqActionsMapping {
 		// replace privilege rep:write by the respective jcr:privileges
 		if(jcrPrivileges.containsAll(repWriteList)){
 			jcrPrivileges.removeAll(repWriteList); 
-			jcrPrivileges.addAll(map.get("rep:write"));
+			jcrPrivileges.addAll(PRIVILEGES_MAP.get(PRIVILEGE_REP_WRITE));
 		}
 		// replace privilege jcr:write by the respective jcr:privileges
 		if(jcrPrivileges.containsAll(jcrWriteList)){
 			jcrPrivileges.removeAll(jcrWriteList); 
-			jcrPrivileges.addAll(map.get("jcr:write"));
+			jcrPrivileges.addAll(PRIVILEGES_MAP.get(PRIVILEGE_JCR_WRITE));
 		}
 		// Don't replace jcr:all
 
 		for(String action : actions){
-			List<String> privilegesFromAction = map.get(action);
+			List<String> privilegesFromAction = ACTIONS_MAP.get(action);
 			if(privilegesFromAction != null){
 				jcrPrivileges.removeAll(privilegesFromAction);
 			}
@@ -175,7 +204,7 @@ public class CqActionsMapping {
 		bean.setPrivilegesString(alignedPrivileges);
 
 		// in case privileges property contains "jcr:all" remove all actions, since they're included
-		if(alignedPrivileges.contains("jcr:all")){
+		if(alignedPrivileges.contains(PRIVILEGE_JCR_ALL)){
 			bean.clearActions();
 		}
 		return bean;
@@ -184,9 +213,9 @@ public class CqActionsMapping {
 	public static void getAggregatedPrivilegesBean(AceBean aceBean){
 		
 		Set <String> privileges = new HashSet<String>(new ArrayList(Arrays.asList(aceBean.getPrivileges())));
-		privileges = replaceAggregatedPrivileges(privileges,"jcr:all");
-		privileges = replaceAggregatedPrivileges(privileges,"rep:write");
-		privileges = replaceAggregatedPrivileges(privileges,"jcr:write");
+		privileges = replaceAggregatedPrivileges(privileges,PRIVILEGE_JCR_ALL);
+		privileges = replaceAggregatedPrivileges(privileges,PRIVILEGE_REP_WRITE);
+		privileges = replaceAggregatedPrivileges(privileges,PRIVILEGE_JCR_WRITE);
 		String privilegesString = "";
 		for(String privilege:privileges){
 			privilegesString = privilegesString + privilege + ",";
@@ -196,8 +225,8 @@ public class CqActionsMapping {
 		
 	}
 	private static Set<String> replaceAggregatedPrivileges(Set <String> jcrPrivileges, String aggregatedPrivilege){
-		if(jcrPrivileges.containsAll(map.get(aggregatedPrivilege))){
-			jcrPrivileges.removeAll(map.get(aggregatedPrivilege));
+		if(jcrPrivileges.containsAll(PRIVILEGES_MAP.get(aggregatedPrivilege))){
+			jcrPrivileges.removeAll(PRIVILEGES_MAP.get(aggregatedPrivilege));
 			jcrPrivileges.add(aggregatedPrivilege);
 		}
 		return jcrPrivileges;
@@ -217,19 +246,19 @@ public class CqActionsMapping {
 		
 		// convert cq:actions to their jcr:privileges
 		for(String action : actions){
-			privileges.addAll(map.get(action));
+			privileges.addAll(ACTIONS_MAP.get(action));
 		}
 		// after converting all actions to privileges we can still have aggregated privileges in the privileges variable
 		// these also have to be replaced by their single jcr:privileges
 		
-		if(privileges.contains("jcr:all")){
-			privileges.addAll(map.get("jcr:all"));
+		if(privileges.contains(PRIVILEGE_JCR_ALL)){
+			privileges.addAll(PRIVILEGES_MAP.get(PRIVILEGE_JCR_ALL));
 		}
-		if(privileges.contains("jcr:write")){
-			privileges.addAll(map.get("jcr:write"));
+		if(privileges.contains(PRIVILEGE_JCR_WRITE)){
+			privileges.addAll(PRIVILEGES_MAP.get(PRIVILEGE_JCR_WRITE));
 		}
-		if(privileges.contains("rep:write")){
-			privileges.addAll(map.get("rep:write"));
+		if(privileges.contains(PRIVILEGE_REP_WRITE)){
+			privileges.addAll(PRIVILEGES_MAP.get(PRIVILEGE_REP_WRITE));
 		}
 		bean.clearActions();
 		bean.setActionsString("");

@@ -65,7 +65,7 @@ public class Validators {
 			return false;
 		}
 
-		if(!CqActionsMapping.map.keySet().contains(action)){
+		if(!CqActionsMapping.ACTIONS_MAP.keySet().contains(action)){
 			return false;
 		}
 
@@ -77,7 +77,7 @@ public class Validators {
 		}
 
 		if(!CqActionsMapping.getJcrAggregatedPrivilegesList().contains(privilege) && !CqActionsMapping.getJcrAllPrivilegesList().contains(privilege)
-				&& !CqActionsMapping.map.get("rep:write").contains(privilege) && !CqActionsMapping.map.get("jcr:write").contains(privilege) ){
+				&& !CqActionsMapping.PRIVILEGES_MAP.get("rep:write").contains(privilege) && !CqActionsMapping.PRIVILEGES_MAP.get("jcr:write").contains(privilege) ){
 			return false;
 		}
 

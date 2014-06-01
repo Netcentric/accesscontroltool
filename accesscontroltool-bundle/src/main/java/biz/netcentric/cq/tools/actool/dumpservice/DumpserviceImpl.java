@@ -785,15 +785,15 @@ public class DumpserviceImpl implements Dumpservice{
 			tmpList = new ArrayList<String>(Arrays.asList(aceBean.getPrivilegesString().split(",")));
 
 			// set when action allow/deny:create is used
-			if(tmpList.containsAll(CqActionsMapping.map.get("create")) && tmpList.size() == CqActionsMapping.map.get("create").size()){
+			if(tmpList.containsAll(CqActionsMapping.ACTIONS_MAP.get("create")) && tmpList.size() == CqActionsMapping.ACTIONS_MAP.get("create").size()){
 				ret =  true;
 			}
 			// set when action allow/deny:delete is used
-			else if(tmpList.containsAll(CqActionsMapping.map.get("delete")) && tmpList.size() == CqActionsMapping.map.get("delete").size()){	
+			else if(tmpList.containsAll(CqActionsMapping.ACTIONS_MAP.get("delete")) && tmpList.size() == CqActionsMapping.ACTIONS_MAP.get("delete").size()){	
 				ret = true;
 			}
 			// set when  action allow/deny:modify and allow create,delete and allow modify,create,delete are used
-			else if(tmpList.containsAll(CqActionsMapping.map.get("create")) && tmpList.containsAll(CqActionsMapping.map.get("delete")) && tmpList.size() == (CqActionsMapping.map.get("create").size() + CqActionsMapping.map.get("delete").size())){	
+			else if(tmpList.containsAll(CqActionsMapping.ACTIONS_MAP.get("create")) && tmpList.containsAll(CqActionsMapping.ACTIONS_MAP.get("delete")) && tmpList.size() == (CqActionsMapping.ACTIONS_MAP.get("create").size() + CqActionsMapping.ACTIONS_MAP.get("delete").size())){	
 				ret = true;
 			}
 		}
