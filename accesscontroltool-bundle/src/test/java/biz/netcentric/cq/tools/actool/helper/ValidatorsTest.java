@@ -5,24 +5,34 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
+
 public class ValidatorsTest {
 
 	@Test
 	public void isValidAuthorizableNameTest(){
 		
 		assertTrue(Validators.isValidAuthorizableName("group-A"));
+		assertTrue(Validators.isValidAuthorizableName("group_A"));
+		assertTrue(Validators.isValidAuthorizableName("group.6"));
 		assertTrue(Validators.isValidAuthorizableName("Group-1"));
+		assertTrue(Validators.isValidAuthorizableName("Group-99"));
+		assertTrue(Validators.isValidAuthorizableName("Group..9.9"));
 		
-		assertFalse(Validators.isValidAuthorizableName("group_A"));
-		assertFalse(Validators.isValidAuthorizableName("group.A"));
 		assertFalse(Validators.isValidAuthorizableName("group A"));
+		assertFalse(Validators.isValidAuthorizableName("group -A"));
+		assertFalse(Validators.isValidAuthorizableName("group,A"));
+		assertFalse(Validators.isValidAuthorizableName("group:A"));
+		assertFalse(Validators.isValidAuthorizableName("group;A"));
+		assertFalse(Validators.isValidAuthorizableName("group-ä"));
+		assertFalse(Validators.isValidAuthorizableName("group*A"));
 		assertFalse(Validators.isValidAuthorizableName(""));
 		assertFalse(Validators.isValidAuthorizableName(null));
 	}
 	
 	@Test
 	public void isValidActionTest(){
-		String[] actionStrings = {"read", "modify", "create", "delete", "acl_read", "acl_edit", "replicate"};
+		String[] actionStrings = {CqActionsMapping.ACTION_READ, CqActionsMapping.ACTION_MODIFY, CqActionsMapping.ACTION_CREATE, CqActionsMapping.ACTION_DELETE, CqActionsMapping.ACTION_ACL_READ, CqActionsMapping.ACTION_ACL_EDIT, CqActionsMapping.ACTION_REPLICATE};
 		
 		for(String action : actionStrings){
 			assertTrue(Validators.isValidAction(action));
@@ -31,7 +41,8 @@ public class ValidatorsTest {
 		assertFalse(Validators.isValidAction("write"));
 		assertFalse(Validators.isValidAction("Read"));
 		assertFalse(Validators.isValidAction("aclEdit"));
-		
+		assertFalse(Validators.isValidAction("jcr:all"));
+		assertFalse(Validators.isValidAction("jcr:read"));
 		assertFalse(Validators.isValidAction(null));
 	}
 	

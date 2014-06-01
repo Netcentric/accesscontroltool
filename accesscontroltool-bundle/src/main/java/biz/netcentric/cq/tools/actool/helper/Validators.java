@@ -14,8 +14,8 @@ public class Validators {
 
 	private static final Logger LOG = LoggerFactory.getLogger(Validators.class);
 
-	private static final Pattern AUTHORIZABLE_PATTERN =
-			Pattern.compile("([a-zA-Z0-9-]+)");
+	private static final Pattern GROUP_ID_PATTERN =
+			Pattern.compile("([a-zA-Z0-9-_.]+)");
 
 	public static boolean isValidNodePath(final String path){
 		if(StringUtils.isBlank(path)){
@@ -34,7 +34,7 @@ public class Validators {
 		}
 		boolean isValid = false;
 
-		Matcher matcher = AUTHORIZABLE_PATTERN.matcher(name);
+		Matcher matcher = GROUP_ID_PATTERN.matcher(name);
 		if(matcher.matches()){
 			isValid = true;
 		}
