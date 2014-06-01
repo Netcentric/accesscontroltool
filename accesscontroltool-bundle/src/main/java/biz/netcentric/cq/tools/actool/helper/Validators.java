@@ -28,7 +28,7 @@ public class Validators {
 		return true;
 	}
 
-	public static boolean isValidAuthorizableName(final String name){
+	public static boolean isValidAuthorizableId(final String name){
 		if(StringUtils.isBlank(name)){
 			return false;
 		}
