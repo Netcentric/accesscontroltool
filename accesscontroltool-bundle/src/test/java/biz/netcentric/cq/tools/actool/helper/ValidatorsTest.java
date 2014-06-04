@@ -12,22 +12,22 @@ public class ValidatorsTest {
 	@Test
 	public void isValidAuthorizableNameTest(){
 		
-		assertTrue(Validators.isValidAuthorizableName("group-A"));
-		assertTrue(Validators.isValidAuthorizableName("group_A"));
-		assertTrue(Validators.isValidAuthorizableName("group.6"));
-		assertTrue(Validators.isValidAuthorizableName("Group-1"));
-		assertTrue(Validators.isValidAuthorizableName("Group-99"));
-		assertTrue(Validators.isValidAuthorizableName("Group..9.9"));
+		assertTrue(Validators.isValidAuthorizableId("group-A"));
+		assertTrue(Validators.isValidAuthorizableId("group_A"));
+		assertTrue(Validators.isValidAuthorizableId("group.6"));
+		assertTrue(Validators.isValidAuthorizableId("Group-1"));
+		assertTrue(Validators.isValidAuthorizableId("Group-99"));
+		assertTrue(Validators.isValidAuthorizableId("Group..9.9"));
 		
-		assertFalse(Validators.isValidAuthorizableName("group A"));
-		assertFalse(Validators.isValidAuthorizableName("group -A"));
-		assertFalse(Validators.isValidAuthorizableName("group,A"));
-		assertFalse(Validators.isValidAuthorizableName("group:A"));
-		assertFalse(Validators.isValidAuthorizableName("group;A"));
-		assertFalse(Validators.isValidAuthorizableName("group-ä"));
-		assertFalse(Validators.isValidAuthorizableName("group*A"));
-		assertFalse(Validators.isValidAuthorizableName(""));
-		assertFalse(Validators.isValidAuthorizableName(null));
+		assertFalse(Validators.isValidAuthorizableId("group A"));
+		assertFalse(Validators.isValidAuthorizableId("group -A"));
+		assertFalse(Validators.isValidAuthorizableId("group,A"));
+		assertFalse(Validators.isValidAuthorizableId("group:A"));
+		assertFalse(Validators.isValidAuthorizableId("group;A"));
+		assertFalse(Validators.isValidAuthorizableId("group-ä"));
+		assertFalse(Validators.isValidAuthorizableId("group*A"));
+		assertFalse(Validators.isValidAuthorizableId(""));
+		assertFalse(Validators.isValidAuthorizableId(null));
 	}
 	
 	@Test
