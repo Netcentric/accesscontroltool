@@ -243,15 +243,15 @@ public class ConfigReader {
                                              isPathDefined = validateAcePath(principal, aceBeanCounter, tmpAclBean, currentEntryValue);
                                         }
 
-                                        // set actions
-                                        else if(StringUtils.equals(ACE_CONFIG_PROPERTY_ACTIONS, currentAceProperty )){
-                                             isActionOrPrivilegeDefined = validateActions(principal, aceBeanCounter, tmpAclBean, currentEntryValue);
-                                        }
+                                        // validate actions
+        								else if(StringUtils.equals(ACE_CONFIG_PROPERTY_ACTIONS, currentAceProperty )){
+        									isActionOrPrivilegeDefined = validateActions(principal,isActionOrPrivilegeDefined,aceBeanCounter, tmpAclBean,currentEntryValue);
+        								}
 
-                                        // set privileges
-                                        else if(StringUtils.equals(ACE_CONFIG_PROPERTY_PRIVILEGES, currentAceProperty )){
-                                             isActionOrPrivilegeDefined = validatePrivileges(principal, aceBeanCounter, tmpAclBean, currentEntryValue);
-                                        }
+        								// validate privileges
+        								else if(StringUtils.equals(ACE_CONFIG_PROPERTY_PRIVILEGES, currentAceProperty )){
+        									isActionOrPrivilegeDefined = validatePrivileges(principal,isActionOrPrivilegeDefined,aceBeanCounter, tmpAclBean,currentEntryValue);
+        								}
 
                                         // set permission
                                         else if(StringUtils.equals(ACE_CONFIG_PROPERTY_PERMISSION, currentAceProperty )){
@@ -358,55 +358,57 @@ public class ConfigReader {
           }
      }
 
-     private static boolean validatePrivileges(String principal, long counter, AceBean tmpAclBean, String currentEntryValue) {
-          boolean isActionOrPrivilegeDefined = false;
-          if(StringUtils.isNotBlank(currentEntryValue)){
+     private static boolean validatePrivileges(String principal,
+ 			boolean isActionOrPrivilegeDefined, long counter,
+ 			AceBean tmpAclBean, String currentEntryValue) {
+ 		if(StringUtils.isNotBlank(currentEntryValue)){
 
-               // validation
-               if("null".equals(currentEntryValue)){
-                    tmpAclBean.setPrivilegesString("");
-               }else if(!currentEntryValue.isEmpty()){
-                    String[] privileges = currentEntryValue.split(",");
-                    for(int i = 0; i < privileges.length; i++){
+ 			// validation
+ 			if("null".equals(currentEntryValue)){
+ 				tmpAclBean.setPrivilegesString("");
+ 			}else if(!currentEntryValue.isEmpty()){
+ 				String[] privileges = currentEntryValue.split(",");
+ 				for(int i = 0; i < privileges.length; i++){
 
-                         // remove leading and trailing blanks from privilege name
-                         privileges[i] = StringUtils.strip(privileges[i]);
+ 					// remove leading and trailing blanks from privilege name
+ 					privileges[i] = StringUtils.strip(privileges[i]);
 
-                         if(!Validators.isValidJcrPrivilege(privileges[i])){
-                              LOG.error("Validation error while reading ACE data: invalid jcr privilege: {}", privileges[i]);
-                              throw new IllegalArgumentException("Validation error while reading ACE definition nr." + counter + " of authorizable: " + principal + ",  invalid jcr privilege: " + privileges[i]);
-                         }
-                    }
-                    tmpAclBean.setPrivilegesString(currentEntryValue);
-                    isActionOrPrivilegeDefined = true;
-               }
-          }
-          return isActionOrPrivilegeDefined;
-     }
+ 					if(!Validators.isValidJcrPrivilege(privileges[i])){
+ 						LOG.error("Validation error while reading ACE data: invalid jcr privilege: {}", privileges[i]);
+ 						throw new IllegalArgumentException("Validation error while reading ACE definition nr." + counter + " of authorizable: " + principal + ",  invalid jcr privilege: " + privileges[i]);
+ 					}
+ 				}
+ 				tmpAclBean.setPrivilegesString(currentEntryValue);
+ 				isActionOrPrivilegeDefined = true;
+ 			}
+ 		}
+ 		return isActionOrPrivilegeDefined;
+ 	}
 
-     private static boolean validateActions(String principal, long counter, AceBean tmpAclBean, String currentEntryValue) {
-          boolean isActionOrPrivilegeDefined = false;
-          if(StringUtils.isNotBlank(currentEntryValue)){
+ 	private static boolean validateActions(String principal,
+ 			boolean isActionOrPrivilegeDefined, long counter,
+ 			AceBean tmpAclBean, String currentEntryValue) {
+ 		if(StringUtils.isNotBlank(currentEntryValue)){
 
-               String[] actions = currentEntryValue.split(",");
+ 			String[] actions = currentEntryValue.split(",");
 
-               for(int i = 0; i < actions.length; i++){
+ 			for(int i = 0; i < actions.length; i++){
 
-                    // remove leading and trailing blanks from action name
-                    actions[i] = StringUtils.strip(actions[i]);
+ 				// remove leading and trailing blanks from action name
+ 				actions[i] = StringUtils.strip(actions[i]);
 
-                    if(!Validators.isValidAction(actions[i])){
-                         LOG.error("Validation error while reading ACE data: invalid action: {}", actions[i]);
-                         throw new IllegalArgumentException("Validation error while reading ACE definition nr." + counter + " of authorizable: " + principal + ",  invalid action: " + actions[i]);
-                    }
-               }
+ 				if(!Validators.isValidAction(actions[i])){
+ 					LOG.error("Validation error while reading ACE data: invalid action: {}", actions[i]);
+ 					throw new IllegalArgumentException("Validation error while reading ACE definition nr." + counter + " of authorizable: " + principal + ",  invalid action: " + actions[i]);
+ 				}
+ 			}
 
-               tmpAclBean.setActions(actions);
-               isActionOrPrivilegeDefined = true;
+ 			tmpAclBean.setActions(actions);
+ 			isActionOrPrivilegeDefined = true;
 
-          }
-          return isActionOrPrivilegeDefined;
-     }
+ 		}
+ 		return isActionOrPrivilegeDefined;
+ 	}
 
      private static boolean validateAcePath(String principal,long counter, AceBean tmpAclBean, String currentEntryValue) {
           boolean isPathDefined = false;
