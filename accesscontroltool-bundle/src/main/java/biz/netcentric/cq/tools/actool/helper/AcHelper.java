@@ -14,14 +14,20 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
+import javax.jcr.query.InvalidQueryException;
+import javax.jcr.query.Query;
+import javax.jcr.query.QueryResult;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
+import org.apache.jackrabbit.api.security.principal.PrincipalIterator;
 import org.apache.jackrabbit.api.security.principal.PrincipalManager;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.slf4j.Logger;
@@ -174,19 +180,17 @@ public class AcHelper {
 		JackrabbitSession js = (JackrabbitSession) session;
 		PrincipalManager pm = js.getPrincipalManager();
 		
-		
-
 		// reset ACL in repo with permissions from merged ACL
 		for(AceBean bean : aceBeanSetFromConfig){
 
-			Principal currentPrincipal = pm.getPrincipal(bean.getPrincipalName());
-
+			Principal currentPrincipal = getLdapImportGroupPrincipal(session, bean);
+			
 			if(currentPrincipal == null){
 				String warningMessage = "Could not find definition for authorizable " + bean.getPrincipalName() + " in groups config while installing ACE for: "+bean.getJcrPath()+"! Don't install ACEs for this authorizable!\n";
 				LOG.warn(warningMessage);
 				history.addWarning(warningMessage);
-
 				continue;
+
 			}
 			else{
 				history.addVerboseMessage("starting installation of bean: \n" + bean);
@@ -202,17 +206,54 @@ public class AcHelper {
 
 			}
 		}
-		
-		
 	}
-
+	/**
+	 * Method that searches a group by nodename or by ldap attribute 'cn' inside the rep:principal property of a group node.
+	 * Serves as a fallback, in case a group can't be resolved by principal manager by its name provided in config file after ldap import
+	 * @param session
+	 * @param aceBean
+	 * @return found Principal or null
+	 * @throws InvalidQueryException
+	 * @throws RepositoryException
+	 */
+	private static Principal getLdapImportGroupPrincipal(final Session session, final AceBean aceBean) throws InvalidQueryException, RepositoryException{
+		Principal principal = null;
+		String principalName = aceBean.getPrincipalName();
+		JackrabbitSession js = (JackrabbitSession) session;
+		PrincipalManager pm = js.getPrincipalManager();
+		
+		principal = pm.getPrincipal(principalName);
+		
+		if(principal == null){
+			String query = "/jcr:root/home/groups//*[fn:name() = '" + principalName + "']";
+			principal = getPrincipalbyQuery(query, session, pm);
+			if(principal == null){
+				query = "/jcr:root/home/groups//*[(@jcr:primaryType = 'rep:Group') and jcr:like(@rep:principalName, 'cn=" + principalName +"%')]";
+				principal = getPrincipalbyQuery(query, session, pm);
+			}
+		}
+		return principal;
+	}
+	
+    private static Principal getPrincipalbyQuery(final String queryStringGroups, final Session session, final PrincipalManager pm) throws InvalidQueryException, RepositoryException{
+    	
+    	Query queryGroups = session.getWorkspace().getQueryManager().createQuery(queryStringGroups, Query.XPATH);
+        QueryResult queryResultGroups = queryGroups.execute();
+        NodeIterator nitGroups = queryResultGroups.getNodes();
+        Set <String> groups = new TreeSet<String>();
+        while(nitGroups.hasNext()){
+            Node node = nitGroups.nextNode();
+            String tmp = node.getProperty( "rep:principalName").getString();
+            groups.add(tmp);
+        }
+        return pm.getPrincipal(groups.iterator().next());
+    }
+    
 	private static void installBean(final Session session,
 			final AcInstallationHistoryPojo history,
 			AceBean bean, Principal currentPrincipal)
 			throws RepositoryException, UnsupportedRepositoryOperationException {
 		if(bean.getActions() != null){
-			
-
 			// install actions
 			history.addVerboseMessage("adding action for path: "+ bean.getJcrPath() + ", principal: " + currentPrincipal.getName() + ", actions: " + bean.getActionsString() + ", permission: " + bean.getPermission());
 			AccessControlUtils.addActions(session, bean, currentPrincipal,history); 
