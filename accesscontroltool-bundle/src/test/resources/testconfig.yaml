@@ -1,0 +1,189 @@
+- group_config:
+
+    - groupA:
+
+       - name: 
+         memberOf: 
+         path: /home/groups/g
+         
+         
+    # invalid group name 
+    - groupÄ:
+
+       - name: 
+         memberOf: 
+         path: /home/groups/g
+         assertedException: InvalidGroupNameException
+         
+    - group_B:
+
+       - memberOf:
+         name:
+         path: /home/groups/g
+         
+         
+    - group_D:
+
+       - memberOf:
+         
+         
+    - group_C:
+
+       - memberOf: group_B
+         path: /home/groups/g
+         
+         
+    # invalid memberOf-name name
+    - group_F:
+
+       - memberOf: group_Ö
+         path: /home/groups/g
+         assertedException: InvalidGroupNameException
+         
+- ace_config:
+
+
+    - groupA:
+
+       - path: /content
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+        
+
+       - path: /content/dam
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob:
+         
+         
+    - groupA:
+
+       - path: /content
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+         
+            
+    - groupD:
+
+       # group not defined in group_section
+       - path: /content
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+         assertedException: NoGroupDefinedException
+         
+    
+    - group_B:
+
+       - path: /content
+         permission: deny
+         actions: read
+         privileges: 
+         
+
+       - path: /content/dam
+         permission: allow
+         actions: read,create
+         privileges: 
+         repGlob:
+         
+         
+       - path: /content/dam
+         permission: allow
+         actions: read, create
+         privileges: 
+         repGlob:
+         
+         
+       - path: /content/dam
+         permission: allow
+         actions: read,  create
+         privileges: 
+         repGlob:
+        
+       #valid, test for blanks between actions
+       - path: /content/dam
+         permission: deny
+         actions: read,acl_edit,acl_read,delete,create,modify,replicate
+         privileges: jcr:all, crx:replicate
+         repGlob: 
+         
+         
+       #1 invalid privilege : action as privilege
+       - path: /content/dam
+         permission: deny
+         actions: 
+         privileges: read
+         repGlob: 
+         assertedException: InvalidJcrPrivilegeException
+         
+       #2 invalid privilege
+       - path: /content/dam
+         permission: deny
+         actions: 
+         privileges: jcr_all
+         repGlob: 
+         assertedException: InvalidJcrPrivilegeException
+         
+       #3 invalid action
+       - path: /content/dam
+         permission: deny
+         actions: rea
+         privileges: 
+         repGlob:
+         assertedException: InvalidActionException
+       
+       #4 invalid action
+       - path: /content/dam
+         permission: deny
+         actions: read,acl_edit,aclread,delete,create,modify,replicate
+         privileges: 
+         repGlob:
+         assertedException: InvalidActionException
+         
+       #5 too many actions
+       - path: /content/dam
+         permission: deny
+         actions: read,acl_edit,acl_read,delete,create,modify,replicate,read
+         privileges: 
+         repGlob:
+         assertedException: TooManyActionsException
+       
+       #6 privilege as action
+       - path: /content/dam
+         permission: deny
+         actions: jcr:all
+         privileges: 
+         repGlob:
+         assertedException: InvalidActionException
+         
+       #7 no action AND no privileges defined
+       - path: /content/dam
+         permission: deny
+         actions: 
+         privileges: 
+         repGlob:
+         assertedException: NoActionOrPrivilegeDefinedException
+         
+       #8 no path defined
+       - path: 
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob:
+         assertedException: InvalidPathException
+         
+       #9 no permission defined
+       - path: /content/dam
+         permission: 
+         actions: read
+         privileges: 
+         repGlob:
+         assertedException: InvalidPermissionException
+       

@@ -1,4 +1,4 @@
-package biz.netcentric.cq.tools.actool.helper;
+package biz.netcentric.cq.tools.actool.validators;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

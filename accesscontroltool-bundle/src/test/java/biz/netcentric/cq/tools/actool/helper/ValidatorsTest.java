@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
+import biz.netcentric.cq.tools.actool.validators.Validators;
 
 public class ValidatorsTest {
 

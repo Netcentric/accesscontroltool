@@ -21,7 +21,7 @@ public class CqActionsMappingTest {
 		aceBean1 = new AceBean();
 		aceBean1.setPrincipal("group-A");
 		aceBean1.setActions(null);
-		aceBean1.setActionsString("");
+		aceBean1.setActionsStringFromConfig("");
 		aceBean1.setAllow(false);
 		aceBean1.setJcrPath("/content");
 		aceBean1.setPrivilegesString("jcr:read,crx:replicate");

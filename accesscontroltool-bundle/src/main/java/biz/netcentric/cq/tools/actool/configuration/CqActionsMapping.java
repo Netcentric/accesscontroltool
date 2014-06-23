@@ -261,7 +261,7 @@ public class CqActionsMapping {
 			privileges.addAll(PRIVILEGES_MAP.get(PRIVILEGE_REP_WRITE));
 		}
 		bean.clearActions();
-		bean.setActionsString("");
+		bean.setActionsStringFromConfig("");
 		
 		StringBuilder sb = new StringBuilder();
 		for (String privilege : privileges) {

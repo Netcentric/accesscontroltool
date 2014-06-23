@@ -15,11 +15,25 @@ public class AuthorizableConfigBean implements AcDumpElement{
 	private String principalName;
 	
 	private String[] memberOf;
+	String memberOfStringFromConfig;
+	
+
 	private String description;
 	private String path;
 	private String password;
 	private boolean isGroup = true;
+	private String assertedExceptionString = null;
 	
+	
+
+	public String getAssertedExceptionString() {
+		return assertedExceptionString;
+	}
+
+	public void setAssertedExceptionString(String assertedException) {
+		this.assertedExceptionString = assertedException;
+	}
+
 	public String getPassword() {
 		return password;
 	}
@@ -27,7 +41,9 @@ public class AuthorizableConfigBean implements AcDumpElement{
 	public void setPassword(String password) {
 		this.password = password;
 	}
-
+	public void setMemberOfString(String memberOfString) {
+		this.memberOfStringFromConfig = memberOfString;
+	}
 	
 	
 	public boolean isGroup() {
@@ -62,6 +78,10 @@ public class AuthorizableConfigBean implements AcDumpElement{
 	public boolean isMemberOfOtherGroups(){
 		return memberOf != null;
 	}
+	public String getMemberOfStringFromConfig(){
+		return this.memberOfStringFromConfig;
+	}
+	
 	public String getMemberOfString() {
 		if(memberOf == null){
 			return "";

@@ -1,9 +1,7 @@
 package biz.netcentric.cq.tools.actool.helper;
 
 import java.util.Arrays;
-
 import org.apache.commons.lang.StringUtils;
-
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElement;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementVisitor;
 
@@ -21,15 +19,32 @@ public class AceBean implements AcDumpElement{
 	private String jcrPath;
 	private boolean isAllow;
 	private String repGlob;
-	private String actionsString;
+	private String actionsStringFromConfig;
 	private String privilegesString;
 	private String principal;
+	private String permissionString;
+	private boolean isValid = true;
 	private boolean isAllowProvided = false;
 	private String[] actions;
+	private String assertedExceptionString;
+	
+	public String getAssertedExceptionString() {
+		return assertedExceptionString;
+	}
+	public void setAssertedExceptionString(final String assertedException) {
+		this.assertedExceptionString = assertedException;
+	}
+	
+	public String getPermissionString() {
+		return permissionString;
+	}
+	public void setPermissionString(String permissionString) {
+		this.permissionString = permissionString;
+	}
 	
 	public void clearActions(){
 		this.actions = null;
-		this.actionsString = "";
+		this.actionsStringFromConfig = "";
 	}
 	public String getPrincipalName() {
 		return principal;
@@ -83,11 +98,14 @@ public class AceBean implements AcDumpElement{
 		}
 		return "";
 	}
+	public String getActionsStringFromConfig() {
+		return this.actionsStringFromConfig;
+	}
 	public void setActions(String[] actions){
 		this.actions = actions;
 	}
-	public void setActionsString(String actionsString) {
-		this.actionsString = actionsString;
+	public void setActionsStringFromConfig(String actionsString) {
+		this.actionsStringFromConfig = actionsString;
 	}
 	public String[] getActions(){
 		return this.actions;
@@ -95,6 +113,7 @@ public class AceBean implements AcDumpElement{
 	public String getPrivilegesString() {
 		return privilegesString;
 	}
+	
 	public String[] getPrivileges() {
 		if(StringUtils.isNotBlank(privilegesString)){
 			return privilegesString.split(",");
@@ -108,7 +127,7 @@ public class AceBean implements AcDumpElement{
 	@Override
 	public String toString() {
 		return "AceBean [jcrPath=" + jcrPath + "\n" +", isAllow=" + isAllow + "\n"
-				+ ", repGlob=" + repGlob +  "\n"+ ", actionsString=" + actionsString + "\n"
+				+ ", repGlob=" + repGlob +  "\n"+ ", actionsString=" + actionsStringFromConfig + "\n"
 				+ ", privilegesString=" + privilegesString + "\n" +", principal="
 				+ principal + "\n" +  ", isAllowProvided=" + isAllowProvided
 				+ "\n" + ", actions=" + Arrays.toString(actions) + "]";
@@ -119,7 +138,7 @@ public class AceBean implements AcDumpElement{
 		int result = 1;
 		result = prime * result + Arrays.hashCode(actions);
 		result = prime * result
-				+ ((actionsString == null) ? 0 : actionsString.hashCode());
+				+ ((actionsStringFromConfig == null) ? 0 : actionsStringFromConfig.hashCode());
 		result = prime * result + (isAllow ? 1231 : 1237);
 		result = prime * result + (isAllowProvided ? 1231 : 1237);
 		result = prime * result + ((jcrPath == null) ? 0 : jcrPath.hashCode());
@@ -143,10 +162,10 @@ public class AceBean implements AcDumpElement{
 		AceBean other = (AceBean) obj;
 		if (!Arrays.equals(actions, other.actions))
 			return false;
-		if (actionsString == null) {
-			if (other.actionsString != null)
+		if (actionsStringFromConfig == null) {
+			if (other.actionsStringFromConfig != null)
 				return false;
-		} else if (!actionsString.equals(other.actionsString))
+		} else if (!actionsStringFromConfig.equals(other.actionsStringFromConfig))
 			return false;
 		if (isAllow != other.isAllow)
 			return false;

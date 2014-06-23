@@ -2,18 +2,14 @@ package biz.netcentric.cq.tools.actool.helper;
 
 
 import java.security.Principal;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
-
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
@@ -23,22 +19,17 @@ import javax.jcr.ValueFormatException;
 import javax.jcr.query.InvalidQueryException;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryResult;
-
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
-import org.apache.jackrabbit.api.security.principal.PrincipalIterator;
 import org.apache.jackrabbit.api.security.principal.PrincipalManager;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.Yaml;
-
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
 import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
 import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+
 
 public class AcHelper {
 	
@@ -53,43 +44,7 @@ public class AcHelper {
 	public static int PRINCIPAL_BASED_ORDER = 1;
 	public static int PATH_BASED_ORDER = 2;
 
-//	public static Map <String, Set<AceBean>> createPrincipalBasedAceDump(final Session session, final String[] excludePaths) throws AccessDeniedException, UnsupportedRepositoryOperationException, IllegalArgumentException, RepositoryException{
-//
-//		Map <String, Set<AceBean>> groupBasedAceMap = new HashMap<String, Set<AceBean>>();
-//
-//		Set<AclBean> aclBeanSet = DumpserviceImpl.getACLDump(session, excludePaths);
-//
-//
-//		JackrabbitSession js = (JackrabbitSession) session;
-//		PrincipalManager pm = js.getPrincipalManager();
-//		Iterator<Principal> pmIter = pm.getPrincipals( PrincipalManager.SEARCH_TYPE_GROUP);
-//
-//		// predefine keys based on found groups and add empty sets for storing ACEs
-//		while(pmIter.hasNext()){
-//			Set<AceBean> aceSet = null;
-//			aceSet  = new HashSet<AceBean>();
-//			groupBasedAceMap.put(pmIter.next().getName(), aceSet);
-//		}
-//
-//
-//		// loop through all aclBeans and build up hash map which contains found groups as keys and set of respective ACEs as value
-//		for(AclBean aclBean : aclBeanSet){
-//			if(aclBean.getAcl() != null){
-//				for(AccessControlEntry ace : aclBean.getAcl().getAccessControlEntries()){
-//
-//					if(groupBasedAceMap.get(ace.getPrincipal().getName()) != null){
-//						AceWrapper tmpBean = new AceWrapper(ace, aclBean.getJcrPath());
-//						AceBean tmpAceBean = getAceBean(tmpBean);
-//						groupBasedAceMap.get(ace.getPrincipal().getName()).add(tmpAceBean);
-//
-//					}else{
-//						LOG.warn("Found Principal without entry under home/groups: {}", ace.getPrincipal().getName());
-//					}
-//				}
-//			}
-//		}
-//		return groupBasedAceMap;
-//	}
+
 
 	public static AceBean getAceBean(final AceWrapper ace) throws ValueFormatException, IllegalStateException, RepositoryException{
 		AceBean aceBean = new AceBean();
@@ -248,12 +203,14 @@ public class AcHelper {
         }
         return pm.getPrincipal(groups.iterator().next());
     }
-    
+
 	private static void installBean(final Session session,
 			final AcInstallationHistoryPojo history,
 			AceBean bean, Principal currentPrincipal)
 			throws RepositoryException, UnsupportedRepositoryOperationException {
 		if(bean.getActions() != null){
+			
+
 			// install actions
 			history.addVerboseMessage("adding action for path: "+ bean.getJcrPath() + ", principal: " + currentPrincipal.getName() + ", actions: " + bean.getActionsString() + ", permission: " + bean.getPermission());
 			AccessControlUtils.addActions(session, bean, currentPrincipal,history); 
@@ -294,8 +251,6 @@ public class AcHelper {
 
 		// loop through the ACL from repository
 		for(AceBean aceBeanFromRepository : aclFomRepository){
-			// if the ACL from config doesn't contain an ACE from the current authorizable
-			
 			// if the ACL from repo contains an authorizable from the groups config but the ACL from the config does not - "delete" the respective ACE by not adding it to the orderedMergedSet
 			if(!authorizablesInAclFromConfig.contains(aceBeanFromRepository.getPrincipalName()) && !allAuthorizablesFromConfigsSet.contains(aceBeanFromRepository.getPrincipalName())){
 				// add the ACE from repo
@@ -360,146 +315,6 @@ public class AcHelper {
 		}
 		return pathBasedAceMap;
 	}
-
-
-	/**
-	 * Method that merges several textual AccessControlConfigurations written in YAML format, each comprising of a groups and ACE configuration.
-	 * Validation ensures that no doubled defined groups and only valid section identifiers in configuration files are possible
-	 * @param session 
-	 * @param newestConfigurations map which contains all paths and configuration in YAML format. key is the node path in CRX under which the respective configuration is stored, entry is the textual configuration
-	 * @param history history object
-	 * @return List which contains the combined groups configurations (as map holding sets of AuthorizableConfigBeans) as first element and the combined ACE configurations (as map holding sets of AceBeans) as second element
-	 * @throws RepositoryException
-	 */
-	public static List  getMergedConfigurations(final Session session, final Map<String, String> newestConfigurations, final AcInstallationHistoryPojo history) throws RepositoryException{
-		List c = new ArrayList<Map>();
-		Map<String, LinkedHashSet<AuthorizableConfigBean>> mergedAuthorizablesMapfromConfig = new LinkedHashMap<String, LinkedHashSet<AuthorizableConfigBean>>();
-		Map<String, Set<AceBean>> mergedAceMapFromConfig = new LinkedHashMap<String, Set<AceBean>>();
-		Set<String> groupIdsFromAllConfig = new HashSet<String>(); // needed for detection of doubled defined groups in configurations
-
-		for(Map.Entry<String, String> entry : newestConfigurations.entrySet()){
-			String message = "start merging configuration data from: " + entry.getKey();
-			
-			validateMandatorySectionIdentifiersExistence(entry.getValue(), entry.getKey());
-			
-			history.addMessage(message);
-			Yaml yaml = new Yaml();
-			List<LinkedHashMap>  yamlList =  (List<LinkedHashMap>) yaml.load(entry.getValue());
-			
-			Set<String> sectionIdentifiers = new LinkedHashSet<String>();
-			
-			// put all section identifiers of current configuration into a set
-			for(int i = 0; i < yamlList.size();i++){
-				sectionIdentifiers.addAll(yamlList.get(i).keySet());
-			}
-			validateSectionIdentifiers(sectionIdentifiers, entry.getKey());
-			
-			validateSectionContentExistence(entry.getKey(), yamlList);
-			
-			// build AuthorizableConfigBeans from current configurations
-			Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig = ConfigReader.getAuthorizableConfigurationBeans(yamlList);
-			Set<String> groupIdsFromCurrentConfig = authorizablesMapfromConfig.keySet();
-
-			validateDoubleGroups(groupIdsFromAllConfig, groupIdsFromCurrentConfig, entry.getKey());
-			
-			// add IDs from authorizables from current configuration to set
-			groupIdsFromAllConfig.addAll(groupIdsFromCurrentConfig);
-			
-			// build AceBeans from current configuration
-			Map<String, Set<AceBean>> aceMapFromConfig = ConfigReader.getAceConfigurationBeans(session, yamlList, groupIdsFromCurrentConfig);
-			
-			// add AuthorizableConfigBeans built from current configuration to set containing AuthorizableConfigBeans from all configurations
-			mergedAuthorizablesMapfromConfig.putAll(authorizablesMapfromConfig);
-			
-			// add AceBeans built from current configuration to set containing AceBeans from all configurations
-			mergedAceMapFromConfig.putAll(aceMapFromConfig);
-		}
-		c.add(mergedAuthorizablesMapfromConfig);
-		c.add(mergedAceMapFromConfig);
-		return c;
-	}
-
-
-	/**
-	 * Method that checks if a group in the current configuration file was already defined in another configuration file
-	 * which has been already processed
-	 * @param groupsFromAllConfig set holding all names of groups of all config files which have already been processed 
-	 * @param groupsFromCurrentConfig set holding all names of the groups from the current configuration
-	 * @param configPath repository path of current config
-	 * @throws IllegalArgumentException
-	 */
-	private static void validateDoubleGroups(Set<String> groupsFromAllConfig,
-			Set<String> groupsFromCurrentConfig, final String configPath) throws IllegalArgumentException{
-		
-		if(CollectionUtils.containsAny(groupsFromAllConfig, groupsFromCurrentConfig))  {
-			String errorMessage = "already defined group: ";
-
-			// find the name of the doubled defined group and add it to error message
-			for(String group : groupsFromCurrentConfig){
-				if(groupsFromAllConfig.contains(group)){
-					errorMessage = errorMessage + group + " found in configuration file: " + configPath + "!";
-					errorMessage = errorMessage + " This group was already defined in another configuration file on the system!";
-					break;
-				}
-			}
-			throw new IllegalArgumentException(errorMessage);
-		}
-	}
-
-
-	/**
-	 * Method that checks if both configuration sections (group and ACE) have content
-	 * @param configPath repository path of current config
-	 * @param yamlList list holding the group and ACE configuration as LinkedHashMap (as returned by YAML parser)
-	 * @throws IllegalArgumentException
-	 */
-	private static void validateSectionContentExistence (final String configPath, List<LinkedHashMap> yamlList) throws IllegalArgumentException{
-		
-		if(yamlList.get(0).get(Constants.GROUP_CONFIGURATION_KEY) == null){
-			throw new IllegalArgumentException("Empty " + Constants.GROUP_CONFIGURATION_KEY + " section in configuration file: " + configPath);
-		}
-		if(yamlList.get(1).get(Constants.ACE_CONFIGURATION_KEY) == null){
-			throw new IllegalArgumentException("Empty " + Constants.ACE_CONFIGURATION_KEY + " section in configuration file: " + configPath);
-		}
-	}
-	
-	/**
-	 * Method that checks if mandatory configuration section identifiers (group and ACE) exist in the current configuration file
-	 * @param entry Map.Entry containing a configuration
-	 * @throws IllegalArgumentException
-	 */
-	private static void validateMandatorySectionIdentifiersExistence(final String configuration, final String filePath){
-			// check if mandatory section identifiers are there
-		
-				if(!configuration.contains(Constants.GROUP_CONFIGURATION_KEY) && !configuration.contains(Constants.USER_CONFIGURATION_KEY) ){
-					throw new IllegalArgumentException(Constants.GROUP_CONFIGURATION_KEY + " section identifier ('" + Constants.GROUP_CONFIGURATION_KEY + "') missing in configuration file: " + filePath);
-				}
-				if(!configuration.contains(Constants.ACE_CONFIGURATION_KEY)){
-					throw new IllegalArgumentException(Constants.ACE_CONFIGURATION_KEY + "section identifier ('" + Constants.ACE_CONFIGURATION_KEY + "') missing in configuration file: " + filePath);
-				}
-	}
-
-	/**
-	 * Method that checks if only valid configuration section identifiers (group (and optional users) and ACE) exist in the current configuration file
-	 * @param sectionIdentifiers
-	 * @param filePath
-	 * @throws IllegalArgumentException
-	 */
-	private static void validateSectionIdentifiers(final Set<String> sectionIdentifiers, final String filePath) throws IllegalArgumentException{
-		
-		// check for invalid section identifiers
-		
-		if(!Constants.VALID_CONFIG_SECTION_IDENTIFIERS.containsAll(sectionIdentifiers)){
-
-			for(String identifier : sectionIdentifiers){
-				if(!Constants.VALID_CONFIG_SECTION_IDENTIFIERS.contains(identifier)){
-					throw new IllegalArgumentException("invalid section identifier: " + identifier + " in configuration file: " + filePath + "\n" +
-				                                       "valid configuration section identifiers are: " + Constants.VALID_CONFIG_SECTION_IDENTIFIERS);
-				}
-			}
-		}
-	}
-
 
 	public static boolean isEqualBean(final AceBean bean1, final AceBean bean2){
 		Set<String> bean1Privileges = new HashSet<String>(Arrays.asList(bean1.getPrivilegesString().split(",")));
