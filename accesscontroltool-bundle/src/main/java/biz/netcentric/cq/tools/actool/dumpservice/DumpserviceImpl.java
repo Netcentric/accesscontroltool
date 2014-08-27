@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+
 import javax.jcr.AccessDeniedException;
 import javax.jcr.ItemExistsException;
 import javax.jcr.ItemNotFoundException;
@@ -29,8 +30,11 @@ import javax.jcr.nodetype.NoSuchNodeTypeException;
 import javax.jcr.security.AccessControlEntry;
 import javax.jcr.version.VersionException;
 import javax.servlet.ServletOutputStream;
+
 import org.apache.commons.lang.StringUtils;
+import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Modified;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
@@ -53,7 +57,9 @@ import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import com.day.cq.commons.Externalizer;
+
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.comparators.AcePathComparator;
 import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
@@ -119,8 +125,19 @@ public class DumpserviceImpl implements Dumpservice{
 	
 	private String bundleDescription;
 	
+	@Activate
 	public void activate(@SuppressWarnings("rawtypes") final Map properties, final 
 			ComponentContext context) throws Exception {
+		updateProperties(properties, context);
+	}
+	
+	@Modified
+	public void modified(@SuppressWarnings("rawtypes") final Map properties, final 
+			ComponentContext context) throws Exception {
+		updateProperties(properties, context);
+	}
+	private void updateProperties(final Map properties,
+			final ComponentContext context) {
 		this.queryExcludePaths = PropertiesUtil.toStringArray(properties.get(DUMP_SERVICE_EXCLUDE_PATHS_PATH),null);
 		this.nrOfSavedDumps = PropertiesUtil.toInteger(properties.get(DUMP_SERVICE_NR_OF_SAVED_DUMPS), NR_OF_DUMPS_TO_SAVE_DEFAULT);
 		this.includeUsersInDumps = PropertiesUtil.toBoolean(properties.get(DUMP_INCLUDE_USERS), false);
