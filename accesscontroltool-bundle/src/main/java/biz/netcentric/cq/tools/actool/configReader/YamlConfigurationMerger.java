@@ -24,58 +24,87 @@ import biz.netcentric.cq.tools.actool.validators.YamlConfigurationsValidator;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
 public class YamlConfigurationMerger implements ConfigurationMerger {
-	/* (non-Javadoc)
-	 * @see biz.netcentric.cq.tools.actool.configReader.ConfigurationMeger#getMergedConfigurations(java.util.Map, biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo, biz.netcentric.cq.tools.actool.configReader.ConfigReader)
-	 */
-	@Override
-	public List getMergedConfigurations(final Map<String, String> newestConfigurations, final AcInstallationHistoryPojo history, final ConfigReader configReader) throws RepositoryException, AcConfigBeanValidationException{
-		List c = new ArrayList<Map>();
-		Map<String, LinkedHashSet<AuthorizableConfigBean>> mergedAuthorizablesMapfromConfig = new LinkedHashMap<String, LinkedHashSet<AuthorizableConfigBean>>();
-		Map<String, Set<AceBean>> mergedAceMapFromConfig = new LinkedHashMap<String, Set<AceBean>>();
-		Set<String> groupIdsFromAllConfig = new HashSet<String>(); // needed for detection of doubled defined groups in configurations
-		ConfigurationsValidator configurationsValidator = new YamlConfigurationsValidator();
-		
-		for(Map.Entry<String, String> entry : newestConfigurations.entrySet()){
-			String message = "start merging configuration data from: " + entry.getKey();
-			
-			configurationsValidator.validateMandatorySectionIdentifiersExistence(entry.getValue(), entry.getKey());
-			
-			history.addMessage(message);
-			Yaml yaml = new Yaml();
-			List<LinkedHashMap>  yamlList =  (List<LinkedHashMap>) yaml.load(entry.getValue());
-			
-			Set<String> sectionIdentifiers = new LinkedHashSet<String>();
-			
-			// put all section identifiers of current configuration into a set
-			for(int i = 0; i < yamlList.size();i++){
-				sectionIdentifiers.addAll(yamlList.get(i).keySet());
-			}
-			configurationsValidator.validateSectionIdentifiers(sectionIdentifiers, entry.getKey());
-			
-			configurationsValidator.validateSectionContentExistence(entry.getKey(), yamlList);
-			
-			// build AuthorizableConfigBeans from current configurations
-			AuthorizableValidator authorizableValidator = new  AuthorizableValidatorImpl();
-			Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig = configReader.getGroupConfigurationBeans(yamlList, authorizableValidator);
-			Set<String> groupIdsFromCurrentConfig = authorizablesMapfromConfig.keySet();
+    /*
+     * (non-Javadoc)
+     * 
+     * @see biz.netcentric.cq.tools.actool.configReader.ConfigurationMeger#
+     * getMergedConfigurations(java.util.Map,
+     * biz.netcentric.cq.tools.actool.installationhistory
+     * .AcInstallationHistoryPojo,
+     * biz.netcentric.cq.tools.actool.configReader.ConfigReader)
+     */
+    @Override
+    public List getMergedConfigurations(
+            final Map<String, String> newestConfigurations,
+            final AcInstallationHistoryPojo history,
+            final ConfigReader configReader) throws RepositoryException,
+            AcConfigBeanValidationException {
+        List c = new ArrayList<Map>();
+        Map<String, LinkedHashSet<AuthorizableConfigBean>> mergedAuthorizablesMapfromConfig = new LinkedHashMap<String, LinkedHashSet<AuthorizableConfigBean>>();
+        Map<String, Set<AceBean>> mergedAceMapFromConfig = new LinkedHashMap<String, Set<AceBean>>();
+        Set<String> groupIdsFromAllConfig = new HashSet<String>(); // needed for
+                                                                   // detection
+                                                                   // of doubled
+                                                                   // defined
+                                                                   // groups in
+                                                                   // configurations
+        ConfigurationsValidator configurationsValidator = new YamlConfigurationsValidator();
 
-			configurationsValidator.validateDoubleGroups(groupIdsFromAllConfig, groupIdsFromCurrentConfig, entry.getKey());
-			
-			// add IDs from authorizables from current configuration to set
-			groupIdsFromAllConfig.addAll(groupIdsFromCurrentConfig);
-			
-			// build AceBeans from current configuration
-			AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(groupIdsFromCurrentConfig);
-			Map<String, Set<AceBean>> aceMapFromConfig = configReader.getAceConfigurationBeans(yamlList, groupIdsFromCurrentConfig, aceBeanValidator);
-			
-			// add AuthorizableConfigBeans built from current configuration to set containing AuthorizableConfigBeans from all configurations
-			mergedAuthorizablesMapfromConfig.putAll(authorizablesMapfromConfig);
-			
-			// add AceBeans built from current configuration to set containing AceBeans from all configurations
-			mergedAceMapFromConfig.putAll(aceMapFromConfig);
-		}
-		c.add(mergedAuthorizablesMapfromConfig);
-		c.add(mergedAceMapFromConfig);
-		return c;
-	}
+        for (Map.Entry<String, String> entry : newestConfigurations.entrySet()) {
+            String message = "start merging configuration data from: "
+                    + entry.getKey();
+
+            configurationsValidator
+                    .validateMandatorySectionIdentifiersExistence(
+                            entry.getValue(), entry.getKey());
+
+            history.addMessage(message);
+            Yaml yaml = new Yaml();
+            List<LinkedHashMap> yamlList = (List<LinkedHashMap>) yaml
+                    .load(entry.getValue());
+
+            Set<String> sectionIdentifiers = new LinkedHashSet<String>();
+
+            // put all section identifiers of current configuration into a set
+            for (int i = 0; i < yamlList.size(); i++) {
+                sectionIdentifiers.addAll(yamlList.get(i).keySet());
+            }
+            configurationsValidator.validateSectionIdentifiers(
+                    sectionIdentifiers, entry.getKey());
+
+            configurationsValidator.validateSectionContentExistence(
+                    entry.getKey(), yamlList);
+
+            // build AuthorizableConfigBeans from current configurations
+            AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl();
+            Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig = configReader
+                    .getGroupConfigurationBeans(yamlList, authorizableValidator);
+            Set<String> groupIdsFromCurrentConfig = authorizablesMapfromConfig
+                    .keySet();
+
+            configurationsValidator.validateDoubleGroups(groupIdsFromAllConfig,
+                    groupIdsFromCurrentConfig, entry.getKey());
+
+            // add IDs from authorizables from current configuration to set
+            groupIdsFromAllConfig.addAll(groupIdsFromCurrentConfig);
+
+            // build AceBeans from current configuration
+            AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(
+                    groupIdsFromCurrentConfig);
+            Map<String, Set<AceBean>> aceMapFromConfig = configReader
+                    .getAceConfigurationBeans(yamlList,
+                            groupIdsFromCurrentConfig, aceBeanValidator);
+
+            // add AuthorizableConfigBeans built from current configuration to
+            // set containing AuthorizableConfigBeans from all configurations
+            mergedAuthorizablesMapfromConfig.putAll(authorizablesMapfromConfig);
+
+            // add AceBeans built from current configuration to set containing
+            // AceBeans from all configurations
+            mergedAceMapFromConfig.putAll(aceMapFromConfig);
+        }
+        c.add(mergedAuthorizablesMapfromConfig);
+        c.add(mergedAceMapFromConfig);
+        return c;
+    }
 }

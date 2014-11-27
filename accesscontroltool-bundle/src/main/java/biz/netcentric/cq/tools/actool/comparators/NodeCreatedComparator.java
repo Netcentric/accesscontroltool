@@ -11,26 +11,26 @@ import javax.jcr.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+public class NodeCreatedComparator implements Comparator<Node> {
 
+    private static final String PROPERTY_JCR_CREATED = "jcr:created";
 
-public class NodeCreatedComparator implements Comparator<Node>{
+    @Override
+    public int compare(Node node1, Node node2) {
 
-	private static final String PROPERTY_JCR_CREATED = "jcr:created";
-
-	@Override
-	public int compare(Node node1, Node node2) {
-		
-		final Logger LOG = LoggerFactory.getLogger(NodeCreatedComparator.class);
-		Date node1Date = null;
+        final Logger LOG = LoggerFactory.getLogger(NodeCreatedComparator.class);
+        Date node1Date = null;
         Date node2Date = null;
-        
+
         try {
-        	node1Date = getArticleDateProperty(node1);
+            node1Date = getArticleDateProperty(node1);
             node2Date = getArticleDateProperty(node2);
 
-            if (node1Date != null && node2Date != null && node1Date.after(node2Date)) {
+            if (node1Date != null && node2Date != null
+                    && node1Date.after(node2Date)) {
                 return -1;
-            } else if (node1Date != null && node2Date != null && node2Date.after(node1Date)) {
+            } else if (node1Date != null && node2Date != null
+                    && node2Date.after(node1Date)) {
                 return 1;
             }
 
@@ -39,11 +39,14 @@ public class NodeCreatedComparator implements Comparator<Node>{
         }
 
         return 0;
-	}
-	 
-	/** @param node article node
+    }
+
+    /**
+     * @param node
+     *            article node
      * @return Date creation date of the article
-     * @throws RepositoryException */
+     * @throws RepositoryException
+     */
     public static Date getArticleDateProperty(final Node node)
             throws RepositoryException {
         Date date = null;

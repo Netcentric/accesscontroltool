@@ -12,85 +12,94 @@ import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
 
 public class Validators {
 
-	private static final Logger LOG = LoggerFactory.getLogger(Validators.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Validators.class);
 
-	private static final Pattern GROUP_ID_PATTERN =
-			Pattern.compile("([a-zA-Z0-9-_.]+)");
+    private static final Pattern GROUP_ID_PATTERN = Pattern
+            .compile("([a-zA-Z0-9-_.]+)");
 
-	public static boolean isValidNodePath(final String path){
-		if(StringUtils.isBlank(path)){
-			return false;
-		}
-		// TO DO: proper validation
-		if ((path == null) || (path.equals(""))) {
-			return false;
-		}
-		return true;
-	}
+    public static boolean isValidNodePath(final String path) {
+        if (StringUtils.isBlank(path)) {
+            return false;
+        }
+        // TO DO: proper validation
+        if ((path == null) || (path.equals(""))) {
+            return false;
+        }
+        return true;
+    }
 
-	public static boolean isValidAuthorizableId(final String name){
-		if(StringUtils.isBlank(name)){
-			return false;
-		}
-		boolean isValid = false;
+    public static boolean isValidAuthorizableId(final String name) {
+        if (StringUtils.isBlank(name)) {
+            return false;
+        }
+        boolean isValid = false;
 
-		Matcher matcher = GROUP_ID_PATTERN.matcher(name);
-		if(matcher.matches()){
-			isValid = true;
-		}
-		return isValid;
-	}
+        Matcher matcher = GROUP_ID_PATTERN.matcher(name);
+        if (matcher.matches()) {
+            isValid = true;
+        }
+        return isValid;
+    }
 
-	public static boolean isValidRegex(String expression) {
-		if(StringUtils.isBlank(expression)){
-			return true;
-		}
-		boolean isValid = true;
+    public static boolean isValidRegex(String expression) {
+        if (StringUtils.isBlank(expression)) {
+            return true;
+        }
+        boolean isValid = true;
 
-			if(expression.startsWith("*")){
-				expression = expression.replaceFirst("\\*", "\\\\*");
-			}
-			try {
-				Pattern.compile(expression);
-			} catch (PatternSyntaxException e) {
-				LOG.error("Error while validating rep glob: {} ", expression, e);
-				isValid=false;
-			}
-		
-		return isValid;
-	}
+        if (expression.startsWith("*")) {
+            expression = expression.replaceFirst("\\*", "\\\\*");
+        }
+        try {
+            Pattern.compile(expression);
+        } catch (PatternSyntaxException e) {
+            LOG.error("Error while validating rep glob: {} ", expression, e);
+            isValid = false;
+        }
 
-	public static boolean isValidAction(String action){
-		if(action == null){
-			return false;
-		}
+        return isValid;
+    }
 
-		if(!CqActionsMapping.ACTIONS_MAP.keySet().contains(action)){
-			return false;
-		}
+    public static boolean isValidAction(String action) {
+        if (action == null) {
+            return false;
+        }
 
-		return true;
-	}
-	public static boolean isValidJcrPrivilege(String privilege){
-		if(privilege == null){
-			return false;
-		}
+        if (!CqActionsMapping.ACTIONS_MAP.keySet().contains(action)) {
+            return false;
+        }
 
-		if(!CqActionsMapping.getJcrAggregatedPrivilegesList().contains(privilege) && !CqActionsMapping.getJcrAllPrivilegesList().contains(privilege)
-				&& !CqActionsMapping.PRIVILEGES_MAP.get("rep:write").contains(privilege) && !CqActionsMapping.PRIVILEGES_MAP.get("jcr:write").contains(privilege) ){
-			return false;
-		}
+        return true;
+    }
 
-		return true;
-	}
-	public static boolean isValidPermission(String permission){
-		if(permission == null){
-			return false;
-		}
+    public static boolean isValidJcrPrivilege(String privilege) {
+        if (privilege == null) {
+            return false;
+        }
 
-		if (StringUtils.equals("allow", permission) || StringUtils.equals("deny", permission) ){
-			return true;
-		}
-		return false;
-	}
+        if (!CqActionsMapping.getJcrAggregatedPrivilegesList().contains(
+                privilege)
+                && !CqActionsMapping.getJcrAllPrivilegesList().contains(
+                        privilege)
+                && !CqActionsMapping.PRIVILEGES_MAP.get("rep:write").contains(
+                        privilege)
+                && !CqActionsMapping.PRIVILEGES_MAP.get("jcr:write").contains(
+                        privilege)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static boolean isValidPermission(String permission) {
+        if (permission == null) {
+            return false;
+        }
+
+        if (StringUtils.equals("allow", permission)
+                || StringUtils.equals("deny", permission)) {
+            return true;
+        }
+        return false;
+    }
 }

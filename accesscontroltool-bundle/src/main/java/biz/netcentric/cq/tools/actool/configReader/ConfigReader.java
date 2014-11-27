@@ -13,12 +13,18 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
 
 public interface ConfigReader {
 
-	public Map<String, Set<AceBean>> getAceConfigurationBeans(final  Collection<?> aceConfigData, Set<String> groupsFromConfig, AceBeanValidator aceBeanValidator)
-			throws RepositoryException, AcConfigBeanValidationException;
+    public Map<String, Set<AceBean>> getAceConfigurationBeans(
+            final Collection<?> aceConfigData, Set<String> groupsFromConfig,
+            AceBeanValidator aceBeanValidator) throws RepositoryException,
+            AcConfigBeanValidationException;
 
-	public Map<String, LinkedHashSet<AuthorizableConfigBean>> getGroupConfigurationBeans(final  Collection<?> groupConfigData, AuthorizableValidator authorizableValidator)
-			throws AcConfigBeanValidationException;
-	
-	public Map<String, LinkedHashSet<AuthorizableConfigBean>> getUserConfigurationBeans(final  Collection<?> userConfigData, AuthorizableValidator authorizableValidator)
-			throws AcConfigBeanValidationException;
+    public Map<String, LinkedHashSet<AuthorizableConfigBean>> getGroupConfigurationBeans(
+            final Collection<?> groupConfigData,
+            AuthorizableValidator authorizableValidator)
+            throws AcConfigBeanValidationException;
+
+    public Map<String, LinkedHashSet<AuthorizableConfigBean>> getUserConfigurationBeans(
+            final Collection<?> userConfigData,
+            AuthorizableValidator authorizableValidator)
+            throws AcConfigBeanValidationException;
 }

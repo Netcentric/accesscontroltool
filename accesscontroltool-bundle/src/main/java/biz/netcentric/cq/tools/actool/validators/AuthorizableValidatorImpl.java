@@ -8,77 +8,90 @@ import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidGroupNameException;
 
-public class AuthorizableValidatorImpl implements AuthorizableValidator{
-	
-	private static final Logger LOG = LoggerFactory.getLogger(AuthorizableValidatorImpl.class);
-	private boolean enabled = true;
-	AuthorizableConfigBean authorizableConfigBean;
-	
-	
-	public AuthorizableValidatorImpl() {}
-	
-	public void validate(AuthorizableConfigBean authorizableConfigBean) throws AcConfigBeanValidationException{
-		this.authorizableConfigBean = authorizableConfigBean;
-		validate();
-	}
-	private boolean validate() throws AcConfigBeanValidationException{
-		if(enabled){
-			return validateMemberOf(this.authorizableConfigBean) && validateAuthorizableId(this.authorizableConfigBean);
-		}
-		return true;
-	}
+public class AuthorizableValidatorImpl implements AuthorizableValidator {
 
-	public boolean validateMemberOf( AuthorizableConfigBean tmpPrincipalConfigBean) throws InvalidGroupNameException {
-		String currentPrincipal = tmpPrincipalConfigBean.getPrincipalID();
-		String currentEntryValue = tmpPrincipalConfigBean.getMemberOfStringFromConfig();
-		if(StringUtils.isNotBlank(currentEntryValue)){
-			if(currentEntryValue != null){
+    private static final Logger LOG = LoggerFactory
+            .getLogger(AuthorizableValidatorImpl.class);
+    private boolean enabled = true;
+    AuthorizableConfigBean authorizableConfigBean;
 
-				String[] groups = currentEntryValue.split(",");
+    public AuthorizableValidatorImpl() {
+    }
 
-				for(int i = 0; i < groups.length; i++){
+    public void validate(AuthorizableConfigBean authorizableConfigBean)
+            throws AcConfigBeanValidationException {
+        this.authorizableConfigBean = authorizableConfigBean;
+        validate();
+    }
 
-					// remove leading and trailing blanks from groupname
-					groups[i] = StringUtils.strip(groups[i]);
+    private boolean validate() throws AcConfigBeanValidationException {
+        if (enabled) {
+            return validateMemberOf(this.authorizableConfigBean)
+                    && validateAuthorizableId(this.authorizableConfigBean);
+        }
+        return true;
+    }
 
-					if(!Validators.isValidAuthorizableId(groups[i])){
-						LOG.error("Validation error while reading group property of authorizable:{}, invalid authorizable name: {}", currentPrincipal, groups[i]);
-						throw new InvalidGroupNameException("Validation error while reading group property of authorizable: " + currentPrincipal + ", invalid group name: " + groups[i]);
-					}
-				}
+    public boolean validateMemberOf(
+            AuthorizableConfigBean tmpPrincipalConfigBean)
+            throws InvalidGroupNameException {
+        String currentPrincipal = tmpPrincipalConfigBean.getPrincipalID();
+        String currentEntryValue = tmpPrincipalConfigBean
+                .getMemberOfStringFromConfig();
+        if (StringUtils.isNotBlank(currentEntryValue)) {
+            if (currentEntryValue != null) {
 
-				tmpPrincipalConfigBean.setMemberOf(groups);
-				
-			}
-		}
-		return true;
-	}
+                String[] groups = currentEntryValue.split(",");
 
-	public boolean validateAuthorizableId(AuthorizableConfigBean tmpPrincipalConfigBean) throws InvalidGroupNameException {
-		String currentPrincipal = tmpPrincipalConfigBean.getPrincipalID();
-		
-		if(Validators.isValidAuthorizableId((String)currentPrincipal)){
-			tmpPrincipalConfigBean.setPrincipalID((String)currentPrincipal);
-		}
-		else{
-			String message = "Validation error while reading group data: invalid group name: " + (String)currentPrincipal;
-			LOG.error(message);
-			throw new InvalidGroupNameException(message);
+                for (int i = 0; i < groups.length; i++) {
 
-		}
-		return true;
-	}
+                    // remove leading and trailing blanks from groupname
+                    groups[i] = StringUtils.strip(groups[i]);
 
-	@Override
-	public void setBean(AuthorizableConfigBean authorizableConfigBean) {
-		this.authorizableConfigBean = authorizableConfigBean;
-	}
+                    if (!Validators.isValidAuthorizableId(groups[i])) {
+                        LOG.error(
+                                "Validation error while reading group property of authorizable:{}, invalid authorizable name: {}",
+                                currentPrincipal, groups[i]);
+                        throw new InvalidGroupNameException(
+                                "Validation error while reading group property of authorizable: "
+                                        + currentPrincipal
+                                        + ", invalid group name: " + groups[i]);
+                    }
+                }
 
-	@Override
-	public void disable() {
-		this.enabled = false;
-		
-	}
+                tmpPrincipalConfigBean.setMemberOf(groups);
 
-	
+            }
+        }
+        return true;
+    }
+
+    public boolean validateAuthorizableId(
+            AuthorizableConfigBean tmpPrincipalConfigBean)
+            throws InvalidGroupNameException {
+        String currentPrincipal = tmpPrincipalConfigBean.getPrincipalID();
+
+        if (Validators.isValidAuthorizableId((String) currentPrincipal)) {
+            tmpPrincipalConfigBean.setPrincipalID((String) currentPrincipal);
+        } else {
+            String message = "Validation error while reading group data: invalid group name: "
+                    + (String) currentPrincipal;
+            LOG.error(message);
+            throw new InvalidGroupNameException(message);
+
+        }
+        return true;
+    }
+
+    @Override
+    public void setBean(AuthorizableConfigBean authorizableConfigBean) {
+        this.authorizableConfigBean = authorizableConfigBean;
+    }
+
+    @Override
+    public void disable() {
+        this.enabled = false;
+
+    }
+
 }

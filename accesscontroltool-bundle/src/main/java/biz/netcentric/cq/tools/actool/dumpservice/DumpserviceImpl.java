@@ -75,256 +75,285 @@ import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.installationhistory.HistoryUtils;
 
-
 @Service
-
-@Component(
-		metatype = true,
-		label = "AC Dump Service",
-		description = "Service that creates dumps of the current AC configurations (groups&ACEs)")
+@Component(metatype = true, label = "AC Dump Service", description = "Service that creates dumps of the current AC configurations (groups&ACEs)")
 @Properties({
 
-	@Property(label = "Number of dumps to save", name = DumpserviceImpl.DUMP_SERVICE_NR_OF_SAVED_DUMPS, value = "5", description = "number of last dumps which get saved in CRX under /var/statistics/achistory"),
-	@Property(label = "Include user ACEs in dumps", name = DumpserviceImpl.DUMP_INCLUDE_USERS, boolValue = false, description = "if selected, also user based ACEs (and their respective users) get added to dumps"),
-	@Property(label = "filtered dump", name = DumpserviceImpl.DUMP_IS_FILTERED, boolValue = true, description = "if selected, ACEs of cq actions modify, create and delete containing a repGlob get also added to dumps in section: " + Constants.USER_CONFIGURATION_KEY),
-	@Property(label = "include legacy ACEs", name = DumpserviceImpl.DUMP_IS_SHOW_LEGACY_ACES, boolValue = false, description = "if selected, legacy ACEs (ACEs without group/user under /home) get also added to dumps in section: " + Constants.LEGACY_ACE_DUMP_SECTION_KEY),
-	@Property(label = "AC query exclude paths", name = DumpserviceImpl.DUMP_SERVICE_EXCLUDE_PATHS_PATH, value = {"/home", "/jcr:system", "/tmp"}, description = "direct children of jcr:root which get excluded from all dumps (also from internal dumps)")
-})
+        @Property(label = "Number of dumps to save", name = DumpserviceImpl.DUMP_SERVICE_NR_OF_SAVED_DUMPS, value = "5", description = "number of last dumps which get saved in CRX under /var/statistics/achistory"),
+        @Property(label = "Include user ACEs in dumps", name = DumpserviceImpl.DUMP_INCLUDE_USERS, boolValue = false, description = "if selected, also user based ACEs (and their respective users) get added to dumps"),
+        @Property(label = "filtered dump", name = DumpserviceImpl.DUMP_IS_FILTERED, boolValue = true, description = "if selected, ACEs of cq actions modify, create and delete containing a repGlob get also added to dumps in section: "
+                + Constants.USER_CONFIGURATION_KEY),
+        @Property(label = "include legacy ACEs", name = DumpserviceImpl.DUMP_IS_SHOW_LEGACY_ACES, boolValue = false, description = "if selected, legacy ACEs (ACEs without group/user under /home) get also added to dumps in section: "
+                + Constants.LEGACY_ACE_DUMP_SECTION_KEY),
+        @Property(label = "AC query exclude paths", name = DumpserviceImpl.DUMP_SERVICE_EXCLUDE_PATHS_PATH, value = {
+                "/home", "/jcr:system", "/tmp" }, description = "direct children of jcr:root which get excluded from all dumps (also from internal dumps)") })
+public class DumpserviceImpl implements Dumpservice {
 
-public class DumpserviceImpl implements Dumpservice{
-	
-	private static final Logger LOG = LoggerFactory.getLogger(DumpserviceImpl.class);
+    private static final Logger LOG = LoggerFactory
+            .getLogger(DumpserviceImpl.class);
 
-	private static final String DUMP_FILE_EXTENSION = ".yaml";
-	private static final String DUMP_NODE_PREFIX = "dump_";
-	
-	public final static int PRINCIPAL_BASED_SORTING = 1;
-	public final static int PATH_BASED_SORTING = 2;
+    private static final String DUMP_FILE_EXTENSION = ".yaml";
+    private static final String DUMP_NODE_PREFIX = "dump_";
 
-	public final static int DENY_ALLOW_ACL_SORTING = 1;
-	public final static int NO_ACL_SORTING = 2;
+    public final static int PRINCIPAL_BASED_SORTING = 1;
+    public final static int PATH_BASED_SORTING = 2;
 
-	protected static final int NR_OF_DUMPS_TO_SAVE_DEFAULT = 5;
-	static final String DUMP_SERVICE_EXCLUDE_PATHS_PATH = "DumpService.queryExcludePaths";
-	static final String DUMP_SERVICE_NR_OF_SAVED_DUMPS = "DumpService.nrOfSavedDumps";
-	static final String DUMP_INCLUDE_USERS = "DumpService.includeUsers";
-	static final String DUMP_IS_FILTERED = "DumpService.isFiltered";
-	static final String DUMP_IS_SHOW_LEGACY_ACES = "DumpService.isShowLegacyAces";
-	
-	private String[] queryExcludePaths;
-	private int nrOfSavedDumps;
-	private boolean includeUsersInDumps = false;
-	private boolean isFilteredDump = false;
-	private boolean isShowLegacyAces = false;
-	
-	@Reference
-	private SlingRepository repository;
+    public final static int DENY_ALLOW_ACL_SORTING = 1;
+    public final static int NO_ACL_SORTING = 2;
 
-	@Reference
-	private ResourceResolverFactory resourceResolverFactory;
-	
-	private String bundleDescription;
-	
-	@Activate
-	public void activate(@SuppressWarnings("rawtypes") final Map properties, final 
-			ComponentContext context) throws Exception {
-		updateProperties(properties, context);
-	}
-	
-	@Modified
-	public void modified(@SuppressWarnings("rawtypes") final Map properties, final 
-			ComponentContext context) throws Exception {
-		updateProperties(properties, context);
-	}
-	private void updateProperties(final Map properties,
-			final ComponentContext context) {
-		this.queryExcludePaths = PropertiesUtil.toStringArray(properties.get(DUMP_SERVICE_EXCLUDE_PATHS_PATH),null);
-		this.nrOfSavedDumps = PropertiesUtil.toInteger(properties.get(DUMP_SERVICE_NR_OF_SAVED_DUMPS), NR_OF_DUMPS_TO_SAVE_DEFAULT);
-		this.includeUsersInDumps = PropertiesUtil.toBoolean(properties.get(DUMP_INCLUDE_USERS), false);
-		this.isFilteredDump = PropertiesUtil.toBoolean(properties.get(DUMP_IS_FILTERED), true);
-		this.isShowLegacyAces = PropertiesUtil.toBoolean(properties.get(DUMP_IS_SHOW_LEGACY_ACES), true);
-		bundleDescription = (String) context.getBundleContext().getBundle().getHeaders().get("Bundle-Description");
-	}
-	
-	public String getBundleDescription() {
-		return bundleDescription;
-	}
+    protected static final int NR_OF_DUMPS_TO_SAVE_DEFAULT = 5;
+    static final String DUMP_SERVICE_EXCLUDE_PATHS_PATH = "DumpService.queryExcludePaths";
+    static final String DUMP_SERVICE_NR_OF_SAVED_DUMPS = "DumpService.nrOfSavedDumps";
+    static final String DUMP_INCLUDE_USERS = "DumpService.includeUsers";
+    static final String DUMP_IS_FILTERED = "DumpService.isFiltered";
+    static final String DUMP_IS_SHOW_LEGACY_ACES = "DumpService.isShowLegacyAces";
 
-	public boolean isIncludeUsers(){
-		return this.includeUsersInDumps;
-	}
-	public boolean isShowLegacyAces(){
-		return this.isShowLegacyAces;
-	}
-	@Override
-	public String[] getQueryExcludePaths() {
-		return this.queryExcludePaths;
-	}
-	
-	@Override
-	public void returnAceDumpAsFile(final SlingHttpServletRequest request, final SlingHttpServletResponse response, Session session, int mapOrder, int aceOrder) {
-		try {
-			Map<String, Set<AceBean>> aclDumpMap = AcHelper.createAceMap(request, mapOrder, aceOrder, this.queryExcludePaths, this);
-			this.returnAceDumpAsFile(response, aclDumpMap, mapOrder);
-		} catch (ValueFormatException e) {
-			LOG.error("ValueFormatException in AceServiceImpl: {}", e);
-		} catch (IllegalStateException e) {
-			LOG.error("IllegalStateException in AceServiceImpl: {}", e);
-		} catch (IOException e) {
-			LOG.error("IOException in AceServiceImpl: {}", e);
-		} catch (RepositoryException e) {
-			LOG.error("RepositoryException in AceServiceImpl: {}", e);
-		}
+    private String[] queryExcludePaths;
+    private int nrOfSavedDumps;
+    private boolean includeUsersInDumps = false;
+    private boolean isFilteredDump = false;
+    private boolean isShowLegacyAces = false;
 
-	}
+    @Reference
+    private SlingRepository repository;
 
-	@Override
-	public String getCompletePathBasedDumpsAsString() {
-		String dump = getCompleteDump(2,2);
-		persistDump(dump);
-		return dump;
-	}
+    @Reference
+    private ResourceResolverFactory resourceResolverFactory;
 
-	@Override
-	public String getCompletePrincipalBasedDumpsAsString() {
-		String dump = getCompleteDump(1,1);
-		persistDump(dump);
-		return dump;
-	}
+    private String bundleDescription;
 
-	private void persistDump(String dump){
-		Session session = null;
-		try {
-			session = repository.loginAdministrative(null);
-			Node rootNode = HistoryUtils.getAcHistoryRootNode(session);
-			createTransientDumpNode(dump, rootNode);
-			session.save();
-		} catch (RepositoryException e) {
-			LOG.error("RepositoryException: {}", e);
-		}finally{
-			if(session != null){
-				session.logout();
-			}
-		}
-	}
-	
-	private void createTransientDumpNode(String dump, Node rootNode)throws ItemExistsException, PathNotFoundException, NoSuchNodeTypeException, LockException, VersionException,
-	ConstraintViolationException, RepositoryException, ValueFormatException {
+    @Activate
+    public void activate(@SuppressWarnings("rawtypes") final Map properties,
+            final ComponentContext context) throws Exception {
+        updateProperties(properties, context);
+    }
 
-		NodeIterator nodeIt = rootNode.getNodes();
+    @Modified
+    public void modified(@SuppressWarnings("rawtypes") final Map properties,
+            final ComponentContext context) throws Exception {
+        updateProperties(properties, context);
+    }
 
-		// TreeSet used here since only this type offers the methods first() and last()
-		TreeSet<Node> dumpNodes = new TreeSet<Node>(new JcrCreatedComparator());
+    private void updateProperties(final Map properties,
+            final ComponentContext context) {
+        this.queryExcludePaths = PropertiesUtil.toStringArray(
+                properties.get(DUMP_SERVICE_EXCLUDE_PATHS_PATH), null);
+        this.nrOfSavedDumps = PropertiesUtil.toInteger(
+                properties.get(DUMP_SERVICE_NR_OF_SAVED_DUMPS),
+                NR_OF_DUMPS_TO_SAVE_DEFAULT);
+        this.includeUsersInDumps = PropertiesUtil.toBoolean(
+                properties.get(DUMP_INCLUDE_USERS), false);
+        this.isFilteredDump = PropertiesUtil.toBoolean(
+                properties.get(DUMP_IS_FILTERED), true);
+        this.isShowLegacyAces = PropertiesUtil.toBoolean(
+                properties.get(DUMP_IS_SHOW_LEGACY_ACES), true);
+        bundleDescription = (String) context.getBundleContext().getBundle()
+                .getHeaders().get("Bundle-Description");
+    }
 
-		Node previousDumpNode = null;
+    public String getBundleDescription() {
+        return bundleDescription;
+    }
 
-		// get all dump nodes
-		while(nodeIt.hasNext()){
-			Node currNode = nodeIt.nextNode();
+    public boolean isIncludeUsers() {
+        return this.includeUsersInDumps;
+    }
 
-			if(currNode.getName().startsWith(DUMP_NODE_PREFIX)){
-				dumpNodes.add(currNode);
-			}
-		}
-		// try to get previous dump node
-		if(!dumpNodes.isEmpty()){
-			previousDumpNode = dumpNodes.first();
-		}
-		// is limit of dump nodes to save reached?
-		if(dumpNodes.size() > this.nrOfSavedDumps-1){
-			Node oldestDumpNode = dumpNodes.last();
-			oldestDumpNode.remove();
-		}
-		Node dumpNode = getNewDumpNode(dump, rootNode);
+    public boolean isShowLegacyAces() {
+        return this.isShowLegacyAces;
+    }
 
-		// order the newest dump node as first child node of ac root node
-		if(previousDumpNode != null){
-			rootNode.orderBefore(dumpNode.getName(), previousDumpNode.getName());
-		}
-	}
-	
-	private Node getNewDumpNode(String dump, Node rootNode)
-			throws ItemExistsException, PathNotFoundException,
-			NoSuchNodeTypeException, LockException, VersionException,
-			ConstraintViolationException, RepositoryException,
-			ValueFormatException {
-		// create necessary child node&properties
-		long timestamp = System.currentTimeMillis();
-		Node dumpNode = rootNode.addNode(DUMP_NODE_PREFIX + timestamp + DUMP_FILE_EXTENSION, "nt:file");
+    @Override
+    public String[] getQueryExcludePaths() {
+        return this.queryExcludePaths;
+    }
 
-		Node dumpJcrContenNodet = dumpNode.addNode("jcr:content", "nt:resource");
-		dumpJcrContenNodet.setProperty("jcr:mimeType", "text/plain");
-		dumpJcrContenNodet.setProperty("jcr:encoding", "utf-8");
-		dumpJcrContenNodet.setProperty("jcr:data", dump);
-		return dumpNode;
-	}
+    @Override
+    public void returnAceDumpAsFile(final SlingHttpServletRequest request,
+            final SlingHttpServletResponse response, Session session,
+            int mapOrder, int aceOrder) {
+        try {
+            Map<String, Set<AceBean>> aclDumpMap = AcHelper.createAceMap(
+                    request, mapOrder, aceOrder, this.queryExcludePaths, this);
+            this.returnAceDumpAsFile(response, aclDumpMap, mapOrder);
+        } catch (ValueFormatException e) {
+            LOG.error("ValueFormatException in AceServiceImpl: {}", e);
+        } catch (IllegalStateException e) {
+            LOG.error("IllegalStateException in AceServiceImpl: {}", e);
+        } catch (IOException e) {
+            LOG.error("IOException in AceServiceImpl: {}", e);
+        } catch (RepositoryException e) {
+            LOG.error("RepositoryException in AceServiceImpl: {}", e);
+        }
 
-	private Node getNewestDumpNode(Set<Node> dumpNodes){
-		Iterator it = dumpNodes.iterator();
-		Node node = null;
-		while(it.hasNext()){
-			node =  (Node) it.next();
-		}
-		return node;
-	}
+    }
 
-	@Override
-	public void returnCompleteDumpAsFile(
-			SlingHttpServletResponse response,
-			Map<String, Set<AceBean>> aceMap,
-			Set<AuthorizableConfigBean> authorizableSet, Session session,
-			int mapOrder, int aceOrder) throws IOException {
-		this.returnConfigurationDumpAsFile(response, aceMap, authorizableSet, mapOrder);
+    @Override
+    public String getCompletePathBasedDumpsAsString() {
+        String dump = getCompleteDump(2, 2);
+        persistDump(dump);
+        return dump;
+    }
 
-	}
-    
-	/**
-	 * returns the complete AC dump (groups&ACEs) as String in YAML format
-	 * @param keyOrder either principals (AceHelper.PRINCIPAL_BASED_ORDERING) or node paths (AceHelper.PATH_BASED_ORDERING) as keys
-	 * @param aclOrdering specifies whether the allow and deny ACEs within an ACL should be divided in separate blocks (first deny then allow)
-	 * @return String containing complete AC dump
-	 */
-	private String getCompleteDump(int aclMapKeyOrder, int mapOrder){
-		Session session = null;
-		ResourceResolver resourceResolver = null;
+    @Override
+    public String getCompletePrincipalBasedDumpsAsString() {
+        String dump = getCompleteDump(1, 1);
+        persistDump(dump);
+        return dump;
+    }
 
-		try {
-			session = repository.loginAdministrative(null);
-			AceDumpData aceDumpData = this.createFilteredAclDumpMap(session, aclMapKeyOrder, AcHelper.ACE_ORDER_ALPHABETICAL, this.queryExcludePaths);
-			Map<String, Set<AceBean>> aclDumpMap = aceDumpData.getAceDump();
-//			Map<String, Set<AceBean>> legacyAclDumpMap = aceDumpData.getLegacyAceDump();
-			Set<AuthorizableConfigBean> groupBeans = getGroupBeans(session);
-			Set<User> usersFromACEs = getUsersFromAces(mapOrder, session, aclDumpMap);
-			Set<AuthorizableConfigBean> userBeans = getUserBeans(usersFromACEs);
-			
-			resourceResolver = this.resourceResolverFactory.getAdministrativeResourceResolver(null);
-			Externalizer externalizer = resourceResolver.adaptTo(Externalizer.class);
-			String serverUrl = externalizer.authorLink(resourceResolver, "");
+    private void persistDump(String dump) {
+        Session session = null;
+        try {
+            session = repository.loginAdministrative(null);
+            Node rootNode = HistoryUtils.getAcHistoryRootNode(session);
+            createTransientDumpNode(dump, rootNode);
+            session.save();
+        } catch (RepositoryException e) {
+            LOG.error("RepositoryException: {}", e);
+        } finally {
+            if (session != null) {
+                session.logout();
+            }
+        }
+    }
 
-			return this.getConfigurationDumpAsString(aceDumpData, groupBeans, userBeans, mapOrder, serverUrl);
-		} catch (ValueFormatException e) {
-			LOG.error("ValueFormatException in AceServiceImpl: {}", e);
-		} catch (IllegalStateException e) {
-			LOG.error("IllegalStateException in AceServiceImpl: {}", e);
-		} catch (IOException e) {
-			LOG.error("IOException in AceServiceImpl: {}", e);
-		} catch (RepositoryException e) {
-			LOG.error("RepositoryException in AceServiceImpl: {}", e);
-		} catch (LoginException e) {
-			LOG.error("LoginException in AceServiceImpl: {}", e);
-		}finally{
-			if(session != null){
-				session.logout();
-			}
-			if(resourceResolver != null){
-				resourceResolver.close();
-			}
-		}
-		return null;
-	}
-	
+    private void createTransientDumpNode(String dump, Node rootNode)
+            throws ItemExistsException, PathNotFoundException,
+            NoSuchNodeTypeException, LockException, VersionException,
+            ConstraintViolationException, RepositoryException,
+            ValueFormatException {
+
+        NodeIterator nodeIt = rootNode.getNodes();
+
+        // TreeSet used here since only this type offers the methods first() and
+        // last()
+        TreeSet<Node> dumpNodes = new TreeSet<Node>(new JcrCreatedComparator());
+
+        Node previousDumpNode = null;
+
+        // get all dump nodes
+        while (nodeIt.hasNext()) {
+            Node currNode = nodeIt.nextNode();
+
+            if (currNode.getName().startsWith(DUMP_NODE_PREFIX)) {
+                dumpNodes.add(currNode);
+            }
+        }
+        // try to get previous dump node
+        if (!dumpNodes.isEmpty()) {
+            previousDumpNode = dumpNodes.first();
+        }
+        // is limit of dump nodes to save reached?
+        if (dumpNodes.size() > this.nrOfSavedDumps - 1) {
+            Node oldestDumpNode = dumpNodes.last();
+            oldestDumpNode.remove();
+        }
+        Node dumpNode = getNewDumpNode(dump, rootNode);
+
+        // order the newest dump node as first child node of ac root node
+        if (previousDumpNode != null) {
+            rootNode.orderBefore(dumpNode.getName(), previousDumpNode.getName());
+        }
+    }
+
+    private Node getNewDumpNode(String dump, Node rootNode)
+            throws ItemExistsException, PathNotFoundException,
+            NoSuchNodeTypeException, LockException, VersionException,
+            ConstraintViolationException, RepositoryException,
+            ValueFormatException {
+        // create necessary child node&properties
+        long timestamp = System.currentTimeMillis();
+        Node dumpNode = rootNode.addNode(DUMP_NODE_PREFIX + timestamp
+                + DUMP_FILE_EXTENSION, "nt:file");
+
+        Node dumpJcrContenNodet = dumpNode
+                .addNode("jcr:content", "nt:resource");
+        dumpJcrContenNodet.setProperty("jcr:mimeType", "text/plain");
+        dumpJcrContenNodet.setProperty("jcr:encoding", "utf-8");
+        dumpJcrContenNodet.setProperty("jcr:data", dump);
+        return dumpNode;
+    }
+
+    private Node getNewestDumpNode(Set<Node> dumpNodes) {
+        Iterator it = dumpNodes.iterator();
+        Node node = null;
+        while (it.hasNext()) {
+            node = (Node) it.next();
+        }
+        return node;
+    }
+
+    @Override
+    public void returnCompleteDumpAsFile(SlingHttpServletResponse response,
+            Map<String, Set<AceBean>> aceMap,
+            Set<AuthorizableConfigBean> authorizableSet, Session session,
+            int mapOrder, int aceOrder) throws IOException {
+        this.returnConfigurationDumpAsFile(response, aceMap, authorizableSet,
+                mapOrder);
+
+    }
+
+    /**
+     * returns the complete AC dump (groups&ACEs) as String in YAML format
+     * 
+     * @param keyOrder
+     *            either principals (AceHelper.PRINCIPAL_BASED_ORDERING) or node
+     *            paths (AceHelper.PATH_BASED_ORDERING) as keys
+     * @param aclOrdering
+     *            specifies whether the allow and deny ACEs within an ACL should
+     *            be divided in separate blocks (first deny then allow)
+     * @return String containing complete AC dump
+     */
+    private String getCompleteDump(int aclMapKeyOrder, int mapOrder) {
+        Session session = null;
+        ResourceResolver resourceResolver = null;
+
+        try {
+            session = repository.loginAdministrative(null);
+            AceDumpData aceDumpData = this.createFilteredAclDumpMap(session,
+                    aclMapKeyOrder, AcHelper.ACE_ORDER_ALPHABETICAL,
+                    this.queryExcludePaths);
+            Map<String, Set<AceBean>> aclDumpMap = aceDumpData.getAceDump();
+            // Map<String, Set<AceBean>> legacyAclDumpMap =
+            // aceDumpData.getLegacyAceDump();
+            Set<AuthorizableConfigBean> groupBeans = getGroupBeans(session);
+            Set<User> usersFromACEs = getUsersFromAces(mapOrder, session,
+                    aclDumpMap);
+            Set<AuthorizableConfigBean> userBeans = getUserBeans(usersFromACEs);
+
+            resourceResolver = this.resourceResolverFactory
+                    .getAdministrativeResourceResolver(null);
+            Externalizer externalizer = resourceResolver
+                    .adaptTo(Externalizer.class);
+            String serverUrl = externalizer.authorLink(resourceResolver, "");
+
+            return this.getConfigurationDumpAsString(aceDumpData, groupBeans,
+                    userBeans, mapOrder, serverUrl);
+        } catch (ValueFormatException e) {
+            LOG.error("ValueFormatException in AceServiceImpl: {}", e);
+        } catch (IllegalStateException e) {
+            LOG.error("IllegalStateException in AceServiceImpl: {}", e);
+        } catch (IOException e) {
+            LOG.error("IOException in AceServiceImpl: {}", e);
+        } catch (RepositoryException e) {
+            LOG.error("RepositoryException in AceServiceImpl: {}", e);
+        } catch (LoginException e) {
+            LOG.error("LoginException in AceServiceImpl: {}", e);
+        } finally {
+            if (session != null) {
+                session.logout();
+            }
+            if (resourceResolver != null) {
+                resourceResolver.close();
+            }
+        }
+        return null;
+    }
+
     /**
      * get users from ACEs
+     * 
      * @param mapOrder
      * @param session
      * @param aclDumpMap
@@ -333,495 +362,632 @@ public class DumpserviceImpl implements Dumpservice{
      * @throws UnsupportedRepositoryOperationException
      * @throws RepositoryException
      */
-	private Set<User> getUsersFromAces(int mapOrder, Session session, Map<String, Set<AceBean>> aclDumpMap) throws AccessDeniedException,
-			UnsupportedRepositoryOperationException, RepositoryException {
-		
-		Set<User> usersFromACEs = new HashSet<User>();
-		UserManager um = ((JackrabbitSession)session).getUserManager();
-		
-		// if we have a principal ordered ACE map, all authorizables are contained in the keySet of the map
-		if(mapOrder == PRINCIPAL_BASED_SORTING){
-			Set<String> userIds = new HashSet<String>();
-			userIds = aclDumpMap.keySet();
-			
-			for(String id : userIds){
-				Authorizable authorizable = um.getAuthorizable(id);
-				if(!authorizable.isGroup()){
-					User user = (User)authorizable;
-					usersFromACEs.add(user);
-				}
-			}
-		// if we have a path ordered ACE map, all authorizables are contained in AceBean properties
-		}else if(mapOrder == PATH_BASED_SORTING){
-			for(Map.Entry<String, Set<AceBean>> entry : aclDumpMap.entrySet()){
-				Set<AceBean> aceBeanSet =  entry.getValue();
-				
-				for(AceBean aceBean : aceBeanSet){
-					String principalId = aceBean.getPrincipalName();
-					Authorizable authorizable = um.getAuthorizable(principalId);
-					if(!authorizable.isGroup()){
-						User user = (User)authorizable;
-						usersFromACEs.add(user);
-					}
-				}
-			}
-		}
-		return usersFromACEs;
-	}
+    private Set<User> getUsersFromAces(int mapOrder, Session session,
+            Map<String, Set<AceBean>> aclDumpMap) throws AccessDeniedException,
+            UnsupportedRepositoryOperationException, RepositoryException {
 
+        Set<User> usersFromACEs = new HashSet<User>();
+        UserManager um = ((JackrabbitSession) session).getUserManager();
 
-	/**
-	 * returns a dump of the ACEs installed in the system using a PrintWriter.
-	 * @param out PrintWriter
-	 * @param aceMap map containing all ACE data, either path based or group based
-	 * @param mapOrdering 
-	 * @param aceOrdering
-	 */
-	public void returnAceDump(final PrintWriter out, Map<String, Set<AceBean>> aceMap, final int mapOrdering, final int aceOrdering){
+        // if we have a principal ordered ACE map, all authorizables are
+        // contained in the keySet of the map
+        if (mapOrder == PRINCIPAL_BASED_SORTING) {
+            Set<String> userIds = new HashSet<String>();
+            userIds = aclDumpMap.keySet();
 
-		if(mapOrdering == PATH_BASED_SORTING){
-			LOG.debug("path based ordering required therefor getting path based ACE map");
-			int aclOrder = NO_ACL_SORTING;
+            for (String id : userIds) {
+                Authorizable authorizable = um.getAuthorizable(id);
+                if (!authorizable.isGroup()) {
+                    User user = (User) authorizable;
+                    usersFromACEs.add(user);
+                }
+            }
+            // if we have a path ordered ACE map, all authorizables are
+            // contained in AceBean properties
+        } else if (mapOrder == PATH_BASED_SORTING) {
+            for (Map.Entry<String, Set<AceBean>> entry : aclDumpMap.entrySet()) {
+                Set<AceBean> aceBeanSet = entry.getValue();
 
-			if(aceOrdering == DENY_ALLOW_ACL_SORTING){
-				aclOrder = DENY_ALLOW_ACL_SORTING;
-			}
-			aceMap = AcHelper.getPathBasedAceMap(aceMap, aclOrder) ;
-		}
+                for (AceBean aceBean : aceBeanSet) {
+                    String principalId = aceBean.getPrincipalName();
+                    Authorizable authorizable = um.getAuthorizable(principalId);
+                    if (!authorizable.isGroup()) {
+                        User user = (User) authorizable;
+                        usersFromACEs.add(user);
+                    }
+                }
+            }
+        }
+        return usersFromACEs;
+    }
 
-		Set<String> keySet = aceMap.keySet();
-		for(String principal:keySet){
-			Set<AceBean> aceBeanSet = aceMap.get(principal);
-			out.println("- " + principal + ":");
-			for(AceBean bean : aceBeanSet){
-				out.println();
-				out.println("   - path: " + bean.getJcrPath());
-				out.println("     permission: " + bean.getPermission());
-				out.println("     actions: " + bean.getActionsString());
-				out.println("     privileges: " + bean.getPrivilegesString());
-				out.print("     repGlob: ");
-				if(!bean.getRepGlob().isEmpty()){
-					out.println("'" + bean.getRepGlob() + "'");
-				}else{
-					out.println();
-				}
-			}
-			out.println();
-		}
-		out.println();
-	}
+    /**
+     * returns a dump of the ACEs installed in the system using a PrintWriter.
+     * 
+     * @param out
+     *            PrintWriter
+     * @param aceMap
+     *            map containing all ACE data, either path based or group based
+     * @param mapOrdering
+     * @param aceOrdering
+     */
+    public void returnAceDump(final PrintWriter out,
+            Map<String, Set<AceBean>> aceMap, final int mapOrdering,
+            final int aceOrdering) {
 
-	public void returnAceDumpAsFile(final SlingHttpServletResponse response, final Map<String, Set<AceBean>> aceMap, final int mapOrder) throws IOException{
-		String mimetype =  "application/octet-stream";
-		response.setContentType(mimetype);
-		ServletOutputStream outStream = null;
-		try{
-			try {
-				outStream = response.getOutputStream();
-			} catch (IOException e) {
-				LOG.error("Exception in AclDumpUtils: {}", e);
-			}
+        if (mapOrdering == PATH_BASED_SORTING) {
+            LOG.debug("path based ordering required therefor getting path based ACE map");
+            int aclOrder = NO_ACL_SORTING;
 
-			String fileName = "ACE_Dump_" + new Date(System.currentTimeMillis());
-			response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+            if (aceOrdering == DENY_ALLOW_ACL_SORTING) {
+                aclOrder = DENY_ALLOW_ACL_SORTING;
+            }
+            aceMap = AcHelper.getPathBasedAceMap(aceMap, aclOrder);
+        }
 
-			try {
+        Set<String> keySet = aceMap.keySet();
+        for (String principal : keySet) {
+            Set<AceBean> aceBeanSet = aceMap.get(principal);
+            out.println("- " + principal + ":");
+            for (AceBean bean : aceBeanSet) {
+                out.println();
+                out.println("   - path: " + bean.getJcrPath());
+                out.println("     permission: " + bean.getPermission());
+                out.println("     actions: " + bean.getActionsString());
+                out.println("     privileges: " + bean.getPrivilegesString());
+                out.print("     repGlob: ");
+                if (!bean.getRepGlob().isEmpty()) {
+                    out.println("'" + bean.getRepGlob() + "'");
+                } else {
+                    out.println();
+                }
+            }
+            out.println();
+        }
+        out.println();
+    }
 
-				writeAclConfigToStream(aceMap, mapOrder, outStream);
-			} catch (IOException e) {
-				LOG.error("Exception in AclDumpUtils: {}", e);
-			}
-		}finally{
-			if(outStream != null){
-				outStream.close();
-			}
-		}
-	}
+    public void returnAceDumpAsFile(final SlingHttpServletResponse response,
+            final Map<String, Set<AceBean>> aceMap, final int mapOrder)
+            throws IOException {
+        String mimetype = "application/octet-stream";
+        response.setContentType(mimetype);
+        ServletOutputStream outStream = null;
+        try {
+            try {
+                outStream = response.getOutputStream();
+            } catch (IOException e) {
+                LOG.error("Exception in AclDumpUtils: {}", e);
+            }
 
-	public String getConfigurationDumpAsString(AceDumpData aceDumpData, final Set<AuthorizableConfigBean> groupSet, final Set<AuthorizableConfigBean> userSet, final int mapOrder, final String serverUrl) throws IOException{
-		StringBuilder sb = new StringBuilder(20000);
+            String fileName = "ACE_Dump_"
+                    + new Date(System.currentTimeMillis());
+            response.setHeader("Content-Disposition", "attachment; filename=\""
+                    + fileName + "\"");
 
-		// add creation date and URL of current author instance as first line 
-		String dumpComment = bundleDescription + "\n# Dump created: " + new Date() + " on: " + serverUrl;
-		
-		new CompleteAcDump(aceDumpData, groupSet, userSet, mapOrder, dumpComment, this).accept(new AcDumpElementYamlVisitor(mapOrder, sb));
-		return sb.toString();
-	}
+            try {
 
+                writeAclConfigToStream(aceMap, mapOrder, outStream);
+            } catch (IOException e) {
+                LOG.error("Exception in AclDumpUtils: {}", e);
+            }
+        } finally {
+            if (outStream != null) {
+                outStream.close();
+            }
+        }
+    }
 
-	public void returnConfigurationDumpAsFile(final SlingHttpServletResponse response,
-			Map<String, Set<AceBean>> aceMap, Set<AuthorizableConfigBean> authorizableSet, final int mapOrder) throws IOException{
+    public String getConfigurationDumpAsString(AceDumpData aceDumpData,
+            final Set<AuthorizableConfigBean> groupSet,
+            final Set<AuthorizableConfigBean> userSet, final int mapOrder,
+            final String serverUrl) throws IOException {
+        StringBuilder sb = new StringBuilder(20000);
 
-		String mimetype =  "application/octet-stream";
-		response.setContentType(mimetype);
-		ServletOutputStream outStream = null;
-		try{
-			try {
-				outStream = response.getOutputStream();
-			} catch (IOException e) {
-				LOG.error("Exception in AclDumpUtils: {}", e);
-			}
+        // add creation date and URL of current author instance as first line
+        String dumpComment = bundleDescription + "\n# Dump created: "
+                + new Date() + " on: " + serverUrl;
 
-			String fileName = "ACL_Configuration_Dump_" + new Date(System.currentTimeMillis());
-			response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+        new CompleteAcDump(aceDumpData, groupSet, userSet, mapOrder,
+                dumpComment, this).accept(new AcDumpElementYamlVisitor(
+                mapOrder, sb));
+        return sb.toString();
+    }
 
-			try {
-				writeAuthorizableConfigToStream(authorizableSet, outStream);
-				outStream.println() ;
-				writeAclConfigToStream(aceMap, mapOrder, outStream);
-			} catch (IOException e) {
-				LOG.error("Exception in AclDumpUtils: {}", e);
-			}
-		}finally{
-			if(outStream != null){
-				outStream.close();
-			}
-		}
-	}
+    public void returnConfigurationDumpAsFile(
+            final SlingHttpServletResponse response,
+            Map<String, Set<AceBean>> aceMap,
+            Set<AuthorizableConfigBean> authorizableSet, final int mapOrder)
+            throws IOException {
 
+        String mimetype = "application/octet-stream";
+        response.setContentType(mimetype);
+        ServletOutputStream outStream = null;
+        try {
+            try {
+                outStream = response.getOutputStream();
+            } catch (IOException e) {
+                LOG.error("Exception in AclDumpUtils: {}", e);
+            }
 
-	private ServletOutputStream writeAclConfigToStream(Map<String, Set<AceBean>> aceMap, final int mapOrder,ServletOutputStream outStream) throws IOException {
-		Set<String> keys = aceMap.keySet();
-		outStream.println("- " + Constants.ACE_CONFIGURATION_KEY + ":") ;
-		outStream.println() ;
+            String fileName = "ACL_Configuration_Dump_"
+                    + new Date(System.currentTimeMillis());
+            response.setHeader("Content-Disposition", "attachment; filename=\""
+                    + fileName + "\"");
 
-		for(String mapKey : keys){
+            try {
+                writeAuthorizableConfigToStream(authorizableSet, outStream);
+                outStream.println();
+                writeAclConfigToStream(aceMap, mapOrder, outStream);
+            } catch (IOException e) {
+                LOG.error("Exception in AclDumpUtils: {}", e);
+            }
+        } finally {
+            if (outStream != null) {
+                outStream.close();
+            }
+        }
+    }
 
-			Set<AceBean> aceBeanSet = aceMap.get(mapKey);
+    private ServletOutputStream writeAclConfigToStream(
+            Map<String, Set<AceBean>> aceMap, final int mapOrder,
+            ServletOutputStream outStream) throws IOException {
+        Set<String> keys = aceMap.keySet();
+        outStream.println("- " + Constants.ACE_CONFIGURATION_KEY + ":");
+        outStream.println();
 
-			outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_KEY) + "- " + mapKey + ":");
+        for (String mapKey : keys) {
 
-			for(AceBean bean : aceBeanSet){
-				bean = CqActionsMapping.getAlignedPermissionBean(bean);
+            Set<AceBean> aceBeanSet = aceMap.get(mapKey);
 
-				outStream.println();
-				if(mapOrder == PATH_BASED_SORTING){
-					outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_FIRST_PROPERTY) + "- principal: " + bean.getPrincipalName());
-				}else if(mapOrder == PRINCIPAL_BASED_SORTING){
-					outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_FIRST_PROPERTY) + "- path: " + bean.getJcrPath());
-				}
-				outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY ) + "permission: " + bean.getPermission());
-				outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY ) + "actions: " + bean.getActionsString());
-				outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY ) + "privileges: " + bean.getPrivilegesString());
-				outStream.print(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY ) + "repGlob: ");
-				if(!bean.getRepGlob().isEmpty()){
-					outStream.println("'" + bean.getRepGlob() + "'");
-				}else{
-					outStream.println();
-				}
+            outStream
+                    .println(AcHelper
+                            .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_KEY)
+                            + "- " + mapKey + ":");
 
-			}
+            for (AceBean bean : aceBeanSet) {
+                bean = CqActionsMapping.getAlignedPermissionBean(bean);
 
-			outStream.println();
-		}
-		outStream.println();
-		return outStream;
-	}
+                outStream.println();
+                if (mapOrder == PATH_BASED_SORTING) {
+                    outStream
+                            .println(AcHelper
+                                    .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_FIRST_PROPERTY)
+                                    + "- principal: " + bean.getPrincipalName());
+                } else if (mapOrder == PRINCIPAL_BASED_SORTING) {
+                    outStream
+                            .println(AcHelper
+                                    .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_FIRST_PROPERTY)
+                                    + "- path: " + bean.getJcrPath());
+                }
+                outStream
+                        .println(AcHelper
+                                .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY)
+                                + "permission: " + bean.getPermission());
+                outStream
+                        .println(AcHelper
+                                .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY)
+                                + "actions: " + bean.getActionsString());
+                outStream
+                        .println(AcHelper
+                                .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY)
+                                + "privileges: " + bean.getPrivilegesString());
+                outStream
+                        .print(AcHelper
+                                .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY)
+                                + "repGlob: ");
+                if (!bean.getRepGlob().isEmpty()) {
+                    outStream.println("'" + bean.getRepGlob() + "'");
+                } else {
+                    outStream.println();
+                }
 
-	public String getDumplLinks(){
-		StringBuilder sb = new StringBuilder(); 
-		sb.append("path based dump <a href = '" + Constants.ACE_SERVLET_PATH + "?dumpAll=true&keyOrder=pathBased&aceOrder=denyallow'> (download)</a>");
-		sb.append("<br />");
-		sb.append("group based dump <a href = '" + Constants.ACE_SERVLET_PATH + "?dumpAll=true&aceOrder=denyallow'> (download)</a>");
+            }
 
-		return sb.toString();
-	}
+            outStream.println();
+        }
+        outStream.println();
+        return outStream;
+    }
 
-	public Set<AclBean> getACLDumpBeans(final Session session) throws RepositoryException{
+    public String getDumplLinks() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("path based dump <a href = '"
+                + Constants.ACE_SERVLET_PATH
+                + "?dumpAll=true&keyOrder=pathBased&aceOrder=denyallow'> (download)</a>");
+        sb.append("<br />");
+        sb.append("group based dump <a href = '" + Constants.ACE_SERVLET_PATH
+                + "?dumpAll=true&aceOrder=denyallow'> (download)</a>");
 
-		List <String> excludeNodesList = Arrays.asList(this.queryExcludePaths);
+        return sb.toString();
+    }
 
-		// check excludePaths for existence
-		for(String path : excludeNodesList){
-			try {
-				if(!session.itemExists(path)){
-					LOG.error("Query exclude path: {} doesn't exist in repository! AccessControl installation aborted! Check exclude paths in OSGi configuration of AceService!", path );
-					throw new IllegalArgumentException("Query exclude path: " + path + " doesn't exist in repository! AccessControl installation aborted! Check exclude paths in OSGi configuration of AceService!");
-				}
-			} catch (RepositoryException e) {
-				LOG.error("RepositoryException: {}", e);
-				throw e;
-			}
-		}
+    public Set<AclBean> getACLDumpBeans(final Session session)
+            throws RepositoryException {
 
-		Set<Node> resultNodeSet = QueryHelper.getRepPolicyNodes(session, excludeNodesList);
-		Set<AclBean> accessControBeanSet = new LinkedHashSet<AclBean>();
+        List<String> excludeNodesList = Arrays.asList(this.queryExcludePaths);
 
-		// assemble big query result set using the query results of the child paths of jcr:root node
-		for(Node node : resultNodeSet){
-			try {
-				accessControBeanSet.add(new AclBean(AccessControlUtils.getAccessControlList(session, node.getParent().getPath()), node.getParent().getPath()));
-			} catch (AccessDeniedException e) {
-				LOG.error("AccessDeniedException: {}", e);
-			} catch (ItemNotFoundException e) {
-				LOG.error("ItemNotFoundException: {}", e);
-			} catch (RepositoryException e) {
-				LOG.error("RepositoryException: {}", e);
-			}
-		}
-		return accessControBeanSet;
-	}
-	public AceDumpData createFilteredAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException{
-		return createAclDumpMap(session, keyOrder, aclOrdering, excludePaths, this.isFilteredDump, this.includeUsersInDumps);
-	}
-    public AceDumpData createUnfilteredAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException{
-    	return createAclDumpMap(session, keyOrder, aclOrdering, excludePaths, false, true);
-	}
-    
-	/**
-	 * returns a Map with holds either principal or path based ACE data
-	 * @param request
-	 * @param keyOrder either principals (AceHelper.PRINCIPAL_BASED_ORDERING) or node paths (AceHelper.PATH_BASED_ORDERING) as keys
-	 * @param aclOrdering specifies whether the allow and deny ACEs within an ACL should be divided in separate blocks (first deny then allow)
-	 * @param isFilterACEs
-	 * @param isIncludeUsers
-	 * @return
-	 * @throws ValueFormatException
-	 * @throws IllegalStateException
-	 * @throws RepositoryException
-	 */
-	private AceDumpData createAclDumpMap(final Session session, final int keyOrder, final int aclOrdering, final String[] excludePaths, final boolean isFilterACEs, final boolean isIncludeUsers) throws ValueFormatException, IllegalArgumentException, IllegalStateException, RepositoryException{
-		AceDumpData aceDumpData = new AceDumpData();
-		UserManager um = ((JackrabbitSession)session).getUserManager();
-		Map <String, Set<AceBean>> aceMap = null;
-		Map <String, Set<AceBean>> legacyAceMap = new TreeMap<String, Set<AceBean>>();
+        // check excludePaths for existence
+        for (String path : excludeNodesList) {
+            try {
+                if (!session.itemExists(path)) {
+                    LOG.error(
+                            "Query exclude path: {} doesn't exist in repository! AccessControl installation aborted! Check exclude paths in OSGi configuration of AceService!",
+                            path);
+                    throw new IllegalArgumentException(
+                            "Query exclude path: "
+                                    + path
+                                    + " doesn't exist in repository! AccessControl installation aborted! Check exclude paths in OSGi configuration of AceService!");
+                }
+            } catch (RepositoryException e) {
+                LOG.error("RepositoryException: {}", e);
+                throw e;
+            }
+        }
 
-		if(keyOrder == AcHelper.PRINCIPAL_BASED_ORDER){ // principal based
-			aceMap = new TreeMap<String, Set<AceBean>>();
-		}else if(keyOrder == AcHelper.PATH_BASED_ORDER){ // path based
-			aceMap = new TreeMap<String, Set<AceBean>>();
-		}
+        Set<Node> resultNodeSet = QueryHelper.getRepPolicyNodes(session,
+                excludeNodesList);
+        Set<AclBean> accessControBeanSet = new LinkedHashSet<AclBean>();
 
-		Set<AclBean> aclBeanSet = getACLDumpBeans(session);
+        // assemble big query result set using the query results of the child
+        // paths of jcr:root node
+        for (Node node : resultNodeSet) {
+            try {
+                accessControBeanSet.add(new AclBean(AccessControlUtils
+                        .getAccessControlList(session, node.getParent()
+                                .getPath()), node.getParent().getPath()));
+            } catch (AccessDeniedException e) {
+                LOG.error("AccessDeniedException: {}", e);
+            } catch (ItemNotFoundException e) {
+                LOG.error("ItemNotFoundException: {}", e);
+            } catch (RepositoryException e) {
+                LOG.error("RepositoryException: {}", e);
+            }
+        }
+        return accessControBeanSet;
+    }
 
-		// build a set containing all ACE found in the original order
-		for(AclBean aclBean : aclBeanSet){
-			
-			if(aclBean.getAcl() == null){
-				continue;
-			}
-			
-			for(AccessControlEntry ace : aclBean.getAcl().getAccessControlEntries()){
-				AceWrapper tmpBean = new AceWrapper(ace, aclBean.getJcrPath());
-				AceBean tmpAceBean = AcHelper.getAceBean(tmpBean);
-				CqActionsMapping.getAggregatedPrivilegesBean(tmpAceBean);
+    public AceDumpData createFilteredAclDumpMap(final Session session,
+            final int keyOrder, final int aclOrdering,
+            final String[] excludePaths) throws ValueFormatException,
+            IllegalArgumentException, IllegalStateException,
+            RepositoryException {
+        return createAclDumpMap(session, keyOrder, aclOrdering, excludePaths,
+                this.isFilteredDump, this.includeUsersInDumps);
+    }
 
-				if(isUnwantedAce(tmpAceBean) && isFilterACEs){
-					continue;
-				}
+    public AceDumpData createUnfilteredAclDumpMap(final Session session,
+            final int keyOrder, final int aclOrdering,
+            final String[] excludePaths) throws ValueFormatException,
+            IllegalArgumentException, IllegalStateException,
+            RepositoryException {
+        return createAclDumpMap(session, keyOrder, aclOrdering, excludePaths,
+                false, true);
+    }
 
-				Authorizable authorizable = um.getAuthorizable(tmpAceBean.getPrincipalName());
+    /**
+     * returns a Map with holds either principal or path based ACE data
+     * 
+     * @param request
+     * @param keyOrder
+     *            either principals (AceHelper.PRINCIPAL_BASED_ORDERING) or node
+     *            paths (AceHelper.PATH_BASED_ORDERING) as keys
+     * @param aclOrdering
+     *            specifies whether the allow and deny ACEs within an ACL should
+     *            be divided in separate blocks (first deny then allow)
+     * @param isFilterACEs
+     * @param isIncludeUsers
+     * @return
+     * @throws ValueFormatException
+     * @throws IllegalStateException
+     * @throws RepositoryException
+     */
+    private AceDumpData createAclDumpMap(final Session session,
+            final int keyOrder, final int aclOrdering,
+            final String[] excludePaths, final boolean isFilterACEs,
+            final boolean isIncludeUsers) throws ValueFormatException,
+            IllegalArgumentException, IllegalStateException,
+            RepositoryException {
+        AceDumpData aceDumpData = new AceDumpData();
+        UserManager um = ((JackrabbitSession) session).getUserManager();
+        Map<String, Set<AceBean>> aceMap = null;
+        Map<String, Set<AceBean>> legacyAceMap = new TreeMap<String, Set<AceBean>>();
 
-				// if this group exists under home
-				if(authorizable != null){
-					if(authorizable.isGroup() || isIncludeUsers){
-						addBeanToMap(keyOrder, aclOrdering, aceMap, tmpAceBean);
-					}
-				}
-				// otherwise put in map holding legacy ACEs
-				else{
-					addBeanToMap(keyOrder, aclOrdering, legacyAceMap, tmpAceBean);
-				}
-			}
-		}
-		aceDumpData.setAceDump(aceMap);
-		aceDumpData.setLegacyAceDump(legacyAceMap);
-		
-		return aceDumpData;
-	}
+        if (keyOrder == AcHelper.PRINCIPAL_BASED_ORDER) { // principal based
+            aceMap = new TreeMap<String, Set<AceBean>>();
+        } else if (keyOrder == AcHelper.PATH_BASED_ORDER) { // path based
+            aceMap = new TreeMap<String, Set<AceBean>>();
+        }
 
-	private void addBeanToMap(final int keyOrder, final int aclOrdering, Map<String, Set<AceBean>> aceMap, AceBean aceBean) {
-		if(keyOrder == AcHelper.PRINCIPAL_BASED_ORDER){
-			String principalName = aceBean.getPrincipalName();
-			if(!aceMap.containsKey(principalName)){
-				Set<AceBean> aceSet = getNewAceSet(aclOrdering);
-				aceSet.add(aceBean);
-				aceMap.put(principalName, aceSet);
-			}else{
-				aceMap.get(principalName).add(aceBean);
-			}
-		}else if(keyOrder == AcHelper.PATH_BASED_ORDER){ 
-			String jcrPath = aceBean.getJcrPath();
-			if(!aceMap.containsKey(jcrPath)){
-				Set<AceBean> aceSet = getNewAceSet(aclOrdering);
-				aceSet.add(aceBean);
-				aceMap.put(jcrPath, aceSet);
-			}else{
-				aceMap.get(jcrPath).add(aceBean);
-			}
-		}
-	}
+        Set<AclBean> aclBeanSet = getACLDumpBeans(session);
 
+        // build a set containing all ACE found in the original order
+        for (AclBean aclBean : aclBeanSet) {
 
-	/**
-	 * removes the name of the group node itself (groupID) from the intermediate path 
-	 * @param intermediatePath 
-	 * @param groupID
-	 * @return corrected path if groupID was found at the end of the intermediatePath, otherwise original path
-	 */
-	private String getIntermediatePath(String intermediatePath, final String groupID){
-		int index = StringUtils.lastIndexOf(intermediatePath, "/"+ groupID);
-		if(index != -1){
-			intermediatePath = intermediatePath.replace(intermediatePath.substring(index), "");
-		}
-		return intermediatePath;
-	}
+            if (aclBean.getAcl() == null) {
+                continue;
+            }
 
-	public void returnAuthorizableDumpAsFile(final SlingHttpServletResponse response,
-			Set<AuthorizableConfigBean> authorizableSet) throws IOException{
-		String mimetype =  "application/octet-stream";
-		response.setContentType(mimetype);
-		ServletOutputStream outStream = null;
-		try {
-			outStream = response.getOutputStream();
-		} catch (IOException e) {
-			LOG.error("Exception in AuthorizableDumpUtils: {}", e);
-		}
-	
-		String fileName = "Authorizable_Dump_" + new Date(System.currentTimeMillis());
-		response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
-	
-		byte[] byteBuffer = new byte[4096];
-	
-		try {
-			writeAuthorizableConfigToStream(authorizableSet, outStream);
-		} catch (IOException e) {
-			LOG.error("Exception in AuthorizableDumpUtils: {}", e);
-		}
-		outStream.close();
-	}
+            for (AccessControlEntry ace : aclBean.getAcl()
+                    .getAccessControlEntries()) {
+                AceWrapper tmpBean = new AceWrapper(ace, aclBean.getJcrPath());
+                AceBean tmpAceBean = AcHelper.getAceBean(tmpBean);
+                CqActionsMapping.getAggregatedPrivilegesBean(tmpAceBean);
 
-	public void writeAuthorizableConfigToStream(Set<AuthorizableConfigBean> authorizableSet, ServletOutputStream outStream) throws IOException {
-	
-		outStream.println("- " + Constants.GROUP_CONFIGURATION_KEY + ":") ;
-		outStream.println();
-	
-		for(AuthorizableConfigBean bean:authorizableSet){
-			outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_KEY) + "- " + bean.getPrincipalID() + ":");
-			outStream.println();
-			outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_FIRST_PROPERTY) + "- name: ");
-			outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY) + "memberOf: " + bean.getMemberOfString());
-			outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY) + "path: " + bean.getPath());
-			outStream.println(AcHelper.getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY) + "isGroup: " + "'" + bean.isGroup() + "'");
-			outStream.println();
-		}
-	}
+                if (isUnwantedAce(tmpAceBean) && isFilterACEs) {
+                    continue;
+                }
 
-	/**
-	 * method that returns the data of users contained in a set as AuthorizableConfigBeans
-	 * @param usersFromACEs set holding users
-	 * @return set holding AuthorizableConfigBeans
-	 * @throws RepositoryException
-	 * @throws UnsupportedRepositoryOperationException
-	 */
-	public Set<AuthorizableConfigBean> getUserBeans(Set<User> usersFromACEs) throws RepositoryException, UnsupportedRepositoryOperationException {
-	
-		Set<AuthorizableConfigBean> userBeans = new TreeSet<AuthorizableConfigBean>(new AuthorizableBeanIDComparator());
-	
-		// add found users from ACEs to set of authorizables
-		if(!usersFromACEs.isEmpty()){
-			for(User user : usersFromACEs){
-				AuthorizableConfigBean newBean = new AuthorizableConfigBean();
-				newBean.setPrincipalID(user.getID());
-				String intermediatePath = getIntermediatePath(user.getPath(), user.getID());
-				newBean.setPath(intermediatePath);
-				newBean.setIsGroup(false);
-				Set<Authorizable> memberOf = new HashSet<Authorizable>();
-				addDeclaredMembers(user, newBean);
-				userBeans.add(newBean);
-			}
-		}
-		return userBeans;
-	}
+                Authorizable authorizable = um.getAuthorizable(tmpAceBean
+                        .getPrincipalName());
 
-	/**
-	 * method that fetches all groups from /home and returns their data encapsulated in AuthorizableConfigBeans
-	 * @param session session with sufficient rights to read group informations
-	 * @return set holding AuthorizableConfigBeans
-	 * @throws AccessDeniedException
-	 * @throws UnsupportedRepositoryOperationException
-	 * @throws RepositoryException
-	 */
-	public Set<AuthorizableConfigBean> getGroupBeans(Session session) throws AccessDeniedException, UnsupportedRepositoryOperationException, RepositoryException{
-		JackrabbitSession js = (JackrabbitSession) session;
-		UserManager userManager = js.getUserManager();
+                // if this group exists under home
+                if (authorizable != null) {
+                    if (authorizable.isGroup() || isIncludeUsers) {
+                        addBeanToMap(keyOrder, aclOrdering, aceMap, tmpAceBean);
+                    }
+                }
+                // otherwise put in map holding legacy ACEs
+                else {
+                    addBeanToMap(keyOrder, aclOrdering, legacyAceMap,
+                            tmpAceBean);
+                }
+            }
+        }
+        aceDumpData.setAceDump(aceMap);
+        aceDumpData.setLegacyAceDump(legacyAceMap);
 
-		Set <AuthorizableConfigBean> groupBeans = new LinkedHashSet<AuthorizableConfigBean>();
+        return aceDumpData;
+    }
 
-		Iterator<Authorizable> result = userManager.findAuthorizables(new Query() {
-			public  void build(QueryBuilder builder) {
-				builder.setSortOrder("@rep:principalName", Direction.ASCENDING);
-				builder.setSelector(org.apache.jackrabbit.api.security.user.Group.class);
-			}
-		});
-		
-		while(result.hasNext()){
-			Group group = (Group)result.next();
-			if(group != null){
-				AuthorizableConfigBean bean = new AuthorizableConfigBean();
-				bean.setPrincipalID(group.getID());
-				addDeclaredMembers(group, bean);
-				bean.setIsGroup(group.isGroup());
-				bean.setPath(getIntermediatePath(group.getPath(),group.getID()));
-		
-				groupBeans.add(bean);
-			}else{
-				LOG.debug("group is null !");
-			}
-		}
-		return groupBeans;
-	
-	}
-	private void addDeclaredMembers(Authorizable authorizable, AuthorizableConfigBean bean)
-			throws RepositoryException {
-		Iterator <Group> it = authorizable.declaredMemberOf();
-		List<String> memberOfList = new ArrayList<String>();
+    private void addBeanToMap(final int keyOrder, final int aclOrdering,
+            Map<String, Set<AceBean>> aceMap, AceBean aceBean) {
+        if (keyOrder == AcHelper.PRINCIPAL_BASED_ORDER) {
+            String principalName = aceBean.getPrincipalName();
+            if (!aceMap.containsKey(principalName)) {
+                Set<AceBean> aceSet = getNewAceSet(aclOrdering);
+                aceSet.add(aceBean);
+                aceMap.put(principalName, aceSet);
+            } else {
+                aceMap.get(principalName).add(aceBean);
+            }
+        } else if (keyOrder == AcHelper.PATH_BASED_ORDER) {
+            String jcrPath = aceBean.getJcrPath();
+            if (!aceMap.containsKey(jcrPath)) {
+                Set<AceBean> aceSet = getNewAceSet(aclOrdering);
+                aceSet.add(aceBean);
+                aceMap.put(jcrPath, aceSet);
+            } else {
+                aceMap.get(jcrPath).add(aceBean);
+            }
+        }
+    }
 
-		while(it.hasNext()){
-			memberOfList.add(it.next().getID());
-		}
-		bean.setMemberOf(memberOfList.toArray(new String[memberOfList.size()]));
-	}
+    /**
+     * removes the name of the group node itself (groupID) from the intermediate
+     * path
+     * 
+     * @param intermediatePath
+     * @param groupID
+     * @return corrected path if groupID was found at the end of the
+     *         intermediatePath, otherwise original path
+     */
+    private String getIntermediatePath(String intermediatePath,
+            final String groupID) {
+        int index = StringUtils.lastIndexOf(intermediatePath, "/" + groupID);
+        if (index != -1) {
+            intermediatePath = intermediatePath.replace(
+                    intermediatePath.substring(index), "");
+        }
+        return intermediatePath;
+    }
 
-	/**
-	 * Method that checks if passed ACE is one of the 2 ACEs which belong to the cq actions "create", "delete" and "modify" in an AceDump containing a repGlob. Reason is 
-	 * the fact that each of these 2 actions use 2 identical ACEs. one with an additional repGlob and one without. In a dump we only want to have one ACE
-	 * for each of these actions without a repGlob.
-	 * @param aceBean bean holding the properties of an ACE
-	 * @return true if ace belongs to one of the 3 actions
-	 */
-	private boolean isUnwantedAce(final AceBean aceBean){
-		boolean ret = false;
-		List <String> tmpList = null;
-		if(StringUtils.equals(aceBean.getRepGlob(), "*/jcr:content*")){
-			tmpList = new ArrayList<String>(Arrays.asList(aceBean.getPrivilegesString().split(",")));
+    public void returnAuthorizableDumpAsFile(
+            final SlingHttpServletResponse response,
+            Set<AuthorizableConfigBean> authorizableSet) throws IOException {
+        String mimetype = "application/octet-stream";
+        response.setContentType(mimetype);
+        ServletOutputStream outStream = null;
+        try {
+            outStream = response.getOutputStream();
+        } catch (IOException e) {
+            LOG.error("Exception in AuthorizableDumpUtils: {}", e);
+        }
 
-			// set when action allow/deny:create is used
-			if(tmpList.containsAll(CqActionsMapping.ACTIONS_MAP.get("create")) && tmpList.size() == CqActionsMapping.ACTIONS_MAP.get("create").size()){
-				ret =  true;
-			}
-			// set when action allow/deny:delete is used
-			else if(tmpList.containsAll(CqActionsMapping.ACTIONS_MAP.get("delete")) && tmpList.size() == CqActionsMapping.ACTIONS_MAP.get("delete").size()){	
-				ret = true;
-			}
-			// set when  action allow/deny:modify and allow create,delete and allow modify,create,delete are used
-			else if(tmpList.containsAll(CqActionsMapping.ACTIONS_MAP.get("create")) && tmpList.containsAll(CqActionsMapping.ACTIONS_MAP.get("delete")) && tmpList.size() == (CqActionsMapping.ACTIONS_MAP.get("create").size() + CqActionsMapping.ACTIONS_MAP.get("delete").size())){	
-				ret = true;
-			}
-		}
-		return ret;
-	}
+        String fileName = "Authorizable_Dump_"
+                + new Date(System.currentTimeMillis());
+        response.setHeader("Content-Disposition", "attachment; filename=\""
+                + fileName + "\"");
 
-	private Set<AceBean> getNewAceSet(final int aclOrdering) {
-		Set<AceBean> aceSet = null;
+        byte[] byteBuffer = new byte[4096];
 
-		if(aclOrdering == AcHelper.ACE_ORDER_NONE){
-			aceSet = new LinkedHashSet<AceBean>();
-		}else if(aclOrdering == AcHelper.ACE_ORDER_DENY_ALLOW){
-			aceSet = new TreeSet<AceBean>(new AcePermissionComparator());
-		}else if(aclOrdering == AcHelper.ACE_ORDER_ALPHABETICAL){
-			aceSet = new TreeSet<AceBean>(new AcePathComparator());
-		}
-		return aceSet;
-	}
+        try {
+            writeAuthorizableConfigToStream(authorizableSet, outStream);
+        } catch (IOException e) {
+            LOG.error("Exception in AuthorizableDumpUtils: {}", e);
+        }
+        outStream.close();
+    }
+
+    public void writeAuthorizableConfigToStream(
+            Set<AuthorizableConfigBean> authorizableSet,
+            ServletOutputStream outStream) throws IOException {
+
+        outStream.println("- " + Constants.GROUP_CONFIGURATION_KEY + ":");
+        outStream.println();
+
+        for (AuthorizableConfigBean bean : authorizableSet) {
+            outStream
+                    .println(AcHelper
+                            .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_KEY)
+                            + "- " + bean.getPrincipalID() + ":");
+            outStream.println();
+            outStream
+                    .println(AcHelper
+                            .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_FIRST_PROPERTY)
+                            + "- name: ");
+            outStream
+                    .println(AcHelper
+                            .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY)
+                            + "memberOf: " + bean.getMemberOfString());
+            outStream
+                    .println(AcHelper
+                            .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY)
+                            + "path: " + bean.getPath());
+            outStream
+                    .println(AcHelper
+                            .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY)
+                            + "isGroup: " + "'" + bean.isGroup() + "'");
+            outStream.println();
+        }
+    }
+
+    /**
+     * method that returns the data of users contained in a set as
+     * AuthorizableConfigBeans
+     * 
+     * @param usersFromACEs
+     *            set holding users
+     * @return set holding AuthorizableConfigBeans
+     * @throws RepositoryException
+     * @throws UnsupportedRepositoryOperationException
+     */
+    public Set<AuthorizableConfigBean> getUserBeans(Set<User> usersFromACEs)
+            throws RepositoryException, UnsupportedRepositoryOperationException {
+
+        Set<AuthorizableConfigBean> userBeans = new TreeSet<AuthorizableConfigBean>(
+                new AuthorizableBeanIDComparator());
+
+        // add found users from ACEs to set of authorizables
+        if (!usersFromACEs.isEmpty()) {
+            for (User user : usersFromACEs) {
+                AuthorizableConfigBean newBean = new AuthorizableConfigBean();
+                newBean.setPrincipalID(user.getID());
+                String intermediatePath = getIntermediatePath(user.getPath(),
+                        user.getID());
+                newBean.setPath(intermediatePath);
+                newBean.setIsGroup(false);
+                Set<Authorizable> memberOf = new HashSet<Authorizable>();
+                addDeclaredMembers(user, newBean);
+                userBeans.add(newBean);
+            }
+        }
+        return userBeans;
+    }
+
+    /**
+     * method that fetches all groups from /home and returns their data
+     * encapsulated in AuthorizableConfigBeans
+     * 
+     * @param session
+     *            session with sufficient rights to read group informations
+     * @return set holding AuthorizableConfigBeans
+     * @throws AccessDeniedException
+     * @throws UnsupportedRepositoryOperationException
+     * @throws RepositoryException
+     */
+    public Set<AuthorizableConfigBean> getGroupBeans(Session session)
+            throws AccessDeniedException,
+            UnsupportedRepositoryOperationException, RepositoryException {
+        JackrabbitSession js = (JackrabbitSession) session;
+        UserManager userManager = js.getUserManager();
+
+        Set<AuthorizableConfigBean> groupBeans = new LinkedHashSet<AuthorizableConfigBean>();
+
+        Iterator<Authorizable> result = userManager
+                .findAuthorizables(new Query() {
+                    public void build(QueryBuilder builder) {
+                        builder.setSortOrder("@rep:principalName",
+                                Direction.ASCENDING);
+                        builder.setSelector(org.apache.jackrabbit.api.security.user.Group.class);
+                    }
+                });
+
+        while (result.hasNext()) {
+            Group group = (Group) result.next();
+            if (group != null) {
+                AuthorizableConfigBean bean = new AuthorizableConfigBean();
+                bean.setPrincipalID(group.getID());
+                addDeclaredMembers(group, bean);
+                bean.setIsGroup(group.isGroup());
+                bean.setPath(getIntermediatePath(group.getPath(), group.getID()));
+
+                groupBeans.add(bean);
+            } else {
+                LOG.debug("group is null !");
+            }
+        }
+        return groupBeans;
+
+    }
+
+    private void addDeclaredMembers(Authorizable authorizable,
+            AuthorizableConfigBean bean) throws RepositoryException {
+        Iterator<Group> it = authorizable.declaredMemberOf();
+        List<String> memberOfList = new ArrayList<String>();
+
+        while (it.hasNext()) {
+            memberOfList.add(it.next().getID());
+        }
+        bean.setMemberOf(memberOfList.toArray(new String[memberOfList.size()]));
+    }
+
+    /**
+     * Method that checks if passed ACE is one of the 2 ACEs which belong to the
+     * cq actions "create", "delete" and "modify" in an AceDump containing a
+     * repGlob. Reason is the fact that each of these 2 actions use 2 identical
+     * ACEs. one with an additional repGlob and one without. In a dump we only
+     * want to have one ACE for each of these actions without a repGlob.
+     * 
+     * @param aceBean
+     *            bean holding the properties of an ACE
+     * @return true if ace belongs to one of the 3 actions
+     */
+    private boolean isUnwantedAce(final AceBean aceBean) {
+        boolean ret = false;
+        List<String> tmpList = null;
+        if (StringUtils.equals(aceBean.getRepGlob(), "*/jcr:content*")) {
+            tmpList = new ArrayList<String>(Arrays.asList(aceBean
+                    .getPrivilegesString().split(",")));
+
+            // set when action allow/deny:create is used
+            if (tmpList.containsAll(CqActionsMapping.ACTIONS_MAP.get("create"))
+                    && tmpList.size() == CqActionsMapping.ACTIONS_MAP.get(
+                            "create").size()) {
+                ret = true;
+            }
+            // set when action allow/deny:delete is used
+            else if (tmpList.containsAll(CqActionsMapping.ACTIONS_MAP
+                    .get("delete"))
+                    && tmpList.size() == CqActionsMapping.ACTIONS_MAP.get(
+                            "delete").size()) {
+                ret = true;
+            }
+            // set when action allow/deny:modify and allow create,delete and
+            // allow modify,create,delete are used
+            else if (tmpList.containsAll(CqActionsMapping.ACTIONS_MAP
+                    .get("create"))
+                    && tmpList.containsAll(CqActionsMapping.ACTIONS_MAP
+                            .get("delete"))
+                    && tmpList.size() == (CqActionsMapping.ACTIONS_MAP.get(
+                            "create").size() + CqActionsMapping.ACTIONS_MAP
+                            .get("delete").size())) {
+                ret = true;
+            }
+        }
+        return ret;
+    }
+
+    private Set<AceBean> getNewAceSet(final int aclOrdering) {
+        Set<AceBean> aceSet = null;
+
+        if (aclOrdering == AcHelper.ACE_ORDER_NONE) {
+            aceSet = new LinkedHashSet<AceBean>();
+        } else if (aclOrdering == AcHelper.ACE_ORDER_DENY_ALLOW) {
+            aceSet = new TreeSet<AceBean>(new AcePermissionComparator());
+        } else if (aclOrdering == AcHelper.ACE_ORDER_ALPHABETICAL) {
+            aceSet = new TreeSet<AceBean>(new AcePathComparator());
+        }
+        return aceSet;
+    }
 }

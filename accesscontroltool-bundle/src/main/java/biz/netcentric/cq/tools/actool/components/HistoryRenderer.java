@@ -11,17 +11,18 @@ import biz.netcentric.cq.tools.actool.installationhistory.HistoryUtils;
 public class HistoryRenderer {
 
     private SlingHttpServletRequest request;
-	 
-	public void setSlingRequest(final SlingHttpServletRequest slingRequest) {
+
+    public void setSlingRequest(final SlingHttpServletRequest slingRequest) {
         this.request = slingRequest;
-	}
-	public String getHistory(){
-		ResourceResolver resourceResolver = this.request.getResourceResolver();
-		Session session = resourceResolver.adaptTo(Session.class);
-		Resource resource = request.getResource();
-		
-		return HistoryUtils.getLogHtml(session, resource.getName());
-		
-	}
-	
+    }
+
+    public String getHistory() {
+        ResourceResolver resourceResolver = this.request.getResourceResolver();
+        Session session = resourceResolver.adaptTo(Session.class);
+        Resource resource = request.getResource();
+
+        return HistoryUtils.getLogHtml(session, resource.getName());
+
+    }
+
 }

@@ -14,6 +14,15 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryP
 
 public interface AuthorizableCreatorService {
 
-	public void createNewAuthorizables(Map<String, LinkedHashSet<AuthorizableConfigBean>> principalMapFromConfig, final Session session, AcInstallationHistoryPojo status, AuthorizableInstallationHistory authorizableInstallationHistory) throws AccessDeniedException, UnsupportedRepositoryOperationException, RepositoryException, AuthorizableCreatorException;
-	public  void performRollback(SlingRepository repository, AuthorizableInstallationHistory authorizableInstallationHistory, AcInstallationHistoryPojo history) throws RepositoryException;
+    public void createNewAuthorizables(
+            Map<String, LinkedHashSet<AuthorizableConfigBean>> principalMapFromConfig,
+            final Session session, AcInstallationHistoryPojo status,
+            AuthorizableInstallationHistory authorizableInstallationHistory)
+            throws AccessDeniedException,
+            UnsupportedRepositoryOperationException, RepositoryException,
+            AuthorizableCreatorException;
+
+    public void performRollback(SlingRepository repository,
+            AuthorizableInstallationHistory authorizableInstallationHistory,
+            AcInstallationHistoryPojo history) throws RepositoryException;
 }
