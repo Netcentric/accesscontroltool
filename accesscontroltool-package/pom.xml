@@ -60,6 +60,11 @@
                             <artifactId>accesscontroltool-bundle</artifactId>
                             <target>/apps/netcentric/actool/install</target>
                         </embedded>
+                        <embedded>
+                            <groupId>org.yaml</groupId>
+                            <artifactId>snakeyaml</artifactId>
+                            <target>/apps/netcentric/actool/install</target>
+                        </embedded>
                     </embeddeds>
                     <targetURL>http://${crx.host}:${crx.port}/crx/packmgr/service.jsp</targetURL>
                 </configuration>
