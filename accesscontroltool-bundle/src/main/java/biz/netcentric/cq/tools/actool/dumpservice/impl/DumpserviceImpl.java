@@ -1,4 +1,4 @@
-package biz.netcentric.cq.tools.actool.dumpservice;
+package biz.netcentric.cq.tools.actool.dumpservice.impl;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -66,6 +66,10 @@ import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
 import biz.netcentric.cq.tools.actool.comparators.AuthorizableBeanIDComparator;
 import biz.netcentric.cq.tools.actool.comparators.JcrCreatedComparator;
 import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
+import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementYamlVisitor;
+import biz.netcentric.cq.tools.actool.dumpservice.AceDumpData;
+import biz.netcentric.cq.tools.actool.dumpservice.CompleteAcDump;
+import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
@@ -73,7 +77,7 @@ import biz.netcentric.cq.tools.actool.helper.AceWrapper;
 import biz.netcentric.cq.tools.actool.helper.AclBean;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
-import biz.netcentric.cq.tools.actool.installationhistory.HistoryUtils;
+import biz.netcentric.cq.tools.actool.installationhistory.impl.HistoryUtils;
 
 @Service
 @Component(metatype = true, label = "AC Dump Service", description = "Service that creates dumps of the current AC configurations (groups&ACEs)")

@@ -1,4 +1,4 @@
-package biz.netcentric.cq.tools.actool.installationhistory;
+package biz.netcentric.cq.tools.actool.installationhistory.impl;
 
 import java.util.Map;
 import java.util.Set;
@@ -21,6 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
+import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
+import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 import com.day.cq.commons.jcr.JcrUtil;
 

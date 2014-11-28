@@ -1,4 +1,4 @@
-package biz.netcentric.cq.tools.actool.authorizableutils;
+package biz.netcentric.cq.tools.actool.authorizableutils.impl;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -31,6 +31,11 @@ import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableBean;
+import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
+import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
+import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 @Service

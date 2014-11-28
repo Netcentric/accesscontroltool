@@ -1,6 +1,7 @@
 package biz.netcentric.cq.tools.actool.validators;
 
 import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -11,16 +12,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
 import javax.jcr.RepositoryException;
+
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.yaml.snakeyaml.Yaml;
+
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configReader.ConfigReader;
 import biz.netcentric.cq.tools.actool.configReader.YamlConfigReader;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
+import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
+import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
 
 public class BeanValidatorsTest {
     List<LinkedHashMap> aclList;

@@ -1,4 +1,4 @@
-package biz.netcentric.cq.tools.actool.validators;
+package biz.netcentric.cq.tools.actool.validators.impl;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
+import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
+import biz.netcentric.cq.tools.actool.validators.Validators;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AlreadyDefinedGroupException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.DoubledDefinedActionException;

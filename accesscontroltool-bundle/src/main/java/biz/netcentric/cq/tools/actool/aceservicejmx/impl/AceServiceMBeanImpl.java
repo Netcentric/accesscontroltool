@@ -1,4 +1,4 @@
-package biz.netcentric.cq.tools.actool.aceservicejmx;
+package biz.netcentric.cq.tools.actool.aceservicejmx.impl;
 
 import java.util.Set;
 
@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.adobe.granite.jmx.annotation.AnnotatedStandardMBean;
 
 import biz.netcentric.cq.tools.actool.aceservice.AceService;
+import biz.netcentric.cq.tools.actool.aceservicejmx.AceServiceMBean;
 import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 

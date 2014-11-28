@@ -1,4 +1,4 @@
-package biz.netcentric.cq.tools.actool.authorizableutils;
+package biz.netcentric.cq.tools.actool.authorizableutils.impl;
 
 import java.security.Principal;
 

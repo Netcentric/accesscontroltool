@@ -16,12 +16,12 @@ import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
-import biz.netcentric.cq.tools.actool.validators.AceBeanValidatorImpl;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
-import biz.netcentric.cq.tools.actool.validators.AuthorizableValidatorImpl;
 import biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator;
 import biz.netcentric.cq.tools.actool.validators.YamlConfigurationsValidator;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
+import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
+import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
 
 public class YamlConfigurationMerger implements ConfigurationMerger {
     /*

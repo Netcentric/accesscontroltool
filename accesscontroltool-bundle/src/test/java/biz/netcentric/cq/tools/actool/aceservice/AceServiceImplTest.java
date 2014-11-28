@@ -28,6 +28,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 public class AceServiceImplTest {
