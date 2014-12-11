@@ -60,6 +60,7 @@ public class UploadListenerServiceImpl implements UploadListenerService,
     public void onEvent(EventIterator events) {
 
         if (this.enabled) {
+            int changes = 0; // Number of new or changed files.
             try {
                 while (events.hasNext()) {
                     Event event = events.nextEvent();
@@ -77,14 +78,18 @@ public class UploadListenerServiceImpl implements UploadListenerService,
                         LOG.warn("Unexpected event: {}", event);    
                     }
                     if (node != null && node.hasProperty("jcr:content/jcr:data")) {
-                        LOG.info("Installation triggered by upload listener. detected new or changed node at {}.",  node.getPath());
-                        aceService.execute();
+                        LOG.info("Detected new or changed node at {}.",  node.getPath());
+                        ++changes;
                     } else {
-                        LOG.info("Node {} associated with event does not have configuration data.", event.getPath());
+                        LOG.debug("Node {} associated with event does not have configuration data.", event.getPath());
                     }
                 }
             } catch (RepositoryException e) {
                 LOG.error("Error while handling events.", e);
+            }
+            if (changes > 0) {
+                LOG.info("There are {} new or changed files. Triggering reload of configuration.", changes);
+                aceService.execute();
             }
         }
     }
