@@ -62,33 +62,29 @@ public class UploadListenerServiceImpl implements UploadListenerService,
         if (this.enabled) {
             try {
                 while (events.hasNext()) {
-                    String path = events.nextEvent().getPath();
-                    LOG.info("something has been added : {}", path);
-
-                    if (path.contains("/jcr:content/jcr:lastModified")) {
-                        path = path
-                                .replace("/jcr:content/jcr:lastModified", "");
-                    }
-                    Node node = adminSession.getNode(path);
-                    String config = null;
-                    if (node != null) {
-                        if (node.hasProperty("jcr:content/jcr:data")) {
-                            config = node.getProperty("jcr:content/jcr:data")
-                                    .getString();
+                    Event event = events.nextEvent();
+                    Node node = null;
+                    switch (event.getType()) {
+                    case Event.NODE_ADDED:
+                        node = adminSession.getNode(event.getPath());
+                        break;
+                    case Event.PROPERTY_CHANGED:
+                        if (event.getPath().endsWith("jcr:content/jcr:data")) {
+                            node = adminSession.getNode(event.getPath().replace("/jcr:content/jcr:data", ""));
                         }
+                        break;
+                    default:
+                        LOG.warn("Unexpected event: {}", event);    
                     }
-                    if (config != null) {
-                        LOG.info(
-                                "installation triggered by upload listener. detected change in path: ",
-                                path);
+                    if (node != null && node.hasProperty("jcr:content/jcr:data")) {
+                        LOG.info("Installation triggered by upload listener. detected new or changed node at {}.",  node.getPath());
                         aceService.execute();
                     } else {
-                        LOG.error("Did not found a config, path: " + path
-                                + " ! Config is null!");
+                        LOG.info("Node {} associated with event does not have configuration data.", event.getPath());
                     }
                 }
             } catch (RepositoryException e) {
-                LOG.error("Error while treating events", e);
+                LOG.error("Error while handling events.", e);
             }
         }
     }

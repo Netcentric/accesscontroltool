@@ -36,16 +36,16 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.aceservice.AceService;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
+import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
 import biz.netcentric.cq.tools.actool.comparators.NodeCreatedComparator;
 import biz.netcentric.cq.tools.actool.configReader.ConfigReader;
 import biz.netcentric.cq.tools.actool.configReader.ConfigurationMerger;
 import biz.netcentric.cq.tools.actool.configReader.YamlConfigurationMerger;
 import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
-import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
+import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.helper.AclBean;
 import biz.netcentric.cq.tools.actool.helper.PurgeHelper;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
@@ -60,6 +60,8 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryP
 public class AceServiceImpl implements AceService {
 
     static final String ACE_SERVICE_CONFIGURATION_PATH = "AceService.configurationPath";
+    
+    private static final String PROP_JCR_DATA = "jcr:data";
 
     @Reference
     AuthorizableCreatorService authorizableCreatorService;
@@ -370,12 +372,12 @@ public class AceServiceImpl implements AceService {
         LOG.info("trying got put content of found configs into configurations map");
         try {
             for (Node configNode : configs) {
-                LOG.info("current config node: {}", configNode.getPath());
-                if (configNode.hasProperty("jcr:content/jcr:data")) {
-                    LOG.info("found property 'jcr:content/jcr:data'");
+                LOG.debug("current config node: {}", configNode.getPath());
+                if (configNode.hasProperty(PROP_JCR_DATA)) {
+                    LOG.debug("found property '{}'", PROP_JCR_DATA);
                     writer = new StringWriter();
                     configInputStream = configNode
-                            .getProperty("jcr:content/jcr:data").getBinary()
+                            .getProperty(PROP_JCR_DATA).getBinary()
                             .getStream();
                     IOUtils.copy(configInputStream, writer, "UTF-8");
                     configData = writer.toString();
@@ -389,7 +391,7 @@ public class AceServiceImpl implements AceService {
                                     .put(configNode.getPath(), configData);
                         } else {
                             LOG.warn(
-                                    "config data (jcr:content/jcr:data) of node: {} is empty!",
+                                    "config data of node: {} is empty!",
                                     configNode.getPath());
                         }
                     } else {
@@ -397,8 +399,8 @@ public class AceServiceImpl implements AceService {
                     }
                 } else {
                     LOG.error(
-                            "property: jcr:content/jcr:data not found under configNode: {}",
-                            configNode.getPath());
+                            "property: {} not found under configNode: {}",
+                            PROP_JCR_DATA, configNode.getPath());
                 }
 
             }
