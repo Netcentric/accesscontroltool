@@ -368,15 +368,21 @@ public class AceServiceImpl implements AceService {
         StringWriter writer = null;
         InputStream configInputStream = null;
 
+        // FIXME: This should be more flexible and look for config files at any level under the configured root path
         Map<String, String> configurations = new LinkedHashMap<String, String>();
-        LOG.info("trying got put content of found configs into configurations map");
+        LOG.info("Trying to store content of found configuration files into configurations map");
         try {
             for (Node configNode : configs) {
                 LOG.debug("current config node: {}", configNode.getPath());
-                if (configNode.hasProperty(PROP_JCR_DATA)) {
+                if (!configNode.hasNode("jcr:content")) {
+                    LOG.warn("Node {} has no jcr:content", configNode.getPath());
+                    continue;
+                }
+                Node contentNode = configNode.getNode("jcr:content");
+                if (contentNode.hasProperty(PROP_JCR_DATA)) {
                     LOG.debug("found property '{}'", PROP_JCR_DATA);
                     writer = new StringWriter();
-                    configInputStream = configNode
+                    configInputStream = contentNode
                             .getProperty(PROP_JCR_DATA).getBinary()
                             .getStream();
                     IOUtils.copy(configInputStream, writer, "UTF-8");
@@ -399,8 +405,8 @@ public class AceServiceImpl implements AceService {
                     }
                 } else {
                     LOG.error(
-                            "property: {} not found under configNode: {}",
-                            PROP_JCR_DATA, configNode.getPath());
+                            "property: {} not found under contentNode: {}",
+                            PROP_JCR_DATA, contentNode.getPath());
                 }
 
             }

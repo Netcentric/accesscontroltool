@@ -92,6 +92,7 @@ public class AcHelper {
             final AcInstallationHistoryPojo history) throws Exception {
 
         Set<String> paths = pathBasedAceMapFromConfig.keySet();
+        LOG.debug("Paths in merged config = {}", paths);
 
         history.addVerboseMessage("found: " + paths.size()
                 + "  paths in merged config");
@@ -126,6 +127,8 @@ public class AcHelper {
                 aclBeansProcessed += aceBeanSetFromConfig.size();
                 history.addVerboseMessage("\n installing ACE: "
                         + aceBeanSetFromConfig.toString());
+                
+                LOG.debug("Installing ACE: {}", aceBeanSetFromConfig);
 
                 // get merged ACL
                 aceBeanSetFromConfig = getMergedACL(aceBeanSetFromConfig,
