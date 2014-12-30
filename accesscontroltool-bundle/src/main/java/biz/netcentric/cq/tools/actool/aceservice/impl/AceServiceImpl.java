@@ -52,6 +52,8 @@ import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
+import com.day.cq.wcm.api.PageManager;
+
 @Service
 @Component(metatype = true, label = "AC Installation Service", description = "Service that installs groups & ACEs according to textual configuration files")
 @Properties({ @Property(label = "Configuration storage path", description = "enter CRX path where ACE configuration gets stored", name = AceServiceImpl.ACE_SERVICE_CONFIGURATION_PATH, value = "")
@@ -77,6 +79,8 @@ public class AceServiceImpl implements AceService {
 
     @Reference
     private ConfigReader configReader;
+    
+    private PageManager pageManager; // TODO: how do we get a PageManager?
 
     private static final Logger LOG = LoggerFactory
             .getLogger(AceServiceImpl.class);
@@ -92,16 +96,19 @@ public class AceServiceImpl implements AceService {
 
     }
 
+    // FIXME: Why is this called installConfigurationFromYamlList if it doesn't use YAML?
     private void installConfigurationFromYamlList(
             final List mergedConfigurations, AcInstallationHistoryPojo history,
             final Session session,
             Set<AuthorizableInstallationHistory> authorizableHistorySet,
             Map<String, Set<AceBean>> repositoryDumpAceMap) throws Exception {
 
+        // FIXME: putting different types of configuration objects in a heterogeneous list is pretty bad
         Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig = (Map<String, LinkedHashSet<AuthorizableConfigBean>>) mergedConfigurations
                 .get(0);
         Map<String, Set<AceBean>> aceMapFromConfig = (Map<String, Set<AceBean>>) mergedConfigurations
                 .get(1);
+        Map<String, String> templateMappings = (Map<String, String>) mergedConfigurations.get(2);
 
         if (aceMapFromConfig == null) {
             String message = "ace config not found in YAML file! installation aborted!";
@@ -112,7 +119,7 @@ public class AceServiceImpl implements AceService {
         installAuthorizables(history, authorizableHistorySet,
                 authorizablesMapfromConfig);
         installAces(history, session, repositoryDumpAceMap,
-                authorizablesMapfromConfig, aceMapFromConfig);
+                authorizablesMapfromConfig, aceMapFromConfig, templateMappings);
     }
 
     private void installAces(
@@ -120,7 +127,8 @@ public class AceServiceImpl implements AceService {
             final Session session,
             Map<String, Set<AceBean>> repositoryDumpAceMap,
             Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig,
-            Map<String, Set<AceBean>> aceMapFromConfig) throws Exception {
+            Map<String, Set<AceBean>> aceMapFromConfig, 
+            Map<String, String> templateMappings) throws Exception {
         String message;
         // --- installation of ACEs from configuration ---
 
@@ -132,8 +140,10 @@ public class AceServiceImpl implements AceService {
 
         if (repositoryDumpAceMap != null) {
             Set<String> authorizablesSet = authorizablesMapfromConfig.keySet();
+            // FIXME: templateMappings is passed down too many levels of method calls
+            LOG.info("Page Manager = {} foo", pageManager);
             AcHelper.installPathBasedACEs(pathBasedAceMapFromConfig,
-                    repositoryDumpAceMap, authorizablesSet, session, history);
+                    repositoryDumpAceMap, authorizablesSet, templateMappings, session, history);
         } else {
             message = "Could not create dump of repository ACEs (null). Installation aborted!";
             history.addMessage(message);

@@ -1,6 +1,7 @@
 package biz.netcentric.cq.tools.actool.configReader;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -48,6 +49,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
                                                                    // defined
                                                                    // groups in
                                                                    // configurations
+        Map<String, String> mergedTemplateConfigs = new HashMap<String, String>();
         ConfigurationsValidator configurationsValidator = new YamlConfigurationsValidator();
 
         for (Map.Entry<String, String> entry : newestConfigurations.entrySet()) {
@@ -65,6 +67,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
 
             Set<String> sectionIdentifiers = new LinkedHashSet<String>();
 
+            // FIXME: Why doesn't this use YamlConfigReader?
             // put all section identifiers of current configuration into a set
             for (int i = 0; i < yamlList.size(); i++) {
                 sectionIdentifiers.addAll(yamlList.get(i).keySet());
@@ -102,9 +105,17 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             // add AceBeans built from current configuration to set containing
             // AceBeans from all configurations
             mergedAceMapFromConfig.putAll(aceMapFromConfig);
+            
+            // Add page creation template configs
+            YamlConfigReader yamlConfigReader = new YamlConfigReader();
+            Map<String, String> mappings = yamlConfigReader.getTemplateConfiguration(yamlList);
+            if (mappings != null) {
+                mergedTemplateConfigs.putAll(mappings);
+            }
         }
         c.add(mergedAuthorizablesMapfromConfig);
         c.add(mergedAceMapFromConfig);
+        c.add(mergedTemplateConfigs);
         return c;
     }
 }

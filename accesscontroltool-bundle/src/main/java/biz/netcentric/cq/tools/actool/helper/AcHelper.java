@@ -1,5 +1,8 @@
 package biz.netcentric.cq.tools.actool.helper;
 
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.security.Principal;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -9,6 +12,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
+
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
@@ -18,12 +22,14 @@ import javax.jcr.ValueFormatException;
 import javax.jcr.query.InvalidQueryException;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryResult;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.principal.PrincipalManager;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
 import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
 import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
@@ -78,6 +84,7 @@ public class AcHelper {
      * @param authorizablesSet
      *            set which contains all group names contained in the
      *            configurations
+     * @param templateMappings 
      * @param session
      * @param out
      * @param history
@@ -88,7 +95,9 @@ public class AcHelper {
     public static void installPathBasedACEs(
             final Map<String, Set<AceBean>> pathBasedAceMapFromConfig,
             final Map<String, Set<AceBean>> repositoryDumpedAceMap,
-            final Set<String> authorizablesSet, final Session session,
+            final Set<String> authorizablesSet,
+            Map<String, String> templateMappings,
+            final Session session,
             final AcInstallationHistoryPojo history) throws Exception {
 
         Set<String> paths = pathBasedAceMapFromConfig.keySet();
@@ -143,7 +152,7 @@ public class AcHelper {
             // loop has ended only paths are left which are not contained in
             // current config
             repositoryDumpedAceMap.remove(path);
-            resetAclInRepository(session, history, aceBeanSetFromConfig);
+            resetAclInRepository(session, history, aceBeanSetFromConfig, templateMappings);
         }
 
         // loop through ACLs which are NOT contained in the configuration
@@ -175,7 +184,8 @@ public class AcHelper {
 
     private static void resetAclInRepository(final Session session,
             final AcInstallationHistoryPojo history,
-            final Set<AceBean> aceBeanSetFromConfig)
+            final Set<AceBean> aceBeanSetFromConfig, 
+            Map<String, String> templateMappings)
             throws RepositoryException, UnsupportedRepositoryOperationException {
 
         JackrabbitSession js = (JackrabbitSession) session;
@@ -204,17 +214,36 @@ public class AcHelper {
                 if (session.itemExists(bean.getJcrPath())) {
                     installBean(session, history, bean, currentPrincipal);
                 } else {
-                    // TODO: create page if necessary
-                    String warningMessage = "path: "
-                            + bean.getJcrPath()
-                            + " doesn't exist in repository. Cancelled installation for this ACE!";
-                    LOG.warn(warningMessage);
-                    history.addWarning(warningMessage);
-                    continue;
+                    // Create page if necessary
+                    if (createPageIfNecessary(session, history, bean.getJcrPath(), templateMappings)) {
+                        installBean(session, history, bean, currentPrincipal);
+                    } else {
+                        String warningMessage = "path: "
+                                + bean.getJcrPath()
+                                + " doesn't exist in repository. Cancelled installation for this ACE!";
+                        LOG.warn(warningMessage);
+                        history.addWarning(warningMessage);
+                        continue;
+                    }
                 }
 
             }
         }
+    }
+
+    private static boolean createPageIfNecessary(Session session,
+            AcInstallationHistoryPojo history, String jcrPath,
+            Map<String, String> templateMappings) {
+        
+        for (String path : templateMappings.keySet()) {
+            PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + path);
+            Path ioPath = FileSystems.getDefault().getPath(jcrPath);
+            if (matcher.matches(ioPath)) {
+                LOG.info("Creating page at {} using template {}.", jcrPath, templateMappings.get(path));
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

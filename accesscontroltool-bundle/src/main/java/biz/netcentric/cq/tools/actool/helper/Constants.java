@@ -18,6 +18,6 @@ public class Constants {
 
     public static final Set<String> VALID_CONFIG_SECTION_IDENTIFIERS = new HashSet<String>(
             Arrays.asList(GROUP_CONFIGURATION_KEY, USER_CONFIGURATION_KEY,
-                    ACE_CONFIGURATION_KEY));
+                    ACE_CONFIGURATION_KEY, TEMPLATE_CONFIGURATION_KEY));
 
 }
