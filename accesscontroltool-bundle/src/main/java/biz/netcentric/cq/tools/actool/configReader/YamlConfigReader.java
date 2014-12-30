@@ -2,12 +2,13 @@ package biz.netcentric.cq.tools.actool.configReader;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.LinkedHashSet;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -45,6 +46,7 @@ public class YamlConfigReader implements ConfigReader {
     private final String GROUP_CONFIG_PROPERTY_PASSWORD = "password";
     private final String GROUP_CONFIG_PROPERTY_NAME = "name";
 
+    // FIXME: This class should not depend on Sling
     @Reference
     private SlingRepository repository;
 
@@ -340,6 +342,26 @@ public class YamlConfigReader implements ConfigReader {
             return (String) currentAceDefinition.get(propertyName);
         }
         return "";
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, String> getTemplateConfiguration(Collection<?> configData) {
+        List<Map<?, ?>> templates = (List<Map<?, ?>>) getConfigSection(Constants.TEMPLATE_CONFIGURATION_KEY, configData);
+        if (templates == null) {
+            LOG.info("Template section missing from configuration file.");
+            return null;
+        }
+        Map<String, String> templateMappings = new HashMap<String, String>();
+        for (Map<?,  ?> entry : templates) {
+            if (entry.get("path") == null) {
+                LOG.warn("Template configuration entry {} is missing value for path.", entry);
+            }
+            if (entry.get("template") == null) {
+                LOG.warn("Template configuration entry {} is missing value for template.", entry);
+            }
+            templateMappings.put(entry.get("path").toString(), entry.get("template").toString());
+        }
+        return templateMappings;
     }
 
 }

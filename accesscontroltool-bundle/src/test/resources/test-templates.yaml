@@ -1,0 +1,48 @@
+- group_config:
+
+    - groupA:
+
+       - name: 
+         memberOf: 
+         path: /home/groups/g
+         
+         
+- ace_config:
+
+    - groupA:
+
+       - path: /content/site
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /content/site/en
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /content/site/en/products
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /content/site/en/services
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+- template_config:
+    
+    - path: /content/site/*
+      template: /apps/mysite/templates/home
+    
+    - path: /content/site/en/*
+      template: /apps/mysite/templates/firstlevel
+    
+    - path: /content/site/en/*/*
+      template: /apps/mysite/templates/secondlevel
+      

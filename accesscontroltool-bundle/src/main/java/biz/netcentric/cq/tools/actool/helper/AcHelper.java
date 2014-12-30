@@ -204,6 +204,7 @@ public class AcHelper {
                 if (session.itemExists(bean.getJcrPath())) {
                     installBean(session, history, bean, currentPrincipal);
                 } else {
+                    // TODO: create page if necessary
                     String warningMessage = "path: "
                             + bean.getJcrPath()
                             + " doesn't exist in repository. Cancelled installation for this ACE!";
