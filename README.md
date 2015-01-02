@@ -72,7 +72,7 @@ property | comment | optional
 path | a node path. Wildcards '*' are possible. e.g. assuming we have the language trees de and en then /content/*/test would match: /content/de/test and /content/en/test (mandatory) If an asterisk is contained then the path has to be written inside single quotes ('...') since this symbol is a functional character in YAML. | no
 permission | the permission (allow/deny) | no
 actions | the actions (read,modify,create,delete,acl_read,acl_edit,replicate) | no, either actions or privileges; also a mix of both is possible
-privileges | the privileges (jcr:read, rep:write, jcr:all, crx:replicate,jcr:addChildNodes,jcr:lifecycleManagement,jcr:lockManagement,jcr:modifyAccessControl,jcr:modifyProperties,jcr:namespaceManagement,jcr:nodeTypeDefinitionManagement,jcr:nodeTypeManagement,jcr:readAccessControl,jcr:removeChildNodes,jcr:removeNode,jcr:retentionManagement,jcr:versionManagement,jcr:workspaceManagement,jcr:write,rep:privilegeManagement) |
+privileges | the privileges (jcr:read, rep:write, jcr:all, crx:replicate, jcr:addChildNodes, jcr:lifecycleManagement, jcr:lockManagement, jcr:modifyAccessControl, jcr:modifyProperties, jcr:namespaceManagement, jcr:nodeTypeDefinitionManagement, jcr:nodeTypeManagement, jcr:readAccessControl, jcr:removeChildNodes, jcr:removeNode, jcr:retentionManagement, jcr:versionManagement, jcr:workspaceManagement, jcr:write, rep:privilegeManagement) |
 repGlob |a repGlob expression | yes
 
 Every new data entry starts with a "-". 
@@ -124,6 +124,12 @@ In case the configuration file contains ACEs for groups which are not present in
 
 All important steps performed by the service as well as all error/warning messages get written to error log and history.
 
+## Validation
+
+First the validation of the different configuration lines is performed based on regular expressions and gets applied while reading the file. Further validation consists of checking paths for existence as well as for double entries, checks for conflicting ACEs (e.g. allow and deny for same actions on same node), checks whether principals are existing under home. If an invalid parameter or aforementioned issue gets detected, the reading gets aborted and an appropriate error message gets append in the installation history and log.
+
+If issues occur during the application of the configurations in CRX the installation has to be aborted and the previous state has to stay untouched! Therefore the session used for the installation only gets saved if no exceptions occured thus persisting the changes.
+
 # Deploying ACLs
 
 ## Storage of configurations in CRX
@@ -133,3 +139,96 @@ Example showing 3 separate project-specific configuration sub-nodes each contain
 <img src="docs/images/crx-storage.png">
 
 The projectspecific configuration files get stored in CRX under a node which can be set in the OSGi configuration of the AcService (system/console/configMgr). Each child node contains the project specific configuration file(s). Everytime a new installation gets executed, the newest configuration file gets used. The folder structure gets created by deployment or manually in CRX. Each time a new configuration file gets uploaded in CRX (e.g. deployment) or the content of a file gets changed a node listener can trigger a new installation of the configurations. This behaviour can be enabled/disabled in UploadListenerService OSGi config.
+
+## Installation process
+
+During the installation all groups defined in the groups section of the configuration file get created in the system. In a next step all ACEs configured in the ACE section get installed in CRX. Any old ACEs regarding these groups not contained anymore in the config but in the repository gets automatically purged thus no old or obsolete ACEs stay in the system and any manual change of ACEs regarding these groups get reverted thus ensuring a defined state again. ACEs not belongig to those groups in the configuration files remain untouched. So after the installation took place all groups and the corresponding ACEs exactly as defined in the configuration(s) are installed on the system.
+
+If at any point during the installation an ecxeption occurs, no changes get persisted in the system. This prevents ending up having a undefined state in the repository.
+
+During the installation a history containing the most important events gets ceated and persisted in CRX for later examination.
+Merging of  ACEs
+
+To achieve the aforementioned requirements every new installation comprises the following steps:
+
+* The group based ACE configuration from configuration file gets transformed into a node based configuration
+* A dump in the same format gets fetched from the repository
+* On each node contained in this file the following steps get performed:
+    * The ACL from dump and from the configuration gets compared
+    * If there are already ACEs in the repository regarding a group from the configuration, these ACEs get removed
+    * The other ACEs not contained in the respective ACL from config get merged into the ACL from the config and get ordered (deny ACEs followed by allow ACEs)
+    * The ACL from in repo gets replaced by the merged one from config
+* In case there is a node in repository dump that is not covered in the config the following step gets performed
+    * if the ACL of that node has one or several ACEs belonging to one or several groups from config, these ACEs get deleted
+    
+## Dump service
+
+The dump Service is responsible for creating dumps which are accessible via JMX whiteboard. There are 2 kinds of dumps supported: path ordered- and principal ordered dumps.
+
+* path ordered dumps: here all ACEs in the dump are grouped by path thus representing a complete ACL. This kind of dump gets triggered by the method: pathBasedDump().
+* group based dumps: here all ACEs in the dump are grouped by their respective principal (group or user). This kind of dump gets triggered by the method: groupBasedDump().
+
+<img src="docs/images/dump-service.png">
+
+Every created dump can be watched directly in JMX and also gets saved in CRX under /var/statistics/achistory/dump_[Timestamp]. The number of dumps to be saved in CRX can be configured in the OSGi configuration of the dump service in the field: "Number of dumps to save" (see Screenshot)
+
+There are also 3 additional options available in the OSGi configuration of the dump service:
+
+* Include user in ACEs in dumps: if checked, all users which have ACEs directly set in the repository get added to the dump (ACEs in section "- ace_config:" and users in section "- user_config:")
+* filtered dump: if checked, all ACEs belonging to the cq actions: modifiy, create or delete which have a repGlob set don't get added to the dump. Per default they are omitted since they're automatically set within CQ if one of the action gets set and are not necessary to expicitly being set in a new configuration file.
+* include legacy ACEs in dump: if checked, legacy ACEs (ACEs of groups/users which can not be found under /home) also get added to the dump in an extra section called "legacy_aces" at the end of the dump. The order of ACEs listed there is the same as it is for the "valid" ACEs (path based or group based). If needed these ACEs can be manually deleted using the "purge_Authorizables" function by entering the respective principal name(s).
+
+Internal dumps which get created and used everytime an new AC installation takes place get also created by this service and contain always all ACEs (users and unfilteredACEs).
+
+## AC (search) Query
+
+In order to exclude certain direct child nodes of the jcr:root node from the query (e.g. /home, since we don't want to have the rep: policy nodes of each user) to get all the rep: policy nodes in the system, these nodes can be configured. This configuration takes place in the OSGi configuration of the AcService ('/home', '/jcr:system' and '/tmp' are exclude by default). When a query is performed (e.g. during a new installation) , the results of the single queries performed on the nodes which are not excluded get assembled and returned as collective result for further processing.
+
+## UploadListenerService
+
+The Upload Listener Service allows to configure the NodeEvent Listener. In the OSGi console it can be enabled/disabled furthermore the listener path can also be configured here.
+
+If enabled each new upload of a projectspecific configuration file triggers the AceService. Before a new installation starts, a dump (groups & ACLs) gets created which get stored under the backups-node.
+
+## JMX interface
+
+The JMX interface offers the possibility to trigger the functions offered by the ACE service. These are:
+
+* starting a new installation of the newest configuration files in CRX.
+* purging of ACLs (of a single node or recursively for all subnodes)
+* deletion of single ACEs
+* purging users/groups from the instance (including all related ACEs).
+* creation of dumps (ordered by path or by group)
+* showing of history logs created during the installation
+
+Also important status messages are shown here:
+
+* readiness for installation (if at least one configuration file is stored in CRX)
+* success status of the last installation
+* display of the newest installation files (incl. date information)
+* display of the paths of last 5 history logs saved in CTX and a success status of each of those installation
+
+## History Service
+
+A history object collects messages, warnings, and also an exception in case something goes wrong. This history gets saved in CRX nder /var/statistics/achistory. The number of histories to be saved can be configured in the history service.
+
+## Purge ACLs/Authorizables
+
+Beside the options to install access control configurations and to create dumps the ac tool also offers different possibilities to purge ACLs/authorizables from the system. These methods are also available via JMX whiteboard (see screenshot: JMX Whiteboard of the AC tool).
+
+Method | Action
+--- | ---
+purgeACL | This method purges the access control list of a (single) node in repository. The node path is entered as parameter before invocation.
+purgeACLs | This method purges the access control list a node and also the access control lists of all child nodes. The node path is entered as parameter before invocation.
+purgeAuthorizables | This method purges authorizables from home and also deletes all corresponding ACEs from the repository. Several authorizables are entered as comma separated list before invocation.
+purgeAllAuthorizablesFromConfigurations | This method purges all authorizables defined in all configurations files and all their corresponding ACEs from the repository.
+
+For any of these purge actions a separate purge history (node) containing all logging statements gets persisted in CRX in order to be able to track every of those actions afterwards. Such a purge history node gets saved under the history node of the current ac installation in place. Any of these purge nodes has a timestamp as suffix in the node name.
+
+## Curl calls
+
+### Trigger the 'execute' method of the AC service
+
+```
+curl -sS --retry 1 -u ${CQ_ADMINUSER}:${CQ_ADMINPW} -X POST "http://${CQ_SERVER}:${CQ_PORT}/system/console/jmx/biz.netcentric.cq.tools.actool:id='ac+installation'/op/execute/"
+```
