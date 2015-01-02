@@ -31,7 +31,7 @@ For better human readability and easy editing the ACL configuration files use th
 
 ## Overall structure a of an AC configuration file
 
-[<img src="docs/images/configuration-file-structure.png">]
+<img src="docs/images/configuration-file-structure.png">
 
 Every configuration file comprises a group section where groups and their membership to other groups get defined and a ACE section where all ACEs in the repository regarding these groups get defined. These ACE definitions are again written under the respective group id. The group of an ACE definition in each configuration file has to match a group which is also defined in the same file. Groups which are contained in the memberOf property within a group definition have either to be defined in another configuration file or already be installed in the system on which the installation takes place.
 
@@ -72,10 +72,8 @@ property | comment | optional
 path | a node path. Wildcards '*' are possible. e.g. assuming we have the language trees de and en then /content/*/test would match: /content/de/test and /content/en/test (mandatory) If an asterisk is contained then the path has to be written inside single quotes ('...') since this symbol is a functional character in YAML. | no
 permission | the permission (allow/deny) | no
 actions | the actions (read,modify,create,delete,acl_read,acl_edit,replicate) | no, either actions or privileges; also a mix of both is possible
-privileges | the privileges (jcr:read, rep:write, jcr:all, crx:replicate,jcr:addChildNodes,jcr:lifecycleManagement,jcr:lockManagement,jcr:modifyAccessControl,jcr:modifyProperties,
-jcr:namespaceManagement,jcr:nodeTypeDefinitionManagement,jcr:nodeTypeManagement,jcr:readAccessControl,jcr:removeChildNodes,
-jcr:removeNode,jcr:retentionManagement,jcr:versionManagement,jcr:workspaceManagement,jcr:write,rep:privilegeManagement)
-repGlob	a repGlob expression | yes
+privileges | the privileges (jcr:read, rep:write, jcr:all, crx:replicate,jcr:addChildNodes,jcr:lifecycleManagement,jcr:lockManagement,jcr:modifyAccessControl,jcr:modifyProperties,jcr:namespaceManagement,jcr:nodeTypeDefinitionManagement,jcr:nodeTypeManagement,jcr:readAccessControl,jcr:removeChildNodes,jcr:removeNode,jcr:retentionManagement,jcr:versionManagement,jcr:workspaceManagement,jcr:write,rep:privilegeManagement) |
+repGlob |a repGlob expression | yes
 
 Every new data entry starts with a "-". 
 
@@ -132,7 +130,6 @@ All important steps performed by the service as well as all error/warning messag
 
 Example showing 3 separate project-specific configuration sub-nodes each containing one or more configuration files:
 
-[<img src="docs/images/crx-storage.png">]
-
+<img src="docs/images/crx-storage.png">
 
 The projectspecific configuration files get stored in CRX under a node which can be set in the OSGi configuration of the AcService (system/console/configMgr). Each child node contains the project specific configuration file(s). Everytime a new installation gets executed, the newest configuration file gets used. The folder structure gets created by deployment or manually in CRX. Each time a new configuration file gets uploaded in CRX (e.g. deployment) or the content of a file gets changed a node listener can trigger a new installation of the configurations. This behaviour can be enabled/disabled in UploadListenerService OSGi config.
