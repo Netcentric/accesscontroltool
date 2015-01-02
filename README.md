@@ -161,6 +161,18 @@ To achieve the aforementioned requirements every new installation comprises the 
 * In case there is a node in repository dump that is not covered in the config the following step gets performed
     * if the ACL of that node has one or several ACEs belonging to one or several groups from config, these ACEs get deleted
     
+## AC Service
+    
+The main operation purpose of the AC service is the installation of ACE / group definitions from one or several configuration files to a CQ instance on the one hand or the creation of such files (dump) out of an existing configuration on the other hand. It offers possibilities like purging existing ACEs / principals from the instance before installing new ones, merging / adding new ACEs or performing a rollback to a previously saved state if needed. 
+ 
+The configuration for ACEs principals and groups can be maintained in one file or in dedicated files.
+ 
+The configurations are contained in textual files.These files get transferred to CRX usually via deployment. The service can be triggered by a JCR listener which reacts on node changes underneath a configurable path to detect a new configuration in the system, or by triggering the executing it via JMX.
+ 
+Before installing a new configuration on an instance a validation of the data stored in the configuration file takes place. In case an issue gets detected the installation doesn't get performed.
+
+<img src="docs/images/ac-service.png">
+    
 ## Dump service
 
 The dump Service is responsible for creating dumps which are accessible via JMX whiteboard. There are 2 kinds of dumps supported: path ordered- and principal ordered dumps.
@@ -232,3 +244,7 @@ For any of these purge actions a separate purge history (node) containing all lo
 ```
 curl -sS --retry 1 -u ${CQ_ADMINUSER}:${CQ_ADMINPW} -X POST "http://${CQ_SERVER}:${CQ_PORT}/system/console/jmx/biz.netcentric.cq.tools.actool:id='ac+installation'/op/execute/"
 ```
+
+# Architectural Overview
+
+<img src="docs/images/architectural-overview.png">
