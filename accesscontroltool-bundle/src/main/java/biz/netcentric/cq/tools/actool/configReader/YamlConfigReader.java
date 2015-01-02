@@ -9,14 +9,18 @@
 package biz.netcentric.cq.tools.actool.configReader;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -47,6 +51,7 @@ public class YamlConfigReader implements ConfigReader {
     private final String ACE_CONFIG_PROPERTY_PRIVILEGES = "privileges";
     private final String ACE_CONFIG_PROPERTY_ACTIONS = "actions";
     private final String ACE_CONFIG_PROPERTY_PATH = "path";
+    private final String ACE_CONFIG_PROPERTY_FOR = "for";
 
     private final String GROUP_CONFIG_PROPERTY_MEMBER_OF = "memberOf";
     private final String GROUP_CONFIG_PROPERTY_PATH = "path";
@@ -177,16 +182,18 @@ public class YamlConfigReader implements ConfigReader {
             LinkedHashSet<AuthorizableConfigBean> tmpSet = new LinkedHashSet<AuthorizableConfigBean>();
             principalMap.put((String) currentPrincipal, tmpSet);
 
-            List<LinkedHashMap> currentPrincipalData = (List<LinkedHashMap>) currentMap
+            List<Map<String, String>> currentPrincipalData = (List<Map<String, String>>) currentMap
                     .get(currentPrincipal);
 
             if (currentPrincipalData != null && !currentPrincipalData.isEmpty()) {
 
-                for (LinkedHashMap<?, ?> currentPrincipalDataMap : currentPrincipalData) {
+                for (Map<String, String> currentPrincipalDataMap : currentPrincipalData) {
                     AuthorizableConfigBean tmpPrincipalConfigBean = new AuthorizableConfigBean();
                     setupAuthorizableBean(tmpPrincipalConfigBean,
                             currentPrincipalDataMap, (String) currentPrincipal);
-                    authorizableValidator.validate(tmpPrincipalConfigBean);
+                    if (authorizableValidator != null) {
+                        authorizableValidator.validate(tmpPrincipalConfigBean);
+                    }
                     principalMap.get(currentPrincipal).add(
                             tmpPrincipalConfigBean);
                 }
@@ -241,23 +248,34 @@ public class YamlConfigReader implements ConfigReader {
                 // create ACE bean and populate it according to the properties
                 // in the config
 
-                aceBeanValidator.setCurrentAuthorizableName(principalName);
+                if (aceBeanValidator != null) {
+                    aceBeanValidator.setCurrentAuthorizableName(principalName);
+                }
 
-                for (LinkedHashMap<?, ?> currentAceDefinition : aceDefinitions) {
-                    AceBean newAceBean = new AceBean();
-                    setupAceBean(principalName, currentAceDefinition,
-                            newAceBean);
-                    aceBeanValidator.validate(newAceBean);
-
-                    // --- handle wildcards ---
-
-                    if (newAceBean.getJcrPath() != null
-                            && newAceBean.getJcrPath().contains("*")
-                            && null != session) {
-                        handleWildcards(session, aceMap, principalName,
-                                newAceBean);
+                for (LinkedHashMap<String, String> currentAceDefinition : aceDefinitions) {
+                    if (currentAceDefinition.containsKey(ACE_CONFIG_PROPERTY_FOR)) {
+                        List<AceBean> beans = unrollForLoop(currentAceDefinition, principalName);
+                        for (AceBean bean : beans) {
+                            aceMap.get(principalName).add(bean);
+                        }
                     } else {
-                        aceMap.get(principalName).add(newAceBean);
+                        AceBean newAceBean = new AceBean();
+                        setupAceBean(principalName, currentAceDefinition,
+                                newAceBean);
+                        if (aceBeanValidator != null) {
+                            aceBeanValidator.validate(newAceBean);
+                        }
+    
+                        // --- handle wildcards ---
+    
+                        if (newAceBean.getJcrPath() != null
+                                && newAceBean.getJcrPath().contains("*")
+                                && null != session) {
+                            handleWildcards(session, aceMap, principalName,
+                                    newAceBean);
+                        } else {
+                            aceMap.get(principalName).add(newAceBean);
+                        }
                     }
                 }
             }
@@ -267,6 +285,36 @@ public class YamlConfigReader implements ConfigReader {
                 session.logout();
             }
         }
+    }
+
+    private Pattern forLoopPattern = Pattern.compile("(\\w+) in \\[([,\\s\\w]+)\\]");
+    
+    protected List<AceBean> unrollForLoop(Map<String, String> config, String principalName) {
+        List<AceBean> beans = new LinkedList<AceBean>();
+        String forSpec = config.get(ACE_CONFIG_PROPERTY_FOR);
+        Matcher matcher = forLoopPattern.matcher(forSpec);
+        if (matcher.find()) {
+            String var = matcher.group(1);
+            String in = matcher.group(2);
+            String[] values = in.split(",\\s+");
+            for (String value : values) {
+                AceBean newAceBean = new AceBean();
+                // Replace variables in config
+                Map<String, String> unrolledConfig = new HashMap<String, String>();
+                String regex = "\\$\\{" + var + "}";
+                for (String key : config.keySet()) {
+                    LOG.info("{} => {}", key, config.get(key));
+                    String val = config.get(key);
+                    String newVal = val == null ? null : val.replaceAll(regex, value);
+                    unrolledConfig.put(key, newVal);
+                }
+                setupAceBean(principalName, unrolledConfig, newAceBean);
+                beans.add(newAceBean);
+            }
+        } else {
+            LOG.error("Incorrect for loop syntax: {}", forSpec);
+        }
+        return beans;
     }
 
     private void handleWildcards(final Session session,
@@ -309,7 +357,7 @@ public class YamlConfigReader implements ConfigReader {
     }
 
     private void setupAceBean(String principal,
-            LinkedHashMap<?, ?> currentAceDefinition, AceBean tmpAclBean) {
+            Map<String, String> currentAceDefinition, AceBean tmpAclBean) {
         tmpAclBean.setPrincipal(principal);
         tmpAclBean.setJcrPath(getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_PROPERTY_PATH));
@@ -327,7 +375,7 @@ public class YamlConfigReader implements ConfigReader {
 
     private void setupAuthorizableBean(
             AuthorizableConfigBean authorizableConfigBean,
-            LinkedHashMap<?, ?> currentPrincipalDataMap,
+            Map<String, String> currentPrincipalDataMap,
             final String authorizableId) {
         authorizableConfigBean.setPrincipalID(authorizableId);
         authorizableConfigBean.setAuthorizableName(getMapValueAsString(
@@ -344,10 +392,10 @@ public class YamlConfigReader implements ConfigReader {
     }
 
     private String getMapValueAsString(
-            final LinkedHashMap<?, ?> currentAceDefinition,
+            final Map<String, String> currentAceDefinition,
             final String propertyName) {
         if (currentAceDefinition.get(propertyName) != null) {
-            return (String) currentAceDefinition.get(propertyName);
+            return currentAceDefinition.get(propertyName);
         }
         return "";
     }
