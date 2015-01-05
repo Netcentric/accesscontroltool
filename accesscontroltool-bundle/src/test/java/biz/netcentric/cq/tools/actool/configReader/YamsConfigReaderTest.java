@@ -50,8 +50,11 @@ public class YamsConfigReaderTest {
         List<LinkedHashMap> yamlList = getYamlList("testmacro.yaml");
         Map<String, LinkedHashSet<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
         Map<String, Set<AceBean>> aces = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null);
-        System.out.println(aces);
-        // TODO: finish this test
+        assertEquals("Number of groups", 2, aces.size());
+        Set<AceBean> groupA = aces.get("groupA");
+        assertEquals("Number of ACEs for groupA", 3, groupA.size());
+        Set<AceBean> groupB = aces.get("groupB");
+        assertEquals("Number of ACEs for groupB", 1, groupB.size());
     }
 
     @Test

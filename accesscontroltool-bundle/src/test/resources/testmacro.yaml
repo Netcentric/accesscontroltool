@@ -29,8 +29,7 @@
 
     - groupB:
 
-        - for: site in [ MKT/SITE1, MKT/SITE2, MKT/SITE3 ]
-          path: /content/brand/${site}
+        - path: /content/brand/site
           permission: allow
           actions: read
           privileges: 
