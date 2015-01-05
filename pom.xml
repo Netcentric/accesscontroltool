@@ -15,7 +15,7 @@
 
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
     <artifactId>accesscontroltool</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.1.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Access Control Tool - Reactor Project</name>
@@ -24,7 +24,8 @@
     <scm>
         <connection>scm:git:ssh://git@source.int.netcentric.biz:7999/cq/accesscontroltool.git</connection>
         <developerConnection>scm:git:ssh://git@source.int.netcentric.biz:7999/cq/accesscontroltool.git</developerConnection>
-    </scm>
+      <tag>HEAD</tag>
+  </scm>
     <distributionManagement>
         <repository>
           <id>nexus</id>
@@ -293,7 +294,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore/>
+                                        <ignore />
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>
