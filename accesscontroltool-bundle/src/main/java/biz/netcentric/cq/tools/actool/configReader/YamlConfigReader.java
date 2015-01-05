@@ -217,48 +217,55 @@ public class YamlConfigReader implements ConfigReader {
         if (aceYamlList == null) {
             return aceMap;
         }
+        LOG.info("aceYamlList = {}", aceYamlList);
         Session session = null;
         try {
             if (repository != null) {
                 session = repository.loginAdministrative(null);
             }
-            for (LinkedHashMap<?, ?> currentPrincipalAceMap : aceYamlList) {
+            for (Map<String, List<Map<String, ?>>> currentPrincipalAceMap : aceYamlList) {
 
                 String principalName = (String) currentPrincipalAceMap.keySet()
                         .iterator().next();
 
-                List<LinkedHashMap> aceDefinitions = (List<LinkedHashMap>) currentPrincipalAceMap
-                        .get(principalName);
-                LOG.info("start reading ACE configuration of authorizable: {}",
-                        principalName);
-
-                // if current principal is not yet in map, add new key and empty
-                // set for storing the pricipals ACE beans
-                if (aceMap.get(principalName) == null) {
-                    Set<AceBean> tmpSet = new LinkedHashSet<AceBean>();
-                    aceMap.put(principalName, tmpSet);
-                }
-
-                if (aceDefinitions == null || aceDefinitions.isEmpty()) {
-                    LOG.warn("no ACE definition(s) found for autorizable: {}",
-                            principalName);
-                    continue;
-                }
-
-                // create ACE bean and populate it according to the properties
-                // in the config
-
-                if (aceBeanValidator != null) {
-                    aceBeanValidator.setCurrentAuthorizableName(principalName);
-                }
-
-                for (LinkedHashMap<String, String> currentAceDefinition : aceDefinitions) {
-                    if (currentAceDefinition.containsKey(ACE_CONFIG_PROPERTY_FOR)) {
-                        List<AceBean> beans = unrollForLoop(currentAceDefinition, principalName);
-                        for (AceBean bean : beans) {
-                            aceMap.get(principalName).add(bean);
+                Matcher matcher = forLoopPattern.matcher(principalName);
+                if (matcher.find()) {
+                    LOG.info("Principal name {} matches FOR loop pattern. Unrolling {}", principalName, currentPrincipalAceMap.get(principalName));
+                    List<AceBean> aces = unrollAceForLoop(principalName, currentPrincipalAceMap.get(principalName));
+                    for (AceBean ace : aces) {
+                        if (aceMap.get(ace.getPrincipalName()) == null) {
+                            Set<AceBean> tmpSet = new LinkedHashSet<AceBean>();
+                            aceMap.put(ace.getPrincipalName(), tmpSet);
                         }
-                    } else {
+                        aceMap.get(ace.getPrincipalName()).add(ace);
+                    }
+                } else {
+                    List<Map<String, ?>> aceDefinitions = currentPrincipalAceMap.get(principalName);
+                    
+                    LOG.info("start reading ACE configuration of authorizable: {}",
+                            principalName);
+                    
+                    // if current principal is not yet in map, add new key and empty
+                    // set for storing the pricipals ACE beans
+                    if (aceMap.get(principalName) == null) {
+                        Set<AceBean> tmpSet = new LinkedHashSet<AceBean>();
+                        aceMap.put(principalName, tmpSet);
+                    }
+    
+                    if (aceDefinitions == null || aceDefinitions.isEmpty()) {
+                        LOG.warn("no ACE definition(s) found for autorizable: {}",
+                                principalName);
+                        continue;
+                    }
+    
+                    // create ACE bean and populate it according to the properties
+                    // in the config
+    
+                    if (aceBeanValidator != null) {
+                        aceBeanValidator.setCurrentAuthorizableName(principalName);
+                    }
+    
+                    for (Map<String, ?> currentAceDefinition : aceDefinitions) {
                         AceBean newAceBean = new AceBean();
                         setupAceBean(principalName, currentAceDefinition,
                                 newAceBean);
@@ -287,29 +294,45 @@ public class YamlConfigReader implements ConfigReader {
         }
     }
 
-    private Pattern forLoopPattern = Pattern.compile("(\\w+) in \\[([,/\\s\\w]+)\\]", Pattern.CASE_INSENSITIVE);
+    private Pattern forLoopPattern = Pattern.compile("for (\\w+) in \\[([,/\\s\\w]+)\\]", Pattern.CASE_INSENSITIVE);
 
-    protected List<AceBean> unrollForLoop(Map<String, String> config, String principalName) {
+    protected List<AceBean> unrollAceForLoop(String forSpec, List<Map<String, ?>> groups) {
+        
+        LOG.info("Unrolling {}", groups);
+        
         List<AceBean> beans = new LinkedList<AceBean>();
-        String forSpec = config.get(ACE_CONFIG_PROPERTY_FOR);
         Matcher matcher = forLoopPattern.matcher(forSpec);
         if (matcher.find()) {
             String var = matcher.group(1);
             String in = matcher.group(2);
             String[] values = in.split(",\\s+");
+            // Looping over values in FOR statement
             for (String value : values) {
-                AceBean newAceBean = new AceBean();
                 // Replace variables in config
-                Map<String, String> unrolledConfig = new HashMap<String, String>();
                 String regex = "\\$\\{" + var + "}";
-                for (String key : config.keySet()) {
-                    LOG.info("{} => {}", key, config.get(key));
-                    String val = config.get(key);
-                    String newVal = val == null ? null : val.replaceAll(regex, value.trim());
-                    unrolledConfig.put(key, newVal);
+                // Looping over groups
+                for (Map<String, ?> group : groups) {
+                    String key = group.keySet().iterator().next();
+                    String principalName = key.replaceAll(regex, value.trim());
+                    List<Map<String, ?>> aces = (List<Map<String, ?>>) group.get(key);
+                    // Looping over ACEs for group
+                    for (Map<String, ?> ace : aces) {
+                        Map<String, String> unrolledGroup = new HashMap<String, String>();
+                        AceBean newAceBean = new AceBean();
+                        // Looping over property values and child objects
+                        for (String key2 : ace.keySet()) {
+                            Object val = ace.get(key2);
+                            if (val == null || val instanceof String) {
+                                String newVal = val == null ? null : ((String) val).replaceAll(regex, value.trim());
+                                unrolledGroup.put(key2, newVal);
+                            } else {
+                                LOG.warn("Nested loops not supported yet.");
+                            }
+                        }
+                        setupAceBean(principalName, unrolledGroup, newAceBean);
+                        beans.add(newAceBean);
+                    }
                 }
-                setupAceBean(principalName, unrolledConfig, newAceBean);
-                beans.add(newAceBean);
             }
         } else {
             LOG.error("Incorrect for loop syntax: {}", forSpec);
@@ -357,7 +380,7 @@ public class YamlConfigReader implements ConfigReader {
     }
 
     private void setupAceBean(String principal,
-            Map<String, String> currentAceDefinition, AceBean tmpAclBean) {
+            Map<String, ?> currentAceDefinition, AceBean tmpAclBean) {
         tmpAclBean.setPrincipal(principal);
         tmpAclBean.setJcrPath(getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_PROPERTY_PATH));
@@ -392,10 +415,10 @@ public class YamlConfigReader implements ConfigReader {
     }
 
     private String getMapValueAsString(
-            final Map<String, String> currentAceDefinition,
+            final Map<String, ?> currentAceDefinition,
             final String propertyName) {
         if (currentAceDefinition.get(propertyName) != null) {
-            return currentAceDefinition.get(propertyName);
+            return currentAceDefinition.get(propertyName).toString();
         }
         return "";
     }
