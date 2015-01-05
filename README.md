@@ -1,13 +1,13 @@
 Access Control Tool for Adobe Experience Manager
 ================================================
 
-The Access Control Tool for Adobe AEM (ACTool) is a tool that simplifies the specification and deployment of complex Access Control Lists in Adobe AEM.
+The Access Control Tool for Adobe Experience Manager (ACTool) is a tool that simplifies the specification and deployment of complex Access Control Lists in AEM.
 
 # Prerequisites
 
 Building the ACTool reuires Java 7 and Maven 3.2.
 
-Installing ACTool requires Adobe AEM 6.0.
+Installing ACTool requires AEM 6.0.
 
 # Installation
 
