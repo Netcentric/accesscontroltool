@@ -287,8 +287,8 @@ public class YamlConfigReader implements ConfigReader {
         }
     }
 
-    private Pattern forLoopPattern = Pattern.compile("(\\w+) in \\[([,\\s\\w]+)\\]");
-    
+    private Pattern forLoopPattern = Pattern.compile("(\\w+) in \\[([,/\\s\\w]+)\\]", Pattern.CASE_INSENSITIVE);
+
     protected List<AceBean> unrollForLoop(Map<String, String> config, String principalName) {
         List<AceBean> beans = new LinkedList<AceBean>();
         String forSpec = config.get(ACE_CONFIG_PROPERTY_FOR);

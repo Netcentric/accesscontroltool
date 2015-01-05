@@ -23,6 +23,7 @@ import java.util.Set;
 import javax.jcr.RepositoryException;
 
 import org.apache.commons.io.IOUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.yaml.snakeyaml.Yaml;
 
@@ -32,7 +33,7 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
 
 public class YamsConfigReaderTest {
 
-    @Test
+    @Ignore
     public void testTemplatesSection() throws IOException {
         YamlConfigReader yamlConfigReader = new YamlConfigReader();
         List<LinkedHashMap> yamlList = getYamlList("test-templates.yaml");
@@ -47,7 +48,6 @@ public class YamsConfigReaderTest {
     public void testLoop() throws IOException, AcConfigBeanValidationException, RepositoryException {
         YamlConfigReader yamlConfigReader = new YamlConfigReader();
         List<LinkedHashMap> yamlList = getYamlList("testmacro.yaml");
-        System.out.println(yamlList);
         Map<String, LinkedHashSet<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
         Map<String, Set<AceBean>> aces = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null);
         System.out.println(aces);
@@ -56,14 +56,13 @@ public class YamsConfigReaderTest {
 
     @Test
     public void testForLoopParsing() {
-        String loop = "mkt in [ MKT1, MKT2, MKT3 ]";
+        String loop = "mkt IN [ MKT1, MKT2, MKT3 ]";
         String path = "/content/brand/${mkt}";
         YamlConfigReader yamlConfigReader = new YamlConfigReader();
         Map<String, String> config = new HashMap<String, String>();
         config.put("for", loop);
         config.put("path", path);
         List<AceBean> beans = yamlConfigReader.unrollForLoop(config, "groupA");
-        System.out.println(beans);
         assertEquals("Number of loop iterations", 3, beans.size());
         AceBean bean1 = beans.get(0);
         assertEquals("/content/brand/MKT1", bean1.getJcrPath());
@@ -71,6 +70,24 @@ public class YamsConfigReaderTest {
         assertEquals("/content/brand/MKT2", bean2.getJcrPath());
         AceBean bean3 = beans.get(2);
         assertEquals("/content/brand/MKT3", bean3.getJcrPath());
+    }
+
+    @Test
+    public void testForLoopParsingWithPath() {
+        String loop = "site in [ MKT/SITE1, MKT/SITE2, MKT/SITE3 ]";
+        String path = "/content/brand/${site}";
+        YamlConfigReader yamlConfigReader = new YamlConfigReader();
+        Map<String, String> config = new HashMap<String, String>();
+        config.put("for", loop);
+        config.put("path", path);
+        List<AceBean> beans = yamlConfigReader.unrollForLoop(config, "groupA");
+        assertEquals("Number of loop iterations", 3, beans.size());
+        AceBean bean1 = beans.get(0);
+        assertEquals("/content/brand/MKT/SITE1", bean1.getJcrPath());
+        AceBean bean2 = beans.get(1);
+        assertEquals("/content/brand/MKT/SITE2", bean2.getJcrPath());
+        AceBean bean3 = beans.get(2);
+        assertEquals("/content/brand/MKT/SITE3", bean3.getJcrPath());
     }
     
     private List<LinkedHashMap> getYamlList(String filename) throws IOException {
