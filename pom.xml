@@ -25,6 +25,18 @@
         <connection>scm:git:ssh://git@source.int.netcentric.biz:7999/cq/accesscontroltool.git</connection>
         <developerConnection>scm:git:ssh://git@source.int.netcentric.biz:7999/cq/accesscontroltool.git</developerConnection>
     </scm>
+    <distributionManagement>
+        <repository>
+          <id>nexus</id>
+          <name>Netcentric Releases</name>
+          <url>https://repo.int.netcentric.biz/nexus/content/repositories/netcentric-releases/</url>
+        </repository>
+        <snapshotRepository>
+          <id>nexus</id>
+          <name>Netcentric Nexus Snapshot Repository</name>
+          <url>https://repo.int.netcentric.biz/nexus/content/repositories/netcentric-snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 
     <prerequisites>
         <maven>3.0.2</maven>
