@@ -305,7 +305,7 @@ public class YamlConfigReader implements ConfigReader {
                 for (String key : config.keySet()) {
                     LOG.info("{} => {}", key, config.get(key));
                     String val = config.get(key);
-                    String newVal = val == null ? null : val.replaceAll(regex, value);
+                    String newVal = val == null ? null : val.replaceAll(regex, value.trim());
                     unrolledConfig.put(key, newVal);
                 }
                 setupAceBean(principalName, unrolledConfig, newAceBean);

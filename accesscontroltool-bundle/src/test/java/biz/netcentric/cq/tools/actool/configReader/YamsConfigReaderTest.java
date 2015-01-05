@@ -65,6 +65,12 @@ public class YamsConfigReaderTest {
         List<AceBean> beans = yamlConfigReader.unrollForLoop(config, "groupA");
         System.out.println(beans);
         assertEquals("Number of loop iterations", 3, beans.size());
+        AceBean bean1 = beans.get(0);
+        assertEquals("/content/brand/MKT1", bean1.getJcrPath());
+        AceBean bean2 = beans.get(1);
+        assertEquals("/content/brand/MKT2", bean2.getJcrPath());
+        AceBean bean3 = beans.get(2);
+        assertEquals("/content/brand/MKT3", bean3.getJcrPath());
     }
     
     private List<LinkedHashMap> getYamlList(String filename) throws IOException {
