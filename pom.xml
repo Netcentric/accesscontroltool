@@ -20,6 +20,11 @@
 
     <name>Access Control Tool - Reactor Project</name>
     <description>Maven Multimodule project for Access Control Tool.</description>
+    
+    <scm>
+        <connection>scm:git:ssh://git@source.int.netcentric.biz:7999/cq/accesscontroltool.git</connection>
+        <developerConnection>scm:git:ssh://git@source.int.netcentric.biz:7999/cq/accesscontroltool.git</developerConnection>
+    </scm>
 
     <prerequisites>
         <maven>3.0.2</maven>
