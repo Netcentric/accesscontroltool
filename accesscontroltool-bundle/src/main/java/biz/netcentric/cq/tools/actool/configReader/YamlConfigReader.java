@@ -231,7 +231,7 @@ public class YamlConfigReader implements ConfigReader {
                 Matcher matcher = forLoopPattern.matcher(principalName);
                 if (matcher.find()) {
                     LOG.info("Principal name {} matches FOR loop pattern. Unrolling {}", principalName, currentPrincipalAceMap.get(principalName));
-                    List<AceBean> aces = unrollAceForLoop(principalName, currentPrincipalAceMap.get(principalName));
+                    List<AceBean> aces = unrollAceForLoop(principalName, currentPrincipalAceMap.get(principalName), new HashMap<String, String>());
                     for (AceBean ace : aces) {
                         if (aceMap.get(ace.getPrincipalName()) == null) {
                             Set<AceBean> tmpSet = new LinkedHashSet<AceBean>();
@@ -296,10 +296,7 @@ public class YamlConfigReader implements ConfigReader {
 
     private Pattern forLoopPattern = Pattern.compile("for (\\w+) in \\[([,/\\s\\w]+)\\]", Pattern.CASE_INSENSITIVE);
 
-    protected List<AceBean> unrollAceForLoop(String forSpec, List<Map<String, ?>> groups) {
-        
-        LOG.info("Unrolling {}", groups);
-        
+    protected List<AceBean> unrollAceForLoop(String forSpec, List<Map<String, ?>> groups, Map<String, String> substitutions) {
         List<AceBean> beans = new LinkedList<AceBean>();
         Matcher matcher = forLoopPattern.matcher(forSpec);
         if (matcher.find()) {
@@ -313,24 +310,38 @@ public class YamlConfigReader implements ConfigReader {
                 // Looping over groups
                 for (Map<String, ?> group : groups) {
                     String key = group.keySet().iterator().next();
-                    String principalName = key.replaceAll(regex, value.trim());
-                    List<Map<String, ?>> aces = (List<Map<String, ?>>) group.get(key);
-                    // Looping over ACEs for group
-                    for (Map<String, ?> ace : aces) {
-                        Map<String, String> unrolledGroup = new HashMap<String, String>();
-                        AceBean newAceBean = new AceBean();
-                        // Looping over property values and child objects
-                        for (String key2 : ace.keySet()) {
-                            Object val = ace.get(key2);
-                            if (val == null || val instanceof String) {
-                                String newVal = val == null ? null : ((String) val).replaceAll(regex, value.trim());
-                                unrolledGroup.put(key2, newVal);
-                            } else {
-                                LOG.warn("Nested loops not supported yet.");
-                            }
+                    Matcher matcher2 = forLoopPattern.matcher(key);
+                    if (matcher2.find()) {
+                        substitutions.put(regex,  value);
+                        LOG.info("Detected nested loop {}. Unrolling with {}", key, substitutions);
+                        List<AceBean> nestedAces = unrollAceForLoop(key, (List<Map<String, ?>>) group.get(key), substitutions);
+                        beans.addAll(nestedAces);
+                    } else {
+                        String principalName = key.replaceAll(regex, value.trim());
+                        for (String sub : substitutions.keySet()) {
+                            principalName = principalName.replaceAll(sub, substitutions.get(sub).trim());
                         }
-                        setupAceBean(principalName, unrolledGroup, newAceBean);
-                        beans.add(newAceBean);
+                        List<Map<String, ?>> aces = (List<Map<String, ?>>) group.get(key);
+                        // Looping over ACEs for group
+                        for (Map<String, ?> ace : aces) {
+                            Map<String, String> unrolledGroup = new HashMap<String, String>();
+                            AceBean newAceBean = new AceBean();
+                            // Looping over property values and child objects
+                            for (String key2 : ace.keySet()) {
+                                Object val = ace.get(key2);
+                                if (val == null) {
+                                    unrolledGroup.put(key2, null);
+                                } else if (val instanceof String) {
+                                    String newVal = ((String) val).replaceAll(regex, value.trim());
+                                    for (String sub : substitutions.keySet()) {
+                                        newVal = newVal.replaceAll(sub, substitutions.get(sub).trim());
+                                    }
+                                    unrolledGroup.put(key2, newVal);
+                                }
+                            }
+                            setupAceBean(principalName, unrolledGroup, newAceBean);
+                            beans.add(newAceBean);
+                        }
                     }
                 }
             }

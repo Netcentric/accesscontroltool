@@ -8,7 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.configReader;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,6 +59,29 @@ public class YamsConfigReaderTest {
     }
 
     @Test
+    public void testNestedLoop() throws IOException, AcConfigBeanValidationException, RepositoryException {
+        YamlConfigReader yamlConfigReader = new YamlConfigReader();
+        List<LinkedHashMap> yamlList = getYamlList("test-nested-loops.yaml");
+        Map<String, LinkedHashSet<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
+        Map<String, Set<AceBean>> aces = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null);
+        assertEquals("Number of groups", 12, aces.size());
+        assertTrue(aces.containsKey("content-BRAND1-reader"));
+        assertTrue(aces.containsKey("content-BRAND1-writer"));
+        assertTrue(aces.containsKey("content-BRAND2-reader"));
+        assertTrue(aces.containsKey("content-BRAND2-writer"));
+        assertTrue(aces.containsKey("content-BRAND1-MKT1-reader"));
+        assertTrue(aces.containsKey("content-BRAND1-MKT1-writer"));
+        assertTrue(aces.containsKey("content-BRAND2-MKT1-reader"));
+        assertTrue(aces.containsKey("content-BRAND2-MKT1-writer"));
+        assertTrue(aces.containsKey("content-BRAND1-MKT2-reader"));
+        assertTrue(aces.containsKey("content-BRAND1-MKT2-writer"));
+        assertTrue(aces.containsKey("content-BRAND2-MKT2-reader"));
+        assertTrue(aces.containsKey("content-BRAND2-MKT2-writer"));
+        AceBean b1m1r = aces.get("content-BRAND1-MKT1-reader").iterator().next();
+        assertEquals("JCR path", "/content/BRAND1/MKT1", b1m1r.getJcrPath());
+    }
+
+    @Test
     public void testForLoopParsing() {
         String forStmt = "for brand IN [ BRAND1, BRAND2, BRAND3 ]";
         YamlConfigReader yamlConfigReader = new YamlConfigReader();
@@ -73,7 +96,7 @@ public class YamsConfigReaderTest {
         ace2.put("path", "/content/${brand}/foo");
         readerAces.add(ace2);
         groups.add(reader);
-        List<AceBean> beans = yamlConfigReader.unrollAceForLoop(forStmt, groups);
+        List<AceBean> beans = yamlConfigReader.unrollAceForLoop(forStmt, groups, new HashMap<String, String>());
         assertEquals("Number of loop iterations", 6, beans.size());
         assertEquals("/content/BRAND1", beans.get(0).getJcrPath());
         assertEquals("/content/BRAND1/foo", beans.get(1).getJcrPath());
