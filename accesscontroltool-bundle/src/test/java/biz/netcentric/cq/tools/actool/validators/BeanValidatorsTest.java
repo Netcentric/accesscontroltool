@@ -101,9 +101,9 @@ public class BeanValidatorsTest {
             throws AcConfigBeanValidationException {
         AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl();
         authorizableValidator.disable();
-        Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMap = yamlConfigReader
+        Map<String, Set<AuthorizableConfigBean>> authorizablesMap = yamlConfigReader
                 .getGroupConfigurationBeans(yamlList, authorizableValidator);
-        for (Entry<String, LinkedHashSet<AuthorizableConfigBean>> authorizableEntrySet : authorizablesMap
+        for (Entry<String, Set<AuthorizableConfigBean>> authorizableEntrySet : authorizablesMap
                 .entrySet()) {
             authorizableBeanList.addAll(authorizableEntrySet.getValue());
         }

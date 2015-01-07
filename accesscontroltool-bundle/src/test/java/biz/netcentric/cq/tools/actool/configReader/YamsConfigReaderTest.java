@@ -49,7 +49,7 @@ public class YamsConfigReaderTest {
     public void testLoop() throws IOException, AcConfigBeanValidationException, RepositoryException {
         YamlConfigReader yamlConfigReader = new YamlConfigReader();
         List<LinkedHashMap> yamlList = getYamlList("test-loop.yaml");
-        Map<String, LinkedHashSet<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
+        Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
         Map<String, Set<AceBean>> aces = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null);
         assertEquals("Number of groups", 5, aces.size());
         Set<AceBean> group1 = aces.get("content-BRAND-MKT1-reader");
@@ -62,7 +62,7 @@ public class YamsConfigReaderTest {
     public void testNestedLoop() throws IOException, AcConfigBeanValidationException, RepositoryException {
         YamlConfigReader yamlConfigReader = new YamlConfigReader();
         List<LinkedHashMap> yamlList = getYamlList("test-nested-loops.yaml");
-        Map<String, LinkedHashSet<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
+        Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
         Map<String, Set<AceBean>> aces = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null);
         assertEquals("Number of groups", 12, aces.size());
         assertTrue(aces.containsKey("content-BRAND1-reader"));
@@ -82,7 +82,22 @@ public class YamsConfigReaderTest {
     }
 
     @Test
-    public void testForLoopParsing() {
+    public void testGroupLoop() throws IOException, AcConfigBeanValidationException, RepositoryException {
+        YamlConfigReader yamlConfigReader = new YamlConfigReader();
+        List<LinkedHashMap> yamlList = getYamlList("test-loop.yaml");
+        Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
+        assertEquals("Number of groups", 7, groups.size());
+        assertEquals("Path of group", "/home/groups/BRAND1", groups.get("content-BRAND1-reader").iterator().next().getPath());
+        assertEquals("Path of group", "/home/groups/BRAND1", groups.get("content-BRAND1-writer").iterator().next().getPath());
+        assertEquals("Path of group", "/home/groups/BRAND2", groups.get("content-BRAND2-reader").iterator().next().getPath());
+        assertEquals("Path of group", "/home/groups/BRAND2", groups.get("content-BRAND2-writer").iterator().next().getPath());
+        assertEquals("Path of group", "/home/groups/BRAND3", groups.get("content-BRAND3-reader").iterator().next().getPath());
+        assertEquals("Path of group", "/home/groups/BRAND3", groups.get("content-BRAND3-writer").iterator().next().getPath());
+        
+    }
+
+    @Test
+    public void testAceForLoopParsing() {
         String forStmt = "for brand IN [ BRAND1, BRAND2, BRAND3 ]";
         YamlConfigReader yamlConfigReader = new YamlConfigReader();
         List<Map<String, ?>> groups = new LinkedList<Map<String, ?>>();
@@ -104,6 +119,25 @@ public class YamsConfigReaderTest {
         assertEquals("/content/BRAND2/foo", beans.get(3).getJcrPath());
         assertEquals("/content/BRAND3", beans.get(4).getJcrPath());
         assertEquals("/content/BRAND3/foo", beans.get(5).getJcrPath());
+    }
+
+    @Test
+    public void testGroupForLoopParsing() {
+        String forStmt = "for brand IN [ BRAND1, BRAND2, BRAND3 ]";
+        YamlConfigReader yamlConfigReader = new YamlConfigReader();
+        List<Map<String, ?>> groups = new LinkedList<Map<String, ?>>();
+        Map<String, List<?>> group = new HashMap<String, List<?>>();
+        List<Map<String, String>> groupMaps = new LinkedList<Map<String, String>>(); 
+        group.put("content-${brand}-reader", groupMaps);
+        Map<String, String> props = new HashMap<String, String>();
+        props.put("path", "/home/groups/${brand}");
+        groupMaps.add(props);
+        groups.add(group);
+        List<AuthorizableConfigBean> beans = yamlConfigReader.unrollGroupForLoop(forStmt, groups, new HashMap<String, String>());
+        assertEquals("Number of groups", 3, beans.size());
+        assertEquals("/home/groups/BRAND1", beans.get(0).getPath());
+        assertEquals("/home/groups/BRAND2", beans.get(1).getPath());
+        assertEquals("/home/groups/BRAND3", beans.get(2).getPath());
     }
     
     private List<LinkedHashMap> getYamlList(String filename) throws IOException {

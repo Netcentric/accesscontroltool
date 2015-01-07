@@ -49,7 +49,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             final ConfigReader configReader) throws RepositoryException,
             AcConfigBeanValidationException {
         List c = new ArrayList<Map>();
-        Map<String, LinkedHashSet<AuthorizableConfigBean>> mergedAuthorizablesMapfromConfig = new LinkedHashMap<String, LinkedHashSet<AuthorizableConfigBean>>();
+        Map<String, Set<AuthorizableConfigBean>> mergedAuthorizablesMapfromConfig = new LinkedHashMap<String, Set<AuthorizableConfigBean>>();
         Map<String, Set<AceBean>> mergedAceMapFromConfig = new LinkedHashMap<String, Set<AceBean>>();
         Set<String> groupIdsFromAllConfig = new HashSet<String>(); // needed for
                                                                    // detection
@@ -88,7 +88,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
 
             // build AuthorizableConfigBeans from current configurations
             AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl();
-            Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig = configReader
+            Map<String, Set<AuthorizableConfigBean>> authorizablesMapfromConfig = configReader
                     .getGroupConfigurationBeans(yamlList, authorizableValidator);
             Set<String> groupIdsFromCurrentConfig = authorizablesMapfromConfig
                     .keySet();

@@ -26,7 +26,7 @@ public interface ConfigReader {
             AceBeanValidator aceBeanValidator) throws RepositoryException,
             AcConfigBeanValidationException;
 
-    public Map<String, LinkedHashSet<AuthorizableConfigBean>> getGroupConfigurationBeans(
+    public Map<String, Set<AuthorizableConfigBean>> getGroupConfigurationBeans(
             final Collection<?> groupConfigData,
             AuthorizableValidator authorizableValidator)
             throws AcConfigBeanValidationException;

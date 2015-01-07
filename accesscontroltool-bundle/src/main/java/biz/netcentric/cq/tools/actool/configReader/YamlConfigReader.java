@@ -106,7 +106,7 @@ public class YamlConfigReader implements ConfigReader {
      * biz.netcentric.cq.tools.actool.validators.AuthorizableValidator)
      */
     @Override
-    public Map<String, LinkedHashSet<AuthorizableConfigBean>> getGroupConfigurationBeans(
+    public Map<String, Set<AuthorizableConfigBean>> getGroupConfigurationBeans(
             final Collection yamlList,
             AuthorizableValidator authorizableValidator)
             throws AcConfigBeanValidationException {
@@ -119,7 +119,7 @@ public class YamlConfigReader implements ConfigReader {
             return null;
         }
 
-        Map<String, LinkedHashSet<AuthorizableConfigBean>> principalsMap = getAuthorizablesMap(
+        Map<String, Set<AuthorizableConfigBean>> principalsMap = getAuthorizablesMap(
                 authorizableList, authorizableValidator);
         return principalsMap;
     }
@@ -154,12 +154,12 @@ public class YamlConfigReader implements ConfigReader {
      * biz.netcentric.cq.tools.actool.validators.AuthorizableValidator)
      */
 
-    private Map<String, LinkedHashSet<AuthorizableConfigBean>> getAuthorizablesMap(
+    private Map<String, Set<AuthorizableConfigBean>> getAuthorizablesMap(
             final List<LinkedHashMap> yamlMap,
             AuthorizableValidator authorizableValidator)
             throws AcConfigBeanValidationException {
         Set<String> alreadyProcessedGroups = new HashSet<String>();
-        Map<String, LinkedHashSet<AuthorizableConfigBean>> principalMap = new LinkedHashMap<String, LinkedHashSet<AuthorizableConfigBean>>();
+        Map<String, Set<AuthorizableConfigBean>> principalMap = new LinkedHashMap<String, Set<AuthorizableConfigBean>>();
 
         if (yamlMap == null) {
             return principalMap;
@@ -171,31 +171,52 @@ public class YamlConfigReader implements ConfigReader {
             String currentPrincipal = (String) currentMap.keySet().iterator()
                     .next();
 
-            if (!alreadyProcessedGroups.add(currentPrincipal)) {
-                throw new IllegalArgumentException(
-                        "There is more than one group definition for group: "
-                                + currentPrincipal);
-            }
-            LOG.info("start reading group configuration");
-            LOG.info("Found principal: {} in config", currentPrincipal);
-
-            LinkedHashSet<AuthorizableConfigBean> tmpSet = new LinkedHashSet<AuthorizableConfigBean>();
-            principalMap.put((String) currentPrincipal, tmpSet);
-
-            List<Map<String, String>> currentPrincipalData = (List<Map<String, String>>) currentMap
-                    .get(currentPrincipal);
-
-            if (currentPrincipalData != null && !currentPrincipalData.isEmpty()) {
-
-                for (Map<String, String> currentPrincipalDataMap : currentPrincipalData) {
-                    AuthorizableConfigBean tmpPrincipalConfigBean = new AuthorizableConfigBean();
-                    setupAuthorizableBean(tmpPrincipalConfigBean,
-                            currentPrincipalDataMap, (String) currentPrincipal);
-                    if (authorizableValidator != null) {
-                        authorizableValidator.validate(tmpPrincipalConfigBean);
+            Matcher matcher = forLoopPattern.matcher(currentPrincipal);
+            if (matcher.find()) {
+                LOG.info("Principal name {} matches FOR loop pattern. Unrolling {}", currentPrincipal, currentMap.get(currentPrincipal));
+                List<AuthorizableConfigBean> groups = unrollGroupForLoop(currentPrincipal, (List<Map<String, ?>>) currentMap.get(currentPrincipal), new HashMap<String, String>());
+                for (AuthorizableConfigBean group : groups) {
+                    String principal = group.getPrincipalID();
+                    if (!alreadyProcessedGroups.add(principal)) {
+                        throw new IllegalArgumentException(
+                                "There is more than one group definition for group: "
+                                        + principal);
                     }
-                    principalMap.get(currentPrincipal).add(
-                            tmpPrincipalConfigBean);
+                    if (authorizableValidator != null) {
+                        authorizableValidator.validate(group);
+                    }
+                    Set<AuthorizableConfigBean> tmpSet = new LinkedHashSet<AuthorizableConfigBean>();
+                    tmpSet.add(group);
+                    principalMap.put(principal, tmpSet);
+                }
+            } else {
+    
+                if (!alreadyProcessedGroups.add(currentPrincipal)) {
+                    throw new IllegalArgumentException(
+                            "There is more than one group definition for group: "
+                                    + currentPrincipal);
+                }
+                LOG.info("start reading group configuration");
+                LOG.info("Found principal: {} in config", currentPrincipal);
+    
+                LinkedHashSet<AuthorizableConfigBean> tmpSet = new LinkedHashSet<AuthorizableConfigBean>();
+                principalMap.put(currentPrincipal, tmpSet);
+    
+                List<Map<String, String>> currentPrincipalData = (List<Map<String, String>>) currentMap
+                        .get(currentPrincipal);
+    
+                if (currentPrincipalData != null && !currentPrincipalData.isEmpty()) {
+    
+                    for (Map<String, String> currentPrincipalDataMap : currentPrincipalData) {
+                        AuthorizableConfigBean tmpPrincipalConfigBean = new AuthorizableConfigBean();
+                        setupAuthorizableBean(tmpPrincipalConfigBean,
+                                currentPrincipalDataMap, (String) currentPrincipal);
+                        if (authorizableValidator != null) {
+                            authorizableValidator.validate(tmpPrincipalConfigBean);
+                        }
+                        principalMap.get(currentPrincipal).add(
+                                tmpPrincipalConfigBean);
+                    }
                 }
             }
         }
@@ -341,6 +362,61 @@ public class YamlConfigReader implements ConfigReader {
                             }
                             setupAceBean(principalName, unrolledGroup, newAceBean);
                             beans.add(newAceBean);
+                        }
+                    }
+                }
+            }
+        } else {
+            LOG.error("Incorrect for loop syntax: {}", forSpec);
+        }
+        return beans;
+    }
+
+    protected List<AuthorizableConfigBean> unrollGroupForLoop(String forSpec, List<Map<String, ?>> groups, Map<String, String> substitutions) {
+        List<AuthorizableConfigBean> beans = new LinkedList<AuthorizableConfigBean>();
+        Matcher matcher = forLoopPattern.matcher(forSpec);
+        if (matcher.find()) {
+            String var = matcher.group(1);
+            String in = matcher.group(2);
+            String[] values = in.split(",\\s+");
+            // Looping over values in FOR statement
+            for (String value : values) {
+                // Replace variables in config
+                String regex = "\\$\\{" + var + "}";
+                // Looping over groups
+                for (Map<String, ?> group : groups) {
+                    String key = group.keySet().iterator().next();
+                    Matcher matcher2 = forLoopPattern.matcher(key);
+                    if (matcher2.find()) {
+                        substitutions.put(regex,  value);
+                        LOG.info("Detected nested loop {}. Unrolling with {}", key, substitutions);
+                        List<AuthorizableConfigBean> nestedGroups = unrollGroupForLoop(key, (List<Map<String, ?>>) group.get(key), substitutions);
+                        beans.addAll(nestedGroups);
+                    } else {
+                        String principalName = key.replaceAll(regex, value.trim());
+                        for (String sub : substitutions.keySet()) {
+                            principalName = principalName.replaceAll(sub, substitutions.get(sub).trim());
+                        }
+                        List<Map<String, ?>> groupMaps = (List<Map<String, ?>>) group.get(key);
+                        // Looping over ACEs for group
+                        for (Map<String, ?> props : groupMaps) {
+                            Map<String, String> unrolledGroup = new HashMap<String, String>();
+                            AuthorizableConfigBean newGroupBean = new AuthorizableConfigBean();
+                            // Looping over property values and child objects
+                            for (String key2 : props.keySet()) {
+                                Object val = props.get(key2);
+                                if (val == null) {
+                                    unrolledGroup.put(key2, null);
+                                } else if (val instanceof String) {
+                                    String newVal = ((String) val).replaceAll(regex, value.trim());
+                                    for (String sub : substitutions.keySet()) {
+                                        newVal = newVal.replaceAll(sub, substitutions.get(sub).trim());
+                                    }
+                                    unrolledGroup.put(key2, newVal);
+                                }
+                            }
+                            setupAuthorizableBean(newGroupBean, unrolledGroup, principalName);
+                            beans.add(newGroupBean);
                         }
                     }
                 }

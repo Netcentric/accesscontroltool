@@ -14,6 +14,20 @@
        - name: 
          memberOf: 
          path: /home/groups/g
+    
+    - for brand IN [ BRAND1, BRAND2, BRAND3 ]:
+    
+        - content-${brand}-reader:
+
+           - name: 
+             memberOf: 
+             path: /home/groups/${brand}
+
+        - content-${brand}-writer:
+
+           - name: 
+             memberOf: 
+             path: /home/groups/${brand}
          
          
 - ace_config:
