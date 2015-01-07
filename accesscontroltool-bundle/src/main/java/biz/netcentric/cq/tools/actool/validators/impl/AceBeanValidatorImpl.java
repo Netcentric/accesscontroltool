@@ -115,16 +115,14 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
     public boolean validatePermission(final AceBean tmpAclBean)
             throws InvalidPermissionException {
         boolean valid = true;
-        String currentEntryValue = tmpAclBean.getPermissionString();
+        String permission = tmpAclBean.getPermission();
         String principal = tmpAclBean.getPrincipalName();
-        if (Validators.isValidPermission(currentEntryValue)) {
-            tmpAclBean.setAllow(new Boolean(StringUtils.equals("allow",
-                    currentEntryValue) ? "true" : "deny"));
-            tmpAclBean.setIsAllowProvide(true);
+        if (Validators.isValidPermission(permission)) {
+            tmpAclBean.setPermission(permission);
         } else {
             valid = false;
             String errorMessage = getBeanDescription(this.currentBeanCounter,
-                    principal) + ", invalid permission: " + currentEntryValue;
+                    principal) + ", invalid permission: " + permission;
             LOG.error(errorMessage);
             throw new InvalidPermissionException(errorMessage);
         }

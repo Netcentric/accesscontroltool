@@ -25,14 +25,11 @@ import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementVisitor;
 public class AceBean implements AcDumpElement {
 
     private String jcrPath;
-    private boolean isAllow;
     private String repGlob;
     private String actionsStringFromConfig;
     private String privilegesString;
     private String principal;
-    private String permissionString;
-    private boolean isValid = true;
-    private boolean isAllowProvided = false;
+    private String permission;
     private String[] actions;
     private String assertedExceptionString;
 
@@ -44,12 +41,12 @@ public class AceBean implements AcDumpElement {
         this.assertedExceptionString = assertedException;
     }
 
-    public String getPermissionString() {
-        return permissionString;
+    public String getPermission() {
+        return permission;
     }
 
-    public void setPermissionString(String permissionString) {
-        this.permissionString = permissionString;
+    public void setPermission(String permissionString) {
+        this.permission = permissionString;
     }
 
     public void clearActions() {
@@ -74,27 +71,7 @@ public class AceBean implements AcDumpElement {
     }
 
     public boolean isAllow() {
-        return isAllow;
-    }
-
-    public String getPermission() {
-        return (this.isAllow) ? "allow" : "deny";
-    }
-
-    public boolean getPermissionAsBoolean() {
-        return (this.isAllow) ? true : false;
-    }
-
-    public void setAllow(boolean isAllow) {
-        this.isAllow = isAllow;
-    }
-
-    public void setIsAllowProvide(boolean bool) {
-        this.isAllowProvided = bool;
-    }
-
-    public boolean getIsAllowProvide() {
-        return this.isAllowProvided;
+        return "allow".equalsIgnoreCase(this.permission);
     }
 
     public String getRepGlob() {
@@ -155,12 +132,11 @@ public class AceBean implements AcDumpElement {
 
     @Override
     public String toString() {
-        return "AceBean [jcrPath=" + jcrPath + "\n" + ", isAllow=" + isAllow
+        return "AceBean [jcrPath=" + jcrPath + "\n" + ", permission=" + permission
                 + "\n" + ", repGlob=" + repGlob + "\n" + ", actionsString="
                 + actionsStringFromConfig + "\n" + ", privilegesString="
                 + privilegesString + "\n" + ", principal=" + principal + "\n"
-                + ", isAllowProvided=" + isAllowProvided + "\n" + ", actions="
-                + Arrays.toString(actions) + "]";
+                + ", actions=" + Arrays.toString(actions) + "]";
     }
 
     @Override
@@ -172,9 +148,9 @@ public class AceBean implements AcDumpElement {
                 * result
                 + ((actionsStringFromConfig == null) ? 0
                         : actionsStringFromConfig.hashCode());
-        result = prime * result + (isAllow ? 1231 : 1237);
-        result = prime * result + (isAllowProvided ? 1231 : 1237);
         result = prime * result + ((jcrPath == null) ? 0 : jcrPath.hashCode());
+        result = prime * result
+                + ((permission == null) ? 0 : permission.hashCode());
         result = prime * result
                 + ((principal == null) ? 0 : principal.hashCode());
         result = prime
@@ -201,10 +177,6 @@ public class AceBean implements AcDumpElement {
         } else if (!actionsStringFromConfig
                 .equals(other.actionsStringFromConfig))
             return false;
-        if (isAllow != other.isAllow)
-            return false;
-        if (isAllowProvided != other.isAllowProvided)
-            return false;
         if (jcrPath == null) {
             if (other.jcrPath != null)
                 return false;
@@ -214,6 +186,11 @@ public class AceBean implements AcDumpElement {
             if (other.principal != null)
                 return false;
         } else if (!principal.equals(other.principal))
+            return false;
+        if (permission == null) {
+            if (other.permission != null)
+                return false;
+        } else if (!permission.equals(other.permission))
             return false;
         if (privilegesString == null) {
             if (other.privilegesString != null)

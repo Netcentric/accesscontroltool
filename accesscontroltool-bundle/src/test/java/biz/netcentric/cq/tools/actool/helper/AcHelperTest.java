@@ -43,7 +43,7 @@ public class AcHelperTest {
         aceBeanGroupA_1 = new AceBean();
         aceBeanGroupA_1.setPrincipal("group-A");
         aceBeanGroupA_1.setActions(new String[] { "allow", "replicate" });
-        aceBeanGroupA_1.setAllow(false);
+        aceBeanGroupA_1.setPermission("deny");
         aceBeanGroupA_1.setJcrPath("/content");
         aceBeanGroupA_1.setPrivilegesString("");
         aceBeanGroupA_1.setRepGlob("");
@@ -51,7 +51,7 @@ public class AcHelperTest {
         aceBeanGroupA_2 = new AceBean();
         aceBeanGroupA_2.setPrincipal("group-A");
         aceBeanGroupA_2.setActions(new String[] { "allow,modify" });
-        aceBeanGroupA_2.setAllow(true);
+        aceBeanGroupA_2.setPermission("allow");
         aceBeanGroupA_2.setJcrPath("/content");
         aceBeanGroupA_2.setPrivilegesString("");
         aceBeanGroupA_2.setRepGlob("");
@@ -59,7 +59,7 @@ public class AcHelperTest {
         aceBeanGroupA_3 = new AceBean();
         aceBeanGroupA_3.setPrincipal("group-A");
         aceBeanGroupA_3.setActions(new String[] { "allow,modify" });
-        aceBeanGroupA_3.setAllow(false);
+        aceBeanGroupA_3.setPermission("deny");
         aceBeanGroupA_3.setJcrPath("/content/isp");
         aceBeanGroupA_3.setPrivilegesString("");
         aceBeanGroupA_3.setRepGlob("");
@@ -67,7 +67,7 @@ public class AcHelperTest {
         aceBeanGroupB_1 = new AceBean();
         aceBeanGroupB_1.setPrincipal("group-B");
         aceBeanGroupB_1.setActions(new String[] { "allow" });
-        aceBeanGroupB_1.setAllow(true);
+        aceBeanGroupB_1.setPermission("allow");
         aceBeanGroupB_1.setJcrPath("/content");
         aceBeanGroupB_1.setPrivilegesString("");
         aceBeanGroupB_1.setRepGlob("");
@@ -75,7 +75,7 @@ public class AcHelperTest {
         aceBeanGroupB_2 = new AceBean();
         aceBeanGroupB_2.setPrincipal("group-B");
         aceBeanGroupB_2.setActions(new String[] { "allow,delete" });
-        aceBeanGroupB_2.setAllow(false);
+        aceBeanGroupB_2.setPermission("deny");
         aceBeanGroupB_2.setJcrPath("/content");
         aceBeanGroupB_2.setPrivilegesString("");
         aceBeanGroupB_2.setRepGlob("");
@@ -83,7 +83,7 @@ public class AcHelperTest {
         aceBeanGroupB_3 = new AceBean();
         aceBeanGroupB_3.setPrincipal("group-B");
         aceBeanGroupB_3.setActions(new String[] { "allow,delete" });
-        aceBeanGroupB_3.setAllow(true);
+        aceBeanGroupB_3.setPermission("allow");
         aceBeanGroupB_3.setJcrPath("/content/isp");
         aceBeanGroupB_3.setPrivilegesString("");
         aceBeanGroupB_3.setRepGlob("");
@@ -91,7 +91,7 @@ public class AcHelperTest {
         aceBeanGroupC_1 = new AceBean();
         aceBeanGroupC_1.setPrincipal("group-C");
         aceBeanGroupC_1.setActions(new String[] { "allow" });
-        aceBeanGroupC_1.setAllow(true);
+        aceBeanGroupC_1.setPermission("allow");
         aceBeanGroupC_1.setJcrPath("/content");
         aceBeanGroupC_1.setPrivilegesString("");
         aceBeanGroupC_1.setRepGlob("");
@@ -101,7 +101,7 @@ public class AcHelperTest {
         aceBeanGroupD_1 = new AceBean();
         aceBeanGroupD_1.setPrincipal("group-D");
         aceBeanGroupD_1.setActions(new String[] { "allow" });
-        aceBeanGroupD_1.setAllow(true);
+        aceBeanGroupD_1.setPermission("allow");
         aceBeanGroupD_1.setJcrPath("/content");
         aceBeanGroupD_1.setPrivilegesString("");
         aceBeanGroupD_1.setRepGlob("");
@@ -109,7 +109,7 @@ public class AcHelperTest {
         aceBeanGroupE_1 = new AceBean();
         aceBeanGroupE_1.setPrincipal("group-E");
         aceBeanGroupE_1.setActions(new String[] { "allow" });
-        aceBeanGroupE_1.setAllow(true);
+        aceBeanGroupE_1.setPermission("allow");
         aceBeanGroupE_1.setJcrPath("/content");
         aceBeanGroupE_1.setPrivilegesString("");
         aceBeanGroupE_1.setRepGlob("");

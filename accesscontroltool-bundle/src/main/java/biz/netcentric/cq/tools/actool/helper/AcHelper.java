@@ -64,7 +64,7 @@ public class AcHelper {
 
         aceBean.setActions(CqActionsMapping.getCqActions(
                 ace.getPrivilegesString()).split(","));
-        aceBean.setAllow(ace.isAllow());
+        aceBean.setPermission(ace.isAllow() ? "allow" : "deny");
         aceBean.setJcrPath(ace.getJcrPath());
         aceBean.setPrincipal(ace.getPrincipal().getName());
         aceBean.setPrivilegesString(ace.getPrivilegesString());

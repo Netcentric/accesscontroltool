@@ -303,6 +303,7 @@ public class YamlConfigReader implements ConfigReader {
                                     newAceBean);
                         } else {
                             aceMap.get(principalName).add(newAceBean);
+                            LOG.info("There are {} ACEs in the set: {}", aceMap.get(principalName).size(), aceMap.get(principalName));
                         }
                     }
                 }
@@ -449,7 +450,7 @@ public class YamlConfigReader implements ConfigReader {
                 AceBean replacementBean = new AceBean();
                 replacementBean.setJcrPath(node.getPath());
                 replacementBean.setActions(tmpAclBean.getActions());
-                replacementBean.setAllow(tmpAclBean.isAllow());
+                replacementBean.setPermission(tmpAclBean.getPermission());
                 replacementBean.setPrincipal(tmpAclBean.getPrincipalName());
                 replacementBean.setPrivilegesString(tmpAclBean
                         .getPrivilegesString());
@@ -475,7 +476,7 @@ public class YamlConfigReader implements ConfigReader {
                 currentAceDefinition, ACE_CONFIG_PROPERTY_ACTIONS));
         tmpAclBean.setPrivilegesString(getMapValueAsString(
                 currentAceDefinition, ACE_CONFIG_PROPERTY_PRIVILEGES));
-        tmpAclBean.setPermissionString(getMapValueAsString(
+        tmpAclBean.setPermission(getMapValueAsString(
                 currentAceDefinition, ACE_CONFIG_PROPERTY_PERMISSION));
         tmpAclBean.setRepGlob(getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_PROPERTY_GLOB));

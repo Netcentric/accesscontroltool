@@ -51,7 +51,7 @@ public class YamlConfigReaderTest {
         List<LinkedHashMap> yamlList = getYamlList("test-loop.yaml");
         Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
         Map<String, Set<AceBean>> aces = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null);
-        assertEquals("Number of groups", 5, aces.size());
+        assertEquals("Number of ACEs", 5, aces.size());
         Set<AceBean> group1 = aces.get("content-BRAND-MKT1-reader");
         assertEquals("Number of ACEs for groupA", 1, group1.size());
         Set<AceBean> group2 = aces.get("content-BRAND-MKT2-writer");
@@ -64,7 +64,7 @@ public class YamlConfigReaderTest {
         List<LinkedHashMap> yamlList = getYamlList("test-nested-loops.yaml");
         Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
         Map<String, Set<AceBean>> aces = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null);
-        assertEquals("Number of groups", 12, aces.size());
+        assertEquals("Number of ACEs", 12, aces.size());
         assertTrue(aces.containsKey("content-BRAND1-reader"));
         assertTrue(aces.containsKey("content-BRAND1-writer"));
         assertTrue(aces.containsKey("content-BRAND2-reader"));
@@ -147,6 +147,15 @@ public class YamlConfigReaderTest {
         assertEquals("/home/groups/BRAND1", beans.get(0).getPath());
         assertEquals("/home/groups/BRAND2", beans.get(1).getPath());
         assertEquals("/home/groups/BRAND3", beans.get(2).getPath());
+    }
+
+    @Test
+    public void testMultipleAcesSamePath() throws IOException, AcConfigBeanValidationException, RepositoryException {
+        YamlConfigReader yamlConfigReader = new YamlConfigReader();
+        List<LinkedHashMap> yamlList = getYamlList("test-multiple-aces-same-path.yaml");
+        Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
+        Map<String, Set<AceBean>> aces = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null);
+        // assertEquals("Number of ACLs", 3, aces.size());
     }
     
     private List<LinkedHashMap> getYamlList(String filename) throws IOException {

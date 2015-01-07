@@ -28,7 +28,7 @@ public class CqActionsMappingTest {
         aceBean1.setPrincipal("group-A");
         aceBean1.setActions(null);
         aceBean1.setActionsStringFromConfig("");
-        aceBean1.setAllow(false);
+        aceBean1.setPermission("deny");
         aceBean1.setJcrPath("/content");
         aceBean1.setPrivilegesString("jcr:read,crx:replicate");
         aceBean1.setRepGlob("");
@@ -36,7 +36,7 @@ public class CqActionsMappingTest {
         aceBean2 = new AceBean();
         aceBean2.setPrincipal("group-A");
         aceBean2.setActions(new String[] { "read", "replicate" });
-        aceBean2.setAllow(false);
+        aceBean1.setPermission("deny");
         aceBean2.setJcrPath("/content");
         aceBean2.setPrivilegesString("");
         aceBean2.setRepGlob("");
