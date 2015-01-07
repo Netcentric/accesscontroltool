@@ -238,7 +238,6 @@ public class YamlConfigReader implements ConfigReader {
         if (aceYamlList == null) {
             return aceMap;
         }
-        LOG.info("aceYamlList = {}", aceYamlList);
         Session session = null;
         try {
             if (repository != null) {
@@ -303,7 +302,6 @@ public class YamlConfigReader implements ConfigReader {
                                     newAceBean);
                         } else {
                             aceMap.get(principalName).add(newAceBean);
-                            LOG.info("There are {} ACEs in the set: {}", aceMap.get(principalName).size(), aceMap.get(principalName));
                         }
                     }
                 }

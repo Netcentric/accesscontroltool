@@ -104,7 +104,7 @@ public class QueryHelper {
         while (nit.hasNext()) {
             // get the next rep:policy node
             Node node = nit.nextNode();
-            AcHelper.LOG.debug("adding node: {} to node set", node.getPath());
+            // AcHelper.LOG.debug("adding node: {} to node set", node.getPath());
             paths.add(node.getPath());
             nodes.add(node);
         }

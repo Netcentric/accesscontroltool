@@ -149,7 +149,6 @@ public class AceServiceImpl implements AceService {
         if (repositoryDumpAceMap != null) {
             Set<String> authorizablesSet = authorizablesMapfromConfig.keySet();
             // FIXME: templateMappings is passed down too many levels of method calls
-            LOG.info("Page Manager = {} foo", pageManager);
             AcHelper.installPathBasedACEs(pathBasedAceMapFromConfig,
                     repositoryDumpAceMap, authorizablesSet, templateMappings, session, history);
         } else {

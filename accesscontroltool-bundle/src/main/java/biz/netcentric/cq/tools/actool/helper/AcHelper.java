@@ -109,7 +109,7 @@ public class AcHelper {
             final AcInstallationHistoryPojo history) throws Exception {
 
         Set<String> paths = pathBasedAceMapFromConfig.keySet();
-        LOG.debug("Paths in merged config = {}", paths);
+        LOG.info("Paths in merged config = {}", paths);
 
         history.addVerboseMessage("found: " + paths.size()
                 + "  paths in merged config");
@@ -126,31 +126,15 @@ public class AcHelper {
             Set<AceBean> aceBeanSetFromConfig = pathBasedAceMapFromConfig
                     .get(path); // Set which holds the AceBeans of the current
                                 // path in configuration
-            Set<AceBean> aceBeanSetFromRepo = repositoryDumpedAceMap.get(path); // Set
-                                                                                // which
-                                                                                // holds
-                                                                                // the
-                                                                                // AceBeans
-                                                                                // of
-                                                                                // the
-                                                                                // current
-                                                                                // path
-                                                                                // in
-                                                                                // dump
-                                                                                // from
-                                                                                // repository
+            Set<AceBean> aceBeanSetFromRepo = repositoryDumpedAceMap.get(path); 
 
             if (aceBeanSetFromRepo != null) {
                 aclBeansProcessed += aceBeanSetFromConfig.size();
                 history.addVerboseMessage("\n installing ACE: "
                         + aceBeanSetFromConfig.toString());
-                
-                LOG.debug("Installing ACE: {}", aceBeanSetFromConfig);
-
                 // get merged ACL
                 aceBeanSetFromConfig = getMergedACL(aceBeanSetFromConfig,
                         aceBeanSetFromRepo, authorizablesSet, history);
-
                 // delete ACL in repo
                 PurgeHelper.purgeAcl(session, path);
                 aclsProcessedCounter++;
@@ -216,6 +200,7 @@ public class AcHelper {
                 continue;
 
             } else {
+                LOG.debug("Starting installation of bean {}", bean);
                 history.addVerboseMessage("starting installation of bean: \n"
                         + bean);
                 // check if path exists in CRX
@@ -329,6 +314,8 @@ public class AcHelper {
                     || StringUtils.isNotBlank(bean.getPrivilegesString())) {
                 AccessControlUtils.setPermissionAndRestriction(session, bean,
                         currentPrincipal.getName());
+            } else {
+                LOG.warn("ACE {} has blank repGlob and privileges. Not installing.", bean);
             }
 
         } else {

@@ -154,8 +154,8 @@ public class YamlConfigReaderTest {
         YamlConfigReader yamlConfigReader = new YamlConfigReader();
         List<LinkedHashMap> yamlList = getYamlList("test-multiple-aces-same-path.yaml");
         Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
-        Map<String, Set<AceBean>> aces = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null);
-        // assertEquals("Number of ACLs", 3, aces.size());
+        Map<String, Set<AceBean>> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null);
+        assertEquals("Number of ACLs", 3, acls.get("groupA").size());
     }
     
     private List<LinkedHashMap> getYamlList(String filename) throws IOException {
