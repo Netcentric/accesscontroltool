@@ -32,7 +32,7 @@ import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
-public class YamsConfigReaderTest {
+public class YamlConfigReaderTest {
 
     @Ignore
     public void testTemplatesSection() throws IOException {
