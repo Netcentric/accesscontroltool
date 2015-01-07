@@ -124,6 +124,93 @@ In case the configuration file contains ACEs for groups which are not present in
 
 All important steps performed by the service as well as all error/warning messages get written to error log and history.
 
+## Loops
+
+Configuration sections for groups and ACEs allow to use loops to specify multiple, similar entries. In order to do this, a FOR statement has to be used in place of a group name. The FOR statement names a loop variable and lists the values to iterate over. All the children of the FOR element are repeated once per iteration and all group names and property values of child elements that contain the name of the loop variable within '${' and '}' have that expression substituted with the current value of the loop variable.
+
+For example, the following configuration element:
+
+```
+- FOR brand IN [ BRAND1, BRAND2, BRAND3 ]:
+
+    - content-${brand}-reader:
+
+       - name: 
+         memberOf: 
+         path: /home/groups/${brand}
+```
+
+Gets replaced with
+
+```
+    - content-BRAND1-reader:
+
+       - name: 
+         memberOf: 
+         path: /home/groups/BRAND1
+
+    - content-BRAND2-reader:
+
+       - name: 
+         memberOf: 
+         path: /home/groups/BRAND2
+
+    - content-BRAND3-reader:
+
+       - name: 
+         memberOf: 
+         path: /home/groups/BRAND3
+```
+
+### Nested Loops
+
+FOR loops can be nested to any level:
+
+```
+- for brand IN [ BRAND1, BRAND2 ]:
+
+    - content-${brand}-reader:
+
+       - name: 
+         memberOf: 
+         path: /home/groups/${brand}
+
+    - content-${brand}-writer:
+
+       - name: 
+         memberOf: 
+         path: /home/groups/${brand}
+         
+    - for mkt in [ MKT1, MKT2 ]:
+                       
+        - content-${brand}-${mkt}-reader:
+
+           - name: 
+             memberOf: 
+             path: /home/groups/${brand}/${mkt}
+
+        - content-${brand}-${mkt}-writer:
+
+           - name: 
+             memberOf: 
+             path: /home/groups/${brand}/${mkt}
+```
+
+This will create 12 groups:
+
+* content-BRAND1-reader
+* content-BRAND1-writer
+* content-BRAND1-MKT1-reader
+* content-BRAND1-MKT1-writer
+* content-BRAND1-MKT2-reader
+* content-BRAND1-MKT2-writer
+* content-BRAND2-reader
+* content-BRAND2-writer
+* content-BRAND2-MKT1-reader
+* content-BRAND2-MKT1-writer
+* content-BRAND2-MKT2-reader
+* content-BRAND2-MKT2-writer
+
 ## Validation
 
 First the validation of the different configuration lines is performed based on regular expressions and gets applied while reading the file. Further validation consists of checking paths for existence as well as for double entries, checks for conflicting ACEs (e.g. allow and deny for same actions on same node), checks whether principals are existing under home. If an invalid parameter or aforementioned issue gets detected, the reading gets aborted and an appropriate error message gets append in the installation history and log.
