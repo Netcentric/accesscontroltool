@@ -93,7 +93,16 @@ public class YamsConfigReaderTest {
         assertEquals("Path of group", "/home/groups/BRAND2", groups.get("content-BRAND2-writer").iterator().next().getPath());
         assertEquals("Path of group", "/home/groups/BRAND3", groups.get("content-BRAND3-reader").iterator().next().getPath());
         assertEquals("Path of group", "/home/groups/BRAND3", groups.get("content-BRAND3-writer").iterator().next().getPath());
-        
+    }
+
+    @Test
+    public void testNestedGroupLoop() throws IOException, AcConfigBeanValidationException, RepositoryException {
+        YamlConfigReader yamlConfigReader = new YamlConfigReader();
+        List<LinkedHashMap> yamlList = getYamlList("test-nested-loops.yaml");
+        Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
+        assertEquals("Number of groups", 13, groups.size());
+        assertEquals("Path of group", "/home/groups/BRAND1", groups.get("content-BRAND1-reader").iterator().next().getPath());
+        assertEquals("Path of group", "/home/groups/BRAND1/MKT1", groups.get("content-BRAND1-MKT1-writer").iterator().next().getPath());
     }
 
     @Test

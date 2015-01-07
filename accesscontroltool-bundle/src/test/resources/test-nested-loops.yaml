@@ -21,13 +21,13 @@
 
            - name: 
              memberOf: 
-             path: /home/groups/g
+             path: /home/groups/${brand}
 
         - content-${brand}-writer:
 
            - name: 
              memberOf: 
-             path: /home/groups/g
+             path: /home/groups/${brand}
              
         - for mkt in [ MKT1, MKT2 ]:
                            
@@ -35,13 +35,13 @@
     
                - name: 
                  memberOf: 
-                 path: /home/groups/g
+                 path: /home/groups/${brand}/${mkt}
     
             - content-${brand}-${mkt}-writer:
     
                - name: 
                  memberOf: 
-                 path: /home/groups/g
+                 path: /home/groups/${brand}/${mkt}
          
          
 - ace_config:
