@@ -312,13 +312,15 @@ public class AcHelper {
 
             if (StringUtils.isNotBlank(bean.getRepGlob())
                     || StringUtils.isNotBlank(bean.getPrivilegesString())) {
+                LOG.debug("Installing ACE bean {}", bean);
                 AccessControlUtils.setPermissionAndRestriction(session, bean,
                         currentPrincipal.getName());
             } else {
-                LOG.warn("ACE {} has blank repGlob and privileges. Not installing.", bean);
+                LOG.debug("ACE {} has blank repGlob and privileges. Not installing.", bean);
             }
 
         } else {
+            LOG.debug("Installing ACE bean {} with no actions", bean);
             AccessControlUtils.installPermissions(session, bean.getJcrPath(),
                     currentPrincipal, bean.isAllow(), bean.getRepGlob(),
                     bean.getPrivileges());
