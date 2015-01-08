@@ -476,8 +476,7 @@ public class YamlConfigReader implements ConfigReader {
                 currentAceDefinition, ACE_CONFIG_PROPERTY_PRIVILEGES));
         tmpAclBean.setPermission(getMapValueAsString(
                 currentAceDefinition, ACE_CONFIG_PROPERTY_PERMISSION));
-        tmpAclBean.setRepGlob(getMapValueAsString(currentAceDefinition,
-                ACE_CONFIG_PROPERTY_GLOB));
+        tmpAclBean.setRepGlob((String) currentAceDefinition.get(ACE_CONFIG_PROPERTY_GLOB));
         tmpAclBean.setAssertedExceptionString(getMapValueAsString(
                 currentAceDefinition, ASSERTED_EXCEPTION));
     }

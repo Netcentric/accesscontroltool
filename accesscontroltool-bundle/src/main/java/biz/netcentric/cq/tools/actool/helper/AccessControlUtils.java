@@ -491,11 +491,13 @@ public class AccessControlUtils {
 
         AccessControlManager acMgr = session.getAccessControlManager();
         JackrabbitAccessControlList acl = getModifiableAcl(acMgr, nodePath);
+        
+        LOG.debug("Existing ACL for {} = {}", nodePath, Arrays.toString(acl.getAccessControlEntries()));
 
         Set<Privilege> privileges = getPrivilegeSet(privNames, acMgr);
 
-        Map restrictions = null;
-        if (StringUtils.isNotBlank(globString)) {
+        Map<String, Value> restrictions = null;
+        if (globString != null) {
 
             for (String rName : acl.getRestrictionNames()) {
                 if ("rep:glob".equals(rName)) {
@@ -517,6 +519,8 @@ public class AccessControlUtils {
                         .toArray(new Privilege[privileges.size()]), isAllow);
             }
         }
+        
+        LOG.debug("New ACL for {} = {}", nodePath, Arrays.toString(acl.getAccessControlEntries()));
 
         acMgr.setPolicy(nodePath, acl);
     }

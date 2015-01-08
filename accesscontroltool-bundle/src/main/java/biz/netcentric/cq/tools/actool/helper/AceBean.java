@@ -75,16 +75,10 @@ public class AceBean implements AcDumpElement {
     }
 
     public String getRepGlob() {
-        if (this.repGlob == null) {
-            return "";
-        }
         return repGlob;
     }
 
     public void setRepGlob(String repGlob) {
-        if (repGlob == null) {
-            repGlob = "";
-        }
         this.repGlob = repGlob;
     }
 

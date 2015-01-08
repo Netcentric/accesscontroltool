@@ -9,13 +9,14 @@
 package biz.netcentric.cq.tools.actool.configReader;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -156,6 +157,19 @@ public class YamlConfigReaderTest {
         Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
         Map<String, Set<AceBean>> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null);
         assertEquals("Number of ACLs", 3, acls.get("groupA").size());
+    }
+    
+    @Test
+    public void testEmptyGlobVsNoGlob() throws Exception {
+        YamlConfigReader yamlConfigReader = new YamlConfigReader();
+        List<LinkedHashMap> yamlList = getYamlList("test-empty-glob.yaml");
+        Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
+        Map<String, Set<AceBean>> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null);
+        Iterator<AceBean> it = acls.get("groupA").iterator();
+        AceBean ace1 = it.next();
+        assertNull("repGlob", ace1.getRepGlob());
+        AceBean ace2 = it.next();
+        assertEquals("repGlob", "", ace2.getRepGlob());
     }
     
     private List<LinkedHashMap> getYamlList(String filename) throws IOException {
