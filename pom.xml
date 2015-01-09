@@ -15,7 +15,7 @@
 
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
     <artifactId>accesscontroltool</artifactId>
-    <version>1.1.1-SNAPSHOT</version>
+    <version>1.2.0</version>
     <packaging>pom</packaging>
 
     <name>Access Control Tool - Reactor Project</name>
@@ -300,6 +300,18 @@
                             </pluginExecutions>
                         </lifecycleMappingMetadata>
                     </configuration>
+                </plugin>
+                <plugin>
+                  <groupId>external.atlassian.jgitflow</groupId>
+                  <artifactId>jgitflow-maven-plugin</artifactId>
+                  <version>1.0-m4.3</version>
+                  <configuration>
+                    <enableSshAgent>true</enableSshAgent>
+                    <enableFeatureVersions>true</enableFeatureVersions>
+                    <pushReleases>true</pushReleases>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <releaseBranchVersionSuffix>rc</releaseBranchVersionSuffix>
+                  </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
