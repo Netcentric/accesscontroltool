@@ -301,6 +301,18 @@
                         </lifecycleMappingMetadata>
                     </configuration>
                 </plugin>
+                <plugin>
+                  <groupId>external.atlassian.jgitflow</groupId>
+                  <artifactId>jgitflow-maven-plugin</artifactId>
+                  <version>1.0-m4.3</version>
+                  <configuration>
+                    <enableSshAgent>true</enableSshAgent>
+                    <enableFeatureVersions>true</enableFeatureVersions>
+                    <pushReleases>true</pushReleases>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <releaseBranchVersionSuffix>rc</releaseBranchVersionSuffix>
+                  </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
