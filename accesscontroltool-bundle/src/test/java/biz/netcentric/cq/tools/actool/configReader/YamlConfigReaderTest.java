@@ -172,6 +172,21 @@ public class YamlConfigReaderTest {
         assertEquals("repGlob", "", ace2.getRepGlob());
     }
     
+    @Test
+    public void testOptionalSections() throws Exception {
+        YamlConfigReader yamlConfigReader = new YamlConfigReader();
+        List<LinkedHashMap> yamlList = getYamlList("test-no-aces.yaml");
+        Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
+        Map<String, Set<AceBean>> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null);
+        assertNull("No ACEs", acls);
+        yamlList = getYamlList("test-no-groups.yaml");
+        groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
+        assertNull("No groups", groups);
+        acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, null);
+        assertNotNull("ACL for groupA", acls.get("groupA"));
+        assertEquals("Number of ACEs", 1, acls.get("groupA").size());
+    }
+    
     private List<LinkedHashMap> getYamlList(String filename) throws IOException {
         String configString = getTestConfigAsString(filename);
 
