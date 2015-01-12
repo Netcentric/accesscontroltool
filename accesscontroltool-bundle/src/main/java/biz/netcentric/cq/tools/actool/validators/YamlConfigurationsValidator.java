@@ -62,6 +62,7 @@ public class YamlConfigurationsValidator implements ConfigurationsValidator {
             final Collection configurations) throws IllegalArgumentException {
         List<LinkedHashMap> yamlList = new ArrayList<LinkedHashMap>(
                 configurations);
+        // It is now possible to have separate configs for ACEs and groups, so this validation is not needed anymore
         /*
         if (yamlList.get(0).get(Constants.GROUP_CONFIGURATION_KEY) == null) {
             throw new IllegalArgumentException("Empty "
@@ -87,8 +88,9 @@ public class YamlConfigurationsValidator implements ConfigurationsValidator {
     public void validateMandatorySectionIdentifiersExistence(
             final String configuration, final String filePath) {
         // check if mandatory section identifiers are there
+        // It is now possible to have separate configs for ACEs and groups, so this validation is not needed anymore
 
-        /*
+        /* 
         if (!configuration.contains(Constants.GROUP_CONFIGURATION_KEY)
                 && !configuration.contains(Constants.USER_CONFIGURATION_KEY)) {
             throw new IllegalArgumentException(
