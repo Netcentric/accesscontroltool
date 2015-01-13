@@ -90,29 +90,33 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl();
             Map<String, Set<AuthorizableConfigBean>> authorizablesMapfromConfig = configReader
                     .getGroupConfigurationBeans(yamlList, authorizableValidator);
-            Set<String> groupIdsFromCurrentConfig = authorizablesMapfromConfig
-                    .keySet();
+            Set<String> groupIdsFromCurrentConfig = authorizablesMapfromConfig != null ? authorizablesMapfromConfig.keySet() : null;
 
-            configurationsValidator.validateDoubleGroups(groupIdsFromAllConfig,
-                    groupIdsFromCurrentConfig, entry.getKey());
-
-            // add IDs from authorizables from current configuration to set
-            groupIdsFromAllConfig.addAll(groupIdsFromCurrentConfig);
+            if (groupIdsFromCurrentConfig != null) {
+                configurationsValidator.validateDoubleGroups(groupIdsFromAllConfig,
+                        groupIdsFromCurrentConfig, entry.getKey());
+                // add IDs from authorizables from current configuration to set
+                groupIdsFromAllConfig.addAll(groupIdsFromCurrentConfig);
+            }
 
             // build AceBeans from current configuration
             AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(
-                    groupIdsFromCurrentConfig);
+                    groupIdsFromAllConfig);
             Map<String, Set<AceBean>> aceMapFromConfig = configReader
                     .getAceConfigurationBeans(yamlList,
-                            groupIdsFromCurrentConfig, aceBeanValidator);
+                            groupIdsFromAllConfig, aceBeanValidator);
 
             // add AuthorizableConfigBeans built from current configuration to
             // set containing AuthorizableConfigBeans from all configurations
-            mergedAuthorizablesMapfromConfig.putAll(authorizablesMapfromConfig);
+            if (authorizablesMapfromConfig != null) {
+                mergedAuthorizablesMapfromConfig.putAll(authorizablesMapfromConfig);
+            }
 
             // add AceBeans built from current configuration to set containing
             // AceBeans from all configurations
-            mergedAceMapFromConfig.putAll(aceMapFromConfig);
+            if (aceMapFromConfig != null) {
+                mergedAceMapFromConfig.putAll(aceMapFromConfig);
+            }
             
             // Add page creation template configs
             YamlConfigReader yamlConfigReader = new YamlConfigReader();
