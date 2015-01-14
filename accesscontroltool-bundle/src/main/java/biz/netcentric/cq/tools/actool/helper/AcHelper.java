@@ -200,7 +200,6 @@ public class AcHelper {
                 continue;
 
             } else {
-                LOG.debug("Starting installation of bean {}", bean);
                 history.addVerboseMessage("starting installation of bean: \n"
                         + bean);
                 // check if path exists in CRX
@@ -308,7 +307,6 @@ public class AcHelper {
                     + bean.getPermission());
             convertedBean = CqActionsMapping.getConvertedPrivilegeBean(bean);
         }
-        LOG.debug("Installing ACE bean {}", convertedBean);
         AccessControlUtils.installPermissions(session, convertedBean.getJcrPath(),
                 currentPrincipal, convertedBean.isAllow(), convertedBean.getRepGlob(),
                 convertedBean.getPrivileges());
@@ -361,13 +359,9 @@ public class AcHelper {
                             .contains(aceBeanFromRepository.getPrincipalName())) {
                 // add the ACE from repo
                 orderedMergedAceSet.add(aceBeanFromRepository);
-                String message = "add following ACE to the merged ACL: "
-                        + aceBeanFromRepository;
-                LOG.debug(message);
+                LOG.info("Added following ACE to the merged ACL: {}", aceBeanFromRepository);
             } else {
-                String message = "following ACE bean doesn't get added to the merged ACL and thus deleted from repository: "
-                        + aceBeanFromRepository;
-                LOG.debug(message);
+                LOG.info("Following ACE bean doesn't get added to the merged ACL and thus deleted from repository: {}", aceBeanFromRepository);
             }
         }
         return orderedMergedAceSet;

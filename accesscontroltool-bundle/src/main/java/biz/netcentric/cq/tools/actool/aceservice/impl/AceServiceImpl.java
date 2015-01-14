@@ -139,7 +139,6 @@ public class AceServiceImpl implements AceService {
             Map<String, String> templateMappings) throws Exception {
         String message;
         // --- installation of ACEs from configuration ---
-
         Map<String, Set<AceBean>> pathBasedAceMapFromConfig = AcHelper
                 .getPathBasedAceMap(aceMapFromConfig,
                         AcHelper.ACE_ORDER_DENY_ALLOW);
@@ -390,22 +389,18 @@ public class AceServiceImpl implements AceService {
         LOG.info("Trying to store content of found configuration files into configurations map");
         try {
             for (Node configNode : configs) {
-                LOG.debug("current config node: {}", configNode.getPath());
                 if (!configNode.hasNode("jcr:content")) {
                     LOG.warn("Node {} has no jcr:content", configNode.getPath());
                     continue;
                 }
                 Node contentNode = configNode.getNode("jcr:content");
                 if (contentNode.hasProperty(PROP_JCR_DATA)) {
-                    LOG.debug("found property '{}'", PROP_JCR_DATA);
                     writer = new StringWriter();
                     configInputStream = contentNode
                             .getProperty(PROP_JCR_DATA).getBinary()
                             .getStream();
                     IOUtils.copy(configInputStream, writer, "UTF-8");
                     configData = writer.toString();
-                    LOG.debug("found following configuration string: {}",
-                            configData);
                     if (configData != null) {
                         if (!configData.isEmpty()) {
                             LOG.info("found configuration data of node: {}",
