@@ -83,6 +83,18 @@ public class YamlConfigReaderTest {
     }
 
     @Test
+    public void testNullActions() throws IOException, AcConfigBeanValidationException, RepositoryException {
+        YamlConfigReader yamlConfigReader = new YamlConfigReader();
+        List<LinkedHashMap> yamlList = getYamlList("test-null-actions.yaml");
+        Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
+        Map<String, Set<AceBean>> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null);
+        Set<AceBean> acl = acls.get("groupA");
+        for (AceBean ace : acl) {
+            assertNotNull("Testing null actions", ace.getActions());
+        }
+    }
+
+    @Test
     public void testGroupLoop() throws IOException, AcConfigBeanValidationException, RepositoryException {
         YamlConfigReader yamlConfigReader = new YamlConfigReader();
         List<LinkedHashMap> yamlList = getYamlList("test-loop.yaml");

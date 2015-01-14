@@ -19,6 +19,8 @@ import java.util.Set;
 
 import javax.jcr.RepositoryException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
@@ -33,6 +35,9 @@ import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
 import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
 
 public class YamlConfigurationMerger implements ConfigurationMerger {
+
+    private static final Logger LOG = LoggerFactory.getLogger(YamlConfigurationMerger.class);
+
     /*
      * (non-Javadoc)
      * 

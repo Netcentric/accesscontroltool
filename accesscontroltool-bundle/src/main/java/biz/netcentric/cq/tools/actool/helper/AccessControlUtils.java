@@ -488,12 +488,8 @@ public class AccessControlUtils {
             final String nodePath, final Principal principal,
             final boolean isAllow, final String globString,
             final String[] privNames) throws RepositoryException {
-
         AccessControlManager acMgr = session.getAccessControlManager();
         JackrabbitAccessControlList acl = getModifiableAcl(acMgr, nodePath);
-        
-        LOG.debug("Existing ACL for {} = {}", nodePath, Arrays.toString(acl.getAccessControlEntries()));
-
         Set<Privilege> privileges = getPrivilegeSet(privNames, acMgr);
 
         Map<String, Value> restrictions = null;
@@ -519,9 +515,6 @@ public class AccessControlUtils {
                         .toArray(new Privilege[privileges.size()]), isAllow);
             }
         }
-        
-        LOG.debug("New ACL for {} = {}", nodePath, Arrays.toString(acl.getAccessControlEntries()));
-
         acMgr.setPolicy(nodePath, acl);
     }
 

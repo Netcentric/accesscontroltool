@@ -27,6 +27,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.query.InvalidQueryException;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
@@ -35,12 +36,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
+import biz.netcentric.cq.tools.actool.validators.Validators;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
+import biz.netcentric.cq.tools.actool.validators.exceptions.DoubledDefinedActionException;
+import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidActionException;
+import biz.netcentric.cq.tools.actool.validators.exceptions.TooManyActionsException;
 
 @Service
 @Component(metatype = true, label = "AC Yaml Config Reader", description = "Service that installs groups & ACEs according to textual configuration files")
@@ -479,8 +485,15 @@ public class YamlConfigReader implements ConfigReader {
         tmpAclBean.setRepGlob((String) currentAceDefinition.get(ACE_CONFIG_PROPERTY_GLOB));
         tmpAclBean.setAssertedExceptionString(getMapValueAsString(
                 currentAceDefinition, ASSERTED_EXCEPTION));
+        tmpAclBean.setActions(parseActionsString(getMapValueAsString(currentAceDefinition,
+                ACE_CONFIG_PROPERTY_ACTIONS)));
     }
 
+    private String[] parseActionsString(String actionsStringFromConfig) {
+        String[] actions = actionsStringFromConfig.split(",");
+        return actions;
+    }
+    
     private void setupAuthorizableBean(
             AuthorizableConfigBean authorizableConfigBean,
             Map<String, String> currentPrincipalDataMap,
