@@ -311,10 +311,12 @@ public class CqActionsMapping {
             privileges = new HashSet<String>(
                     Arrays.asList(bean.getPrivileges()));
         }
-
+        
         // convert cq:actions to their jcr:privileges
         for (String action : actions) {
-            privileges.addAll(ACTIONS_MAP.get(action));
+        	if (ACTIONS_MAP.containsKey(action)) { // fix for possible NPE
+              privileges.addAll(ACTIONS_MAP.get(action));
+        	}
         }
         // after converting all actions to privileges we can still have
         // aggregated privileges in the privileges variable
