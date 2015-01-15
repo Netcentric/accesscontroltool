@@ -19,6 +19,8 @@ import java.util.Set;
 import javax.jcr.security.Privilege;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 
@@ -131,6 +133,8 @@ public class CqActionsMapping {
                         .asList(new String[] { PRIVILEGE_CRX_REPLICATE })));
     }
 
+    static final Logger LOG = LoggerFactory.getLogger(CqActionsMapping.class);
+    
     public static List<String> getJcrAggregatedPrivilegesList() {
         return jcrAggregatedPrivileges;
     }
@@ -316,6 +320,8 @@ public class CqActionsMapping {
         for (String action : actions) {
         	if (ACTIONS_MAP.containsKey(action)) { // fix for possible NPE
               privileges.addAll(ACTIONS_MAP.get(action));
+        	} else {
+        	    LOG.warn("Unrecognized action: '{}' for bean {}", action, bean);
         	}
         }
         // after converting all actions to privileges we can still have

@@ -490,8 +490,8 @@ public class YamlConfigReader implements ConfigReader {
     }
 
     private String[] parseActionsString(String actionsStringFromConfig) {
-        String[] actions = actionsStringFromConfig.split(",");
-        return actions;
+        String [] empty = {};
+        return StringUtils.isNotBlank(actionsStringFromConfig) ? actionsStringFromConfig.split(",") : empty;
     }
     
     private void setupAuthorizableBean(
