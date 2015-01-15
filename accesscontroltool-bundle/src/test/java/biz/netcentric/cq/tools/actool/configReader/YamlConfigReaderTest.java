@@ -9,11 +9,11 @@
 package biz.netcentric.cq.tools.actool.configReader;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -92,6 +92,17 @@ public class YamlConfigReaderTest {
         for (AceBean ace : acl) {
             assertNotNull("Testing null actions", ace.getActions());
         }
+    }
+
+    @Test
+    public void testNoActions() throws IOException, AcConfigBeanValidationException, RepositoryException {
+        YamlConfigReader yamlConfigReader = new YamlConfigReader();
+        List<LinkedHashMap> yamlList = getYamlList("test-no-actions.yaml");
+        Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
+        Map<String, Set<AceBean>> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null);
+        Set<AceBean> acl = acls.get("groupA");
+        AceBean ace = acl.iterator().next();
+        assertEquals("Number of actions", 0, ace.getActions().length);
     }
 
     @Test
