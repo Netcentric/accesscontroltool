@@ -51,7 +51,9 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryP
 public class AuthorizableCreatorServiceImpl implements
         AuthorizableCreatorService {
 
-    private static final Logger LOG = LoggerFactory
+    private static final String PATH_HOME_GROUPS = "/home/groups";
+
+	private static final Logger LOG = LoggerFactory
             .getLogger(AuthorizableCreatorServiceImpl.class);
 
     AcInstallationHistoryPojo status;
@@ -161,8 +163,9 @@ public class AuthorizableCreatorServiceImpl implements
             Group existingGroup = (Group) existingAuthorizable;
             String intermediatedPathOfExistingGroup = existingGroup.getPath()
                     .substring(0, existingGroup.getPath().lastIndexOf("/"));
+            String groupPathFromBean = PATH_HOME_GROUPS + principalConfigBean.getPath();
             if (!StringUtils.equals(intermediatedPathOfExistingGroup,
-                    principalConfigBean.getPath())) {
+            		groupPathFromBean)) {
                 StringBuilder message = new StringBuilder();
                 message.append("found change of intermediate path:").append(
                         "\n");
@@ -175,7 +178,7 @@ public class AuthorizableCreatorServiceImpl implements
                         "group from config: "
                                 + principalConfigBean.getPrincipalID()
                                 + " has intermediate path: "
-                                + principalConfigBean.getPath()).append("\n");
+                                + groupPathFromBean).append("\n");
 
                 // save members of existing group before deletion
                 Set<Authorizable> membersOfDeletedGroup = new HashSet<Authorizable>();
@@ -232,7 +235,7 @@ public class AuthorizableCreatorServiceImpl implements
         // not get deleted!
         // also node to be deleted has to be empty, so no other authorizables
         // stored under this path get deleted
-        while (!StringUtils.equals("/home/groups",
+        while (!StringUtils.equals(PATH_HOME_GROUPS,
                 oldIntermediateNode.getPath())
                 && !StringUtils.equals("/home/users",
                         oldIntermediateNode.getPath())

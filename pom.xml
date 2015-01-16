@@ -15,7 +15,7 @@
 
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
     <artifactId>accesscontroltool</artifactId>
-    <version>1.2.5</version>
+    <version>1.2.6</version>
     <packaging>pom</packaging>
 
     <name>Access Control Tool - Reactor Project</name>
@@ -26,19 +26,18 @@
         <developerConnection>scm:git:https://github.com/Netcentric/accesscontroltool.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
-    <distributionManagement>
-        <repository>
-          <id>nexus</id>
-          <name>Netcentric Releases</name>
-          <url>https://repo.int.netcentric.biz/nexus/content/repositories/netcentric-releases/</url>
-        </repository>
-        <snapshotRepository>
-          <id>nexus</id>
-          <name>Netcentric Nexus Snapshot Repository</name>
-          <url>https://repo.int.netcentric.biz/nexus/content/repositories/netcentric-snapshots</url>
-        </snapshotRepository>
-    </distributionManagement>
 
+    <distributionManagement>
+      <snapshotRepository>
+        <id>ossrh</id>
+        <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      </snapshotRepository>
+      <repository>
+        <id>ossrh</id>
+        <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+      </repository>
+    </distributionManagement>
+    
     <prerequisites>
         <maven>3.0.2</maven>
     </prerequisites>
@@ -312,6 +311,31 @@
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <releaseBranchVersionSuffix>rc</releaseBranchVersionSuffix>
                   </configuration>
+                </plugin>
+                <plugin>
+                  <groupId>org.sonatype.plugins</groupId>
+                  <artifactId>nexus-staging-maven-plugin</artifactId>
+                  <version>1.6.3</version>
+                  <extensions>true</extensions>
+                  <configuration>
+                     <serverId>ossrh</serverId>
+                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                  </configuration>
+                </plugin>
+                <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-gpg-plugin</artifactId>
+                  <version>1.5</version>
+                  <executions>
+                    <execution>
+                      <id>sign-artifacts</id>
+                      <phase>verify</phase>
+                      <goals>
+                        <goal>sign</goal>
+                      </goals>
+                    </execution>
+                  </executions>
                 </plugin>
             </plugins>
         </pluginManagement>
