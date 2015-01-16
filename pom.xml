@@ -20,7 +20,14 @@
 
     <name>Access Control Tool - Reactor Project</name>
     <description>Maven Multimodule project for Access Control Tool.</description>
-    
+
+    <licenses>
+      <license>
+        <name>Eclipse Public License, Version 1.0</name>
+        <url>https://www.eclipse.org/legal/epl-v10.html</url>
+        <distribution>repo</distribution>
+      </license>
+    </licenses>    
     <scm>
         <connection>scm:git:https://github.com/Netcentric/accesscontroltool.git</connection>
         <developerConnection>scm:git:https://github.com/Netcentric/accesscontroltool.git</developerConnection>
