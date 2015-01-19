@@ -20,6 +20,16 @@
 
     <name>Access Control Tool - Reactor Project</name>
     <description>Maven Multimodule project for Access Control Tool.</description>
+    <url>https://github.com/Netcentric/accesscontroltool</url>
+
+    <developers>
+        <developer>
+            <name>Ugo Cei</name>
+            <email>ugo.cei@netcentric.biz</email>
+            <organization>Netcentric</organization>
+            <organizationUrl>http://www.netcentric.biz/</organizationUrl>
+        </developer>
+  </developers>
 
     <licenses>
       <license>
@@ -28,9 +38,11 @@
         <distribution>repo</distribution>
       </license>
     </licenses>    
+    
     <scm>
         <connection>scm:git:https://github.com/Netcentric/accesscontroltool.git</connection>
         <developerConnection>scm:git:https://github.com/Netcentric/accesscontroltool.git</developerConnection>
+        <url>https://github.com/Netcentric/accesscontroltool.git</url>
         <tag>HEAD</tag>
     </scm>
 
@@ -319,31 +331,6 @@
                     <releaseBranchVersionSuffix>rc</releaseBranchVersionSuffix>
                   </configuration>
                 </plugin>
-                <plugin>
-                  <groupId>org.sonatype.plugins</groupId>
-                  <artifactId>nexus-staging-maven-plugin</artifactId>
-                  <version>1.6.3</version>
-                  <extensions>true</extensions>
-                  <configuration>
-                     <serverId>ossrh</serverId>
-                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                  </configuration>
-                </plugin>
-                <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-gpg-plugin</artifactId>
-                  <version>1.5</version>
-                  <executions>
-                    <execution>
-                      <id>sign-artifacts</id>
-                      <phase>verify</phase>
-                      <goals>
-                        <goal>sign</goal>
-                      </goals>
-                    </execution>
-                  </executions>
-                </plugin>
             </plugins>
         </pluginManagement>
 		<plugins>
@@ -355,6 +342,31 @@
 					<target>1.6</target>
 				</configuration>
 			</plugin>
+            <plugin>
+              <groupId>org.sonatype.plugins</groupId>
+              <artifactId>nexus-staging-maven-plugin</artifactId>
+              <version>1.6.3</version>
+              <extensions>true</extensions>
+              <configuration>
+                 <serverId>ossrh</serverId>
+                 <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                 <autoReleaseAfterClose>true</autoReleaseAfterClose>
+              </configuration>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-gpg-plugin</artifactId>
+              <version>1.5</version>
+              <executions>
+                <execution>
+                  <id>sign-artifacts</id>
+                  <phase>verify</phase>
+                  <goals>
+                    <goal>sign</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
 		</plugins>
     </build>
 
