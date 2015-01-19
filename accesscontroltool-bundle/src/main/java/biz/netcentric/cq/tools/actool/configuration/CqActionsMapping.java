@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -305,14 +306,14 @@ public class CqActionsMapping {
     }
 
     public static AceBean getConvertedPrivilegeBean(AceBean bean) {
-        Set<String> actions = new HashSet<String>();
-        Set<String> privileges = new HashSet<String>();
+        Set<String> actions = new LinkedHashSet<String>();
+        Set<String> privileges = new LinkedHashSet<String>();
 
         if (bean.getActions() != null) {
-            actions = new HashSet<String>(Arrays.asList(bean.getActions()));
+            actions = new LinkedHashSet<String>(Arrays.asList(bean.getActions()));
         }
         if (bean.getPrivileges() != null) {
-            privileges = new HashSet<String>(
+            privileges = new LinkedHashSet<String>(
                     Arrays.asList(bean.getPrivileges()));
         }
         
