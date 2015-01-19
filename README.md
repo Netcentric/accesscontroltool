@@ -248,6 +248,23 @@ To achieve the aforementioned requirements every new installation comprises the 
 * In case there is a node in repository dump that is not covered in the config the following step gets performed
     * if the ACL of that node has one or several ACEs belonging to one or several groups from config, these ACEs get deleted
     
+### Installation Hook
+
+To automatically install ACEs and Authorizable being defined in YAML files with the package containing the YAML files one can leverage the Content Package Install Hook mechanism.
+To enable that on a package being created with Maven through the content-package-maven-plugin one can enable the installation hook via 
+
+```
+<plugin>
+  <groupId>com.day.jcr.vault</groupId>
+  <artifactId>content-package-maven-plugin</artifactId>
+  <configuration>
+    <properties>    <installhook.actool.class>biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook</installhook.actool.class>
+    </properties>
+  </configuration>
+</plugin>
+```
+
+    
 ## AC Service
     
 The main operation purpose of the AC service is the installation of ACE / group definitions from one or several configuration files to a CQ instance on the one hand or the creation of such files (dump) out of an existing configuration on the other hand. It offers possibilities like purging existing ACEs / principals from the instance before installing new ones, merging / adding new ACEs or performing a rollback to a previously saved state if needed. 
