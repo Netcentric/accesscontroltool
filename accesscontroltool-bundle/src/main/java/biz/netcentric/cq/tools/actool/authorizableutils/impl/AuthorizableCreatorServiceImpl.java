@@ -163,7 +163,11 @@ public class AuthorizableCreatorServiceImpl implements
             Group existingGroup = (Group) existingAuthorizable;
             String intermediatedPathOfExistingGroup = existingGroup.getPath()
                     .substring(0, existingGroup.getPath().lastIndexOf("/"));
-            String groupPathFromBean = PATH_HOME_GROUPS + principalConfigBean.getPath();
+            // Relative paths need to be prefixed with /home/groups (issue #10)
+            String groupPathFromBean = principalConfigBean.getPath();
+            if (groupPathFromBean.charAt(0) != '/') { 
+                groupPathFromBean = PATH_HOME_GROUPS + "/" + groupPathFromBean;
+            }
             if (!StringUtils.equals(intermediatedPathOfExistingGroup,
             		groupPathFromBean)) {
                 StringBuilder message = new StringBuilder();

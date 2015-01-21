@@ -15,7 +15,7 @@
 
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
     <artifactId>accesscontroltool</artifactId>
-    <version>1.2.8</version>
+    <version>1.2.9</version>
     <packaging>pom</packaging>
 
     <name>Access Control Tool - Reactor Project</name>
@@ -353,24 +353,33 @@
                  <autoReleaseAfterClose>true</autoReleaseAfterClose>
               </configuration>
             </plugin>
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-gpg-plugin</artifactId>
-              <version>1.5</version>
-              <executions>
-                <execution>
-                  <id>sign-artifacts</id>
-                  <phase>verify</phase>
-                  <goals>
-                    <goal>sign</goal>
-                  </goals>
-                </execution>
-              </executions>
-            </plugin>
 		</plugins>
     </build>
 
     <profiles>
+        
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                      <groupId>org.apache.maven.plugins</groupId>
+                      <artifactId>maven-gpg-plugin</artifactId>
+                      <version>1.6</version>
+                      <executions>
+                        <execution>
+                          <id>sign-artifacts</id>
+                          <phase>verify</phase>
+                          <goals>
+                            <goal>sign</goal>
+                          </goals>
+                        </execution>
+                      </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <profile>
             <id>autoInstallBundle</id>
             <build>
@@ -390,7 +399,9 @@
                 </plugins>
             </build>
         </profile>
+        
     </profiles>
+    
   <modules>
     <module>accesscontroltool-bundle</module>
     <module>accesscontroltool-package</module>
