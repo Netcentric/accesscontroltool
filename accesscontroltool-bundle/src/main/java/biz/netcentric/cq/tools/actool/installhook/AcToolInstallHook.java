@@ -13,6 +13,8 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
 	public void execute(InstallContext context) throws PackageException {
 		switch (context.getPhase()) {
 		case PREPARE:
+			 
+			// check if AcTool is installed
 			log("Installing ACLs through AcToolInstallHook...", context.getOptions());
 			ServiceReference aceServiceReference = getServiceReference("biz.netcentric.cq.tools.actool.aceservice.AceService");
 			if (aceServiceReference == null) {
@@ -33,7 +35,11 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
 				getBundleContext().ungetService(aceServiceReference);
 			}
 			break;
-		default:
+		case INSTALLED:
+			// apply YAML files from package
+			
+			break;
+		default:	
 			// nothing to do in all other phases
 			break;
 
