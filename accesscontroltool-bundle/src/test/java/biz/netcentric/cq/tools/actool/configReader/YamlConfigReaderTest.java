@@ -32,6 +32,7 @@ import org.yaml.snakeyaml.Yaml;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
+import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
 
 public class YamlConfigReaderTest {
 
@@ -208,6 +209,21 @@ public class YamlConfigReaderTest {
         acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, null);
         assertNotNull("ACL for groupA", acls.get("groupA"));
         assertEquals("Number of ACEs", 1, acls.get("groupA").size());
+    }
+
+    /**
+     * Test support for rep:userManagerment privilege name
+     */
+    @Test
+    public void testUserManagementPrivilege() throws IOException, AcConfigBeanValidationException, RepositoryException {
+        YamlConfigReader yamlConfigReader = new YamlConfigReader();
+        List<LinkedHashMap> yamlList = getYamlList("test-rep-usermanagement.yaml");
+        Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
+        Map<String, Set<AceBean>> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), new AceBeanValidatorImpl(groups.keySet()));
+        Set<AceBean> acl = acls.get("groupA");
+        for (AceBean ace : acl) {
+            assertNotNull("Testing null actions", ace.getActions());
+        }
     }
     
     private List<LinkedHashMap> getYamlList(String filename) throws IOException {

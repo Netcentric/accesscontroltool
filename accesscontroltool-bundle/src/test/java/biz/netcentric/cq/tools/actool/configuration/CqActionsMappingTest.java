@@ -64,7 +64,7 @@ public class CqActionsMappingTest {
         CqActionsMapping.getAggregatedPrivilegesBean(aceBean3);
         assertEquals(aceBean3.getPrivilegesString(), "jcr:write");
 
-        aceBean3.setPrivilegesString("jcr:workspaceManagement,jcr:lifecycleManagement,jcr:versionManagement,jcr:lockManagement,crx:replicate,jcr:read,jcr:modifyAccessControl,rep:write,rep:privilegeManagement,jcr:nodeTypeManagement,jcr:namespaceManagement,jcr:write,jcr:nodeTypeDefinitionManagement,jcr:retentionManagement,jcr:readAccessControl");
+        aceBean3.setPrivilegesString("jcr:workspaceManagement,jcr:lifecycleManagement,jcr:versionManagement,jcr:lockManagement,crx:replicate,jcr:read,jcr:modifyAccessControl,rep:write,rep:privilegeManagement,rep:userManagement,jcr:nodeTypeManagement,jcr:namespaceManagement,jcr:write,jcr:nodeTypeDefinitionManagement,jcr:retentionManagement,jcr:readAccessControl");
         CqActionsMapping.getAggregatedPrivilegesBean(aceBean3);
         assertEquals(aceBean3.getPrivilegesString(), "jcr:all");
 

@@ -18,6 +18,7 @@
     
     - groupA:
     
-        - path: /content
+        - path: /home/groups/g/groupA
+          actions: read,modify,acl_read
           permission: allow
           privileges: rep:userManagement

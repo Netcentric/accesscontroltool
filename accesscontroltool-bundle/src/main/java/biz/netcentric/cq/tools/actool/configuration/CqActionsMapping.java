@@ -47,6 +47,7 @@ public class CqActionsMapping {
     public static final String PRIVILEGE_JCR_NAMESPACE_MANAGEMENT = "jcr:namespaceManagement";
     public static final String PRIVILEGE_JCR_NODE_TYPE_MANAGEMENT = "jcr:nodeTypeManagement";
     public static final String PRIVILEGE_REP_PRIVILEGE_MANAGEMENT = "rep:privilegeManagement";
+    public static final String PRIVILEGE_REP_USER_MANAGEMENT = "rep:userManagement";
     public static final String PRIVILEGE_REP_WRITE = "rep:write";
     public static final String PRIVILEGE_JCR_MODIFY_ACCESS_CONTROL = "jcr:modifyAccessControl";
     public static final String PRIVILEGE_JCR_READ = "jcr:read";
@@ -76,6 +77,7 @@ public class CqActionsMapping {
                     PRIVILEGE_JCR_LOCK_MANAGEMENT, PRIVILEGE_CRX_REPLICATE,
                     PRIVILEGE_JCR_READ, PRIVILEGE_JCR_MODIFY_ACCESS_CONTROL,
                     PRIVILEGE_REP_WRITE, PRIVILEGE_REP_PRIVILEGE_MANAGEMENT,
+                    PRIVILEGE_REP_USER_MANAGEMENT,
                     PRIVILEGE_JCR_NODE_TYPE_MANAGEMENT,
                     PRIVILEGE_JCR_NAMESPACE_MANAGEMENT, PRIVILEGE_JCR_WRITE,
                     PRIVILEGE_JCR_NODE_TYPE_DEFINITION_MANAGEMENT,
