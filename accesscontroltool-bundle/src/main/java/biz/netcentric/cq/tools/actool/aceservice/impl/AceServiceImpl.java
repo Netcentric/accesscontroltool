@@ -273,6 +273,7 @@ public class AceServiceImpl implements AceService {
                 history.addWarning("no configuration files found in repository!");
                 history.setSuccess(false);
             }
+            return;
         }
    
         StopWatch sw = new StopWatch();
