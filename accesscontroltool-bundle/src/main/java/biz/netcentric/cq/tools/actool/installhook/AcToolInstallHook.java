@@ -1,5 +1,8 @@
 package biz.netcentric.cq.tools.actool.installhook;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -17,6 +20,7 @@ import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallation
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 import com.day.jcr.vault.fs.io.Archive;
+import com.day.jcr.vault.fs.io.Archive.Entry;
 import com.day.jcr.vault.packaging.InstallContext;
 import com.day.jcr.vault.packaging.PackageException;
 
@@ -67,9 +71,9 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
         Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet = new LinkedHashSet<AuthorizableInstallationHistory>();
         
         try {
-            Map<String, String> newestConfigurations = getConfigurations(archive, session);
-    
-            aceService.installNewConfigurations(session, history, newestConfigurations, authorizableInstallationHistorySet);
+            Map<String, String> configs = getConfigurations(archive, archive.getJcrRoot(), session);
+            LOG.debug("Configurations = {}", configs);
+            aceService.installNewConfigurations(session, history, configs, authorizableInstallationHistorySet);
         } catch (AuthorizableCreatorException e) {
             history.setException(e.toString());
             // here no rollback of authorizables necessary since session wasn't
@@ -82,9 +86,26 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
         }	    
 	}
 
-    private Map<String, String> getConfigurations(Archive archive, Session session) {
+    private Map<String, String> getConfigurations(Archive archive, Entry parent, Session session) throws IOException {
         Map<String, String> configs = new HashMap<String, String>();
-        // TODO Read the configuration files from the archive and return them
+        // Read the configuration files from the archive
+        for (Entry entry : parent.getChildren()) {
+            if (entry.isDirectory()) {
+                configs.putAll(getConfigurations(archive, entry, session));
+            } else {
+                if (entry.getName().endsWith(".yaml")) {
+                    LOG.info("Reading YAML file {}", entry.getName());
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(archive.getInputSource(entry).getByteStream()));
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        sb.append(line);
+                    }
+                    reader.close();
+                    configs.put(entry.getName(), sb.toString()); // FIXME: key should be entry path, not name
+                }
+            }
+        }
         return configs;
     }
 }
