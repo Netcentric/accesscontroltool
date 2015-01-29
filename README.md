@@ -258,7 +258,8 @@ To enable that on a package being created with Maven through the content-package
   <groupId>com.day.jcr.vault</groupId>
   <artifactId>content-package-maven-plugin</artifactId>
   <configuration>
-    <properties>    <installhook.actool.class>biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook</installhook.actool.class>
+    <properties>
+      <installhook.actool.class>biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook</installhook.actool.class>
     </properties>
   </configuration>
 </plugin>

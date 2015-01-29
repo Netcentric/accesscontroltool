@@ -37,7 +37,7 @@ public abstract class OsgiAwareInstallHook implements InstallHook {
 		if (listener != null) {
 			listener.onMessage(ProgressTrackerListener.Mode.TEXT, message, "");
 		} else {
-			LOG.info("message");
+			LOG.info(message);
 		}
 	}
 }
