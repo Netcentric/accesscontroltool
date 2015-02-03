@@ -267,14 +267,6 @@ public class AceServiceImpl implements AceService {
             AcInstallationHistoryPojo history,
             Map<String, String> newestConfigurations, Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet)
             throws Exception {
-        if (!this.isReadyToStart()) {
-            history.addWarning("Cannot perform installation, service not ready to start!");
-            if (this.getCurrentConfigurationPaths().isEmpty()) {
-                history.addWarning("no configuration files found in repository!");
-                history.setSuccess(false);
-            }
-            return;
-        }
    
         StopWatch sw = new StopWatch();
         sw.start();

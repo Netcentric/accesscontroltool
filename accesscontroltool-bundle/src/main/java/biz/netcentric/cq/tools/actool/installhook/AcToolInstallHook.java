@@ -100,6 +100,7 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
                     String line;
                     while ((line = reader.readLine()) != null) {
                         sb.append(line);
+                        sb.append(System.lineSeparator());
                     }
                     reader.close();
                     configs.put(entry.getName(), sb.toString()); // FIXME: key should be entry path, not name
