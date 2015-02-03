@@ -52,7 +52,7 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
 				installConfigs(context.getPackage().getArchive(), context.getSession(), aceService);
 				log("Installed ACLs through AcToolInstallHook!", context.getOptions());
 			} catch (Exception e) {
-			    LOG.error(e.getMessage());
+			    log("Exception while installing configurations: " + e, context.getOptions());
 			    throw new PackageException(e.getMessage(), e);
 			} finally {
 				getBundleContext().ungetService(aceServiceReference);
@@ -66,21 +66,16 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
 		}
 	}
 	
-	private void installConfigs(Archive archive, Session session, AceService aceService) {
+	private void installConfigs(Archive archive, Session session, AceService aceService) throws Exception {
         AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
         Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet = new LinkedHashSet<AuthorizableInstallationHistory>();
         
         try {
             Map<String, String> configs = getConfigurations(archive, archive.getJcrRoot(), session);
-            LOG.debug("Configurations = {}", configs);
             aceService.installNewConfigurations(session, history, configs, authorizableInstallationHistorySet);
-        } catch (AuthorizableCreatorException e) {
-            history.setException(e.toString());
-            // here no rollback of authorizables necessary since session wasn't
-            // saved
         } catch (Exception e) {
-            LOG.error("Exception in AceServiceImpl: {}", e);
             history.setException(e.toString());
+            throw e;
         } finally {
             // TODO: acHistoryService.persistHistory(history, this.configurationPath);
         }	    
@@ -103,7 +98,9 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
                         sb.append(System.lineSeparator());
                     }
                     reader.close();
-                    configs.put(entry.getName(), sb.toString()); // FIXME: key should be entry path, not name
+                    // We cannot use the entry's name, since it might not be unique, and we don't have its full path
+                    // so we add its has code as a key for the map of configs.
+                    configs.put(parent.getName() + "/" + entry.getName() + " (" + entry.hashCode() + ")", sb.toString());
                 }
             }
         }
