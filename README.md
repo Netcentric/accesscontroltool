@@ -265,6 +265,7 @@ To enable that on a package being created with Maven through the content-package
 </plugin>
 ```
 
+With this configuration, all the *.yaml files contained in the package will automatically be installed.
     
 ## AC Service
     
