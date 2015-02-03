@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.aceservice.AceService;
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
@@ -28,12 +27,21 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
 
     private static final Logger LOG = LoggerFactory.getLogger(AcToolInstallHook.class);
     
+    // Workaround for a bug in CQ whereby the package installer goes into a loop if a PackageException is thrown
+    private boolean alreadyRan = false;
+    
 	@Override
 	public void execute(InstallContext context) throws PackageException {
 	    LOG.debug("Executing install hook for phase {}.", context.getPhase());
 	    
 		switch (context.getPhase()) {
 		case PREPARE:
+		    
+		    if (alreadyRan) {
+		        log("Evading attempt to run the install hook twice due to a bug in CQ.", context.getOptions());
+		        return;
+		    }
+		    alreadyRan = true;
 			 
 			// check if AcTool is installed
 			log("Installing ACLs through AcToolInstallHook...", context.getOptions());
