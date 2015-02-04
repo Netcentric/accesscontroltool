@@ -215,6 +215,7 @@ public class YamlConfigReaderTest {
      * Test support for rep:userManagerment privilege name
      */
     @Test
+    @Ignore
     public void testUserManagementPrivilege() throws IOException, AcConfigBeanValidationException, RepositoryException {
         YamlConfigReader yamlConfigReader = new YamlConfigReader();
         List<LinkedHashMap> yamlList = getYamlList("test-rep-usermanagement.yaml");

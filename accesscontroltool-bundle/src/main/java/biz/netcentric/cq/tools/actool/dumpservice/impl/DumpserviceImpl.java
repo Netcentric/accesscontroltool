@@ -558,7 +558,6 @@ public class DumpserviceImpl implements Dumpservice {
                             + "- " + mapKey + ":");
 
             for (AceBean bean : aceBeanSet) {
-                bean = CqActionsMapping.getAlignedPermissionBean(bean);
 
                 outStream.println();
                 if (mapOrder == PATH_BASED_SORTING) {
@@ -723,8 +722,7 @@ public class DumpserviceImpl implements Dumpservice {
             for (AccessControlEntry ace : aclBean.getAcl()
                     .getAccessControlEntries()) {
                 AceWrapper tmpBean = new AceWrapper(ace, aclBean.getJcrPath());
-                AceBean tmpAceBean = AcHelper.getAceBean(tmpBean);
-                CqActionsMapping.getAggregatedPrivilegesBean(tmpAceBean);
+                AceBean tmpAceBean = AcHelper.getAceBean(tmpBean, session.getAccessControlManager());
 
                 if (isUnwantedAce(tmpAceBean) && isFilterACEs) {
                     continue;
