@@ -28,7 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.helper.AceBean;
-
+/**
+ * @deprecated Use com.com.day.cq.security.util.CqActions instead
+ */
 public class CqActionsMapping {
 
     public static final String ACTION_REPLICATE = "replicate";
