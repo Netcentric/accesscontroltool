@@ -71,8 +71,10 @@ property | comment | optional
 --- | --- | ---
 path | a node path. Wildcards '*' are possible. e.g. assuming we have the language trees de and en then /content/*/test would match: /content/de/test and /content/en/test (mandatory) If an asterisk is contained then the path has to be written inside single quotes ('...') since this symbol is a functional character in YAML. | no
 permission | the permission (allow/deny) | no
-actions | the actions (read,modify,create,delete,acl_read,acl_edit,replicate) | no, either actions or privileges; also a mix of both is possible
-privileges | the privileges (jcr:read, rep:write, jcr:all, crx:replicate, jcr:addChildNodes, jcr:lifecycleManagement, jcr:lockManagement, jcr:modifyAccessControl, jcr:modifyProperties, jcr:namespaceManagement, jcr:nodeTypeDefinitionManagement, jcr:nodeTypeManagement, jcr:readAccessControl, jcr:removeChildNodes, jcr:removeNode, jcr:retentionManagement, jcr:versionManagement, jcr:workspaceManagement, jcr:write, rep:privilegeManagement) |
+actions | the actions (`read,modify,create,delete,acl_read,acl_edit,replicate`). <http://docs.adobe.com/docs/en/cq/current/administering/security.html#Actions> | no, either actions or privileges; also a mix of both is possible
+privileges | the privileges (`jcr:read, rep:write, jcr:all, crx:replicate, jcr:addChildNodes, jcr:lifecycleManagement, jcr:lockManagement, jcr:modifyAccessControl, jcr:modifyProperties, jcr:namespaceManagement, jcr:nodeTypeDefinitionManagement, jcr:nodeTypeManagement, jcr:readAccessControl, jcr:removeChildNodes, jcr:removeNode, jcr:retentionManagement, jcr:versionManagement, jcr:workspaceManagement, jcr:write, rep:privilegeManagement`)
+<http://jackrabbit.apache.org/oak/docs/security/privilege.html>
+<http://www.day.com/specs/jcr/2.0/16_Access_Control_Management.html#16.2.3%20Standard%20Privileges> |
 repGlob |a repGlob expression | yes
 
 Every new data entry starts with a "-". 
