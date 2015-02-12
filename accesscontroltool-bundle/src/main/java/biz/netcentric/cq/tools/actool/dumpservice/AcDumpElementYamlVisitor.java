@@ -22,8 +22,8 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
     public static final int DUMP_INDENTATION_PROPERTY = 9;
 
     public static final String YAML_STRUCTURAL_ELEMENT_PREFIX = "- ";
-    private StringBuilder sb;
-    private int mapOrder;
+    private final StringBuilder sb;
+    private final int mapOrder;
 
     public AcDumpElementYamlVisitor(final int mapOrder, final StringBuilder sb) {
         this.mapOrder = mapOrder;
@@ -71,7 +71,7 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
                 .append("\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY)).append(
                 "repGlob: ");
-        if (!aceBean.getRepGlob().isEmpty()) {
+        if ((aceBean.getRepGlob() != null) && !aceBean.getRepGlob().isEmpty()) {
             sb.append("'" + aceBean.getRepGlob() + "'");
         }
         sb.append("\n");
@@ -87,7 +87,7 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
     }
 
     @Override
-    public void visit(StructuralDumpElement structuralDumpElement) {
+    public void visit(final StructuralDumpElement structuralDumpElement) {
         sb.append("\n");
         sb.append(AcHelper.getBlankString(structuralDumpElement.getLevel() * 2)
                 + YAML_STRUCTURAL_ELEMENT_PREFIX
