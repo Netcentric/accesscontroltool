@@ -94,7 +94,8 @@ public class AceWrapper {
             return ((JackrabbitAccessControlEntry) ace).getRestriction(name)
                     .getString();
         }
-        return "";
+        // fix for #11: All ACE from groups not contained in a config get an empty repGlob after installation
+        return null;
     }
 
     public String getPrivilegesString() {
