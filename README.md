@@ -265,7 +265,13 @@ To enable that on a package being created with Maven through the content-package
 </plugin>
 ```
 
-With this configuration, all the *.yaml files contained in the package will automatically be installed.
+Now it depends on where those ```*.yaml``` are located in the package, because not in all cases they are being installed.
+In general the parent node may specify required Sling run modes being separated by a dot (```.```). They specify the minimum required Sling run modes to be set in order for the YAML children files to be installed. This mechanism works similar as the [installation of OSGi bundles through JCR packages in Sling](http://sling.apache.org/documentation/bundles/jcr-installer-provider.html).
+
+E.g. the parent node name ```somename.publish``` will require at least the ```publish``` run mode to be set in order for the YAML children to be installed by the Installation Hook mechanism. The parent node name may also specify multiple required run modes.
+If the parent node name does not contain a dot it will always be installed up (independent of any run modes).
+
+
     
 ## AC Service
     
