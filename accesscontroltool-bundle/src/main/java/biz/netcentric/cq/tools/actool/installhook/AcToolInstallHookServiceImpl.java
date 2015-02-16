@@ -2,7 +2,9 @@ package biz.netcentric.cq.tools.actool.installhook;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -53,7 +55,8 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHoookService {
 		try {
 			Entry rootEntry = archive.getJcrRoot();
 			if (rootEntry == null) {
-				throw new IllegalStateException("Invalid package: It does not contain a JCR root element");
+				throw new IllegalStateException(
+						"Invalid package: It does not contain a JCR root element");
 			}
 			Map<String, String> configs = getConfigurations(archive,
 					archive.getJcrRoot(), session);
@@ -78,21 +81,29 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHoookService {
 			} else {
 				if (isRelevantConfiguration(entry.getName(), parent.getName())) {
 					LOG.info("Reading YAML file {}", entry.getName());
-					BufferedReader reader = new BufferedReader(
-							new InputStreamReader(archive.getInputSource(entry)
-									.getByteStream()));
-					StringBuilder sb = new StringBuilder();
-					String line;
-					while ((line = reader.readLine()) != null) {
-						sb.append(line);
-						sb.append(System.lineSeparator());
+					InputStream input = archive.getInputSource(entry)
+							.getByteStream();
+					if (input == null) {
+						throw new IllegalStateException(
+								"Could not get input stream from entry "
+										+ entry.getName());
 					}
-					reader.close();
-					// We cannot use the entry's name, since it might not be
-					// unique, and we don't have its full path
-					// so we add its hash code as a key for the map of configs.
-					configs.put(parent.getName() + "/" + entry.getName() + " ("
-							+ entry.hashCode() + ")", sb.toString());
+					try (BufferedReader reader = new BufferedReader(
+							new InputStreamReader(input, StandardCharsets.UTF_8))) {
+						StringBuilder sb = new StringBuilder();
+						String line;
+						while ((line = reader.readLine()) != null) {
+							sb.append(line);
+							sb.append(System.lineSeparator());
+						}
+
+						// We cannot use the entry's name, since it might not be
+						// unique, and we don't have its full path
+						// so we add its hash code as a key for the map of
+						// configs.
+						configs.put(parent.getName() + "/" + entry.getName()
+								+ " (" + entry.hashCode() + ")", sb.toString());
+					}
 				}
 			}
 		}
