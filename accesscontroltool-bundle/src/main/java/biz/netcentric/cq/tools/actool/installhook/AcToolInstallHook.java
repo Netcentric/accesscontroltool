@@ -34,7 +34,7 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
 				throw new PackageException(
 						"Could not get AceService from OSGI service registry. Make sure the ACTool is installed!");
 			}
-			AcToolInstallHoookService acService = (AcToolInstallHoookService) getBundleContext()
+			AcToolInstallHookService acService = (AcToolInstallHookService) getBundleContext()
 					.getService(acToolInstallHookService);
 			if (acService == null) {
 				throw new PackageException(
