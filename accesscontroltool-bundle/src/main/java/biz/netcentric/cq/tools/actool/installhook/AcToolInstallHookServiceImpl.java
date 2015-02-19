@@ -13,6 +13,7 @@ import java.util.Set;
 
 import javax.jcr.Session;
 
+import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.settings.SlingSettingsService;
@@ -26,8 +27,9 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryP
 import com.day.jcr.vault.fs.io.Archive;
 import com.day.jcr.vault.fs.io.Archive.Entry;
 
-@Service
-public class AcToolInstallHookServiceImpl implements AcToolInstallHoookService {
+@Component
+@Service(value = AcToolInstallHookService.class)
+public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
 
 	private static final Logger LOG = LoggerFactory
 			.getLogger(AcToolInstallHookServiceImpl.class);
@@ -79,7 +81,8 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHoookService {
 			if (entry.isDirectory()) {
 				configs.putAll(getConfigurations(archive, entry, session));
 			} else {
-				if (isRelevantConfiguration(entry.getName(), parent.getName())) {
+				Set<String> currentRunModes = slingSettingsService.getRunModes();
+				if (isRelevantConfiguration(entry.getName(), parent.getName(), currentRunModes)) {
 					LOG.info("Reading YAML file {}", entry.getName());
 					InputStream input = archive.getInputSource(entry)
 							.getByteStream();
@@ -110,7 +113,7 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHoookService {
 		return configs;
 	}
 
-	private boolean isRelevantConfiguration(String entryName, String parentName) {
+	 static boolean isRelevantConfiguration(final String entryName, final String parentName, final Set<String> currentRunModes) {
 		if (entryName.endsWith(".yaml")) {
 			// extract runmode from parent name (if parent has "." in it)
 			Set<String> requiredRunModes = extractRunModesFromName(parentName);
@@ -123,8 +126,7 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHoookService {
 
 			// check if parent name has the right name
 			for (String requiredRunMode : requiredRunModes) {
-				if (slingSettingsService.getRunModes()
-						.contains(requiredRunMode)) {
+				if (!currentRunModes.contains(requiredRunMode)) {
 					LOG.debug(
 							"Do not install file '{}', because required run mode '{}' is not set.",
 							entryName, requiredRunMode);
@@ -136,7 +138,7 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHoookService {
 		return false;
 	}
 
-	static Set<String> extractRunModesFromName(String name) {
+	static Set<String> extractRunModesFromName(final String name) {
 		Set<String> requiredRunModes = new HashSet<String>();
 
 		// extract runmodes from name (separated by ".")
