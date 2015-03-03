@@ -356,7 +356,7 @@ public class AccessControlUtils {
                     // action(s) given in parameter
                     Privilege[] privileges = jace.getPrivileges();
                     String actionsString = CqActionsMapping
-                            .getCqActions(privileges);
+                            .getCqActions(privileges, session.getAccessControlManager());
 
                     if (Arrays.asList(actions).containsAll(
                             Arrays.asList(actionsString.split(",")))) {

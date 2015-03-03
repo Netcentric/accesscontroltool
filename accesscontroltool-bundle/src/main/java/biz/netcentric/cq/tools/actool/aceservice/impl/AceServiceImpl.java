@@ -21,9 +21,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.jcr.AccessDeniedException;
+import javax.jcr.InvalidItemStateException;
+import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
+import javax.jcr.ReferentialIntegrityException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.ValueFormatException;
+import javax.jcr.lock.LockException;
+import javax.jcr.nodetype.ConstraintViolationException;
+import javax.jcr.nodetype.NoSuchNodeTypeException;
+import javax.jcr.version.VersionException;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.time.StopWatch;
@@ -59,6 +68,7 @@ import biz.netcentric.cq.tools.actool.helper.PurgeHelper;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
 import com.day.cq.wcm.api.PageManager;
 
@@ -208,60 +218,17 @@ public class AceServiceImpl implements AceService {
     @Override
     public AcInstallationHistoryPojo execute() {
 
-        AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
-
-        if (!this.isReadyToStart()) {
-            history.addWarning("Cannot perform installation, service not ready to start!");
-            if (this.getCurrentConfigurationPaths().isEmpty()) {
-                history.addWarning("no configuration files found in repository!");
-                history.setSuccess(false);
-            }
-            return history;
-        }
-
-        String path = this.getConfigurationRootPath();
-        StopWatch sw = new StopWatch();
-        sw.start();
-        this.isExecuting = true;
         Session session = null;
-
+        AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
         Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet = new LinkedHashSet<AuthorizableInstallationHistory>();
-
+        
         try {
             session = repository.loginAdministrative(null);
-
+            String path = this.getConfigurationRootPath();
             Map<String, String> newestConfigurations = getNewestConfigurationNodes(
                     path, session, history);
-            if (newestConfigurations != null) {
-
-                ConfigurationMerger configurationMeger = new YamlConfigurationMerger();
-                List mergedConfigurations = configurationMeger
-                        .getMergedConfigurations(newestConfigurations, history,
-                                configReader);
-
-                String message = "start installation of merged configurations";
-                LOG.info(message);
-                history.addMessage(message);
-
-                Map<String, Set<AceBean>> repositoryDumpAceMap = null;
-                LOG.info("start building dump from repository");
-                repositoryDumpAceMap = dumpservice.createUnfilteredAclDumpMap(
-                        session, AcHelper.PATH_BASED_ORDER,
-                        AcHelper.ACE_ORDER_NONE,
-                        dumpservice.getQueryExcludePaths()).getAceDump();
-
-                installConfigurationFromYamlList(mergedConfigurations, history,
-                        session, authorizableInstallationHistorySet,
-                        repositoryDumpAceMap);
-
-                // if everything went fine (no exceptions), save the session
-                // thus persisting the changed ACLs
-                message = "finished (transient) installation of access control configuration without errors!";
-                history.addMessage(message);
-
-                session.save();
-                history.addMessage("persisted changes of ACLs");
-            }
+    
+            installNewConfigurations(session, history, newestConfigurations, authorizableInstallationHistorySet);
         } catch (AuthorizableCreatorException e) {
             history.setException(e.toString());
             // here no rollback of authorizables necessary since session wasn't
@@ -289,16 +256,67 @@ public class AceServiceImpl implements AceService {
             }
         } finally {
             session.logout();
-            sw.stop();
-            long executionTime = sw.getTime();
-            LOG.info("installation of AccessControlConfiguration took: {} ms",
-                    executionTime);
-            history.setExecutionTime(executionTime);
             this.isExecuting = false;
             acHistoryService.persistHistory(history, this.configurationPath);
 
         }
         return history;
+    }
+
+    public void installNewConfigurations(Session session,
+            AcInstallationHistoryPojo history,
+            Map<String, String> newestConfigurations, Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet)
+            throws Exception {
+   
+        StopWatch sw = new StopWatch();
+        sw.start();
+        this.isExecuting = true;
+   
+
+        if (newestConfigurations != null) {
+
+            ConfigurationMerger configurationMerger = new YamlConfigurationMerger();
+            List mergedConfigurations = configurationMerger
+                    .getMergedConfigurations(newestConfigurations, history,
+                            configReader);
+
+            installMergedConfigurations(history, session,
+                    authorizableInstallationHistorySet,
+                    mergedConfigurations);
+
+            // if everything went fine (no exceptions), save the session
+            // thus persisting the changed ACLs
+            history.addMessage("finished (transient) installation of access control configuration without errors!");
+            session.save();
+            history.addMessage("persisted changes of ACLs");
+        }
+        sw.stop();
+        long executionTime = sw.getTime();
+        LOG.info("installation of AccessControlConfiguration took: {} ms",
+                executionTime);
+        history.setExecutionTime(executionTime);
+    }
+
+    private void installMergedConfigurations(
+            AcInstallationHistoryPojo history,
+            Session session,
+            Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet,
+            List mergedConfigurations) throws ValueFormatException,
+            RepositoryException, Exception {
+        String message = "start installation of merged configurations";
+        LOG.info(message);
+        history.addMessage(message);
+
+        Map<String, Set<AceBean>> repositoryDumpAceMap = null;
+        LOG.info("start building dump from repository");
+        repositoryDumpAceMap = dumpservice.createUnfilteredAclDumpMap(
+                session, AcHelper.PATH_BASED_ORDER,
+                AcHelper.ACE_ORDER_NONE,
+                dumpservice.getQueryExcludePaths()).getAceDump();
+
+        installConfigurationFromYamlList(mergedConfigurations, history,
+                session, authorizableInstallationHistorySet,
+                repositoryDumpAceMap);
     }
 
     /**

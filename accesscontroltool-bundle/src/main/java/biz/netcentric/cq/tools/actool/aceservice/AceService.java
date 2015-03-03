@@ -10,7 +10,10 @@ package biz.netcentric.cq.tools.actool.aceservice;
 
 import java.util.Map;
 import java.util.Set;
+
 import javax.jcr.Session;
+
+import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 public interface AceService {
@@ -92,5 +95,10 @@ public interface AceService {
             AcInstallationHistoryPojo history) throws Exception;
 
     public String purgAuthorizablesFromConfig();
+
+    public void installNewConfigurations(Session session,
+            AcInstallationHistoryPojo history,
+            Map<String, String> newestConfigurations, Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet)
+            throws Exception;
 
 }

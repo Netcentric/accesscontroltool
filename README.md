@@ -248,6 +248,31 @@ To achieve the aforementioned requirements every new installation comprises the 
 * In case there is a node in repository dump that is not covered in the config the following step gets performed
     * if the ACL of that node has one or several ACEs belonging to one or several groups from config, these ACEs get deleted
     
+### Installation Hook
+
+To automatically install ACEs and Authorizable being defined in YAML files with the package containing the YAML files one can leverage the Content Package Install Hook mechanism.
+To enable that on a package being created with Maven through the content-package-maven-plugin one can enable the installation hook via 
+
+```
+<plugin>
+  <groupId>com.day.jcr.vault</groupId>
+  <artifactId>content-package-maven-plugin</artifactId>
+  <configuration>
+    <properties>
+      <installhook.actool.class>biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook</installhook.actool.class>
+    </properties>
+  </configuration>
+</plugin>
+```
+
+Now it depends on where those ```*.yaml``` are located in the package, because not in all cases they are being installed.
+In general the parent node may specify required Sling run modes being separated by a dot (```.```). They specify the minimum required Sling run modes to be set in order for the YAML children files to be installed. This mechanism works similar as the [installation of OSGi bundles through JCR packages in Sling](http://sling.apache.org/documentation/bundles/jcr-installer-provider.html).
+
+E.g. the parent node name ```somename.publish``` will require at least the ```publish``` run mode to be set in order for the YAML children to be installed by the Installation Hook mechanism. The parent node name may also specify multiple required run modes.
+If the parent node name does not contain a dot it will always be installed up (independent of any run modes).
+
+
+    
 ## AC Service
     
 The main operation purpose of the AC service is the installation of ACE / group definitions from one or several configuration files to a CQ instance on the one hand or the creation of such files (dump) out of an existing configuration on the other hand. It offers possibilities like purging existing ACEs / principals from the instance before installing new ones, merging / adding new ACEs or performing a rollback to a previously saved state if needed. 
