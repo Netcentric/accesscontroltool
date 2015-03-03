@@ -23,6 +23,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private String[] memberOf;
     String memberOfStringFromConfig;
 
+    private String[] parents;
     private String description;
     private String path;
     private String password;
@@ -33,7 +34,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
         return assertedExceptionString;
     }
 
-    public void setAssertedExceptionString(String assertedException) {
+    public void setAssertedExceptionString(final String assertedException) {
         this.assertedExceptionString = assertedException;
     }
 
@@ -41,11 +42,11 @@ public class AuthorizableConfigBean implements AcDumpElement {
         return password;
     }
 
-    public void setPassword(String password) {
+    public void setPassword(final String password) {
         this.password = password;
     }
 
-    public void setMemberOfString(String memberOfString) {
+    public void setMemberOfString(final String memberOfString) {
         this.memberOfStringFromConfig = memberOfString;
     }
 
@@ -53,11 +54,11 @@ public class AuthorizableConfigBean implements AcDumpElement {
         return isGroup;
     }
 
-    public void setIsGroup(boolean isGroup) {
+    public void setIsGroup(final boolean isGroup) {
         this.isGroup = isGroup;
     }
 
-    public void memberOf(boolean isGroup) {
+    public void memberOf(final boolean isGroup) {
         this.isGroup = isGroup;
     }
 
@@ -65,7 +66,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
         return principalName;
     }
 
-    public void setAuthorizableName(String principalName) {
+    public void setAuthorizableName(final String principalName) {
         this.principalName = principalName;
     }
 
@@ -94,9 +95,9 @@ public class AuthorizableConfigBean implements AcDumpElement {
             return "";
         }
 
-        StringBuilder memberOfString = new StringBuilder();
+        final StringBuilder memberOfString = new StringBuilder();
 
-        for (String group : memberOf) {
+        for (final String group : memberOf) {
             memberOfString.append(group).append(",");
         }
         return StringUtils.chop(memberOfString.toString());
@@ -110,6 +111,22 @@ public class AuthorizableConfigBean implements AcDumpElement {
         if (memberOf != null && !memberOf.isEmpty()) {
             this.memberOf = memberOf.toArray(new String[memberOf.size()]);
         }
+    }
+
+    public String[] getParents() {
+        return parents;
+    }
+
+    public void setParents(final String[] parents) {
+        this.parents = parents;
+    }
+
+    public void setParents(final String parents) {
+        if (StringUtils.isEmpty(parents) || StringUtils.isEmpty(parents.trim())) {
+            this.parents = new String[0];
+            return;
+        }
+        this.parents = parents.split(",[ ]*");
     }
 
     public String getDescription() {
@@ -130,7 +147,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         sb.append("\n" + "id: " + this.principalID + "\n");
         sb.append("name: " + this.principalName + "\n");
         sb.append("description: " + this.description + "\n");
@@ -140,7 +157,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
     }
 
     @Override
-    public void accept(AcDumpElementVisitor acDumpElementVisitor) {
+    public void accept(final AcDumpElementVisitor acDumpElementVisitor) {
         acDumpElementVisitor.visit(this);
     }
 }
