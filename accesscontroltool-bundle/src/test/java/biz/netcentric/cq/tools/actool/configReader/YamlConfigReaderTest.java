@@ -233,15 +233,8 @@ public class YamlConfigReaderTest {
         final List<LinkedHashMap> yamlList = getYamlList("test-parentgroups.yaml");
         final Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
         assertEquals("Number of groups", 4, groups.size());
-        assertEquals(0, groups.get("groupA").iterator().next().getParents().length);
-        assertEquals(1, groups.get("groupB").iterator().next().getParents().length);
-        assertEquals("groupA", groups.get("groupB").iterator().next().getParents()[0]);
-        assertEquals(2, groups.get("groupC").iterator().next().getParents().length);
-        assertEquals("groupA", groups.get("groupC").iterator().next().getParents()[0]);
-        assertEquals("groupB", groups.get("groupC").iterator().next().getParents()[1]);
-        assertEquals(2, groups.get("groupD").iterator().next().getParents().length);
-        assertEquals("groupA", groups.get("groupD").iterator().next().getParents()[0]);
-        assertEquals("groupB", groups.get("groupD").iterator().next().getParents()[1]);
+        assertEquals("", groups.get("groupA").iterator().next().getParentsStringFromConfig());
+        assertEquals("groupA", groups.get("groupB").iterator().next().getParentsStringFromConfig());
     }
 
     private List<LinkedHashMap> getYamlList(final String filename) throws IOException {
@@ -253,7 +246,7 @@ public class YamlConfigReaderTest {
         return yamlList;
     }
 
-    private String getTestConfigAsString(final String resourceName)
+    static String getTestConfigAsString(final String resourceName)
             throws IOException {
         final ClassLoader classloader = Thread.currentThread()
                 .getContextClassLoader();

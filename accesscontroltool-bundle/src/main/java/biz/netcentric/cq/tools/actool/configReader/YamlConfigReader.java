@@ -494,7 +494,7 @@ public class YamlConfigReader implements ConfigReader {
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_NAME));
         authorizableConfigBean.setMemberOfString(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBER_OF));
-        authorizableConfigBean.setParents(getMapValueAsString(
+        authorizableConfigBean.setParentsString(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_PARENT));
         authorizableConfigBean.setPath(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_PATH));

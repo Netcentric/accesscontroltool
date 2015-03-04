@@ -50,6 +50,7 @@ Overall format
 [Groupd Id]
      - name: groupname (optional, if empty groupd id is taken)
      - isMemberOf: comma separated list of other groups
+     - parent: comma separated list of parent groups
      - description: (optional, description)
      - path: ?
 ```
@@ -59,9 +60,12 @@ Example
 ```
 isp-editor      
    - isMemberOf: fragment-restrict-for-everyone,fragment-allow-nst
+   - parent: editor
 ```
 
 If the memberOf property of a group contains a group which is not yet installed in the repository, this group gets created and its rep:members property gets filled accordingly. if another configuration gets installed having a actual definition for that group the data gets merged into the already existing one.
+
+The parent property contains a list of groups where this group is added as memberOf.
 
 ## Configuration of ACEs
 

@@ -8,6 +8,8 @@
  */
 package biz.netcentric.cq.tools.actool.authorizableutils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
@@ -24,6 +26,8 @@ public class AuthorizableConfigBean implements AcDumpElement {
     String memberOfStringFromConfig;
 
     private String[] parents;
+    String parentsStringFromConfig;
+
     private String description;
     private String path;
     private String password;
@@ -48,6 +52,10 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     public void setMemberOfString(final String memberOfString) {
         this.memberOfStringFromConfig = memberOfString;
+    }
+
+    public void setParentsString(final String parentsString) {
+        this.parentsStringFromConfig = parentsString;
     }
 
     public boolean isGroup() {
@@ -113,20 +121,42 @@ public class AuthorizableConfigBean implements AcDumpElement {
         }
     }
 
+    public void addMemberOf(final String member) {
+        if (memberOf == null) {
+            memberOf = new String[] { member };
+            return;
+        }
+        final List<String> memberList = new ArrayList<String>();
+        memberList.addAll(Arrays.asList(memberOf));
+        if (!memberList.contains(member)) {
+            memberList.add(member);
+            memberOf = memberList.toArray(new String[memberList.size()]);
+        }
+    }
+
+    public String getParentsStringFromConfig() {
+        return this.parentsStringFromConfig;
+    }
+
+    public String getParentsString() {
+        if (parents == null) {
+            return "";
+        }
+
+        final StringBuilder parentsString = new StringBuilder();
+
+        for (final String group : parents) {
+            parentsString.append(group).append(",");
+        }
+        return StringUtils.chop(parentsString.toString());
+    }
+
     public String[] getParents() {
         return parents;
     }
 
     public void setParents(final String[] parents) {
         this.parents = parents;
-    }
-
-    public void setParents(final String parents) {
-        if (StringUtils.isEmpty(parents) || StringUtils.isEmpty(parents.trim())) {
-            this.parents = new String[0];
-            return;
-        }
-        this.parents = parents.split(",[ ]*");
     }
 
     public String getDescription() {
@@ -153,6 +183,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
         sb.append("description: " + this.description + "\n");
         sb.append("path: " + this.path + "\n");
         sb.append("memberOf: " + this.getMemberOfString() + "\n");
+        sb.append("parents: " + this.getParentsString() + "\n");
         return sb.toString();
     }
 
