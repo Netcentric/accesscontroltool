@@ -10,6 +10,8 @@ package biz.netcentric.cq.tools.actool.validators;
 
 import java.util.Set;
 
+import javax.jcr.security.AccessControlManager;
+
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AlreadyDefinedGroupException;
@@ -27,7 +29,7 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.TooManyActionsExcept
 
 public interface AceBeanValidator {
 
-    boolean validate(final AceBean aceBean)
+    boolean validate(final AceBean aceBean, AccessControlManager accessControlManager)
             throws AcConfigBeanValidationException;
 
     boolean validateGlobbing(AceBean tmpAclBean) throws InvalidRepGlobException;
@@ -35,7 +37,7 @@ public interface AceBeanValidator {
     boolean validatePermission(AceBean tmpAclBean)
             throws InvalidPermissionException;
 
-    boolean validatePrivileges(AceBean tmpAclBean)
+    boolean validatePrivileges(AceBean tmpAclBean, AccessControlManager accessControlManager)
             throws NoActionOrPrivilegeDefinedException,
             InvalidJcrPrivilegeException, DoubledDefinedJcrPrivilegeException;
 

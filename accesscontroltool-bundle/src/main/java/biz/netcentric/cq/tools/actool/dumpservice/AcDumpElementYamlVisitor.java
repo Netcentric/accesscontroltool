@@ -71,7 +71,7 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
                 .append("\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY)).append(
                 "repGlob: ");
-        if ((aceBean.getRepGlob() != null) && !aceBean.getRepGlob().isEmpty()) {
+        if ((aceBean.getRepGlob() != null)) {
             sb.append("'" + aceBean.getRepGlob() + "'");
         }
         sb.append("\n");

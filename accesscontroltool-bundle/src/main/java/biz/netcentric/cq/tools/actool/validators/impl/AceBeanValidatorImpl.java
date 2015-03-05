@@ -11,6 +11,8 @@ package biz.netcentric.cq.tools.actool.validators.impl;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.jcr.security.AccessControlManager;
+
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,16 +52,16 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
     public AceBeanValidatorImpl() {
     }
 
-    public boolean validate(final AceBean aceBean)
+    public boolean validate(final AceBean aceBean, AccessControlManager aclManager)
             throws AcConfigBeanValidationException {
         if (!enabled) {
             return true;
         }
         this.aceBean = aceBean;
-        return validate();
+        return validate(aclManager);
     }
 
-    private boolean validate() throws AcConfigBeanValidationException {
+    private boolean validate(AccessControlManager aclManager) throws AcConfigBeanValidationException {
 
         // mandatory properties per AceBean
         boolean isActionDefined = false;
@@ -70,7 +72,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
         validateAcePath(aceBean);
 
         isActionDefined = validateActions(aceBean);
-        isPrivilegeDefined = validatePrivileges(aceBean);
+        isPrivilegeDefined = validatePrivileges(aceBean, aclManager);
 
         validatePermission(aceBean);
 
@@ -172,7 +174,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
         return true;
     }
 
-    public boolean validatePrivileges(final AceBean tmpAclBean)
+    public boolean validatePrivileges(final AceBean tmpAclBean, AccessControlManager aclManager)
             throws InvalidJcrPrivilegeException,
             DoubledDefinedJcrPrivilegeException {
         String currentEntryValue = tmpAclBean.getPrivilegesString();
@@ -189,7 +191,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
             // remove leading and trailing blanks from privilege name
             privileges[i] = StringUtils.strip(privileges[i]);
 
-            if (!Validators.isValidJcrPrivilege(privileges[i])) {
+            if (!Validators.isValidJcrPrivilege(privileges[i], aclManager)) {
                 String errorMessage = getBeanDescription(
                         this.currentBeanCounter, principal)
                         + ",  invalid jcr privilege: " + privileges[i];

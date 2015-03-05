@@ -30,6 +30,7 @@ import javax.jcr.ValueFormatException;
 import javax.jcr.query.InvalidQueryException;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryResult;
+import javax.jcr.security.AccessControlManager;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
@@ -57,13 +58,13 @@ public class AcHelper {
     public static int PRINCIPAL_BASED_ORDER = 1;
     public static int PATH_BASED_ORDER = 2;
 
-    public static AceBean getAceBean(final AceWrapper ace)
+    public static AceBean getAceBean(final AceWrapper ace, AccessControlManager accessControlManager)
             throws ValueFormatException, IllegalStateException,
             RepositoryException {
         AceBean aceBean = new AceBean();
 
         aceBean.setActions(CqActionsMapping.getCqActions(
-                ace.getPrivilegesString()).split(","));
+                ace.getPrivilegesString(), accessControlManager).split(","));
         aceBean.setPermission(ace.isAllow() ? "allow" : "deny");
         aceBean.setJcrPath(ace.getJcrPath());
         aceBean.setPrincipal(ace.getPrincipal().getName());
@@ -186,7 +187,7 @@ public class AcHelper {
         // reset ACL in repo with permissions from merged ACL
         for (AceBean bean : aceBeanSetFromConfig) {
 
-            Principal currentPrincipal = getLdapImportGroupPrincipal(session,
+            Principal currentPrincipal = getPrincipal(session,
                     bean);
 
             if (currentPrincipal == null) {
@@ -250,7 +251,7 @@ public class AcHelper {
      * @throws InvalidQueryException
      * @throws RepositoryException
      */
-    private static Principal getLdapImportGroupPrincipal(final Session session,
+    private static Principal getPrincipal(final Session session,
             final AceBean aceBean) throws InvalidQueryException,
             RepositoryException {
         Principal principal = null;
@@ -282,13 +283,18 @@ public class AcHelper {
                 .createQuery(queryStringGroups, Query.XPATH);
         QueryResult queryResultGroups = queryGroups.execute();
         NodeIterator nitGroups = queryResultGroups.getNodes();
-        Set<String> groups = new TreeSet<String>();
-        while (nitGroups.hasNext()) {
-            Node node = nitGroups.nextNode();
-            String tmp = node.getProperty("rep:principalName").getString();
-            groups.add(tmp);
+        String principalName;
+        if (!nitGroups.hasNext()) {
+        	LOG.debug("Executing query '{}' did not have any results", queryStringGroups);
+        	return null;
         }
-        return pm.getPrincipal(groups.iterator().next());
+        Node node = nitGroups.nextNode();
+        if (node.hasProperty("rep:principalName")) {
+            principalName = node.getProperty("rep:principalName").getString();
+            return pm.getPrincipal(principalName);
+        }
+        LOG.debug("Group '{}' did not have a rep:principalName property", node.getPath());
+        return null;
     }
 
     private static void installBean(final Session session,

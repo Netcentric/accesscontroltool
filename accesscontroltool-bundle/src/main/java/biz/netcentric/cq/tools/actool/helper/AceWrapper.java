@@ -108,39 +108,6 @@ public class AceWrapper {
         return privilegesString;
     }
 
-    public String dumpData() throws RepositoryException {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("path: " + this.jcrPath);
-
-        sb.append("\n");
-
-        Privilege[] privileges = ace.getPrivileges();
-
-        String permissionString = PERM_ALLOW;
-        if (!((JackrabbitAccessControlEntry) ace).isAllow()) {
-            permissionString = PERM_DENY;
-        }
-        sb.append(permissionString + " ");
-
-        String privilegesString = "";
-        for (Privilege privilege : privileges) {
-            privilegesString = privilegesString + privilege.getName() + ",";
-        }
-        privilegesString = StringUtils.chop(privilegesString);
-        sb.append("actions: " + CqActionsMapping.getCqActions(privilegesString));
-
-        sb.append("\n");
-
-        Value repGlob = ((JackrabbitAccessControlEntry) ace)
-                .getRestriction(REP_GLOB_RESTRICTION);
-        if (repGlob != null) {
-            sb.append("glob" + ": " + repGlob.getString());
-        }
-        sb.append("\n");
-
-        return sb.toString();
-    }
 
     public int hashCode() {
         return this.ace.hashCode();

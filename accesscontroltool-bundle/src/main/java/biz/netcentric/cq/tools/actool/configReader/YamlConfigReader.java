@@ -296,7 +296,7 @@ public class YamlConfigReader implements ConfigReader {
                         setupAceBean(principalName, currentAceDefinition,
                                 newAceBean);
                         if (aceBeanValidator != null) {
-                            aceBeanValidator.validate(newAceBean);
+                            aceBeanValidator.validate(newAceBean, session.getAccessControlManager());
                         }
     
                         // --- handle wildcards ---

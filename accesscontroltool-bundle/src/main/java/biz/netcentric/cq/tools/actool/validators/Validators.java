@@ -12,6 +12,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import javax.jcr.RepositoryException;
+import javax.jcr.security.AccessControlException;
+import javax.jcr.security.AccessControlManager;
+
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,22 +84,15 @@ public class Validators {
         return true;
     }
 
-    public static boolean isValidJcrPrivilege(String privilege) {
+    public static boolean isValidJcrPrivilege(String privilege, AccessControlManager aclManager) {
         if (privilege == null) {
             return false;
         }
-
-        if (!CqActionsMapping.getJcrAggregatedPrivilegesList().contains(
-                privilege)
-                && !CqActionsMapping.getJcrAllPrivilegesList().contains(
-                        privilege)
-                && !CqActionsMapping.PRIVILEGES_MAP.get("rep:write").contains(
-                        privilege)
-                && !CqActionsMapping.PRIVILEGES_MAP.get("jcr:write").contains(
-                        privilege)) {
-            return false;
-        }
-
+        try {
+			aclManager.privilegeFromName(privilege);
+		} catch (RepositoryException e) {
+			return false;
+		}
         return true;
     }
 
