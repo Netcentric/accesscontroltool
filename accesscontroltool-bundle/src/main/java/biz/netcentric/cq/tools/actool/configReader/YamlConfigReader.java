@@ -54,6 +54,7 @@ public class YamlConfigReader implements ConfigReader {
     private static final String ACE_CONFIG_PROPERTY_FOR = "for";
 
     private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF = "isMemberOf";
+    private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY = "memberOf";
     private static final String GROUP_CONFIG_PROPERTY_MEMBERS = "members";
     private static final String GROUP_CONFIG_PROPERTY_PATH = "path";
     private static final String GROUP_CONFIG_PROPERTY_IS_GROUP = "isGroup";
@@ -494,6 +495,11 @@ public class YamlConfigReader implements ConfigReader {
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_NAME));
         authorizableConfigBean.setMemberOfString(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBER_OF));
+        // read also memberOf property from legacy scripts
+        if (!StringUtils.isEmpty(getMapValueAsString(currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY))) {
+            authorizableConfigBean.setMemberOfString(getMapValueAsString(
+                    currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY));
+        }
         authorizableConfigBean.setMembersString(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBERS));
         authorizableConfigBean.setPath(getMapValueAsString(
