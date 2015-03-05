@@ -141,16 +141,6 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
-				<extensions>true</extensions>
-				<configuration>
-					<instructions>
-						<Bundle-SymbolicName>biz.netcentric.cq.tools.accesscontroltool.accesscontroltool-bundle</Bundle-SymbolicName>
-					</instructions>
-				</configuration>
-			</plugin>
-			<plugin>
 				<groupId>org.apache.sling</groupId>
 				<artifactId>maven-sling-plugin</artifactId>
 				<configuration>
