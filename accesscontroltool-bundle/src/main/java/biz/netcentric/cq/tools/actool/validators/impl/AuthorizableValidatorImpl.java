@@ -37,7 +37,7 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
     private boolean validate() throws AcConfigBeanValidationException {
         if (enabled) {
             return validateMemberOf(this.authorizableConfigBean)
-                    && validateParents(this.authorizableConfigBean)
+                    && validateMembers(this.authorizableConfigBean)
                     && validateAuthorizableId(this.authorizableConfigBean);
         }
         return true;
@@ -77,12 +77,12 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
         return true;
     }
 
-    public boolean validateParents(
+    public boolean validateMembers(
             final AuthorizableConfigBean tmpPrincipalConfigBean)
             throws InvalidGroupNameException {
         final String currentPrincipal = tmpPrincipalConfigBean.getPrincipalID();
         final String currentEntryValue = tmpPrincipalConfigBean
-                .getParentsStringFromConfig();
+                .getMembersStringFromConfig();
         if (StringUtils.isNotBlank(currentEntryValue)) {
             if (currentEntryValue != null) {
 
@@ -104,7 +104,7 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
                     }
                 }
 
-                tmpPrincipalConfigBean.setParents(groups);
+                tmpPrincipalConfigBean.setMembers(groups);
 
             }
         }

@@ -32,7 +32,7 @@ import biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator;
 import biz.netcentric.cq.tools.actool.validators.YamlConfigurationsValidator;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
-import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableParentGroupsValidator;
+import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableMemberGroupsValidator;
 import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
 
 public class YamlConfigurationMerger implements ConfigurationMerger {
@@ -128,9 +128,9 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
                 mergedTemplateConfigs.putAll(mappings);
             }
         }
-        // set parent groups
-        final AuthorizableParentGroupsValidator parentValidator = new AuthorizableParentGroupsValidator();
-        parentValidator.validate(mergedAuthorizablesMapfromConfig);
+        // set member groups
+        final AuthorizableMemberGroupsValidator membersValidator = new AuthorizableMemberGroupsValidator();
+        membersValidator.validate(mergedAuthorizablesMapfromConfig);
         c.add(mergedAuthorizablesMapfromConfig);
         c.add(mergedAceMapFromConfig);
         c.add(mergedTemplateConfigs);

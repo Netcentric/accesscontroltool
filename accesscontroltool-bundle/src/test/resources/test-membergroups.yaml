@@ -10,24 +10,24 @@
 
     - groupA:
        - name: 
-         memberOf: 
+         isMemberOf: 
          path: /home/groups/g
          
     - groupB:
        - name: 
-         memberOf:
-         parent: groupA 
+         isMemberOf:
+         members: groupA 
          path: /home/groups/g
          
     - groupC:
        - name: 
-         memberOf:
-         parent: groupA,groupB 
+         isMemberOf:
+         members: groupA,groupB 
          path: /home/groups/g
          
     - groupD:
        - name: 
-         memberOf:
-         parent: groupA, groupB
+         isMemberOf:
+         members: groupA, groupB
          path: /home/groups/g
          

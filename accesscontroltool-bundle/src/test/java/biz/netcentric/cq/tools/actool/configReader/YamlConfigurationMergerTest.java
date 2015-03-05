@@ -23,8 +23,8 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
 public class YamlConfigurationMergerTest {
 
     @Test
-    public void testParentGroups() throws IOException, RepositoryException, AcConfigBeanValidationException {
-        final String config = YamlConfigReaderTest.getTestConfigAsString("test-parentgroups.yaml");
+    public void testMemberGroups() throws IOException, RepositoryException, AcConfigBeanValidationException {
+        final String config = YamlConfigReaderTest.getTestConfigAsString("test-membergroups.yaml");
         final ConfigReader reader = new YamlConfigReader();
         final ConfigurationMerger merger = new YamlConfigurationMerger();
         final Map<String, String> configs = new HashMap<String, String>();

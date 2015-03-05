@@ -11,5 +11,5 @@
     - groupA:
 
        - name: 
-         memberOf: 
+         isMemberOf: 
          path: /home/groups/g

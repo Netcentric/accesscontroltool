@@ -228,13 +228,13 @@ public class YamlConfigReaderTest {
     }
 
     @Test
-    public void testParentGroups() throws IOException, AcConfigBeanValidationException, RepositoryException {
+    public void testMemberGroups() throws IOException, AcConfigBeanValidationException, RepositoryException {
         final YamlConfigReader yamlConfigReader = new YamlConfigReader();
-        final List<LinkedHashMap> yamlList = getYamlList("test-parentgroups.yaml");
+        final List<LinkedHashMap> yamlList = getYamlList("test-membergroups.yaml");
         final Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
         assertEquals("Number of groups", 4, groups.size());
-        assertEquals("", groups.get("groupA").iterator().next().getParentsStringFromConfig());
-        assertEquals("groupA", groups.get("groupB").iterator().next().getParentsStringFromConfig());
+        assertEquals("", groups.get("groupA").iterator().next().getMembersStringFromConfig());
+        assertEquals("groupA", groups.get("groupB").iterator().next().getMembersStringFromConfig());
     }
 
     private List<LinkedHashMap> getYamlList(final String filename) throws IOException {

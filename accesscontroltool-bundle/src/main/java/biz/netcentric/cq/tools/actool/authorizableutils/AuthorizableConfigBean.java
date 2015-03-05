@@ -25,8 +25,8 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private String[] memberOf;
     String memberOfStringFromConfig;
 
-    private String[] parents;
-    String parentsStringFromConfig;
+    private String[] members;
+    String membersStringFromConfig;
 
     private String description;
     private String path;
@@ -54,8 +54,8 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.memberOfStringFromConfig = memberOfString;
     }
 
-    public void setParentsString(final String parentsString) {
-        this.parentsStringFromConfig = parentsString;
+    public void setMembersString(final String membersString) {
+        this.membersStringFromConfig = membersString;
     }
 
     public boolean isGroup() {
@@ -134,29 +134,29 @@ public class AuthorizableConfigBean implements AcDumpElement {
         }
     }
 
-    public String getParentsStringFromConfig() {
-        return this.parentsStringFromConfig;
+    public String getMembersStringFromConfig() {
+        return this.membersStringFromConfig;
     }
 
-    public String getParentsString() {
-        if (parents == null) {
+    public String getMembersString() {
+        if (members == null) {
             return "";
         }
 
-        final StringBuilder parentsString = new StringBuilder();
+        final StringBuilder membersString = new StringBuilder();
 
-        for (final String group : parents) {
-            parentsString.append(group).append(",");
+        for (final String group : members) {
+            membersString.append(group).append(",");
         }
-        return StringUtils.chop(parentsString.toString());
+        return StringUtils.chop(membersString.toString());
     }
 
-    public String[] getParents() {
-        return parents;
+    public String[] getMembers() {
+        return members;
     }
 
-    public void setParents(final String[] parents) {
-        this.parents = parents;
+    public void setMembers(final String[] members) {
+        this.members = members;
     }
 
     public String getDescription() {
@@ -183,7 +183,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
         sb.append("description: " + this.description + "\n");
         sb.append("path: " + this.path + "\n");
         sb.append("memberOf: " + this.getMemberOfString() + "\n");
-        sb.append("parents: " + this.getParentsString() + "\n");
+        sb.append("members: " + this.getMembersString() + "\n");
         return sb.toString();
     }
 

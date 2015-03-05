@@ -46,19 +46,19 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
 @Component(metatype = true, label = "AC Yaml Config Reader", description = "Service that installs groups & ACEs according to textual configuration files")
 public class YamlConfigReader implements ConfigReader {
 
-    private final String ACE_CONFIG_PROPERTY_GLOB = "repGlob";
-    private final String ACE_CONFIG_PROPERTY_PERMISSION = "permission";
-    private final String ACE_CONFIG_PROPERTY_PRIVILEGES = "privileges";
-    private final String ACE_CONFIG_PROPERTY_ACTIONS = "actions";
-    private final String ACE_CONFIG_PROPERTY_PATH = "path";
-    private final String ACE_CONFIG_PROPERTY_FOR = "for";
+    private static final String ACE_CONFIG_PROPERTY_GLOB = "repGlob";
+    private static final String ACE_CONFIG_PROPERTY_PERMISSION = "permission";
+    private static final String ACE_CONFIG_PROPERTY_PRIVILEGES = "privileges";
+    private static final String ACE_CONFIG_PROPERTY_ACTIONS = "actions";
+    private static final String ACE_CONFIG_PROPERTY_PATH = "path";
+    private static final String ACE_CONFIG_PROPERTY_FOR = "for";
 
-    private final String GROUP_CONFIG_PROPERTY_MEMBER_OF = "memberOf";
-    private final String GROUP_CONFIG_PROPERTY_PARENT = "parent";
-    private final String GROUP_CONFIG_PROPERTY_PATH = "path";
-    private final String GROUP_CONFIG_PROPERTY_IS_GROUP = "isGroup";
-    private final String GROUP_CONFIG_PROPERTY_PASSWORD = "password";
-    private final String GROUP_CONFIG_PROPERTY_NAME = "name";
+    private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF = "isMemberOf";
+    private static final String GROUP_CONFIG_PROPERTY_MEMBERS = "members";
+    private static final String GROUP_CONFIG_PROPERTY_PATH = "path";
+    private static final String GROUP_CONFIG_PROPERTY_IS_GROUP = "isGroup";
+    private static final String GROUP_CONFIG_PROPERTY_PASSWORD = "password";
+    private static final String GROUP_CONFIG_PROPERTY_NAME = "name";
 
     // FIXME: This class should not depend on Sling
     @Reference
@@ -494,8 +494,8 @@ public class YamlConfigReader implements ConfigReader {
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_NAME));
         authorizableConfigBean.setMemberOfString(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBER_OF));
-        authorizableConfigBean.setParentsString(getMapValueAsString(
-                currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_PARENT));
+        authorizableConfigBean.setMembersString(getMapValueAsString(
+                currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBERS));
         authorizableConfigBean.setPath(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_PATH));
         authorizableConfigBean.setIsGroup(true);
