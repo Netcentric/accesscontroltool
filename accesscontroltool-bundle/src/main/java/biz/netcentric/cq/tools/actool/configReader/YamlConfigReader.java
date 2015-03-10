@@ -9,7 +9,6 @@
 package biz.netcentric.cq.tools.actool.configReader;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,34 +35,31 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
-import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
-import biz.netcentric.cq.tools.actool.validators.Validators;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
-import biz.netcentric.cq.tools.actool.validators.exceptions.DoubledDefinedActionException;
-import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidActionException;
-import biz.netcentric.cq.tools.actool.validators.exceptions.TooManyActionsException;
 
 @Service
 @Component(metatype = true, label = "AC Yaml Config Reader", description = "Service that installs groups & ACEs according to textual configuration files")
 public class YamlConfigReader implements ConfigReader {
 
-    private final String ACE_CONFIG_PROPERTY_GLOB = "repGlob";
-    private final String ACE_CONFIG_PROPERTY_PERMISSION = "permission";
-    private final String ACE_CONFIG_PROPERTY_PRIVILEGES = "privileges";
-    private final String ACE_CONFIG_PROPERTY_ACTIONS = "actions";
-    private final String ACE_CONFIG_PROPERTY_PATH = "path";
-    private final String ACE_CONFIG_PROPERTY_FOR = "for";
+    private static final String ACE_CONFIG_PROPERTY_GLOB = "repGlob";
+    private static final String ACE_CONFIG_PROPERTY_PERMISSION = "permission";
+    private static final String ACE_CONFIG_PROPERTY_PRIVILEGES = "privileges";
+    private static final String ACE_CONFIG_PROPERTY_ACTIONS = "actions";
+    private static final String ACE_CONFIG_PROPERTY_PATH = "path";
+    private static final String ACE_CONFIG_PROPERTY_FOR = "for";
 
-    private final String GROUP_CONFIG_PROPERTY_MEMBER_OF = "memberOf";
-    private final String GROUP_CONFIG_PROPERTY_PATH = "path";
-    private final String GROUP_CONFIG_PROPERTY_IS_GROUP = "isGroup";
-    private final String GROUP_CONFIG_PROPERTY_PASSWORD = "password";
-    private final String GROUP_CONFIG_PROPERTY_NAME = "name";
+    private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF = "isMemberOf";
+    private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY = "memberOf";
+    private static final String GROUP_CONFIG_PROPERTY_MEMBERS = "members";
+    private static final String GROUP_CONFIG_PROPERTY_PATH = "path";
+    private static final String GROUP_CONFIG_PROPERTY_IS_GROUP = "isGroup";
+    private static final String GROUP_CONFIG_PROPERTY_PASSWORD = "password";
+    private static final String GROUP_CONFIG_PROPERTY_NAME = "name";
 
     // FIXME: This class should not depend on Sling
     @Reference
@@ -76,19 +72,17 @@ public class YamlConfigReader implements ConfigReader {
     /*
      * (non-Javadoc)
      * 
-     * @see
-     * biz.netcentric.cq.tools.actool.helper.ConfigReader#getAceConfigurationBeans
-     * (javax.jcr.Session, java.util.List, java.util.Set,
+     * @see biz.netcentric.cq.tools.actool.helper.ConfigReader#getAceConfigurationBeans (javax.jcr.Session, java.util.List, java.util.Set,
      * biz.netcentric.cq.tools.actool.validators.AceBeanValidator)
      */
     @Override
     @SuppressWarnings("rawtypes")
     public Map<String, Set<AceBean>> getAceConfigurationBeans(
-            final Collection<?> aceConfigData, Set<String> groupsFromConfig,
-            AceBeanValidator aceBeanValidator) throws RepositoryException,
+            final Collection<?> aceConfigData, final Set<String> groupsFromConfig,
+            final AceBeanValidator aceBeanValidator) throws RepositoryException,
             AcConfigBeanValidationException {
 
-        List<LinkedHashMap> aclList = (List<LinkedHashMap>) getConfigSection(
+        final List<LinkedHashMap> aclList = (List<LinkedHashMap>) getConfigSection(
                 Constants.ACE_CONFIGURATION_KEY, aceConfigData);
 
         if (aclList == null) {
@@ -96,7 +90,7 @@ public class YamlConfigReader implements ConfigReader {
             return null;
         }
 
-        Map<String, Set<AceBean>> aceMapFromConfig = getPreservedOrderdAceMap(
+        final Map<String, Set<AceBean>> aceMapFromConfig = getPreservedOrderdAceMap(
                 aclList, groupsFromConfig, aceBeanValidator); // group based Map
                                                               // from config
                                                               // file
@@ -107,17 +101,16 @@ public class YamlConfigReader implements ConfigReader {
     /*
      * (non-Javadoc)
      * 
-     * @see biz.netcentric.cq.tools.actool.helper.ConfigReader#
-     * getAuthorizableConfigurationBeans(java.util.List,
+     * @see biz.netcentric.cq.tools.actool.helper.ConfigReader# getAuthorizableConfigurationBeans(java.util.List,
      * biz.netcentric.cq.tools.actool.validators.AuthorizableValidator)
      */
     @Override
     public Map<String, Set<AuthorizableConfigBean>> getGroupConfigurationBeans(
             final Collection yamlList,
-            AuthorizableValidator authorizableValidator)
+            final AuthorizableValidator authorizableValidator)
             throws AcConfigBeanValidationException {
 
-        List<LinkedHashMap> authorizableList = (List<LinkedHashMap>) getConfigSection(
+        final List<LinkedHashMap> authorizableList = (List<LinkedHashMap>) getConfigSection(
                 Constants.GROUP_CONFIGURATION_KEY, yamlList);
 
         if (authorizableList == null) {
@@ -125,16 +118,16 @@ public class YamlConfigReader implements ConfigReader {
             return null;
         }
 
-        Map<String, Set<AuthorizableConfigBean>> principalsMap = getAuthorizablesMap(
+        final Map<String, Set<AuthorizableConfigBean>> principalsMap = getAuthorizablesMap(
                 authorizableList, authorizableValidator);
         return principalsMap;
     }
 
     private Collection getConfigSection(final String sectionName,
             final Collection yamlList) {
-        List<LinkedHashMap<?, ?>> yamList = new ArrayList<LinkedHashMap<?, ?>>(
+        final List<LinkedHashMap<?, ?>> yamList = new ArrayList<LinkedHashMap<?, ?>>(
                 yamlList);
-        for (LinkedHashMap<?, ?> currMap : yamList) {
+        for (final LinkedHashMap<?, ?> currMap : yamList) {
             if (sectionName.equals(currMap.keySet().iterator().next())) {
                 return (List<LinkedHashMap>) currMap.get(sectionName);
             }
@@ -144,8 +137,8 @@ public class YamlConfigReader implements ConfigReader {
 
     @Override
     public Map<String, LinkedHashSet<AuthorizableConfigBean>> getUserConfigurationBeans(
-            Collection<?> userConfigData,
-            AuthorizableValidator authorizableValidator)
+            final Collection<?> userConfigData,
+            final AuthorizableValidator authorizableValidator)
             throws AcConfigBeanValidationException {
         // TODO Auto-generated method stub
         return null;
@@ -154,35 +147,34 @@ public class YamlConfigReader implements ConfigReader {
     /*
      * (non-Javadoc)
      * 
-     * @see
-     * biz.netcentric.cq.tools.actool.helper.ConfigReader#getAuthorizablesMap
-     * (java.util.List,
+     * @see biz.netcentric.cq.tools.actool.helper.ConfigReader#getAuthorizablesMap (java.util.List,
      * biz.netcentric.cq.tools.actool.validators.AuthorizableValidator)
      */
 
     private Map<String, Set<AuthorizableConfigBean>> getAuthorizablesMap(
             final List<LinkedHashMap> yamlMap,
-            AuthorizableValidator authorizableValidator)
+            final AuthorizableValidator authorizableValidator)
             throws AcConfigBeanValidationException {
-        Set<String> alreadyProcessedGroups = new HashSet<String>();
-        Map<String, Set<AuthorizableConfigBean>> principalMap = new LinkedHashMap<String, Set<AuthorizableConfigBean>>();
+        final Set<String> alreadyProcessedGroups = new HashSet<String>();
+        final Map<String, Set<AuthorizableConfigBean>> principalMap = new LinkedHashMap<String, Set<AuthorizableConfigBean>>();
 
         if (yamlMap == null) {
             return principalMap;
         }
-        Session session = null;
+        final Session session = null;
 
-        for (LinkedHashMap currentMap : yamlMap) {
+        for (final LinkedHashMap currentMap : yamlMap) {
 
-            String currentPrincipal = (String) currentMap.keySet().iterator()
+            final String currentPrincipal = (String) currentMap.keySet().iterator()
                     .next();
 
-            Matcher matcher = forLoopPattern.matcher(currentPrincipal);
+            final Matcher matcher = forLoopPattern.matcher(currentPrincipal);
             if (matcher.find()) {
                 LOG.info("Principal name {} matches FOR loop pattern. Unrolling {}", currentPrincipal, currentMap.get(currentPrincipal));
-                List<AuthorizableConfigBean> groups = unrollGroupForLoop(currentPrincipal, (List<Map<String, ?>>) currentMap.get(currentPrincipal), new HashMap<String, String>());
-                for (AuthorizableConfigBean group : groups) {
-                    String principal = group.getPrincipalID();
+                final List<AuthorizableConfigBean> groups = unrollGroupForLoop(currentPrincipal, (List<Map<String, ?>>) currentMap.get(currentPrincipal),
+                        new HashMap<String, String>());
+                for (final AuthorizableConfigBean group : groups) {
+                    final String principal = group.getPrincipalID();
                     if (!alreadyProcessedGroups.add(principal)) {
                         throw new IllegalArgumentException(
                                 "There is more than one group definition for group: "
@@ -191,12 +183,12 @@ public class YamlConfigReader implements ConfigReader {
                     if (authorizableValidator != null) {
                         authorizableValidator.validate(group);
                     }
-                    Set<AuthorizableConfigBean> tmpSet = new LinkedHashSet<AuthorizableConfigBean>();
+                    final Set<AuthorizableConfigBean> tmpSet = new LinkedHashSet<AuthorizableConfigBean>();
                     tmpSet.add(group);
                     principalMap.put(principal, tmpSet);
                 }
             } else {
-    
+
                 if (!alreadyProcessedGroups.add(currentPrincipal)) {
                     throw new IllegalArgumentException(
                             "There is more than one group definition for group: "
@@ -204,17 +196,17 @@ public class YamlConfigReader implements ConfigReader {
                 }
                 LOG.info("start reading group configuration");
                 LOG.info("Found principal: {} in config", currentPrincipal);
-    
-                LinkedHashSet<AuthorizableConfigBean> tmpSet = new LinkedHashSet<AuthorizableConfigBean>();
+
+                final LinkedHashSet<AuthorizableConfigBean> tmpSet = new LinkedHashSet<AuthorizableConfigBean>();
                 principalMap.put(currentPrincipal, tmpSet);
-    
-                List<Map<String, String>> currentPrincipalData = (List<Map<String, String>>) currentMap
+
+                final List<Map<String, String>> currentPrincipalData = (List<Map<String, String>>) currentMap
                         .get(currentPrincipal);
-    
+
                 if (currentPrincipalData != null && !currentPrincipalData.isEmpty()) {
-    
-                    for (Map<String, String> currentPrincipalDataMap : currentPrincipalData) {
-                        AuthorizableConfigBean tmpPrincipalConfigBean = new AuthorizableConfigBean();
+
+                    for (final Map<String, String> currentPrincipalDataMap : currentPrincipalData) {
+                        final AuthorizableConfigBean tmpPrincipalConfigBean = new AuthorizableConfigBean();
                         setupAuthorizableBean(tmpPrincipalConfigBean,
                                 currentPrincipalDataMap, (String) currentPrincipal);
                         if (authorizableValidator != null) {
@@ -232,14 +224,14 @@ public class YamlConfigReader implements ConfigReader {
 
     private Map<String, Set<AceBean>> getPreservedOrderdAceMap(
             final List<LinkedHashMap> aceYamlList,
-            Set<String> groupsFromCurrentConfig,
-            AceBeanValidator aceBeanValidator) throws RepositoryException,
+            final Set<String> groupsFromCurrentConfig,
+            final AceBeanValidator aceBeanValidator) throws RepositoryException,
             AcConfigBeanValidationException {
 
         // stores the names of groups for which the ACEs already have been
         // processed in order to detect doubled defined groups
-        Set<String> alreadyProcessedGroups = new HashSet<String>();
-        Map<String, Set<AceBean>> aceMap = new LinkedHashMap<String, Set<AceBean>>();
+        final Set<String> alreadyProcessedGroups = new HashSet<String>();
+        final Map<String, Set<AceBean>> aceMap = new LinkedHashMap<String, Set<AceBean>>();
 
         if (aceYamlList == null) {
             return aceMap;
@@ -249,58 +241,58 @@ public class YamlConfigReader implements ConfigReader {
             if (repository != null) {
                 session = repository.loginAdministrative(null);
             }
-            for (Map<String, List<Map<String, ?>>> currentPrincipalAceMap : aceYamlList) {
+            for (final Map<String, List<Map<String, ?>>> currentPrincipalAceMap : aceYamlList) {
 
-                String principalName = (String) currentPrincipalAceMap.keySet()
+                final String principalName = (String) currentPrincipalAceMap.keySet()
                         .iterator().next();
 
-                Matcher matcher = forLoopPattern.matcher(principalName);
+                final Matcher matcher = forLoopPattern.matcher(principalName);
                 if (matcher.find()) {
                     LOG.info("Principal name {} matches FOR loop pattern. Unrolling {}", principalName, currentPrincipalAceMap.get(principalName));
-                    List<AceBean> aces = unrollAceForLoop(principalName, currentPrincipalAceMap.get(principalName), new HashMap<String, String>());
-                    for (AceBean ace : aces) {
+                    final List<AceBean> aces = unrollAceForLoop(principalName, currentPrincipalAceMap.get(principalName), new HashMap<String, String>());
+                    for (final AceBean ace : aces) {
                         if (aceMap.get(ace.getPrincipalName()) == null) {
-                            Set<AceBean> tmpSet = new LinkedHashSet<AceBean>();
+                            final Set<AceBean> tmpSet = new LinkedHashSet<AceBean>();
                             aceMap.put(ace.getPrincipalName(), tmpSet);
                         }
                         aceMap.get(ace.getPrincipalName()).add(ace);
                     }
                 } else {
-                    List<Map<String, ?>> aceDefinitions = currentPrincipalAceMap.get(principalName);
-                    
+                    final List<Map<String, ?>> aceDefinitions = currentPrincipalAceMap.get(principalName);
+
                     LOG.info("start reading ACE configuration of authorizable: {}",
                             principalName);
-                    
+
                     // if current principal is not yet in map, add new key and empty
                     // set for storing the pricipals ACE beans
                     if (aceMap.get(principalName) == null) {
-                        Set<AceBean> tmpSet = new LinkedHashSet<AceBean>();
+                        final Set<AceBean> tmpSet = new LinkedHashSet<AceBean>();
                         aceMap.put(principalName, tmpSet);
                     }
-    
+
                     if (aceDefinitions == null || aceDefinitions.isEmpty()) {
                         LOG.warn("no ACE definition(s) found for autorizable: {}",
                                 principalName);
                         continue;
                     }
-    
+
                     // create ACE bean and populate it according to the properties
                     // in the config
-    
+
                     if (aceBeanValidator != null) {
                         aceBeanValidator.setCurrentAuthorizableName(principalName);
                     }
-    
-                    for (Map<String, ?> currentAceDefinition : aceDefinitions) {
-                        AceBean newAceBean = new AceBean();
+
+                    for (final Map<String, ?> currentAceDefinition : aceDefinitions) {
+                        final AceBean newAceBean = new AceBean();
                         setupAceBean(principalName, currentAceDefinition,
                                 newAceBean);
                         if (aceBeanValidator != null) {
                             aceBeanValidator.validate(newAceBean, session.getAccessControlManager());
                         }
-    
+
                         // --- handle wildcards ---
-    
+
                         if (newAceBean.getJcrPath() != null
                                 && newAceBean.getJcrPath().contains("*")
                                 && null != session) {
@@ -320,46 +312,46 @@ public class YamlConfigReader implements ConfigReader {
         }
     }
 
-    private Pattern forLoopPattern = Pattern.compile("for (\\w+) in \\[([,/\\s\\w]+)\\]", Pattern.CASE_INSENSITIVE);
+    private final Pattern forLoopPattern = Pattern.compile("for (\\w+) in \\[([,/\\s\\w]+)\\]", Pattern.CASE_INSENSITIVE);
 
-    protected List<AceBean> unrollAceForLoop(String forSpec, List<Map<String, ?>> groups, Map<String, String> substitutions) {
-        List<AceBean> beans = new LinkedList<AceBean>();
-        Matcher matcher = forLoopPattern.matcher(forSpec);
+    protected List<AceBean> unrollAceForLoop(final String forSpec, final List<Map<String, ?>> groups, final Map<String, String> substitutions) {
+        final List<AceBean> beans = new LinkedList<AceBean>();
+        final Matcher matcher = forLoopPattern.matcher(forSpec);
         if (matcher.find()) {
-            String var = matcher.group(1);
-            String in = matcher.group(2);
-            String[] values = in.split(",\\s+");
+            final String var = matcher.group(1);
+            final String in = matcher.group(2);
+            final String[] values = in.split(",\\s+");
             // Looping over values in FOR statement
-            for (String value : values) {
+            for (final String value : values) {
                 // Replace variables in config
-                String regex = "\\$\\{" + var + "}";
+                final String regex = "\\$\\{" + var + "}";
                 // Looping over groups
-                for (Map<String, ?> group : groups) {
-                    String key = group.keySet().iterator().next();
-                    Matcher matcher2 = forLoopPattern.matcher(key);
+                for (final Map<String, ?> group : groups) {
+                    final String key = group.keySet().iterator().next();
+                    final Matcher matcher2 = forLoopPattern.matcher(key);
                     if (matcher2.find()) {
-                        substitutions.put(regex,  value);
+                        substitutions.put(regex, value);
                         LOG.info("Detected nested loop {}. Unrolling with {}", key, substitutions);
-                        List<AceBean> nestedAces = unrollAceForLoop(key, (List<Map<String, ?>>) group.get(key), substitutions);
+                        final List<AceBean> nestedAces = unrollAceForLoop(key, (List<Map<String, ?>>) group.get(key), substitutions);
                         beans.addAll(nestedAces);
                     } else {
                         String principalName = key.replaceAll(regex, value.trim());
-                        for (String sub : substitutions.keySet()) {
+                        for (final String sub : substitutions.keySet()) {
                             principalName = principalName.replaceAll(sub, substitutions.get(sub).trim());
                         }
-                        List<Map<String, ?>> aces = (List<Map<String, ?>>) group.get(key);
+                        final List<Map<String, ?>> aces = (List<Map<String, ?>>) group.get(key);
                         // Looping over ACEs for group
-                        for (Map<String, ?> ace : aces) {
-                            Map<String, String> unrolledGroup = new HashMap<String, String>();
-                            AceBean newAceBean = new AceBean();
+                        for (final Map<String, ?> ace : aces) {
+                            final Map<String, String> unrolledGroup = new HashMap<String, String>();
+                            final AceBean newAceBean = new AceBean();
                             // Looping over property values and child objects
-                            for (String key2 : ace.keySet()) {
-                                Object val = ace.get(key2);
+                            for (final String key2 : ace.keySet()) {
+                                final Object val = ace.get(key2);
                                 if (val == null) {
                                     unrolledGroup.put(key2, null);
                                 } else if (val instanceof String) {
                                     String newVal = ((String) val).replaceAll(regex, value.trim());
-                                    for (String sub : substitutions.keySet()) {
+                                    for (final String sub : substitutions.keySet()) {
                                         newVal = newVal.replaceAll(sub, substitutions.get(sub).trim());
                                     }
                                     unrolledGroup.put(key2, newVal);
@@ -377,44 +369,44 @@ public class YamlConfigReader implements ConfigReader {
         return beans;
     }
 
-    protected List<AuthorizableConfigBean> unrollGroupForLoop(String forSpec, List<Map<String, ?>> groups, Map<String, String> substitutions) {
-        List<AuthorizableConfigBean> beans = new LinkedList<AuthorizableConfigBean>();
-        Matcher matcher = forLoopPattern.matcher(forSpec);
+    protected List<AuthorizableConfigBean> unrollGroupForLoop(final String forSpec, final List<Map<String, ?>> groups, final Map<String, String> substitutions) {
+        final List<AuthorizableConfigBean> beans = new LinkedList<AuthorizableConfigBean>();
+        final Matcher matcher = forLoopPattern.matcher(forSpec);
         if (matcher.find()) {
-            String var = matcher.group(1);
-            String in = matcher.group(2);
-            String[] values = in.split(",\\s+");
+            final String var = matcher.group(1);
+            final String in = matcher.group(2);
+            final String[] values = in.split(",\\s+");
             // Looping over values in FOR statement
-            for (String value : values) {
+            for (final String value : values) {
                 // Replace variables in config
-                String regex = "\\$\\{" + var + "}";
+                final String regex = "\\$\\{" + var + "}";
                 // Looping over groups
-                for (Map<String, ?> group : groups) {
-                    String key = group.keySet().iterator().next();
-                    Matcher matcher2 = forLoopPattern.matcher(key);
+                for (final Map<String, ?> group : groups) {
+                    final String key = group.keySet().iterator().next();
+                    final Matcher matcher2 = forLoopPattern.matcher(key);
                     if (matcher2.find()) {
-                        substitutions.put(regex,  value);
+                        substitutions.put(regex, value);
                         LOG.info("Detected nested loop {}. Unrolling with {}", key, substitutions);
-                        List<AuthorizableConfigBean> nestedGroups = unrollGroupForLoop(key, (List<Map<String, ?>>) group.get(key), substitutions);
+                        final List<AuthorizableConfigBean> nestedGroups = unrollGroupForLoop(key, (List<Map<String, ?>>) group.get(key), substitutions);
                         beans.addAll(nestedGroups);
                     } else {
                         String principalName = key.replaceAll(regex, value.trim());
-                        for (String sub : substitutions.keySet()) {
+                        for (final String sub : substitutions.keySet()) {
                             principalName = principalName.replaceAll(sub, substitutions.get(sub).trim());
                         }
-                        List<Map<String, ?>> groupMaps = (List<Map<String, ?>>) group.get(key);
+                        final List<Map<String, ?>> groupMaps = (List<Map<String, ?>>) group.get(key);
                         // Looping over ACEs for group
-                        for (Map<String, ?> props : groupMaps) {
-                            Map<String, String> unrolledGroup = new HashMap<String, String>();
-                            AuthorizableConfigBean newGroupBean = new AuthorizableConfigBean();
+                        for (final Map<String, ?> props : groupMaps) {
+                            final Map<String, String> unrolledGroup = new HashMap<String, String>();
+                            final AuthorizableConfigBean newGroupBean = new AuthorizableConfigBean();
                             // Looping over property values and child objects
-                            for (String key2 : props.keySet()) {
-                                Object val = props.get(key2);
+                            for (final String key2 : props.keySet()) {
+                                final Object val = props.get(key2);
                                 if (val == null) {
                                     unrolledGroup.put(key2, null);
                                 } else if (val instanceof String) {
                                     String newVal = ((String) val).replaceAll(regex, value.trim());
-                                    for (String sub : substitutions.keySet()) {
+                                    for (final String sub : substitutions.keySet()) {
                                         newVal = newVal.replaceAll(sub, substitutions.get(sub).trim());
                                     }
                                     unrolledGroup.put(key2, newVal);
@@ -433,25 +425,25 @@ public class YamlConfigReader implements ConfigReader {
     }
 
     private void handleWildcards(final Session session,
-            Map<String, Set<AceBean>> aceMap, String principal,
-            AceBean tmpAclBean) throws InvalidQueryException,
+            final Map<String, Set<AceBean>> aceMap, final String principal,
+            final AceBean tmpAclBean) throws InvalidQueryException,
             RepositoryException {
         // perform query using the path containing wildcards
-        String query = "/jcr:root" + tmpAclBean.getJcrPath();
-        Set<Node> result = QueryHelper.getNodes(session, query);
+        final String query = "/jcr:root" + tmpAclBean.getJcrPath();
+        final Set<Node> result = QueryHelper.getNodes(session, query);
 
         // if there are nodes in repository matching the wildcard-query
         // replace the bean holding the wildcard path by beans having the found
         // paths
-        Set<AceBean> replaceBeans = new HashSet<AceBean>();
+        final Set<AceBean> replaceBeans = new HashSet<AceBean>();
 
         if (result.isEmpty()) {
             return;
         }
-        for (Node node : result) {
+        for (final Node node : result) {
             // ignore rep:policy nodes
             if (!node.getPath().contains("/rep:policy")) {
-                AceBean replacementBean = new AceBean();
+                final AceBean replacementBean = new AceBean();
                 replacementBean.setJcrPath(node.getPath());
                 replacementBean.setActions(tmpAclBean.getActions());
                 replacementBean.setPermission(tmpAclBean.getPermission());
@@ -471,8 +463,8 @@ public class YamlConfigReader implements ConfigReader {
         }
     }
 
-    private void setupAceBean(String principal,
-            Map<String, ?> currentAceDefinition, AceBean tmpAclBean) {
+    private void setupAceBean(final String principal,
+            final Map<String, ?> currentAceDefinition, final AceBean tmpAclBean) {
         tmpAclBean.setPrincipal(principal);
         tmpAclBean.setJcrPath(getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_PROPERTY_PATH));
@@ -489,20 +481,27 @@ public class YamlConfigReader implements ConfigReader {
                 ACE_CONFIG_PROPERTY_ACTIONS)));
     }
 
-    private String[] parseActionsString(String actionsStringFromConfig) {
-        String [] empty = {};
+    private String[] parseActionsString(final String actionsStringFromConfig) {
+        final String[] empty = {};
         return StringUtils.isNotBlank(actionsStringFromConfig) ? actionsStringFromConfig.split(",") : empty;
     }
-    
+
     private void setupAuthorizableBean(
-            AuthorizableConfigBean authorizableConfigBean,
-            Map<String, String> currentPrincipalDataMap,
+            final AuthorizableConfigBean authorizableConfigBean,
+            final Map<String, String> currentPrincipalDataMap,
             final String authorizableId) {
         authorizableConfigBean.setPrincipalID(authorizableId);
         authorizableConfigBean.setAuthorizableName(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_NAME));
         authorizableConfigBean.setMemberOfString(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBER_OF));
+        // read also memberOf property from legacy scripts
+        if (!StringUtils.isEmpty(getMapValueAsString(currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY))) {
+            authorizableConfigBean.setMemberOfString(getMapValueAsString(
+                    currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY));
+        }
+        authorizableConfigBean.setMembersString(getMapValueAsString(
+                currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBERS));
         authorizableConfigBean.setPath(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_PATH));
         authorizableConfigBean.setIsGroup(true);
@@ -522,14 +521,14 @@ public class YamlConfigReader implements ConfigReader {
     }
 
     @SuppressWarnings("unchecked")
-    public Map<String, String> getTemplateConfiguration(Collection<?> configData) {
-        List<Map<?, ?>> templates = (List<Map<?, ?>>) getConfigSection(Constants.TEMPLATE_CONFIGURATION_KEY, configData);
+    public Map<String, String> getTemplateConfiguration(final Collection<?> configData) {
+        final List<Map<?, ?>> templates = (List<Map<?, ?>>) getConfigSection(Constants.TEMPLATE_CONFIGURATION_KEY, configData);
         if (templates == null) {
             LOG.info("Template section missing from configuration file.");
             return null;
         }
-        Map<String, String> templateMappings = new HashMap<String, String>();
-        for (Map<?,  ?> entry : templates) {
+        final Map<String, String> templateMappings = new HashMap<String, String>();
+        for (final Map<?, ?> entry : templates) {
             if (entry.get("path") == null) {
                 LOG.warn("Template configuration entry {} is missing value for path.", entry);
             }

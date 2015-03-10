@@ -12,7 +12,7 @@
     - content-BRAND-reader:
 
        - name: 
-         memberOf: 
+         isMemberOf: 
          path: /home/groups/g
     
     - for brand IN [ BRAND1, BRAND2, BRAND3 ]:
@@ -20,13 +20,13 @@
         - content-${brand}-reader:
 
            - name: 
-             memberOf: 
+             isMemberOf: 
              path: /home/groups/${brand}
 
         - content-${brand}-writer:
 
            - name: 
-             memberOf: 
+             isMemberOf: 
              path: /home/groups/${brand}
          
          
