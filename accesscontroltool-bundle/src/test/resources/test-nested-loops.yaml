@@ -12,7 +12,7 @@
     - content-reader:
 
        - name: 
-         memberOf: 
+         isMemberOf: 
          path: /home/groups/g
     
     - for brand IN [ BRAND1, BRAND2 ]:
@@ -20,13 +20,13 @@
         - content-${brand}-reader:
 
            - name: 
-             memberOf: 
+             isMemberOf: 
              path: /home/groups/${brand}
 
         - content-${brand}-writer:
 
            - name: 
-             memberOf: 
+             isMemberOf: 
              path: /home/groups/${brand}
              
         - for mkt in [ MKT1, MKT2 ]:
@@ -34,13 +34,13 @@
             - content-${brand}-${mkt}-reader:
     
                - name: 
-                 memberOf: 
+                 isMemberOf: 
                  path: /home/groups/${brand}/${mkt}
     
             - content-${brand}-${mkt}-writer:
     
                - name: 
-                 memberOf: 
+                 isMemberOf: 
                  path: /home/groups/${brand}/${mkt}
          
          

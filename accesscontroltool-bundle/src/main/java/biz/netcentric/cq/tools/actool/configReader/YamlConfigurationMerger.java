@@ -32,6 +32,7 @@ import biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator;
 import biz.netcentric.cq.tools.actool.validators.YamlConfigurationsValidator;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
+import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableMemberGroupsValidator;
 import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
 
 public class YamlConfigurationMerger implements ConfigurationMerger {
@@ -41,11 +42,8 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
     /*
      * (non-Javadoc)
      * 
-     * @see biz.netcentric.cq.tools.actool.configReader.ConfigurationMeger#
-     * getMergedConfigurations(java.util.Map,
-     * biz.netcentric.cq.tools.actool.installationhistory
-     * .AcInstallationHistoryPojo,
-     * biz.netcentric.cq.tools.actool.configReader.ConfigReader)
+     * @see biz.netcentric.cq.tools.actool.configReader.ConfigurationMeger# getMergedConfigurations(java.util.Map,
+     * biz.netcentric.cq.tools.actool.installationhistory .AcInstallationHistoryPojo, biz.netcentric.cq.tools.actool.configReader.ConfigReader)
      */
     @Override
     public List getMergedConfigurations(
@@ -53,20 +51,20 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             final AcInstallationHistoryPojo history,
             final ConfigReader configReader) throws RepositoryException,
             AcConfigBeanValidationException {
-        List c = new ArrayList<Map>();
-        Map<String, Set<AuthorizableConfigBean>> mergedAuthorizablesMapfromConfig = new LinkedHashMap<String, Set<AuthorizableConfigBean>>();
-        Map<String, Set<AceBean>> mergedAceMapFromConfig = new LinkedHashMap<String, Set<AceBean>>();
-        Set<String> groupIdsFromAllConfig = new HashSet<String>(); // needed for
-                                                                   // detection
-                                                                   // of doubled
-                                                                   // defined
-                                                                   // groups in
-                                                                   // configurations
-        Map<String, String> mergedTemplateConfigs = new HashMap<String, String>();
-        ConfigurationsValidator configurationsValidator = new YamlConfigurationsValidator();
+        final List c = new ArrayList<Map>();
+        final Map<String, Set<AuthorizableConfigBean>> mergedAuthorizablesMapfromConfig = new LinkedHashMap<String, Set<AuthorizableConfigBean>>();
+        final Map<String, Set<AceBean>> mergedAceMapFromConfig = new LinkedHashMap<String, Set<AceBean>>();
+        final Set<String> groupIdsFromAllConfig = new HashSet<String>(); // needed for
+        // detection
+        // of doubled
+        // defined
+        // groups in
+        // configurations
+        final Map<String, String> mergedTemplateConfigs = new HashMap<String, String>();
+        final ConfigurationsValidator configurationsValidator = new YamlConfigurationsValidator();
 
-        for (Map.Entry<String, String> entry : newestConfigurations.entrySet()) {
-            String message = "start merging configuration data from: "
+        for (final Map.Entry<String, String> entry : newestConfigurations.entrySet()) {
+            final String message = "start merging configuration data from: "
                     + entry.getKey();
 
             configurationsValidator
@@ -74,11 +72,11 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
                             entry.getValue(), entry.getKey());
 
             history.addMessage(message);
-            Yaml yaml = new Yaml();
-            List<LinkedHashMap> yamlList = (List<LinkedHashMap>) yaml
+            final Yaml yaml = new Yaml();
+            final List<LinkedHashMap> yamlList = (List<LinkedHashMap>) yaml
                     .load(entry.getValue());
 
-            Set<String> sectionIdentifiers = new LinkedHashSet<String>();
+            final Set<String> sectionIdentifiers = new LinkedHashSet<String>();
 
             // FIXME: Why doesn't this use YamlConfigReader?
             // put all section identifiers of current configuration into a set
@@ -92,10 +90,10 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
                     entry.getKey(), yamlList);
 
             // build AuthorizableConfigBeans from current configurations
-            AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl();
-            Map<String, Set<AuthorizableConfigBean>> authorizablesMapfromConfig = configReader
+            final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl();
+            final Map<String, Set<AuthorizableConfigBean>> authorizablesMapfromConfig = configReader
                     .getGroupConfigurationBeans(yamlList, authorizableValidator);
-            Set<String> groupIdsFromCurrentConfig = authorizablesMapfromConfig != null ? authorizablesMapfromConfig.keySet() : null;
+            final Set<String> groupIdsFromCurrentConfig = authorizablesMapfromConfig != null ? authorizablesMapfromConfig.keySet() : null;
 
             if (groupIdsFromCurrentConfig != null) {
                 configurationsValidator.validateDoubleGroups(groupIdsFromAllConfig,
@@ -105,9 +103,9 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             }
 
             // build AceBeans from current configuration
-            AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(
+            final AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(
                     groupIdsFromAllConfig);
-            Map<String, Set<AceBean>> aceMapFromConfig = configReader
+            final Map<String, Set<AceBean>> aceMapFromConfig = configReader
                     .getAceConfigurationBeans(yamlList,
                             groupIdsFromAllConfig, aceBeanValidator);
 
@@ -122,14 +120,17 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             if (aceMapFromConfig != null) {
                 mergedAceMapFromConfig.putAll(aceMapFromConfig);
             }
-            
+
             // Add page creation template configs
-            YamlConfigReader yamlConfigReader = new YamlConfigReader();
-            Map<String, String> mappings = yamlConfigReader.getTemplateConfiguration(yamlList);
+            final YamlConfigReader yamlConfigReader = new YamlConfigReader();
+            final Map<String, String> mappings = yamlConfigReader.getTemplateConfiguration(yamlList);
             if (mappings != null) {
                 mergedTemplateConfigs.putAll(mappings);
             }
         }
+        // set member groups
+        final AuthorizableMemberGroupsValidator membersValidator = new AuthorizableMemberGroupsValidator();
+        membersValidator.validate(mergedAuthorizablesMapfromConfig);
         c.add(mergedAuthorizablesMapfromConfig);
         c.add(mergedAceMapFromConfig);
         c.add(mergedTemplateConfigs);

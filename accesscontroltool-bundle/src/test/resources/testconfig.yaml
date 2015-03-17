@@ -11,7 +11,7 @@
     - groupA:
 
        - name: 
-         memberOf: 
+         isMemberOf: 
          path: /home/groups/g
          
          
@@ -19,32 +19,32 @@
     - groupÄ:
 
        - name: 
-         memberOf: 
+         isMemberOf: 
          path: /home/groups/g
          assertedException: InvalidGroupNameException
          
     - group_B:
 
-       - memberOf:
+       - isMemberOf:
          name:
          path: /home/groups/g
          
          
     - group_D:
 
-       - memberOf:
+       - isMemberOf:
          
          
     - group_C:
 
-       - memberOf: group_B
+       - isMemberOf: group_B
          path: /home/groups/g
          
          
-    # invalid memberOf-name name
+    # invalid isMemberOf-name name
     - group_F:
 
-       - memberOf: group_Ö
+       - isMemberOf: group_Ö
          path: /home/groups/g
          assertedException: InvalidGroupNameException
          

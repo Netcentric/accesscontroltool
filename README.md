@@ -33,7 +33,7 @@ For better human readability and easy editing the ACL configuration files use th
 
 <img src="docs/images/configuration-file-structure.png">
 
-Every configuration file comprises a group section where groups and their membership to other groups get defined and a ACE section where all ACEs in the repository regarding these groups get defined. These ACE definitions are again written under the respective group id. The group of an ACE definition in each configuration file has to match a group which is also defined in the same file. Groups which are contained in the memberOf property within a group definition have either to be defined in another configuration file or already be installed in the system on which the installation takes place.
+Every configuration file comprises a group section where groups and their membership to other groups get defined and a ACE section where all ACEs in the repository regarding these groups get defined. These ACE definitions are again written under the respective group id. The group of an ACE definition in each configuration file has to match a group which is also defined in the same file. Groups which are contained in the isMemberOf property within a group definition have either to be defined in another configuration file or already be installed in the system on which the installation takes place.
 
 ## Configuration of groups
 
@@ -41,6 +41,7 @@ A principal record in configuration file starts with the principal id followed b
 
     optional principalname
     comma separated list of other groups which the current principal should belong to
+    comma separated list of other groups which are members of the group
     optional description 
 
 
@@ -50,6 +51,7 @@ Overall format
 [Groupd Id]
      - name: groupname (optional, if empty groupd id is taken)
      - isMemberOf: comma separated list of other groups
+     - members: comma separated list of groups that are member of this group
      - description: (optional, description)
      - path: ?
 ```
@@ -59,9 +61,12 @@ Example
 ```
 isp-editor      
    - isMemberOf: fragment-restrict-for-everyone,fragment-allow-nst
+   - members: editor
 ```
 
-If the memberOf property of a group contains a group which is not yet installed in the repository, this group gets created and its rep:members property gets filled accordingly. if another configuration gets installed having a actual definition for that group the data gets merged into the already existing one.
+If the isMemberOf property of a group contains a group which is not yet installed in the repository, this group gets created and its rep:members property gets filled accordingly. if another configuration gets installed having a actual definition for that group the data gets merged into the already existing one.
+
+The members property contains a list of groups where this group is added as isMemberOf.
 
 ## Configuration of ACEs
 
@@ -136,7 +141,7 @@ For example, the following configuration element:
     - content-${brand}-reader:
 
        - name: 
-         memberOf: 
+         isMemberOf: 
          path: /home/groups/${brand}
 ```
 
@@ -146,19 +151,19 @@ Gets replaced with
     - content-BRAND1-reader:
 
        - name: 
-         memberOf: 
+         isMemberOf: 
          path: /home/groups/BRAND1
 
     - content-BRAND2-reader:
 
        - name: 
-         memberOf: 
+         isMemberOf: 
          path: /home/groups/BRAND2
 
     - content-BRAND3-reader:
 
        - name: 
-         memberOf: 
+         isMemberOf: 
          path: /home/groups/BRAND3
 ```
 
@@ -172,13 +177,13 @@ FOR loops can be nested to any level:
     - content-${brand}-reader:
 
        - name: 
-         memberOf: 
+         isMemberOf: 
          path: /home/groups/${brand}
 
     - content-${brand}-writer:
 
        - name: 
-         memberOf: 
+         isMemberOf: 
          path: /home/groups/${brand}
          
     - for mkt in [ MKT1, MKT2 ]:
@@ -186,13 +191,13 @@ FOR loops can be nested to any level:
         - content-${brand}-${mkt}-reader:
 
            - name: 
-             memberOf: 
+             isMemberOf: 
              path: /home/groups/${brand}/${mkt}
 
         - content-${brand}-${mkt}-writer:
 
            - name: 
-             memberOf: 
+             isMemberOf: 
              path: /home/groups/${brand}/${mkt}
 ```
 

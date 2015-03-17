@@ -9,16 +9,25 @@
 - group_config:
 
     - groupA:
-
        - name: 
          isMemberOf: 
          path: /home/groups/g
          
-- ace_config:
-    
-    - groupA:
-    
-        - path: /home/groups/g/groupA
-          actions: read,modify,acl_read
-          permission: allow
-          privileges: rep:userManagement
+    - groupB:
+       - name: 
+         isMemberOf:
+         members: groupA 
+         path: /home/groups/g
+         
+    - groupC:
+       - name: 
+         isMemberOf:
+         members: groupA,groupB 
+         path: /home/groups/g
+         
+    - groupD:
+       - name: 
+         isMemberOf:
+         members: groupA, groupB
+         path: /home/groups/g
+         
