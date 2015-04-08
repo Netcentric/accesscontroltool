@@ -312,7 +312,7 @@ public class YamlConfigReader implements ConfigReader {
         }
     }
 
-    private final Pattern forLoopPattern = Pattern.compile("for (\\w+) in \\[([,/\\s\\w]+)\\]", Pattern.CASE_INSENSITIVE);
+    private final Pattern forLoopPattern = Pattern.compile("for (\\w+) in \\[([,/\\s\\w\\-]+)\\]", Pattern.CASE_INSENSITIVE);
 
     protected List<AceBean> unrollAceForLoop(final String forSpec, final List<Map<String, ?>> groups, final Map<String, String> substitutions) {
         final List<AceBean> beans = new LinkedList<AceBean>();

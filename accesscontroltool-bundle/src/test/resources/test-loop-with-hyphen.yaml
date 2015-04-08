@@ -1,0 +1,66 @@
+#
+# (C) Copyright 2015 Netcentric AG.
+#
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+    
+- group_config:
+
+    - content-BRAND-reader:
+
+       - name: 
+         isMemberOf: 
+         path: /home/groups/g
+    
+    - for brand IN [ BRAND-1, BRAND-2, BRAND-3 ]:
+    
+        - content-${brand}-reader:
+
+           - name: 
+             isMemberOf: 
+             path: /home/groups/${brand}
+
+        - content-${brand}-writer:
+
+           - name: 
+             isMemberOf: 
+             path: /home/groups/${brand}
+         
+         
+- ace_config:
+    
+    - content-BRAND-reader:
+        
+        - path:  /content/BRAND
+          permission: allow
+          actions: read,acl_read
+          privileges: 
+          repGlob:          
+    
+    - for market IN [ MKT-1, MKT-2 ]:
+    
+        - content-BRAND-${market}-reader:
+        
+            - path:  /content/BRAND/${market}
+              permission: allow
+              actions: read,acl_read
+              privileges: 
+              repGlob:          
+    
+        - content-BRAND-${market}-writer:
+        
+            - path:  /content/BRAND/${market}
+              permission: allow
+              actions: read,acl_read, modify, create
+              privileges: 
+              repGlob:
+
+            - path:  /content/BRAND
+              permission: allow
+              actions: read,acl_read
+              privileges: 
+              repGlob:
+              

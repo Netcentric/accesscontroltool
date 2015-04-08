@@ -62,6 +62,20 @@ public class YamlConfigReaderTest {
         assertEquals("Number of ACEs for groupB", 2, group2.size());
     }
 
+    /** See {@link https://github.com/Netcentric/accesscontroltool/issues/14} */
+    @Test
+    public void testLoopWithHyphen() throws IOException, AcConfigBeanValidationException, RepositoryException {
+        final YamlConfigReader yamlConfigReader = new YamlConfigReader();
+        final List<LinkedHashMap> yamlList = getYamlList("test-loop-with-hyphen.yaml");
+        final Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
+        final Map<String, Set<AceBean>> aces = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null);
+        assertEquals("Number of ACEs", 5, aces.size());
+        final Set<AceBean> group1 = aces.get("content-BRAND-MKT-1-reader");
+        assertEquals("Number of ACEs for groupA", 1, group1.size());
+        final Set<AceBean> group2 = aces.get("content-BRAND-MKT-2-writer");
+        assertEquals("Number of ACEs for groupB", 2, group2.size());
+    }
+
     @Test
     public void testNestedLoop() throws IOException, AcConfigBeanValidationException, RepositoryException {
         final YamlConfigReader yamlConfigReader = new YamlConfigReader();
