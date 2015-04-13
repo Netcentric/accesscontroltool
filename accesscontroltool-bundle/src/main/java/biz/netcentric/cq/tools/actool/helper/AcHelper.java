@@ -297,7 +297,7 @@ public class AcHelper {
         return null;
     }
     
-    private static void installBean(final Session session,
+    private static void installBean2(final Session session,
             final AcInstallationHistoryPojo history, AceBean bean,
             Principal currentPrincipal) throws RepositoryException,
             UnsupportedRepositoryOperationException {
@@ -332,6 +332,29 @@ public class AcHelper {
         }
     }
 
+    private static void installBean(final Session session,
+            final AcInstallationHistoryPojo history, AceBean bean,
+            Principal currentPrincipal) throws RepositoryException,
+            UnsupportedRepositoryOperationException {
+        AceBean convertedBean = bean;
+        // Convert actions to permissions, if necessary
+        if (bean.getActions() != null) {
+
+            // install actions
+            history.addVerboseMessage("adding action for path: "
+                    + bean.getJcrPath() + ", principal: "
+                    + currentPrincipal.getName() + ", actions: "
+                    + bean.getActionsString() + ", permission: "
+                    + bean.getPermission());
+            AccessControlUtils.addActions(session, bean, currentPrincipal,
+                    history);
+            convertedBean = CqActionsMapping.getConvertedPrivilegeBean(bean);
+        }
+        AccessControlUtils.installPermissions(session, convertedBean.getJcrPath(),
+                currentPrincipal, convertedBean.isAllow(), convertedBean.getRepGlob(),
+                convertedBean.getPrivileges());
+    }
+    
     /**
      * Method that merges an ACL from configuration in a ACL from CRX both
      * having the same parent. ACEs in CRX belonging to a group which is defined

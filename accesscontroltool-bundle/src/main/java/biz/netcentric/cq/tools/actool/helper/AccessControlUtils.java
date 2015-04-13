@@ -271,7 +271,9 @@ public class AccessControlUtils {
 
         if (actions != null) {
             for (String action : actions) {
-                actionMap.put(action, isAllow);
+                if ("create".equals(action) || "modify".equals(action) || "delete".equals(action)) {
+                    actionMap.put(action, isAllow);
+                }
             }
 
             Collection<String> inheritedAllows = new HashSet<String>();
