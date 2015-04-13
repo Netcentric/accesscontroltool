@@ -363,7 +363,7 @@ public class AccessControlUtils {
                         acl.removeAccessControlEntry(jace);
                         Map<String, Value> restrictions = new HashMap<String, Value>();
 
-                        if (StringUtils.isNotBlank(globString)) {
+                        if (globString != null) {
                             restrictions.put("rep:glob",
                                     vf.createValue(globString));
                             AcHelper.LOG.info("set rep:Glob: {} in path {}",
@@ -382,7 +382,7 @@ public class AccessControlUtils {
                         }
 
                         // exchange old ACE with new one
-                        if (StringUtils.isNotBlank(globString)) {
+                        if (globString != null) {
                             acl.addEntry(
                                     principalManager.getPrincipal(authorizable),
                                     privileges, jace.isAllow(), restrictions);

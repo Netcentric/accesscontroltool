@@ -296,13 +296,11 @@ public class AcHelper {
         LOG.debug("Group '{}' did not have a rep:principalName property", node.getPath());
         return null;
     }
-
+    
     private static void installBean(final Session session,
             final AcInstallationHistoryPojo history, AceBean bean,
             Principal currentPrincipal) throws RepositoryException,
             UnsupportedRepositoryOperationException {
-        AceBean convertedBean = bean;
-        // Convert actions to permissions, if necessary
         if (bean.getActions() != null) {
 
             // install actions
@@ -311,11 +309,27 @@ public class AcHelper {
                     + currentPrincipal.getName() + ", actions: "
                     + bean.getActionsString() + ", permission: "
                     + bean.getPermission());
-            convertedBean = CqActionsMapping.getConvertedPrivilegeBean(bean);
+            AccessControlUtils.addActions(session, bean, currentPrincipal,
+                    history);
+
+            // since CqActions.installActions() doesn't allow to set
+            // jcr:privileges and globbing, this is done in a dedicated step
+
+            if (bean.getRepGlob() != null
+                    || StringUtils.isNotBlank(bean.getPrivilegesString())) {
+                LOG.debug("Installing ACE bean {}", bean);
+                AccessControlUtils.setPermissionAndRestriction(session, bean,
+                        currentPrincipal.getName());
+            } else {
+                LOG.debug("ACE {} has blank repGlob and privileges. Not installing.", bean);
+            }
+
+        } else {
+            LOG.debug("Installing ACE bean {} with no actions", bean);
+            AccessControlUtils.installPermissions(session, bean.getJcrPath(),
+                    currentPrincipal, bean.isAllow(), bean.getRepGlob(),
+                    bean.getPrivileges());
         }
-        AccessControlUtils.installPermissions(session, convertedBean.getJcrPath(),
-                currentPrincipal, convertedBean.isAllow(), convertedBean.getRepGlob(),
-                convertedBean.getPrivileges());
     }
 
     /**
