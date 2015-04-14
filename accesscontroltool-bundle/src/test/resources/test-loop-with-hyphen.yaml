@@ -15,7 +15,7 @@
          isMemberOf: 
          path: /home/groups/g
     
-    - for brand IN [ BRAND1, BRAND2, BRAND3 ]:
+    - for brand IN [ BRAND-1, BRAND-2, BRAND-3 ]:
     
         - content-${brand}-reader:
 
@@ -40,7 +40,7 @@
           privileges: 
           repGlob:          
     
-    - for market IN [ MKT1, MKT2 ]:
+    - for market IN [ MKT-1, MKT-2 ]:
     
         - content-BRAND-${market}-reader:
         

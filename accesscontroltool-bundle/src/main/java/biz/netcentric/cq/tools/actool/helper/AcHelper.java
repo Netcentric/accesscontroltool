@@ -296,6 +296,41 @@ public class AcHelper {
         LOG.debug("Group '{}' did not have a rep:principalName property", node.getPath());
         return null;
     }
+    
+    private static void installBean2(final Session session,
+            final AcInstallationHistoryPojo history, AceBean bean,
+            Principal currentPrincipal) throws RepositoryException,
+            UnsupportedRepositoryOperationException {
+        if (bean.getActions() != null) {
+
+            // install actions
+            history.addVerboseMessage("adding action for path: "
+                    + bean.getJcrPath() + ", principal: "
+                    + currentPrincipal.getName() + ", actions: "
+                    + bean.getActionsString() + ", permission: "
+                    + bean.getPermission());
+            AccessControlUtils.addActions(session, bean, currentPrincipal,
+                    history);
+
+            // since CqActions.installActions() doesn't allow to set
+            // jcr:privileges and globbing, this is done in a dedicated step
+
+            if (bean.getRepGlob() != null
+                    || StringUtils.isNotBlank(bean.getPrivilegesString())) {
+                LOG.debug("Installing ACE bean {}", bean);
+                AccessControlUtils.setPermissionAndRestriction(session, bean,
+                        currentPrincipal.getName());
+            } else {
+                LOG.debug("ACE {} has blank repGlob and privileges. Not installing.", bean);
+            }
+
+        } else {
+            LOG.debug("Installing ACE bean {} with no actions", bean);
+            AccessControlUtils.installPermissions(session, bean.getJcrPath(),
+                    currentPrincipal, bean.isAllow(), bean.getRepGlob(),
+                    bean.getPrivileges());
+        }
+    }
 
     private static void installBean(final Session session,
             final AcInstallationHistoryPojo history, AceBean bean,
@@ -311,13 +346,15 @@ public class AcHelper {
                     + currentPrincipal.getName() + ", actions: "
                     + bean.getActionsString() + ", permission: "
                     + bean.getPermission());
+            AccessControlUtils.addActions(session, bean, currentPrincipal,
+                    history);
             convertedBean = CqActionsMapping.getConvertedPrivilegeBean(bean);
         }
         AccessControlUtils.installPermissions(session, convertedBean.getJcrPath(),
                 currentPrincipal, convertedBean.isAllow(), convertedBean.getRepGlob(),
                 convertedBean.getPrivileges());
     }
-
+    
     /**
      * Method that merges an ACL from configuration in a ACL from CRX both
      * having the same parent. ACEs in CRX belonging to a group which is defined

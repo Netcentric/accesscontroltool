@@ -271,7 +271,9 @@ public class AccessControlUtils {
 
         if (actions != null) {
             for (String action : actions) {
-                actionMap.put(action, isAllow);
+                if ("create".equals(action) || "modify".equals(action) || "delete".equals(action)) {
+                    actionMap.put(action, isAllow);
+                }
             }
 
             Collection<String> inheritedAllows = new HashSet<String>();
@@ -363,7 +365,7 @@ public class AccessControlUtils {
                         acl.removeAccessControlEntry(jace);
                         Map<String, Value> restrictions = new HashMap<String, Value>();
 
-                        if (StringUtils.isNotBlank(globString)) {
+                        if (globString != null) {
                             restrictions.put("rep:glob",
                                     vf.createValue(globString));
                             AcHelper.LOG.info("set rep:Glob: {} in path {}",
@@ -382,7 +384,7 @@ public class AccessControlUtils {
                         }
 
                         // exchange old ACE with new one
-                        if (StringUtils.isNotBlank(globString)) {
+                        if (globString != null) {
                             acl.addEntry(
                                     principalManager.getPrincipal(authorizable),
                                     privileges, jace.isAllow(), restrictions);

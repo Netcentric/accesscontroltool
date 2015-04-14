@@ -8,6 +8,8 @@
  */
 package biz.netcentric.cq.tools.actool.authorizableutils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
@@ -23,6 +25,9 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private String[] memberOf;
     String memberOfStringFromConfig;
 
+    private String[] members;
+    String membersStringFromConfig;
+
     private String description;
     private String path;
     private String password;
@@ -33,7 +38,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
         return assertedExceptionString;
     }
 
-    public void setAssertedExceptionString(String assertedException) {
+    public void setAssertedExceptionString(final String assertedException) {
         this.assertedExceptionString = assertedException;
     }
 
@@ -41,23 +46,27 @@ public class AuthorizableConfigBean implements AcDumpElement {
         return password;
     }
 
-    public void setPassword(String password) {
+    public void setPassword(final String password) {
         this.password = password;
     }
 
-    public void setMemberOfString(String memberOfString) {
+    public void setMemberOfString(final String memberOfString) {
         this.memberOfStringFromConfig = memberOfString;
+    }
+
+    public void setMembersString(final String membersString) {
+        this.membersStringFromConfig = membersString;
     }
 
     public boolean isGroup() {
         return isGroup;
     }
 
-    public void setIsGroup(boolean isGroup) {
+    public void setIsGroup(final boolean isGroup) {
         this.isGroup = isGroup;
     }
 
-    public void memberOf(boolean isGroup) {
+    public void memberOf(final boolean isGroup) {
         this.isGroup = isGroup;
     }
 
@@ -65,7 +74,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
         return principalName;
     }
 
-    public void setAuthorizableName(String principalName) {
+    public void setAuthorizableName(final String principalName) {
         this.principalName = principalName;
     }
 
@@ -94,9 +103,9 @@ public class AuthorizableConfigBean implements AcDumpElement {
             return "";
         }
 
-        StringBuilder memberOfString = new StringBuilder();
+        final StringBuilder memberOfString = new StringBuilder();
 
-        for (String group : memberOf) {
+        for (final String group : memberOf) {
             memberOfString.append(group).append(",");
         }
         return StringUtils.chop(memberOfString.toString());
@@ -110,6 +119,44 @@ public class AuthorizableConfigBean implements AcDumpElement {
         if (memberOf != null && !memberOf.isEmpty()) {
             this.memberOf = memberOf.toArray(new String[memberOf.size()]);
         }
+    }
+
+    public void addMemberOf(final String member) {
+        if (memberOf == null) {
+            memberOf = new String[] { member };
+            return;
+        }
+        final List<String> memberList = new ArrayList<String>();
+        memberList.addAll(Arrays.asList(memberOf));
+        if (!memberList.contains(member)) {
+            memberList.add(member);
+            memberOf = memberList.toArray(new String[memberList.size()]);
+        }
+    }
+
+    public String getMembersStringFromConfig() {
+        return this.membersStringFromConfig;
+    }
+
+    public String getMembersString() {
+        if (members == null) {
+            return "";
+        }
+
+        final StringBuilder membersString = new StringBuilder();
+
+        for (final String group : members) {
+            membersString.append(group).append(",");
+        }
+        return StringUtils.chop(membersString.toString());
+    }
+
+    public String[] getMembers() {
+        return members;
+    }
+
+    public void setMembers(final String[] members) {
+        this.members = members;
     }
 
     public String getDescription() {
@@ -130,17 +177,18 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         sb.append("\n" + "id: " + this.principalID + "\n");
         sb.append("name: " + this.principalName + "\n");
         sb.append("description: " + this.description + "\n");
         sb.append("path: " + this.path + "\n");
         sb.append("memberOf: " + this.getMemberOfString() + "\n");
+        sb.append("members: " + this.getMembersString() + "\n");
         return sb.toString();
     }
 
     @Override
-    public void accept(AcDumpElementVisitor acDumpElementVisitor) {
+    public void accept(final AcDumpElementVisitor acDumpElementVisitor) {
         acDumpElementVisitor.visit(this);
     }
 }
