@@ -3,8 +3,12 @@ actool 1.5 - May 21, 2015
 
 Fixed #15: purgeAllAuthorizablesFromConfigurations() method throws Exception
 
-actool 1.4
-----------
+actool 1.4, April 14th, 2015
+----------------------------
 
 Fixed #13: Restored call to AccessControlUtils.addActions to deal with CQ-specific actions
 Fixed #14: Support hyphens in 'for' loop lists of values.
+
+actool 1.3 March 5th, 2015
+--------------------------
+Added support to set members of a group
