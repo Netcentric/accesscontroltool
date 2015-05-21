@@ -1,0 +1,4 @@
+actool 1.5 - May 21, 2015
+-------------------------
+
+Fixed #15: purgeAllAuthorizablesFromConfigurations() method throws Exception
