@@ -38,6 +38,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Deactivate;
+import org.apache.felix.scr.annotations.Modified;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
@@ -109,11 +111,17 @@ public class AceServiceImpl implements AceService {
     @Activate
     public void activate(@SuppressWarnings("rawtypes") final Map properties)
             throws Exception {
-        this.configurationPath = PropertiesUtil.toString(
-                properties.get(PROPERTY_CONFIGURATION_PATH), "");
-
+        LOG.debug("Activated AceService!");
+    	modified(properties);
     }
-
+    
+    @Modified
+    public void modified(@SuppressWarnings("rawtypes") final Map properties) {
+    	LOG.debug("Modified AceService!");
+    	this.configurationPath = PropertiesUtil.toString(
+                properties.get(PROPERTY_CONFIGURATION_PATH), "");
+    }
+    
     // FIXME: Why is this called installConfigurationFromYamlList if it doesn't use YAML?
     private void installConfigurationFromYamlList(
             final List mergedConfigurations, AcInstallationHistoryPojo history,
