@@ -276,7 +276,7 @@ In general the parent node may specify required Sling run modes being separated 
 E.g. the parent node name ```somename.publish``` will require at least the ```publish``` run mode to be set in order for the YAML children to be installed by the Installation Hook mechanism. The parent node name may also specify multiple required run modes.
 If the parent node name does not contain a dot it will always be installed up (independent of any run modes).
 
-
+Although it is not necessary that the YAML files are covered by the filter rules of the ```filter.xml```, this is recommended practice. That way you can see afterwards in the repository which YAML files have been processed. However if you would not let the ```filter.xml``` cover your YAML files, those files would still be processed by the installation hook.
     
 ## AC Service
     
