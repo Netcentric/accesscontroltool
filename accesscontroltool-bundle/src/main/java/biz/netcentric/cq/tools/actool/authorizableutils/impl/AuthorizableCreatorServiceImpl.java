@@ -133,13 +133,18 @@ public class AuthorizableCreatorServiceImpl implements
         // Since the persistence of the installation should only take place if
         // no error occured and certain test were successful
         // the autosave gets disabled. Therefore an explicit session.save() is
-        // necessary to persist the changes
-        try {
-            userManager.autoSave(false);
-        } catch (UnsupportedRepositoryOperationException e) {
-            // check added for AEM 6.0
-            LOG.warn("disabling autoSave not possible with this user manager!");
+        // necessary to persist the changes.
+        
+        // Try do disable the autosave only in case if changes are automatically persisted
+        if (userManager.isAutoSave()) {
+            try {
+                userManager.autoSave(false);
+            } catch (UnsupportedRepositoryOperationException e) {
+                // check added for AEM 6.0
+                LOG.warn("disabling autoSave not possible with this user manager!");
+            }
         }
+
         return userManager;
     }
 

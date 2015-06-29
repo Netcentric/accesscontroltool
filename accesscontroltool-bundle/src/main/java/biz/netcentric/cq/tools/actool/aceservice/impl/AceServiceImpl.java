@@ -592,12 +592,17 @@ public class AceServiceImpl implements AceService {
         try {
             JackrabbitSession js = (JackrabbitSession) session;
             UserManager userManager = js.getUserManager();
-            try {
-              userManager.autoSave(false);
-            } catch (final UnsupportedRepositoryOperationException e) {
-              // check added for AEM 6.0
-              LOG.warn("disabling autoSave not possible with this user manager!");
+            
+            // Try do disable the autosave only in case if changes are automatically persisted
+            if (userManager.isAutoSave()) {
+                try {
+                  userManager.autoSave(false);
+                } catch (final UnsupportedRepositoryOperationException e) {
+                  // check added for AEM 6.0
+                  LOG.warn("disabling autoSave not possible with this user manager!");
+                }
             }
+
             PrincipalManager principalManager = js.getPrincipalManager();
 
             for (String authorizableId : authorizableIds) {
