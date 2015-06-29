@@ -28,6 +28,7 @@ import javax.jcr.Node;
 import javax.jcr.ReferentialIntegrityException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
 import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
@@ -591,7 +592,12 @@ public class AceServiceImpl implements AceService {
         try {
             JackrabbitSession js = (JackrabbitSession) session;
             UserManager userManager = js.getUserManager();
-            userManager.autoSave(false);
+            try {
+              userManager.autoSave(false);
+            } catch (final UnsupportedRepositoryOperationException e) {
+              // check added for AEM 6.0
+              LOG.warn("disabling autoSave not possible with this user manager!");
+            }
             PrincipalManager principalManager = js.getPrincipalManager();
 
             for (String authorizableId : authorizableIds) {
