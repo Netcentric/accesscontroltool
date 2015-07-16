@@ -31,6 +31,7 @@ import javax.jcr.security.AccessControlList;
 import javax.jcr.security.AccessControlManager;
 
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
+import org.apache.jackrabbit.oak.spi.security.user.UserConstants;
 
 public class QueryHelper {
 
@@ -83,9 +84,8 @@ public class QueryHelper {
 				nodes.add(session.getNode("/home/rep:policy"));
 			}
 			for (String path : paths) {
-				String query = "/jcr:root" + path
-						+ "//*[(@jcr:primaryType = 'rep:ACL') ]";
-				nodes.addAll(QueryHelper.getNodes(session, query));
+        String query = "SELECT * FROM [rep:ACL] WHERE ISDESCENDANTNODE([" + path + "])";
+				nodes.addAll(QueryHelper.getNodes(session, query, Query.JCR_SQL2));
 			}
 		} catch (InvalidQueryException e) {
 			AcHelper.LOG.error("InvalidQueryException: {}", e);
@@ -95,63 +95,81 @@ public class QueryHelper {
 		return nodes;
 	}
 
-	public static Set<Node> getNodes(final Session session,
+  /**
+   * Get Nodes with XPATH Query.
+   * 
+   * @param session
+   * @param xpathQuery
+   * @return
+   * @throws InvalidQueryException
+   * @throws RepositoryException
+   */
+  public static Set<Node> getNodes(final Session session,
 			final String xpathQuery) throws InvalidQueryException,
 			RepositoryException {
-		Set<Node> nodes = new HashSet<Node>();
-
-		Query query = session.getWorkspace().getQueryManager()
-				.createQuery(xpathQuery, Query.XPATH);
-		QueryResult queryResult = query.execute();
-		NodeIterator nit = queryResult.getNodes();
-		List<String> paths = new ArrayList<String>();
-
-		while (nit.hasNext()) {
-			// get the next rep:policy node
-			Node node = nit.nextNode();
-			// AcHelper.LOG.debug("adding node: {} to node set", node.getPath());
-			paths.add(node.getPath());
-			nodes.add(node);
-		}
+		Set<Node> nodes = getNodes(session, xpathQuery, Query.XPATH);
 		return nodes;
 	}
 
+  /**
+   * @param session
+   * @param queryStatement - ex. "SELECT * FROM [rep:ACL]"
+   * @param queryLanguageType - ex. Query.JCR_SQL2
+   * @return
+   * @throws InvalidQueryException
+   * @throws RepositoryException
+   */
+  public static Set<Node> getNodes(final Session session,
+      final String queryStatement, String queryLanguageType) throws InvalidQueryException,
+      RepositoryException {
+    Set<Node> nodes = new HashSet<Node>();
+
+    Query query = session.getWorkspace().getQueryManager()
+        .createQuery(queryStatement, queryLanguageType);
+    QueryResult queryResult = query.execute();
+    NodeIterator nit = queryResult.getNodes();
+    List<String> paths = new ArrayList<String>();
+
+    while (nit.hasNext()) {
+      // get the next rep:policy node
+      Node node = nit.nextNode();
+      // AcHelper.LOG.debug("adding node: {} to node set", node.getPath());
+      paths.add(node.getPath());
+      nodes.add(node);
+    }
+    return nodes;
+  }
+
 	public static Set<String> getUsersFromHome(final Session session)
-			throws RepositoryException {
-
-		Set<String> users = new TreeSet<String>();
-		String queryStringUsers = "//*[(@jcr:primaryType = 'rep:User')]";
-		Query queryUsers = session.getWorkspace().getQueryManager()
-				.createQuery(queryStringUsers, Query.XPATH);
-		QueryResult queryResultUsers = queryUsers.execute();
-		NodeIterator nitUsers = queryResultUsers.getNodes();
-
-		while (nitUsers.hasNext()) {
-			Node node = nitUsers.nextNode();
-			String tmp = node.getProperty("rep:principalName").getString();
-			users.add(tmp);
-		}
+      throws InvalidQueryException, RepositoryException {
+		Set<String> users = getPrincipalsFromHome(session, UserConstants.NT_REP_USER);
 		return users;
 	}
 
 	public static Set<String> getGroupsFromHome(final Session session)
 			throws InvalidQueryException, RepositoryException {
-		Set<String> groups = new TreeSet<String>();
-		String queryStringGroups = "//*[(@jcr:primaryType = 'rep:Group')]";
-		Query queryGroups = session.getWorkspace().getQueryManager()
-				.createQuery(queryStringGroups, Query.XPATH);
-		QueryResult queryResultGroups = queryGroups.execute();
-		NodeIterator nitGroups = queryResultGroups.getNodes();
-
-		while (nitGroups.hasNext()) {
-			Node node = nitGroups.nextNode();
-			String tmp = node.getProperty("rep:principalName").getString();
-			groups.add(tmp);
-		}
+		Set<String> groups = getPrincipalsFromHome(session, UserConstants.NT_REP_GROUP);
 		return groups;
 	}
 
-	public static Set<AclBean> getAuthorizablesAcls(final Session session,
+  private static Set<String> getPrincipalsFromHome(final Session session, String principalNodeType)
+      throws InvalidQueryException, RepositoryException {
+    Set<String> principals = new TreeSet<String>();
+    String queryStringPrincipals = "SELECT * FROM [" + principalNodeType + "]";
+    Query queryPrincipals = session.getWorkspace().getQueryManager()
+        .createQuery(queryStringPrincipals, Query.JCR_SQL2);
+    QueryResult queryResultPrincipals = queryPrincipals.execute();
+    NodeIterator nitPrincipals = queryResultPrincipals.getNodes();
+
+    while (nitPrincipals.hasNext()) {
+      Node node = nitPrincipals.nextNode();
+      String tmp = node.getProperty("rep:principalName").getString();
+      principals.add(tmp);
+    }
+    return principals;
+  }
+
+  public static Set<AclBean> getAuthorizablesAcls(final Session session,
 			final Set<String> authorizableIds) throws InvalidQueryException,
 			RepositoryException {
 		Set<Node> nodeSet = new LinkedHashSet<Node>();
@@ -160,12 +178,10 @@ public class QueryHelper {
 		
 		while(authorizablesIdIterator.hasNext()){
 			StringBuilder queryStringBuilder = new StringBuilder();
-			queryStringBuilder.append("/jcr:root//*[(@jcr:primaryType = 'rep:GrantACE' or @jcr:primaryType = 'rep:DenyACE' ) and (");
+			queryStringBuilder.append("SELECT * FROM [rep:ACE] WHERE ");
+      queryStringBuilder.append(getAuthorizablesQueryStringBuilder(authorizablesIdIterator, 100));
 
-			queryStringBuilder.append(getAuthorizablesQueryStringBuilder(authorizablesIdIterator, 100));
-			queryStringBuilder.append(")]");
-
-			nodeSet.addAll(getNodes(session, queryStringBuilder.toString()));
+			nodeSet.addAll(getNodes(session, queryStringBuilder.toString(), Query.JCR_SQL2));
 		}
 
 		return buildAclBeansFromNodeSet(session, nodeSet);
@@ -198,7 +214,7 @@ public class QueryHelper {
 			return querySb;
 		}
 		while (true) {
-			querySb.append("@rep:principalName = '" + authorizablesIdIterator.next() + "'");
+      querySb.append("[rep:principalName] = '" + authorizablesIdIterator.next() + "'");
 			authorizableCounter++;
 			if (authorizableCounter < authorizbalesLimitPerQuery && authorizablesIdIterator.hasNext()) {
 				querySb.append(" or ");
@@ -212,9 +228,8 @@ public class QueryHelper {
 			final String authorizableId) throws InvalidQueryException,
 			RepositoryException {
 		Set<Node> nodeSet = new LinkedHashSet<Node>();
-		String query = "/jcr:root//*[(@jcr:primaryType = 'rep:GrantACE' or @jcr:primaryType = 'rep:DenyACE' ) and (@rep:principalName = '"
-				+ authorizableId + "')]";
-		nodeSet.addAll(getNodes(session, query));
+    String query = "SELECT * FROM [rep:ACE] WHERE [rep:principalName] = '" + authorizableId + "'";
+		nodeSet.addAll(getNodes(session, query, Query.JCR_SQL2));
 
 		Set<AclBean> aclSet = buildAclBeansFromNodeSet(session, nodeSet);
 		return aclSet;
