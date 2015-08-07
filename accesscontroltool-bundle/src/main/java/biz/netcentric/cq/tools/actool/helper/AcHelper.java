@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
@@ -288,12 +289,17 @@ public class AcHelper {
         	LOG.debug("Executing query '{}' did not have any results", queryStringGroups);
         	return null;
         }
-        Node node = nitGroups.nextNode();
-        if (node.hasProperty("rep:principalName")) {
-            principalName = node.getProperty("rep:principalName").getString();
-            return pm.getPrincipal(principalName);
+        try {
+            Node node = nitGroups.nextNode();
+            if (node.hasProperty("rep:principalName")) {
+                principalName = node.getProperty("rep:principalName").getString();
+                return pm.getPrincipal(principalName);
+            }
+            LOG.debug("Group '{}' did not have a rep:principalName property", node.getPath());
         }
-        LOG.debug("Group '{}' did not have a rep:principalName property", node.getPath());
+        catch (NoSuchElementException e) {
+            LOG.debug("Executing query '{}' did not have any results", queryStringGroups);
+        }
         return null;
     }
     
