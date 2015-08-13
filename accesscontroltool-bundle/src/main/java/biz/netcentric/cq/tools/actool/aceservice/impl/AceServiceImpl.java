@@ -30,6 +30,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Modified;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
@@ -94,9 +95,14 @@ public class AceServiceImpl implements AceService {
     @Activate
     public void activate(@SuppressWarnings("rawtypes") final Map properties)
             throws Exception {
-        configurationPath = PropertiesUtil.toString(
-                properties.get(PROPERTY_CONFIGURATION_PATH), "");
+        LOG.debug("Activated AceService!");
+        modified(properties);
+    }
 
+    @Modified
+    public void modified(@SuppressWarnings("rawtypes") final Map properties) {
+        LOG.debug("Modified AceService!");
+        configurationPath = PropertiesUtil.toString(properties.get(PROPERTY_CONFIGURATION_PATH), "");
     }
 
     // FIXME: Why is this called installConfigurationFromYamlList if it doesn't use YAML?
@@ -154,7 +160,7 @@ public class AceServiceImpl implements AceService {
             AcInstallationHistoryPojo history,
             Set<AuthorizableInstallationHistory> authorizableHistorySet,
             Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig)
-            throws RepositoryException, Exception {
+                    throws RepositoryException, Exception {
         // --- installation of Authorizables from configuration ---
 
         LOG.info("--- start installation of Authorizable Configuration ---");
@@ -247,7 +253,7 @@ public class AceServiceImpl implements AceService {
     public void installNewConfigurations(Session session,
             AcInstallationHistoryPojo history,
             Map<String, String> newestConfigurations, Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet)
-            throws Exception {
+                    throws Exception {
 
         StopWatch sw = new StopWatch();
         sw.start();
@@ -399,7 +405,7 @@ public class AceServiceImpl implements AceService {
                             LOG.info("found configuration data of node: {}",
                                     configNode.getPath());
                             configurations
-                                    .put(configNode.getPath(), configData);
+                            .put(configNode.getPath(), configData);
                         } else {
                             LOG.warn(
                                     "config data of node: {} is empty!",
