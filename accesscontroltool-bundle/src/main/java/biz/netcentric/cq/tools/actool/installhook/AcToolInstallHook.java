@@ -11,7 +11,6 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
 
     private static final Logger LOG = LoggerFactory.getLogger(AcToolInstallHook.class);
     
-    // Workaround for a bug in CQ whereby the package installer goes into a loop if a PackageException is thrown
     private boolean alreadyRan = false;
     
 	@Override
@@ -21,6 +20,10 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
 		switch (context.getPhase()) {
 		case PREPARE:
 		    
+			/* Workaround for a bug in CQ whereby the package installer goes into a loop if a PackageException is thrown
+			 * Daycare Ticket: https://daycare.day.com/home/netcentric/netcentric_de/partner_services/67812.html
+			 * Granite Bug: GRANITE-7945, fixed in com.day.jcr.vault, version 2.5.8 (AEM 6.1) 
+			 */
 		    if (alreadyRan) {
 		        log("Evading attempt to run the install hook twice due to a bug in CQ.", context.getOptions());
 		        return;
