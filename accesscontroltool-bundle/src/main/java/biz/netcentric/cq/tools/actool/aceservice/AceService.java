@@ -94,7 +94,7 @@ public interface AceService {
             final String configurationsRootPath, final Session session,
             AcInstallationHistoryPojo history) throws Exception;
 
-    public String purgAuthorizablesFromConfig();
+    public String purgeAuthorizablesFromConfig();
 
     public void installNewConfigurations(Session session,
             AcInstallationHistoryPojo history,

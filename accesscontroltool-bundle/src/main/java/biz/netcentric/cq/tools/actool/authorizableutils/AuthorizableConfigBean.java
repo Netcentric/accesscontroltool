@@ -31,7 +31,10 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private String description;
     private String path;
     private String password;
+
     private boolean isGroup = true;
+    private boolean isSystemUser = false;
+
     private String assertedExceptionString = null;
 
     public String getAssertedExceptionString() {
@@ -39,7 +42,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
     }
 
     public void setAssertedExceptionString(final String assertedException) {
-        this.assertedExceptionString = assertedException;
+        assertedExceptionString = assertedException;
     }
 
     public String getPassword() {
@@ -51,11 +54,11 @@ public class AuthorizableConfigBean implements AcDumpElement {
     }
 
     public void setMemberOfString(final String memberOfString) {
-        this.memberOfStringFromConfig = memberOfString;
+        memberOfStringFromConfig = memberOfString;
     }
 
     public void setMembersString(final String membersString) {
-        this.membersStringFromConfig = membersString;
+        membersStringFromConfig = membersString;
     }
 
     public boolean isGroup() {
@@ -64,6 +67,14 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     public void setIsGroup(final boolean isGroup) {
         this.isGroup = isGroup;
+    }
+
+    public boolean isSystemUser() {
+        return isSystemUser;
+    }
+
+    public void setIsSystemUser(final boolean isSystemUser) {
+        this.isSystemUser = isSystemUser;
     }
 
     public void memberOf(final boolean isGroup) {
@@ -95,7 +106,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
     }
 
     public String getMemberOfStringFromConfig() {
-        return this.memberOfStringFromConfig;
+        return memberOfStringFromConfig;
     }
 
     public String getMemberOfString() {
@@ -116,7 +127,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
     }
 
     public void setMemberOf(final List<String> memberOf) {
-        if (memberOf != null && !memberOf.isEmpty()) {
+        if ((memberOf != null) && !memberOf.isEmpty()) {
             this.memberOf = memberOf.toArray(new String[memberOf.size()]);
         }
     }
@@ -135,7 +146,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
     }
 
     public String getMembersStringFromConfig() {
-        return this.membersStringFromConfig;
+        return membersStringFromConfig;
     }
 
     public String getMembersString() {
@@ -178,12 +189,12 @@ public class AuthorizableConfigBean implements AcDumpElement {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        sb.append("\n" + "id: " + this.principalID + "\n");
-        sb.append("name: " + this.principalName + "\n");
-        sb.append("description: " + this.description + "\n");
-        sb.append("path: " + this.path + "\n");
-        sb.append("memberOf: " + this.getMemberOfString() + "\n");
-        sb.append("members: " + this.getMembersString() + "\n");
+        sb.append("\n" + "id: " + principalID + "\n");
+        sb.append("name: " + principalName + "\n");
+        sb.append("description: " + description + "\n");
+        sb.append("path: " + path + "\n");
+        sb.append("memberOf: " + getMemberOfString() + "\n");
+        sb.append("members: " + getMembersString() + "\n");
         return sb.toString();
     }
 

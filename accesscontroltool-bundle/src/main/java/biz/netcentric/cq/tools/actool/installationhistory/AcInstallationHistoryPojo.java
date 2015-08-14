@@ -92,7 +92,7 @@ public class AcInstallationHistoryPojo {
         msgIndex++;
     }
 
-    public void setException(final String exception) {
+    public void addError(final String exception) {
         if (this.rendition.equals(Rendition.HTML)) {
             this.exceptions.add(new HistoryEntry(msgIndex, new Timestamp(
                     new Date().getTime()), "<font color='red'><b>"

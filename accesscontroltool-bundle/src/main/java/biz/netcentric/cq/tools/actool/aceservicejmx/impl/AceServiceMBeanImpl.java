@@ -29,7 +29,7 @@ import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 
 @Service
-@Component(immediate = true, metatype = true)
+@Component(immediate = true)
 @Properties({
         @Property(name = "jmx.objectname", value = "biz.netcentric.cq.tools.actool:id='ac installation'"),
         @Property(name = "pattern", value = "/.*") })
@@ -144,7 +144,7 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements
 
     @Override
     public String purgeAllAuthorizablesFromConfigurations() {
-        return aceService.purgAuthorizablesFromConfig();
+        return aceService.purgeAuthorizablesFromConfig();
     }
 
     @Override

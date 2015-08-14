@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Set;
 
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
-import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 
@@ -38,12 +37,12 @@ public class CompleteAcDump implements AcDumpElement {
 
     @Override
     public void accept(AcDumpElementVisitor acDumpElementVisitor) {
-        Map<String, Set<AceBean>> aceMap = this.aceDumpData.getAceDump();
-        Map<String, Set<AceBean>> legacyAceMap = this.aceDumpData
-                .getLegacyAceDump();
+        Map<String, Set<AceBean>> aceMap = aceDumpData.getAceDump();
+        aceDumpData
+        .getLegacyAceDump();
 
         // render group section label
-        acDumpElementVisitor.visit(new DumpComment(this.dumpComment));
+        acDumpElementVisitor.visit(new DumpComment(dumpComment));
 
         // render group section label
         acDumpElementVisitor.visit(new DumpSectionElement(
@@ -67,12 +66,6 @@ public class CompleteAcDump implements AcDumpElement {
         // render aceBeans
         renderAceBeans(acDumpElementVisitor, aceMap);
 
-        if (dumpservice.isShowLegacyAces()) {
-            // render legacy ACEs section label
-            acDumpElementVisitor.visit(new DumpSectionElement(
-                    Constants.LEGACY_ACE_DUMP_SECTION_KEY));
-            renderAceBeans(acDumpElementVisitor, legacyAceMap);
-        }
     }
 
     private void renderAuthorizableBeans(
@@ -92,7 +85,7 @@ public class CompleteAcDump implements AcDumpElement {
             acDumpElementVisitor.visit(new MapKey(mapKey));
 
             for (AceBean aceBean : aceBeanSet) {
-               // aceBean = CqActionsMapping.getAlignedPermissionBean(aceBean);
+                // aceBean = CqActionsMapping.getAlignedPermissionBean(aceBean);
                 aceBean.accept(acDumpElementVisitor);
             }
         }

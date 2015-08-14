@@ -8,6 +8,8 @@
  */
 package biz.netcentric.cq.tools.actool.authorizableutils.impl;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -53,13 +55,14 @@ public class AuthorizableCreatorServiceImpl implements
 
     private static final String PATH_HOME_GROUPS = "/home/groups";
 
-	private static final Logger LOG = LoggerFactory
+    private static final Logger LOG = LoggerFactory
             .getLogger(AuthorizableCreatorServiceImpl.class);
 
     AcInstallationHistoryPojo status;
     Map<String, LinkedHashSet<AuthorizableConfigBean>> principalMapFromConfig;
     AuthorizableInstallationHistory authorizableInstallationHistory;
 
+    @Override
     public void createNewAuthorizables(
             Map<String, LinkedHashSet<AuthorizableConfigBean>> principalMapFromConfig,
             final Session session, AcInstallationHistoryPojo status,
@@ -85,7 +88,7 @@ public class AuthorizableCreatorServiceImpl implements
             while (it.hasNext()) {
 
                 tmpPricipalConfigBean = it.next();
-                status.addVerboseMessage("start installation of authorizable bean: "
+                status.addVerboseMessage("Starting installation of authorizable bean: "
                         + tmpPricipalConfigBean.toString());
             }
 
@@ -97,14 +100,14 @@ public class AuthorizableCreatorServiceImpl implements
     }
 
     private void installAuthorizableConfigurationBean(final Session session,
-            AuthorizableConfigBean principalConfigBean,
+            AuthorizableConfigBean authorizableConfigBean,
             AcInstallationHistoryPojo history,
             AuthorizableInstallationHistory authorizableInstallationHistory)
             throws AccessDeniedException,
             UnsupportedRepositoryOperationException, RepositoryException,
             AuthorizableExistsException, AuthorizableCreatorException {
 
-        String principalId = principalConfigBean.getPrincipalID();
+        String principalId = authorizableConfigBean.getPrincipalID();
         LOG.info("- start installation of authorizable: {}", principalId);
 
         UserManager userManager = getUsermanager(session);
@@ -112,16 +115,25 @@ public class AuthorizableCreatorServiceImpl implements
 
         // if current authorizable from config doesn't yet exist
         if (userManager.getAuthorizable(principalId) == null) {
-            createNewAuthorizable(principalConfigBean, history,
+            createNewAuthorizable(authorizableConfigBean, history,
                     authorizableInstallationHistory, userManager, vf);
         }
         // if current authorizable from config already exists in repository
         else {
 
-            handleIntermediatePath(session, principalConfigBean, history,
-                    authorizableInstallationHistory, userManager);
-            mergeGroup(history, authorizableInstallationHistory,
-                    principalConfigBean, userManager);
+            if (authorizableConfigBean.isGroup()) {
+
+                handleIntermediatePath(session, authorizableConfigBean, history,
+                        authorizableInstallationHistory, userManager);
+                mergeGroup(history, authorizableInstallationHistory,
+                        authorizableConfigBean, userManager);
+            } else {
+                String msg = "- authorizable " + principalId
+                        + " exists and is a user - moving and updating of users is not implemented yet.";
+                LOG.info(msg);
+                history.addMessage(msg);
+            }
+
         }
     }
 
@@ -133,13 +145,18 @@ public class AuthorizableCreatorServiceImpl implements
         // Since the persistence of the installation should only take place if
         // no error occured and certain test were successful
         // the autosave gets disabled. Therefore an explicit session.save() is
-        // necessary to persist the changes
-        try {
-            userManager.autoSave(false);
-        } catch (UnsupportedRepositoryOperationException e) {
-            // check added for AEM 6.0
-            LOG.warn("disabling autoSave not possible with this user manager!");
+        // necessary to persist the changes.
+
+        // Try do disable the autosave only in case if changes are automatically persisted
+        if (userManager.isAutoSave()) {
+            try {
+                userManager.autoSave(false);
+            } catch (UnsupportedRepositoryOperationException e) {
+                // check added for AEM 6.0
+                LOG.warn("disabling autoSave not possible with this user manager!");
+            }
         }
+
         return userManager;
     }
 
@@ -165,11 +182,11 @@ public class AuthorizableCreatorServiceImpl implements
                     .substring(0, existingGroup.getPath().lastIndexOf("/"));
             // Relative paths need to be prefixed with /home/groups (issue #10)
             String groupPathFromBean = principalConfigBean.getPath();
-            if (groupPathFromBean.charAt(0) != '/') { 
+            if (groupPathFromBean.charAt(0) != '/') {
                 groupPathFromBean = PATH_HOME_GROUPS + "/" + groupPathFromBean;
             }
             if (!StringUtils.equals(intermediatedPathOfExistingGroup,
-            		groupPathFromBean)) {
+                    groupPathFromBean)) {
                 StringBuilder message = new StringBuilder();
                 message.append("found change of intermediate path:").append(
                         "\n");
@@ -217,10 +234,8 @@ public class AuthorizableCreatorServiceImpl implements
         }
     }
 
-    /**
-     * // deletes old intermediatePath parent node and all empty parent nodes up
-     * to /home/groups or /home/users
-     * 
+    /** // deletes old intermediatePath parent node and all empty parent nodes up to /home/groups or /home/users
+     *
      * @param session
      * @param oldIntermediateNode
      * @throws RepositoryException
@@ -228,8 +243,7 @@ public class AuthorizableCreatorServiceImpl implements
      * @throws VersionException
      * @throws LockException
      * @throws ConstraintViolationException
-     * @throws AccessDeniedException
-     */
+     * @throws AccessDeniedException */
     private void deleteOldIntermediatePath(final Session session,
             Node oldIntermediateNode) throws RepositoryException,
             PathNotFoundException, VersionException, LockException,
@@ -296,10 +310,8 @@ public class AuthorizableCreatorServiceImpl implements
             throws AuthorizableExistsException, RepositoryException,
             AuthorizableCreatorException {
 
-        String[] memberOf = principalConfigBean.getMemberOf();
         boolean isGroup = principalConfigBean.isGroup();
         String principalId = principalConfigBean.getPrincipalID();
-        String password = principalConfigBean.getPassword();
 
         Authorizable newAuthorizable = null;
         if (isGroup) {
@@ -310,8 +322,7 @@ public class AuthorizableCreatorServiceImpl implements
                     .addNewCreatedAuthorizabe(principalId);
             LOG.info("Successfully created new Group: {}", principalId);
         } else {
-            newAuthorizable = createNewUser(userManager, principalId, memberOf,
-                    password, status, authorizableInstallationHistory, vf,
+            newAuthorizable = createNewUser(userManager, principalConfigBean, status, authorizableInstallationHistory, vf,
                     principalMapFromConfig);
             LOG.info("Successfully created new User: {}", principalId);
             authorizableInstallationHistory
@@ -551,7 +562,7 @@ public class AuthorizableCreatorServiceImpl implements
         }
 
         // add group to groups according to configuration
-        if (memberOf != null && memberOf.length > 0) {
+        if ((memberOf != null) && (memberOf.length > 0)) {
             Set<Authorizable> assignedGroups = validateAssignedGroups(
                     userManager, groupID, memberOf);
 
@@ -572,54 +583,85 @@ public class AuthorizableCreatorServiceImpl implements
 
     private Authorizable createNewUser(
             final UserManager userManager,
-            final String userID,
-            final String[] memberOf,
-            final String password,
+            AuthorizableConfigBean principalConfigBean,
             AcInstallationHistoryPojo status,
             AuthorizableInstallationHistory authorizableInstallationHistory,
             ValueFactory vf,
             Map<String, LinkedHashSet<AuthorizableConfigBean>> principalMapFromConfig)
             throws AuthorizableExistsException, RepositoryException,
             AuthorizableCreatorException {
+        String principalId = principalConfigBean.getPrincipalID();
+        String name = principalConfigBean.getPrincipalName();
+        String[] memberOf = principalConfigBean.getMemberOf();
+        String password = principalConfigBean.getPassword();
+        boolean isSystemUser = principalConfigBean.isSystemUser();
+        String intermediatePath = principalConfigBean.getPath();
+
         User newUser = null;
-        if (memberOf != null && memberOf.length > 0) {
+        if (isSystemUser) {
+            newUser = userManagerCreateSystemUserViaReflection(userManager, principalId, intermediatePath, status);
+        } else {
+            newUser = userManager.createUser(principalId, password, new PrincipalImpl(principalId), intermediatePath);
+        }
+
+        if (!isSystemUser && StringUtils.isNotBlank(name)) {
+            String givenName = StringUtils.substringBeforeLast(name, " ");
+            String familyName = StringUtils.substringAfterLast(name, " ");
+            newUser.setProperty("profile/givenName", vf.createValue(givenName));
+            newUser.setProperty("profile/familyName", vf.createValue(familyName));
+        }
+
+        if ((memberOf != null) && (memberOf.length > 0)) {
 
             // add group to groups according to configuration
             Set<Authorizable> authorizables = validateAssignedGroups(
-                    userManager, userID, memberOf);
+                    userManager, principalId, memberOf);
 
             if (!authorizables.isEmpty()) {
-                newUser = userManager.createUser(userID, password);
+
                 for (Authorizable authorizable : authorizables) {
                     ((Group) authorizable).addMember(newUser);
                 }
             }
-        } else {
-            newUser = userManager.createUser(userID, password);
         }
         return newUser;
     }
 
-    /**
-     * Validates the authorizables in 'membersOf' array of a given authorizable.
-     * Validation fails if an authorizable is a user If an authorizable
-     * contained in membersOf array doesn't exist it gets created and the
-     * current authorizable gets added as a member
-     * 
+    // using reflection with fallback to create a system user in order to be backwards compatible
+    public User userManagerCreateSystemUserViaReflection(UserManager userManager, String userID, String intermediatePath,
+            AcInstallationHistoryPojo status)
+                    throws RepositoryException {
+
+        String systemPrefix = "system/";
+        if ((intermediatePath != null) && !intermediatePath.startsWith(systemPrefix)) {
+            intermediatePath = systemPrefix + intermediatePath;
+        }
+
+        try {
+            Method method = userManager.getClass().getMethod("createSystemUser", String.class, String.class);
+            User user = (User) method.invoke(userManager, userID, intermediatePath);
+
+            return user;
+        } catch (Throwable e) {
+            if (e instanceof InvocationTargetException) {
+                e = ((InvocationTargetException) e).getTargetException();
+            }
+            status.addError("Could not create system user " + userID + ". e:" + e);
+        }
+
+        return null;
+    }
+
+    /** Validates the authorizables in 'membersOf' array of a given authorizable. Validation fails if an authorizable is a user If an
+     * authorizable contained in membersOf array doesn't exist it gets created and the current authorizable gets added as a member
+     *
      * @param out
      * @param userManager
-     * @param authorizablelID
-     *            the ID of authorizable to validate
-     * @param memberOf
-     *            String array that contains the groups which the authorizable
-     *            should be a member of
-     * @return Set of authorizables which the current authorizable is a member
-     *         of
+     * @param authorizablelID the ID of authorizable to validate
+     * @param memberOf String array that contains the groups which the authorizable should be a member of
+     * @return Set of authorizables which the current authorizable is a member of
      * @throws RepositoryException
-     * @throws AuthorizableCreatorException
-     *             if one of the authorizables contained in membersOf array is a
-     *             user
-     */
+     * @throws AuthorizableCreatorException if one of the authorizables contained in membersOf array is a user */
     private Set<Authorizable> validateAssignedGroups(
             final UserManager userManager, final String authorizablelID,
             final String[] memberOf) throws RepositoryException,
@@ -696,6 +738,7 @@ public class AuthorizableCreatorServiceImpl implements
         return authorizableSet;
     }
 
+    @Override
     public void performRollback(SlingRepository repository,
             AuthorizableInstallationHistory authorizableInstallationHistory,
             AcInstallationHistoryPojo history) throws RepositoryException {

@@ -65,7 +65,7 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
 			aceService.installNewConfigurations(session, history, configs,
 					authorizableInstallationHistorySet);
 		} catch (Exception e) {
-			history.setException(e.toString());
+			history.addError(e.toString());
 			throw e;
 		} finally {
 			// TODO: acHistoryService.persistHistory(history,
