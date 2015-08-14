@@ -66,8 +66,6 @@ import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.day.cq.commons.Externalizer;
-
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.comparators.AcePathComparator;
 import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
@@ -87,6 +85,8 @@ import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.installationhistory.impl.HistoryUtils;
 
+import com.day.cq.commons.Externalizer;
+
 @Service
 @Component(metatype = true, label = "AC Dump Service", description = "Service that creates dumps of the current AC configurations (groups&ACEs)")
 @Properties({
@@ -95,8 +95,6 @@ import biz.netcentric.cq.tools.actool.installationhistory.impl.HistoryUtils;
         @Property(label = "Include user ACEs in dumps", name = DumpserviceImpl.DUMP_INCLUDE_USERS, boolValue = false, description = "if selected, also user based ACEs (and their respective users) get added to dumps"),
         @Property(label = "filtered dump", name = DumpserviceImpl.DUMP_IS_FILTERED, boolValue = true, description = "if selected, ACEs of cq actions modify, create and delete containing a repGlob get also added to dumps in section: "
                 + Constants.USER_CONFIGURATION_KEY),
-        @Property(label = "include legacy ACEs", name = DumpserviceImpl.DUMP_IS_SHOW_LEGACY_ACES, boolValue = false, description = "if selected, legacy ACEs (ACEs without group/user under /home) get also added to dumps in section: "
-                + Constants.LEGACY_ACE_DUMP_SECTION_KEY),
         @Property(label = "AC query exclude paths", name = DumpserviceImpl.DUMP_SERVICE_EXCLUDE_PATHS_PATH, value = {
                 "/home", "/jcr:system", "/tmp" }, description = "direct children of jcr:root which get excluded from all dumps (also from internal dumps)") })
 public class DumpserviceImpl implements Dumpservice {
@@ -148,16 +146,16 @@ public class DumpserviceImpl implements Dumpservice {
 
     private void updateProperties(final Map properties,
             final ComponentContext context) {
-        this.queryExcludePaths = PropertiesUtil.toStringArray(
+        queryExcludePaths = PropertiesUtil.toStringArray(
                 properties.get(DUMP_SERVICE_EXCLUDE_PATHS_PATH), null);
-        this.nrOfSavedDumps = PropertiesUtil.toInteger(
+        nrOfSavedDumps = PropertiesUtil.toInteger(
                 properties.get(DUMP_SERVICE_NR_OF_SAVED_DUMPS),
                 NR_OF_DUMPS_TO_SAVE_DEFAULT);
-        this.includeUsersInDumps = PropertiesUtil.toBoolean(
+        includeUsersInDumps = PropertiesUtil.toBoolean(
                 properties.get(DUMP_INCLUDE_USERS), false);
-        this.isFilteredDump = PropertiesUtil.toBoolean(
+        isFilteredDump = PropertiesUtil.toBoolean(
                 properties.get(DUMP_IS_FILTERED), true);
-        this.isShowLegacyAces = PropertiesUtil.toBoolean(
+        isShowLegacyAces = PropertiesUtil.toBoolean(
                 properties.get(DUMP_IS_SHOW_LEGACY_ACES), true);
         bundleDescription = (String) context.getBundleContext().getBundle()
                 .getHeaders().get("Bundle-Description");
@@ -167,17 +165,14 @@ public class DumpserviceImpl implements Dumpservice {
         return bundleDescription;
     }
 
+    @Override
     public boolean isIncludeUsers() {
-        return this.includeUsersInDumps;
-    }
-
-    public boolean isShowLegacyAces() {
-        return this.isShowLegacyAces;
+        return includeUsersInDumps;
     }
 
     @Override
     public String[] getQueryExcludePaths() {
-        return this.queryExcludePaths;
+        return queryExcludePaths;
     }
 
     @Override
@@ -186,7 +181,7 @@ public class DumpserviceImpl implements Dumpservice {
             int mapOrder, int aceOrder) {
         try {
             Map<String, Set<AceBean>> aclDumpMap = AcHelper.createAceMap(
-                    request, mapOrder, aceOrder, this.queryExcludePaths, this);
+                    request, mapOrder, aceOrder, queryExcludePaths, this);
             this.returnAceDumpAsFile(response, aclDumpMap, mapOrder);
         } catch (ValueFormatException e) {
             LOG.error("ValueFormatException in AceServiceImpl: {}", e);
@@ -257,7 +252,7 @@ public class DumpserviceImpl implements Dumpservice {
             previousDumpNode = dumpNodes.first();
         }
         // is limit of dump nodes to save reached?
-        if (dumpNodes.size() > this.nrOfSavedDumps - 1) {
+        if (dumpNodes.size() > (nrOfSavedDumps - 1)) {
             Node oldestDumpNode = dumpNodes.last();
             oldestDumpNode.remove();
         }
@@ -301,31 +296,26 @@ public class DumpserviceImpl implements Dumpservice {
             Map<String, Set<AceBean>> aceMap,
             Set<AuthorizableConfigBean> authorizableSet, Session session,
             int mapOrder, int aceOrder) throws IOException {
-        this.returnConfigurationDumpAsFile(response, aceMap, authorizableSet,
+        returnConfigurationDumpAsFile(response, aceMap, authorizableSet,
                 mapOrder);
 
     }
 
-    /**
-     * returns the complete AC dump (groups&ACEs) as String in YAML format
-     * 
-     * @param keyOrder
-     *            either principals (AceHelper.PRINCIPAL_BASED_ORDERING) or node
-     *            paths (AceHelper.PATH_BASED_ORDERING) as keys
-     * @param aclOrdering
-     *            specifies whether the allow and deny ACEs within an ACL should
-     *            be divided in separate blocks (first deny then allow)
-     * @return String containing complete AC dump
-     */
+    /** returns the complete AC dump (groups&ACEs) as String in YAML format
+     *
+     * @param keyOrder either principals (AceHelper.PRINCIPAL_BASED_ORDERING) or node paths (AceHelper.PATH_BASED_ORDERING) as keys
+     * @param aclOrdering specifies whether the allow and deny ACEs within an ACL should be divided in separate blocks (first deny then
+     *            allow)
+     * @return String containing complete AC dump */
     private String getCompleteDump(int aclMapKeyOrder, int mapOrder) {
         Session session = null;
         ResourceResolver resourceResolver = null;
 
         try {
             session = repository.loginAdministrative(null);
-            AceDumpData aceDumpData = this.createFilteredAclDumpMap(session,
+            AceDumpData aceDumpData = createFilteredAclDumpMap(session,
                     aclMapKeyOrder, AcHelper.ACE_ORDER_ALPHABETICAL,
-                    this.queryExcludePaths);
+                    queryExcludePaths);
             Map<String, Set<AceBean>> aclDumpMap = aceDumpData.getAceDump();
             // Map<String, Set<AceBean>> legacyAclDumpMap =
             // aceDumpData.getLegacyAceDump();
@@ -334,13 +324,13 @@ public class DumpserviceImpl implements Dumpservice {
                     aclDumpMap);
             Set<AuthorizableConfigBean> userBeans = getUserBeans(usersFromACEs);
 
-            resourceResolver = this.resourceResolverFactory
+            resourceResolver = resourceResolverFactory
                     .getAdministrativeResourceResolver(null);
             Externalizer externalizer = resourceResolver
                     .adaptTo(Externalizer.class);
             String serverUrl = externalizer.authorLink(resourceResolver, "");
 
-            return this.getConfigurationDumpAsString(aceDumpData, groupBeans,
+            return getConfigurationDumpAsString(aceDumpData, groupBeans,
                     userBeans, mapOrder, serverUrl);
         } catch (ValueFormatException e) {
             LOG.error("ValueFormatException in AceServiceImpl: {}", e);
@@ -363,17 +353,15 @@ public class DumpserviceImpl implements Dumpservice {
         return null;
     }
 
-    /**
-     * get users from ACEs
-     * 
+    /** get users from ACEs
+     *
      * @param mapOrder
      * @param session
      * @param aclDumpMap
      * @return
      * @throws AccessDeniedException
      * @throws UnsupportedRepositoryOperationException
-     * @throws RepositoryException
-     */
+     * @throws RepositoryException */
     private Set<User> getUsersFromAces(int mapOrder, Session session,
             Map<String, Set<AceBean>> aclDumpMap) throws AccessDeniedException,
             UnsupportedRepositoryOperationException, RepositoryException {
@@ -413,16 +401,13 @@ public class DumpserviceImpl implements Dumpservice {
         return usersFromACEs;
     }
 
-    /**
-     * returns a dump of the ACEs installed in the system using a PrintWriter.
-     * 
-     * @param out
-     *            PrintWriter
-     * @param aceMap
-     *            map containing all ACE data, either path based or group based
+    /** returns a dump of the ACEs installed in the system using a PrintWriter.
+     *
+     * @param out PrintWriter
+     * @param aceMap map containing all ACE data, either path based or group based
      * @param mapOrdering
-     * @param aceOrdering
-     */
+     * @param aceOrdering */
+    @Override
     public void returnAceDump(final PrintWriter out,
             Map<String, Set<AceBean>> aceMap, final int mapOrdering,
             final int aceOrdering) {
@@ -459,6 +444,7 @@ public class DumpserviceImpl implements Dumpservice {
         out.println();
     }
 
+    @Override
     public void returnAceDumpAsFile(final SlingHttpServletResponse response,
             final Map<String, Set<AceBean>> aceMap, final int mapOrder)
             throws IOException {
@@ -490,6 +476,7 @@ public class DumpserviceImpl implements Dumpservice {
         }
     }
 
+    @Override
     public String getConfigurationDumpAsString(AceDumpData aceDumpData,
             final Set<AuthorizableConfigBean> groupSet,
             final Set<AuthorizableConfigBean> userSet, final int mapOrder,
@@ -506,6 +493,7 @@ public class DumpserviceImpl implements Dumpservice {
         return sb.toString();
     }
 
+    @Override
     public void returnConfigurationDumpAsFile(
             final SlingHttpServletResponse response,
             Map<String, Set<AceBean>> aceMap,
@@ -601,22 +589,11 @@ public class DumpserviceImpl implements Dumpservice {
         return outStream;
     }
 
-    public String getDumplLinks() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("path based dump <a href = '"
-                + Constants.ACE_SERVLET_PATH
-                + "?dumpAll=true&keyOrder=pathBased&aceOrder=denyallow'> (download)</a>");
-        sb.append("<br />");
-        sb.append("group based dump <a href = '" + Constants.ACE_SERVLET_PATH
-                + "?dumpAll=true&aceOrder=denyallow'> (download)</a>");
-
-        return sb.toString();
-    }
-
+    @Override
     public Set<AclBean> getACLDumpBeans(final Session session)
             throws RepositoryException {
 
-        List<String> excludeNodesList = Arrays.asList(this.queryExcludePaths);
+        List<String> excludeNodesList = Arrays.asList(queryExcludePaths);
 
         // check excludePaths for existence
         for (String path : excludeNodesList) {
@@ -658,15 +635,17 @@ public class DumpserviceImpl implements Dumpservice {
         return accessControBeanSet;
     }
 
+    @Override
     public AceDumpData createFilteredAclDumpMap(final Session session,
             final int keyOrder, final int aclOrdering,
             final String[] excludePaths) throws ValueFormatException,
             IllegalArgumentException, IllegalStateException,
             RepositoryException {
         return createAclDumpMap(session, keyOrder, aclOrdering, excludePaths,
-                this.isFilteredDump, this.includeUsersInDumps);
+                isFilteredDump, includeUsersInDumps);
     }
 
+    @Override
     public AceDumpData createUnfilteredAclDumpMap(final Session session,
             final int keyOrder, final int aclOrdering,
             final String[] excludePaths) throws ValueFormatException,
@@ -676,23 +655,18 @@ public class DumpserviceImpl implements Dumpservice {
                 false, true);
     }
 
-    /**
-     * returns a Map with holds either principal or path based ACE data
-     * 
+    /** returns a Map with holds either principal or path based ACE data
+     *
      * @param request
-     * @param keyOrder
-     *            either principals (AceHelper.PRINCIPAL_BASED_ORDERING) or node
-     *            paths (AceHelper.PATH_BASED_ORDERING) as keys
-     * @param aclOrdering
-     *            specifies whether the allow and deny ACEs within an ACL should
-     *            be divided in separate blocks (first deny then allow)
+     * @param keyOrder either principals (AceHelper.PRINCIPAL_BASED_ORDERING) or node paths (AceHelper.PATH_BASED_ORDERING) as keys
+     * @param aclOrdering specifies whether the allow and deny ACEs within an ACL should be divided in separate blocks (first deny then
+     *            allow)
      * @param isFilterACEs
      * @param isIncludeUsers
      * @return
      * @throws ValueFormatException
      * @throws IllegalStateException
-     * @throws RepositoryException
-     */
+     * @throws RepositoryException */
     private AceDumpData createAclDumpMap(final Session session,
             final int keyOrder, final int aclOrdering,
             final String[] excludePaths, final boolean isFilterACEs,
@@ -773,15 +747,11 @@ public class DumpserviceImpl implements Dumpservice {
         }
     }
 
-    /**
-     * removes the name of the group node itself (groupID) from the intermediate
-     * path
-     * 
+    /** removes the name of the group node itself (groupID) from the intermediate path
+     *
      * @param intermediatePath
      * @param groupID
-     * @return corrected path if groupID was found at the end of the
-     *         intermediatePath, otherwise original path
-     */
+     * @return corrected path if groupID was found at the end of the intermediatePath, otherwise original path */
     private String getIntermediatePath(String intermediatePath,
             final String groupID) {
         int index = StringUtils.lastIndexOf(intermediatePath, "/" + groupID);
@@ -808,8 +778,6 @@ public class DumpserviceImpl implements Dumpservice {
                 + new Date(System.currentTimeMillis());
         response.setHeader("Content-Disposition", "attachment; filename=\""
                 + fileName + "\"");
-
-        byte[] byteBuffer = new byte[4096];
 
         try {
             writeAuthorizableConfigToStream(authorizableSet, outStream);
@@ -852,16 +820,12 @@ public class DumpserviceImpl implements Dumpservice {
         }
     }
 
-    /**
-     * method that returns the data of users contained in a set as
-     * AuthorizableConfigBeans
-     * 
-     * @param usersFromACEs
-     *            set holding users
+    /** method that returns the data of users contained in a set as AuthorizableConfigBeans
+     *
+     * @param usersFromACEs set holding users
      * @return set holding AuthorizableConfigBeans
      * @throws RepositoryException
-     * @throws UnsupportedRepositoryOperationException
-     */
+     * @throws UnsupportedRepositoryOperationException */
     public Set<AuthorizableConfigBean> getUserBeans(Set<User> usersFromACEs)
             throws RepositoryException, UnsupportedRepositoryOperationException {
 
@@ -877,7 +841,7 @@ public class DumpserviceImpl implements Dumpservice {
                         user.getID());
                 newBean.setPath(intermediatePath);
                 newBean.setIsGroup(false);
-                Set<Authorizable> memberOf = new HashSet<Authorizable>();
+                new HashSet<Authorizable>();
                 addDeclaredMembers(user, newBean);
                 userBeans.add(newBean);
             }
@@ -885,17 +849,14 @@ public class DumpserviceImpl implements Dumpservice {
         return userBeans;
     }
 
-    /**
-     * method that fetches all groups from /home and returns their data
-     * encapsulated in AuthorizableConfigBeans
-     * 
-     * @param session
-     *            session with sufficient rights to read group informations
+    /** method that fetches all groups from /home and returns their data encapsulated in AuthorizableConfigBeans
+     *
+     * @param session session with sufficient rights to read group informations
      * @return set holding AuthorizableConfigBeans
      * @throws AccessDeniedException
      * @throws UnsupportedRepositoryOperationException
-     * @throws RepositoryException
-     */
+     * @throws RepositoryException */
+    @Override
     public Set<AuthorizableConfigBean> getGroupBeans(Session session)
             throws AccessDeniedException,
             UnsupportedRepositoryOperationException, RepositoryException {
@@ -906,6 +867,7 @@ public class DumpserviceImpl implements Dumpservice {
 
         Iterator<Authorizable> result = userManager
                 .findAuthorizables(new Query() {
+                    @Override
                     public void build(QueryBuilder builder) {
                         builder.setSortOrder("@rep:principalName",
                                 Direction.ASCENDING);
@@ -942,17 +904,12 @@ public class DumpserviceImpl implements Dumpservice {
         bean.setMemberOf(memberOfList.toArray(new String[memberOfList.size()]));
     }
 
-    /**
-     * Method that checks if passed ACE is one of the 2 ACEs which belong to the
-     * cq actions "create", "delete" and "modify" in an AceDump containing a
-     * repGlob. Reason is the fact that each of these 2 actions use 2 identical
-     * ACEs. one with an additional repGlob and one without. In a dump we only
-     * want to have one ACE for each of these actions without a repGlob.
-     * 
-     * @param aceBean
-     *            bean holding the properties of an ACE
-     * @return true if ace belongs to one of the 3 actions
-     */
+    /** Method that checks if passed ACE is one of the 2 ACEs which belong to the cq actions "create", "delete" and "modify" in an AceDump
+     * containing a repGlob. Reason is the fact that each of these 2 actions use 2 identical ACEs. one with an additional repGlob and one
+     * without. In a dump we only want to have one ACE for each of these actions without a repGlob.
+     *
+     * @param aceBean bean holding the properties of an ACE
+     * @return true if ace belongs to one of the 3 actions */
     private boolean isUnwantedAce(final AceBean aceBean) {
         boolean ret = false;
         List<String> tmpList = null;
@@ -962,15 +919,15 @@ public class DumpserviceImpl implements Dumpservice {
 
             // set when action allow/deny:create is used
             if (tmpList.containsAll(CqActionsMapping.ACTIONS_MAP.get("create"))
-                    && tmpList.size() == CqActionsMapping.ACTIONS_MAP.get(
-                            "create").size()) {
+                    && (tmpList.size() == CqActionsMapping.ACTIONS_MAP.get(
+                            "create").size())) {
                 ret = true;
             }
             // set when action allow/deny:delete is used
             else if (tmpList.containsAll(CqActionsMapping.ACTIONS_MAP
                     .get("delete"))
-                    && tmpList.size() == CqActionsMapping.ACTIONS_MAP.get(
-                            "delete").size()) {
+                    && (tmpList.size() == CqActionsMapping.ACTIONS_MAP.get(
+                            "delete").size())) {
                 ret = true;
             }
             // set when action allow/deny:modify and allow create,delete and
@@ -979,9 +936,9 @@ public class DumpserviceImpl implements Dumpservice {
                     .get("create"))
                     && tmpList.containsAll(CqActionsMapping.ACTIONS_MAP
                             .get("delete"))
-                    && tmpList.size() == (CqActionsMapping.ACTIONS_MAP.get(
+                    && (tmpList.size() == (CqActionsMapping.ACTIONS_MAP.get(
                             "create").size() + CqActionsMapping.ACTIONS_MAP
-                            .get("delete").size())) {
+                            .get("delete").size()))) {
                 ret = true;
             }
         }
@@ -1000,4 +957,5 @@ public class DumpserviceImpl implements Dumpservice {
         }
         return aceSet;
     }
+
 }

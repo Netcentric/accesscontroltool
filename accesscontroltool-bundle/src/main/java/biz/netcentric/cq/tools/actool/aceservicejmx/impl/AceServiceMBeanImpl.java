@@ -144,7 +144,7 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements
 
     @Override
     public String purgeAllAuthorizablesFromConfigurations() {
-        return aceService.purgAuthorizablesFromConfig();
+        return aceService.purgeAuthorizablesFromConfig();
     }
 
     @Override
