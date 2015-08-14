@@ -37,7 +37,7 @@
     <build>
         <resources>
             <resource>
-                <directory>src/main/content/jcr_root</directory>
+                <directory>src/main/jcr_root</directory>
                 <filtering>false</filtering>
                 <excludes>
                     <exclude>**/.vlt</exclude>
@@ -61,7 +61,7 @@
                 <extensions>true</extensions>
                 <configuration>
                     <group>Netcentric</group>
-                    <filterSource>src/main/content/META-INF/vault/filter.xml</filterSource>
+                    <filterSource>src/main/META-INF/vault/filter.xml</filterSource>
                     <embeddeds>
                         <embedded>
                             <groupId>${project.groupId}</groupId>
