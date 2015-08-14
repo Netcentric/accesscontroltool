@@ -1,5 +1,6 @@
 actool 1.6 - August 14, 2015
 -------------------------
+Fixed #23: AEM 6.1 Compatibility
 Fixed #22: SQL2 Queries and new oakindex package that can be installed directly or taken as reference to avoid traversal fallback with queries for [rep:ACL]
 Fixed #25: better error handling (also renamed method for clarity)
 
