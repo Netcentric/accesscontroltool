@@ -157,7 +157,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
                     INSTALLED_CONFIGS_NODE_NAME);
         } catch (RepositoryException e) {
             String message = e.toString();
-            history.setException(e.toString());
+            history.addError(e.toString());
             LOG.error("Exception: ", e);
         }
 

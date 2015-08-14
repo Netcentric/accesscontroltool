@@ -176,13 +176,13 @@ public class AcHelper {
             Principal currentPrincipal = getPrincipal(session, bean);
 
             if (currentPrincipal == null) {
-                String warningMessage = "Could not find definition for authorizable "
+                String errMessage = "Could not find definition for authorizable "
                         + bean.getPrincipalName()
                         + " in groups config while installing ACE for: "
                         + bean.getJcrPath()
                         + "! Skipped installation of ACEs for this authorizable!\n";
-                LOG.warn(warningMessage);
-                history.addWarning(warningMessage);
+                LOG.error(errMessage);
+                history.addError(errMessage);
                 continue;
 
             } else {

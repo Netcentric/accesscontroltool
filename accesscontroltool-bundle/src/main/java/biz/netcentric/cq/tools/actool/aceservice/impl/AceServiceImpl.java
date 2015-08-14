@@ -217,7 +217,7 @@ public class AceServiceImpl implements AceService {
 
             installNewConfigurations(session, history, newestConfigurations, authorizableInstallationHistorySet);
         } catch (AuthorizableCreatorException e) {
-            history.setException(e.toString());
+            history.addError(e.toString());
             // here no rollback of authorizables necessary since session wasn't
             // saved
         } catch (Exception e) {
@@ -228,7 +228,7 @@ public class AceServiceImpl implements AceService {
             session.logout();
 
             LOG.error("Exception in AceServiceImpl: {}", e);
-            history.setException(e.toString());
+            history.addError(e.toString());
 
             for (AuthorizableInstallationHistory authorizableInstallationHistory : authorizableInstallationHistorySet) {
                 try {
