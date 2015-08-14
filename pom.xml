@@ -72,6 +72,12 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
+    
+    <modules>
+        <module>accesscontroltool-bundle</module>
+        <module>accesscontroltool-package</module>
+        <module>accesscontroltool-oakindex-package</module>
+    </modules>    
 
     <dependencyManagement>
         <dependencies>
@@ -418,8 +424,4 @@
 
     </profiles>
 
-    <modules>
-        <module>accesscontroltool-bundle</module>
-        <module>accesscontroltool-package</module>
-    </modules>
 </project>

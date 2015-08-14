@@ -22,18 +22,10 @@
     <!-- P R O J E C T D E S C R I P T I O N -->
     <!-- ====================================================================== -->
 
-    <artifactId>accesscontroltool-package</artifactId>
+    <artifactId>accesscontroltool-oakindex-package</artifactId>
     <packaging>content-package</packaging>
-    <name>Access Control Tool Package</name>
+    <name>Access Control Tool Package - Oak Index</name>
 
-    <dependencies>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>accesscontroltool-bundle</artifactId>
-            <version>${project.version}</version>
-            <type>bundle</type>
-        </dependency>
-    </dependencies>
     <build>
         <resources>
             <resource>
@@ -62,18 +54,6 @@
                 <configuration>
                     <group>Netcentric</group>
                     <filterSource>src/main/META-INF/vault/filter.xml</filterSource>
-                    <embeddeds>
-                        <embedded>
-                            <groupId>${project.groupId}</groupId>
-                            <artifactId>accesscontroltool-bundle</artifactId>
-                            <target>/apps/netcentric/actool/install</target>
-                        </embedded>
-                        <embedded>
-                            <groupId>org.yaml</groupId>
-                            <artifactId>snakeyaml</artifactId>
-                            <target>/apps/netcentric/actool/install</target>
-                        </embedded>
-                    </embeddeds>
                     <targetURL>http://${crx.host}:${crx.port}/crx/packmgr/service.jsp</targetURL>
                 </configuration>
             </plugin>
