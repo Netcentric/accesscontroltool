@@ -9,10 +9,11 @@
 package biz.netcentric.cq.tools.actool.configReader;
 
 import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+
 import javax.jcr.RepositoryException;
+
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
@@ -29,10 +30,10 @@ public interface ConfigReader {
     public Map<String, Set<AuthorizableConfigBean>> getGroupConfigurationBeans(
             final Collection<?> groupConfigData,
             AuthorizableValidator authorizableValidator)
-            throws AcConfigBeanValidationException;
+                    throws AcConfigBeanValidationException;
 
-    public Map<String, LinkedHashSet<AuthorizableConfigBean>> getUserConfigurationBeans(
+    public Map<String, Set<AuthorizableConfigBean>> getUserConfigurationBeans(
             final Collection<?> userConfigData,
             AuthorizableValidator authorizableValidator)
-            throws AcConfigBeanValidationException;
+                    throws AcConfigBeanValidationException;
 }

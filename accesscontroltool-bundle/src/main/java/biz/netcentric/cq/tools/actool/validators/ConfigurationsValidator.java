@@ -18,18 +18,18 @@ public interface ConfigurationsValidator {
      * already defined in another configuration file which has been already
      * processed
      * 
-     * @param groupsFromAllConfig
+     * @param authorizablesFromAllConfig
      *            set holding all names of groups of all config files which have
      *            already been processed
-     * @param groupsFromCurrentConfig
+     * @param authorizablesFromCurrentConfig
      *            set holding all names of the groups from the current
      *            configuration
      * @param configPath
      *            repository path of current config
      * @throws IllegalArgumentException
      */
-    public abstract void validateDoubleGroups(Set<String> groupsFromAllConfig,
-            Set<String> groupsFromCurrentConfig, String configPath)
+    public abstract void validateDuplicateAuthorizables(Set<String> authorizablesFromAllConfig,
+            Set<String> authorizablesFromCurrentConfig, String configPath)
             throws IllegalArgumentException;
 
     /**

@@ -263,9 +263,7 @@ public class AceServiceImpl implements AceService {
         if (newestConfigurations != null) {
 
             ConfigurationMerger configurationMerger = new YamlConfigurationMerger();
-            List mergedConfigurations = configurationMerger
-                    .getMergedConfigurations(newestConfigurations, history,
-                            configReader);
+            List mergedConfigurations = configurationMerger.getMergedConfigurations(newestConfigurations, history, configReader);
 
             installMergedConfigurations(history, session,
                     authorizableInstallationHistorySet,
@@ -514,7 +512,7 @@ public class AceServiceImpl implements AceService {
     }
 
     @Override
-    public String purgAuthorizablesFromConfig() {
+    public String purgeAuthorizablesFromConfig() {
         Session session = null;
         String message = "";
         try {
@@ -574,14 +572,14 @@ public class AceServiceImpl implements AceService {
         try {
             JackrabbitSession js = (JackrabbitSession) session;
             UserManager userManager = js.getUserManager();
-            
+
             // Try do disable the autosave only in case if changes are automatically persisted
             if (userManager.isAutoSave()) {
                 try {
-                  userManager.autoSave(false);
+                    userManager.autoSave(false);
                 } catch (final UnsupportedRepositoryOperationException e) {
-                  // check added for AEM 6.0
-                  LOG.warn("disabling autoSave not possible with this user manager!");
+                    // check added for AEM 6.0
+                    LOG.warn("disabling autoSave not possible with this user manager!");
                 }
             }
 

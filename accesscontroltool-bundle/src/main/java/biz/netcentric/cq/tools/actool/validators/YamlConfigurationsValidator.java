@@ -11,7 +11,6 @@ package biz.netcentric.cq.tools.actool.validators;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -23,17 +22,17 @@ public class YamlConfigurationsValidator implements ConfigurationsValidator {
     /*
      * (non-Javadoc)
      * 
-     * @see biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator#
-     * validateDoubleGroups(java.util.Set, java.util.Set, java.lang.String)
+     * @see biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator# validateDoubleGroups(java.util.Set, java.util.Set,
+     * java.lang.String)
      */
     @Override
-    public void validateDoubleGroups(final Set<String> groupsFromAllConfig,
+    public void validateDuplicateAuthorizables(final Set<String> groupsFromAllConfig,
             final Set<String> groupsFromCurrentConfig, final String configPath)
-            throws IllegalArgumentException {
+                    throws IllegalArgumentException {
 
         if (CollectionUtils.containsAny(groupsFromAllConfig,
                 groupsFromCurrentConfig)) {
-            String errorMessage = "already defined group: ";
+            String errorMessage = "Already defined authorizable: ";
 
             // find the name of the doubled defined group and add it to error
             // message
@@ -42,8 +41,7 @@ public class YamlConfigurationsValidator implements ConfigurationsValidator {
                     errorMessage = errorMessage + group
                             + " found in configuration file: " + configPath
                             + "!";
-                    errorMessage = errorMessage
-                            + " This group was already defined in another configuration file on the system!";
+                    errorMessage += " This authorizable was already defined in another configuration file on the system!";
                     break;
                 }
             }
@@ -54,35 +52,21 @@ public class YamlConfigurationsValidator implements ConfigurationsValidator {
     /*
      * (non-Javadoc)
      * 
-     * @see biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator#
-     * validateSectionContentExistence(java.lang.String, java.util.Collection)
+     * @see biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator# validateSectionContentExistence(java.lang.String,
+     * java.util.Collection)
      */
     @Override
     public void validateSectionContentExistence(final String configPath,
             final Collection configurations) throws IllegalArgumentException {
-        List<LinkedHashMap> yamlList = new ArrayList<LinkedHashMap>(
+        new ArrayList<LinkedHashMap>(
                 configurations);
-        // It is now possible to have separate configs for ACEs and groups, so this validation is not needed anymore
-        /*
-        if (yamlList.get(0).get(Constants.GROUP_CONFIGURATION_KEY) == null) {
-            throw new IllegalArgumentException("Empty "
-                    + Constants.GROUP_CONFIGURATION_KEY
-                    + " section in configuration file: " + configPath);
-        }
-        if (yamlList.get(1).get(Constants.ACE_CONFIGURATION_KEY) == null) {
-            throw new IllegalArgumentException("Empty "
-                    + Constants.ACE_CONFIGURATION_KEY
-                    + " section in configuration file: " + configPath);
-        }
-        */
     }
 
     /*
      * (non-Javadoc)
      * 
      * @see biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator#
-     * validateMandatorySectionIdentifiersExistence(java.lang.String,
-     * java.lang.String)
+     * validateMandatorySectionIdentifiersExistence(java.lang.String, java.lang.String)
      */
     @Override
     public void validateMandatorySectionIdentifiersExistence(
@@ -90,33 +74,24 @@ public class YamlConfigurationsValidator implements ConfigurationsValidator {
         // check if mandatory section identifiers are there
         // It is now possible to have separate configs for ACEs and groups, so this validation is not needed anymore
 
-        /* 
-        if (!configuration.contains(Constants.GROUP_CONFIGURATION_KEY)
-                && !configuration.contains(Constants.USER_CONFIGURATION_KEY)) {
-            throw new IllegalArgumentException(
-                    Constants.GROUP_CONFIGURATION_KEY
-                            + " section identifier ('"
-                            + Constants.GROUP_CONFIGURATION_KEY
-                            + "') missing in configuration file: " + filePath);
-        }
-        if (!configuration.contains(Constants.ACE_CONFIGURATION_KEY)) {
-            throw new IllegalArgumentException(Constants.ACE_CONFIGURATION_KEY
-                    + "section identifier ('" + Constants.ACE_CONFIGURATION_KEY
-                    + "') missing in configuration file: " + filePath);
-        }
-        */
+        /*
+         * if (!configuration.contains(Constants.GROUP_CONFIGURATION_KEY) && !configuration.contains(Constants.USER_CONFIGURATION_KEY)) {
+         * throw new IllegalArgumentException( Constants.GROUP_CONFIGURATION_KEY + " section identifier ('" +
+         * Constants.GROUP_CONFIGURATION_KEY + "') missing in configuration file: " + filePath); } if
+         * (!configuration.contains(Constants.ACE_CONFIGURATION_KEY)) { throw new IllegalArgumentException(Constants.ACE_CONFIGURATION_KEY +
+         * "section identifier ('" + Constants.ACE_CONFIGURATION_KEY + "') missing in configuration file: " + filePath); }
+         */
     }
 
     /*
      * (non-Javadoc)
      * 
-     * @see biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator#
-     * validateSectionIdentifiers(java.util.Set, java.lang.String)
+     * @see biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator# validateSectionIdentifiers(java.util.Set, java.lang.String)
      */
     @Override
     public void validateSectionIdentifiers(
             final Set<String> sectionIdentifiers, final String filePath)
-            throws IllegalArgumentException {
+                    throws IllegalArgumentException {
 
         // check for invalid section identifiers
 

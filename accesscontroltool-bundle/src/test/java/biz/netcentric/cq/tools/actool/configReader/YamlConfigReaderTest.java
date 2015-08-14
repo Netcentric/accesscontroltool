@@ -38,17 +38,6 @@ import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
 
 public class YamlConfigReaderTest {
 
-    @Ignore
-    public void testTemplatesSection() throws IOException {
-        final YamlConfigReader yamlConfigReader = new YamlConfigReader();
-        final List<LinkedHashMap> yamlList = getYamlList("test-templates.yaml");
-        assertEquals("Number of top-level config elements", 3, yamlList.size());
-        final Map<String, String> mappings = yamlConfigReader.getTemplateConfiguration(yamlList);
-        assertEquals("/apps/mysite/templates/home", mappings.get("/content/site/*"));
-        assertEquals("/apps/mysite/templates/firstlevel", mappings.get("/content/site/en/*"));
-        assertEquals("/apps/mysite/templates/secondlevel", mappings.get("/content/site/en/*/*"));
-    }
-
     @Test
     public void testLoop() throws IOException, AcConfigBeanValidationException, RepositoryException {
         final YamlConfigReader yamlConfigReader = new YamlConfigReader();
@@ -183,7 +172,8 @@ public class YamlConfigReaderTest {
         props.put("path", "/home/groups/${brand}");
         groupMaps.add(props);
         groups.add(group);
-        final List<AuthorizableConfigBean> beans = yamlConfigReader.unrollGroupForLoop(forStmt, groups, new HashMap<String, String>());
+        final List<AuthorizableConfigBean> beans = yamlConfigReader
+                .unrollGroupForLoop(forStmt, groups, new HashMap<String, String>(), true);
         assertEquals("Number of groups", 3, beans.size());
         assertEquals("/home/groups/BRAND1", beans.get(0).getPath());
         assertEquals("/home/groups/BRAND2", beans.get(1).getPath());
@@ -234,7 +224,8 @@ public class YamlConfigReaderTest {
         final YamlConfigReader yamlConfigReader = new YamlConfigReader();
         final List<LinkedHashMap> yamlList = getYamlList("test-rep-usermanagement.yaml");
         final Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
-        final Map<String, Set<AceBean>> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), new AceBeanValidatorImpl(groups.keySet()));
+        final Map<String, Set<AceBean>> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(),
+                new AceBeanValidatorImpl(groups.keySet()));
         final Set<AceBean> acl = acls.get("groupA");
         for (final AceBean ace : acl) {
             assertNotNull("Testing null actions", ace.getActions());
