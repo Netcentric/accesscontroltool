@@ -20,6 +20,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
+import org.apache.jackrabbit.commons.JcrUtils;
 import org.apache.sling.settings.SlingSettingsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,7 @@ import com.day.jcr.vault.fs.io.Archive;
 import com.day.jcr.vault.fs.io.Archive.Entry;
 
 @Service
-@Component(metatype = true, label = "AC Config Files Retriever", description = "Provides a map path->yamlConfigContent of relevant configs")
+@Component(label = "AC Config Files Retriever", description = "Provides a map path->yamlConfigContent of relevant configs")
 public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfigFilesRetrieverImpl.class);
@@ -192,21 +193,15 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
         public String getContentAsString() throws Exception {
             InputStream configInputStream = null;
             try {
-                Node contentNode = node.getNode("jcr:content");
-                if (contentNode.hasProperty(PROP_JCR_DATA)) {
-                    StringWriter writer = new StringWriter();
-                    configInputStream = contentNode.getProperty(PROP_JCR_DATA).getBinary().getStream();
-                    IOUtils.copy(configInputStream, writer, "UTF-8");
-                    String configData = writer.toString();
-                    if (StringUtils.isNotBlank(configData)) {
-                        LOG.info("found configuration data of node: {}",
-                                node.getPath());
-                        return configData;
-                    } else {
-                        throw new IllegalStateException("config data of node: " + node.getPath() + " is blank!");
-                    }
+                StringWriter writer = new StringWriter();
+                configInputStream = JcrUtils.readFile(node);
+                IOUtils.copy(configInputStream, writer, "UTF-8");
+                String configData = writer.toString();
+                if (StringUtils.isNotBlank(configData)) {
+                    LOG.info("found configuration data of node: {}", node.getPath());
+                    return configData;
                 } else {
-                    throw new IllegalStateException("property: " + PROP_JCR_DATA + " not found under contentNode: " + contentNode.getPath());
+                    throw new IllegalStateException("File " + node.getPath() + " is empty!");
                 }
 
             } finally {
