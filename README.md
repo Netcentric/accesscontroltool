@@ -68,6 +68,16 @@ If the isMemberOf property of a group contains a group which is not yet installe
 
 The members property contains a list of groups where this group is added as isMemberOf.
 
+## Configuration of users
+
+In general it is best practice to not generate regular users by the AC Tool but use other mechanism (e.g. LDAP) to create users. However, it can be useful to create system users (e.g. for replication agents or OSGi service authentiation) or test users on staging environments.
+
+Users can be configured in the same way as groups in the **user_config** section. There are two differences to groups:
+
+* the attribute members cannot be used (for obvious reasons)
+* the boolean attribute isSystemUser is used to create system users in AEM 6.1
+
+
 ## Configuration of ACEs
 
 The configurations are done per principal followed by indented informations which comprise of config data which represents the settings per ACE. This data includes
