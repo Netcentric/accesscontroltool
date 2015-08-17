@@ -1,8 +1,8 @@
-package biz.netcentric.cq.tools.actool.configReader;
+package biz.netcentric.cq.tools.actool.configreader;
 
 import java.util.Map;
 
-import javax.jcr.Session;
+import javax.jcr.Node;
 
 import com.day.jcr.vault.fs.io.Archive;
 
@@ -12,19 +12,19 @@ import com.day.jcr.vault.fs.io.Archive;
  * @author ghenzler */
 public interface ConfigFilesRetriever {
 
-    /** Returns yaml configurations by their path location using a jcr base path.
+    /** Returns yaml configurations using a given root node. This will only return configuration entries which apply to the current run mode.
      *
      * @param session the jcr session
      * @param jcrRootPath the root path in the JCR to start looking for yaml-files
      * @return map of yaml configurations by their path location
      * @throws Exception if things go wrong */
-    Map<String, String> getConfigFileContentByFilenameMap(Session session, String jcrRootPath) throws Exception;
+    Map<String, String> getConfigFileContentFromNode(Node rootNode) throws Exception;
 
-    /** Returns yaml configurations by their path location from a package.
+    /** Returns yaml configurations from a package.  This will only return configuration entries which apply to the current run mode
      *
      * @param archive the Vault Package
      * @return map of yaml configurations by their path location
      * @throws Exception if things go wrong */
-    Map<String, String> getConfigFileContentByFilenameMap(Archive archive) throws Exception;
+    Map<String, String> getConfigFileContentFromPackage(Archive archive) throws Exception;
 
 }

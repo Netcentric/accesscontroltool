@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
@@ -42,10 +43,10 @@ import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
-import biz.netcentric.cq.tools.actool.configReader.ConfigFilesRetriever;
-import biz.netcentric.cq.tools.actool.configReader.ConfigReader;
-import biz.netcentric.cq.tools.actool.configReader.ConfigurationMerger;
-import biz.netcentric.cq.tools.actool.configReader.YamlConfigurationMerger;
+import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetriever;
+import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
+import biz.netcentric.cq.tools.actool.configreader.ConfigurationMerger;
+import biz.netcentric.cq.tools.actool.configreader.YamlConfigurationMerger;
 import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
@@ -204,8 +205,9 @@ public class AceServiceImpl implements AceService {
 
         try {
             session = repository.loginAdministrative(null);
-            String path = getConfigurationRootPath();
-            Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentByFilenameMap(session, path);
+            String rootPath = getConfigurationRootPath();
+            Node rootNode = session.getNode(rootPath);
+            Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(rootNode);
 
             installNewConfigurations(session, history, newestConfigurations, authorizableInstallationHistorySet);
         } catch (AuthorizableCreatorException e) {
@@ -298,11 +300,12 @@ public class AceServiceImpl implements AceService {
 
     @Override
     public boolean isReadyToStart() {
-        String path = getConfigurationRootPath();
+        String rootPath = getConfigurationRootPath();
         Session session = null;
         try {
             session = repository.loginAdministrative(null);
-            return !configFilesRetriever.getConfigFileContentByFilenameMap(session, path).isEmpty();
+            Node rootNode = session.getNode(rootPath);
+            return !configFilesRetriever.getConfigFileContentFromNode(rootNode).isEmpty();
         } catch (Exception e) {
 
         } finally {
@@ -509,7 +512,8 @@ public class AceServiceImpl implements AceService {
 
         try {
             session = repository.loginAdministrative(null);
-            paths = configFilesRetriever.getConfigFileContentByFilenameMap(session, configurationPath).keySet();
+            Node rootNode = session.getNode(configurationPath);
+            paths = configFilesRetriever.getConfigFileContentFromNode(rootNode).keySet();
         } catch (Exception e) {
 
         } finally {
@@ -523,7 +527,8 @@ public class AceServiceImpl implements AceService {
     public Set<String> getAllAuthorizablesFromConfig(Session session)
             throws Exception {
         AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
-        Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentByFilenameMap(session, configurationPath);
+        Node rootNode = session.getNode(configurationPath);
+        Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(rootNode);
         ConfigurationMerger configurationMeger = new YamlConfigurationMerger();
         List mergedConfigurations = configurationMeger.getMergedConfigurations(
                 newestConfigurations, history, configReader);

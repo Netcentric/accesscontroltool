@@ -1,4 +1,4 @@
-package biz.netcentric.cq.tools.actool.configReader;
+package biz.netcentric.cq.tools.actool.configreader;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -7,6 +7,8 @@ import java.util.Set;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
+
+import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetrieverImpl;
 
 public class ConfigFilesRetrieverImplTest {
 

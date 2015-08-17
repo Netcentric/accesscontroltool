@@ -1,4 +1,4 @@
-package biz.netcentric.cq.tools.actool.configReader;
+package biz.netcentric.cq.tools.actool.configreader;
 
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -12,8 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
+import javax.jcr.nodetype.NodeType;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -34,33 +33,22 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfigFilesRetrieverImpl.class);
 
-    private static final String PROP_JCR_DATA = "jcr:data";
-
     @Reference
     private SlingSettingsService slingSettingsService;
 
     @Override
-    public Map<String, String> getConfigFileContentByFilenameMap(Session session, String jcrRootPath) throws Exception {
+    public Map<String, String> getConfigFileContentFromNode(Node rootNode) throws Exception {
 
-        if (StringUtils.isBlank(jcrRootPath)) {
+        if (rootNode == null) {
             throw new IllegalArgumentException("No configuration path configured! please check the configuration of AcService!");
         }
-        Node node = null;
-        try {
-            node = session.getNode(jcrRootPath);
-
-        } catch (RepositoryException e) {
-            throw new IllegalArgumentException("Configured AC Tool root configuration path (=" + jcrRootPath
-                    + ") could not be found or accessed!");
-        }
-
-        Map<String, String> configurations = getConfigurations(new NodeInJcr(node));
+        Map<String, String> configurations = getConfigurations(new NodeInJcr(rootNode));
 
         return configurations;
     }
 
     @Override
-    public Map<String, String> getConfigFileContentByFilenameMap(Archive archive) throws Exception {
+    public Map<String, String> getConfigFileContentFromPackage(Archive archive) throws Exception {
         Entry rootEntry = archive.getJcrRoot();
         if (rootEntry == null) {
             throw new IllegalStateException("Invalid package: It does not contain a JCR root element");
@@ -186,15 +174,14 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
 
         @Override
         public boolean isDirectory() throws Exception {
-            return node.getPrimaryNodeType().getName().toLowerCase().endsWith("folder");
+            return node.getPrimaryNodeType().isNodeType(NodeType.NT_FOLDER);
         }
 
         @Override
         public String getContentAsString() throws Exception {
-            InputStream configInputStream = null;
+            final InputStream configInputStream = JcrUtils.readFile(node);
             try {
                 StringWriter writer = new StringWriter();
-                configInputStream = JcrUtils.readFile(node);
                 IOUtils.copy(configInputStream, writer, "UTF-8");
                 String configData = writer.toString();
                 if (StringUtils.isNotBlank(configData)) {
@@ -205,9 +192,7 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
                 }
 
             } finally {
-                if (configInputStream != null) {
-                    configInputStream.close();
-                }
+                configInputStream.close();
             }
         }
     }
