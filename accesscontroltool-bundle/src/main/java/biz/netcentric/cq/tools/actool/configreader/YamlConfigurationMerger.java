@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package biz.netcentric.cq.tools.actool.configReader;
+package biz.netcentric.cq.tools.actool.configreader;
 
 import java.util.ArrayList;
 import java.util.HashSet;

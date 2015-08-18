@@ -30,8 +30,8 @@ import org.junit.Test;
 import org.yaml.snakeyaml.Yaml;
 
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
-import biz.netcentric.cq.tools.actool.configReader.ConfigReader;
-import biz.netcentric.cq.tools.actool.configReader.YamlConfigReader;
+import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
+import biz.netcentric.cq.tools.actool.configreader.YamlConfigReader;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
