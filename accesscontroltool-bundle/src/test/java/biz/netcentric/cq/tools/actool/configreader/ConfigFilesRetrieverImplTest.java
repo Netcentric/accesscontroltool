@@ -8,8 +8,6 @@ import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 
-import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetrieverImpl;
-
 public class ConfigFilesRetrieverImplTest {
 
     @Test
@@ -51,5 +49,22 @@ public class ConfigFilesRetrieverImplTest {
                 currentRunmodes)));
         Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.foo.publish", currentRunmodes)));
         Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.samplecontent.local", currentRunmodes)));
+
     }
+
+    @Test
+    public void testIsRelevantConfigurationOrCombinations() {
+        Set<String> currentRunmodes = new HashSet<String>(
+                Arrays.asList("samplecontent", "author", "netcentric", "crx3tar", "crx2", "local"));
+
+        // testing 'or' combinations with
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.dev,local", currentRunmodes)));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.int,prod", currentRunmodes)));
+
+        // combined 'and' and 'or'
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.author.dev,local", currentRunmodes)));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.publish.dev,local", currentRunmodes)));
+
+    }
+
 }

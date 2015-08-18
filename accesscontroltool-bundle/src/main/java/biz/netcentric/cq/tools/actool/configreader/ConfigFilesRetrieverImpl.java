@@ -79,28 +79,45 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
     }
 
     static boolean isRelevantConfiguration(final String entryName, final String parentName, final Set<String> currentRunModes) {
-        if (entryName.endsWith(".yaml") || entryName.equals("config") /* name 'config' without extension allowed for backwards compatibility */) {
-            // extract runmode from parent name (if parent has "." in it)
-            Set<String> requiredRunModes = extractRunModesFromName(parentName);
-            if (requiredRunModes.isEmpty()) {
-                LOG.debug(
-                        "Install file '{}', because parent name '{}' does not have a run mode specified.",
-                        entryName, parentName);
-                return true;
-            }
+        if (!entryName.endsWith(".yaml") && !entryName.equals("config") /* name 'config' without .yaml allowed for backwards compatibility */) {
+            return false;
+        }
 
-            // check if parent name has the right name
-            for (String requiredRunMode : requiredRunModes) {
+        // extract runmode from parent name (if parent has "." in it)
+        Set<String> requiredRunModes = extractRunModesFromName(parentName);
+        if (requiredRunModes.isEmpty()) {
+            LOG.debug("Install file '{}', because parent name '{}' does not have a run mode specified.",
+                    entryName, parentName);
+            return true;
+        }
+
+        // check if parent name has the right name
+        for (String requiredRunMode : requiredRunModes) {
+            // allow for 'or' runmodes
+            if (requiredRunMode.contains(",")) {
+                String[] atLeastOneRequired = requiredRunMode.split(",");
+                boolean foundAtLeastOneRunmode = false;
+                for (String orRunmode : atLeastOneRequired) {
+                    if (currentRunModes.contains(orRunmode)) {
+                        foundAtLeastOneRunmode = true;
+                    }
+                }
+                if (!foundAtLeastOneRunmode) {
+                    return false;
+                }
+            } else {
+                // if single runmode, just check if it's there
                 if (!currentRunModes.contains(requiredRunMode)) {
-                    LOG.debug(
-                            "Do not install file '{}', because required run mode '{}' is not set.",
+                    LOG.debug("Do not install file '{}', because required run mode '{}' is not set.",
                             entryName, requiredRunMode);
                     return false;
                 }
+
             }
-            return true;
+
         }
-        return false;
+        return true;
+
     }
 
     static Set<String> extractRunModesFromName(final String name) {
