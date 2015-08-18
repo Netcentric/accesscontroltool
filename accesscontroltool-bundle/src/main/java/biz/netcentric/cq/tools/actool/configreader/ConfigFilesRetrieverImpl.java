@@ -79,7 +79,7 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
     }
 
     static boolean isRelevantConfiguration(final String entryName, final String parentName, final Set<String> currentRunModes) {
-        if (entryName.endsWith(".yaml")) {
+        if (entryName.endsWith(".yaml") || entryName.equals("config") /* name 'config' without extension allowed for backwards compatibility */) {
             // extract runmode from parent name (if parent has "." in it)
             Set<String> requiredRunModes = extractRunModesFromName(parentName);
             if (requiredRunModes.isEmpty()) {
