@@ -28,15 +28,18 @@ public class ConfigFilesRetrieverImplTest {
         Assert.assertThat(ConfigFilesRetrieverImpl
                 .extractRunModesFromName("namewithoutrunmodes."), Matchers.contains(Matchers.contains("")));
     }
-    
+
     @Test
     public void testExtractRunModesFromNameWithAndAndOr() {
         Assert.assertThat(ConfigFilesRetrieverImpl
                 .extractRunModesFromName("name.runmode1,runmode2"), Matchers
                 .containsInAnyOrder(Matchers.contains("runmode1"), Matchers.contains("runmode2")));
-        Assert.assertThat(ConfigFilesRetrieverImpl
-                .extractRunModesFromName("name.runmode1.runmode1a,runmode2.runmode2a"), Matchers
-                .containsInAnyOrder(Matchers.containsInAnyOrder("runmode1", "runmode1a"), Matchers.containsInAnyOrder("runmode2", "runmode2a")));
+        Assert.assertThat(
+                ConfigFilesRetrieverImpl
+                        .extractRunModesFromName("name.runmode1.runmode1a,runmode2.runmode2a"),
+                Matchers
+                        .containsInAnyOrder(Matchers.containsInAnyOrder("runmode1", "runmode1a"),
+                                Matchers.containsInAnyOrder("runmode2", "runmode2a")));
     }
 
     @Test
@@ -68,9 +71,10 @@ public class ConfigFilesRetrieverImplTest {
         Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.int,prod", currentRunmodes)));
 
         // combined 'and' and 'or'
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.author.dev,local", currentRunmodes)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.dev,local.publish", currentRunmodes)));
-
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.author.dev,author.local",
+                currentRunmodes)));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.publish.dev,publish.local",
+                currentRunmodes)));
     }
 
 }
