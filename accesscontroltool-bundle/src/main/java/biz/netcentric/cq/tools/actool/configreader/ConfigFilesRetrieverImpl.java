@@ -79,53 +79,65 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
     }
 
     static boolean isRelevantConfiguration(final String entryName, final String parentName, final Set<String> currentRunModes) {
-        if (entryName.endsWith(".yaml") || entryName.equals("config") /* name 'config' without extension allowed for backwards compatibility */) {
-            // extract runmode from parent name (if parent has "." in it)
-            Set<String> requiredRunModes = extractRunModesFromName(parentName);
-            if (requiredRunModes.isEmpty()) {
-                LOG.debug(
-                        "Install file '{}', because parent name '{}' does not have a run mode specified.",
-                        entryName, parentName);
-                return true;
-            }
+        if (!entryName.endsWith(".yaml") && !entryName.equals("config") /* name 'config' without .yaml allowed for backwards compatibility */) {
+            return false;
+        }
 
-            // check if parent name has the right name
-            for (String requiredRunMode : requiredRunModes) {
-                if (!currentRunModes.contains(requiredRunMode)) {
-                    LOG.debug(
-                            "Do not install file '{}', because required run mode '{}' is not set.",
-                            entryName, requiredRunMode);
-                    return false;
-                }
-            }
+        // extract runmode from parent name (if parent has "." in it)
+        Set<Set<String>> requiredRunModes = extractRunModesFromName(parentName);
+        if (requiredRunModes.isEmpty()) {
+            LOG.debug("Install file '{}', because parent name '{}' does not have a run mode specified.",
+                    entryName, parentName);
             return true;
         }
+
+        // check the OR concatenated run modes
+        for (Set<String> andRunModes : requiredRunModes) {
+        	// within each OR section is a number of AND concatenated run modes
+        	boolean restrictionFulfilled = true;
+        	for (String andRunMode : andRunModes) {
+        		// all must be fulfilled
+        		if (!currentRunModes.contains(andRunMode)) {
+        			restrictionFulfilled = false;
+        			break;
+        		}
+        	}
+        	if (restrictionFulfilled) {
+        		LOG.debug("The following run modes are all set: {}, there proceed installing file '{}'", StringUtils.join(andRunModes,","), entryName);
+        		return true;
+        	}
+        }
+        LOG.debug("The run mode restrictions could not be fullfilled, therefore not installing file '{}'", entryName);
         return false;
     }
 
-    static Set<String> extractRunModesFromName(final String name) {
-        Set<String> requiredRunModes = new HashSet<String>();
+    /**
+     * 
+     * @param name a name containing a number of runmodes concatenated with AND and OR. The name must stick to the following grammar
+     * <pre>&lt;somename&gt;['.'{&lt;runmode&gt;'.'|&lt;runmode&gt;','}]</pre>
+     * The separator '.' means AND, "," means OR.
+     * As usual in most programming languages the AND has a higher precendence.
+     * @return the run modes being extracted from the given name 
+     * (the outer set of run modes represent OR concatenated run modes, the inner set AND concatenated run modes)
+     */
+    static Set<Set<String>> extractRunModesFromName(final String name) {
+        Set<Set<String>> requiredRunModes = new HashSet<Set<String>>();
 
-        // extract runmodes from name (separated by ".")
+        // strip prefix as the name starts usually with config.
         int positionDot = name.indexOf(".");
-
-        while (positionDot != -1) {
-            // find next dot
-            int positionPreviousDot = positionDot;
-            if ((positionPreviousDot + 1) >= name.length()) {
-                // ignore dots at the end!
-                return requiredRunModes;
-            }
-            positionDot = name.indexOf(".", positionPreviousDot + 1);
-            final String runMode;
-            if (positionDot == -1) {
-                runMode = name.substring(positionPreviousDot + 1);
-            } else {
-                runMode = name.substring(positionPreviousDot + 1, positionDot);
-            }
-            if (!runMode.isEmpty()) {
-                requiredRunModes.add(runMode);
-            }
+        if (positionDot == -1) {
+        	return requiredRunModes;
+        }
+        
+        String allSegments = name.substring(positionDot + 1);
+        String[] orSegments = allSegments.split(",");
+        for (String orSegment : orSegments) {
+        	Set<String> andRunModes = new HashSet<String>();
+        	String[] andSegments = orSegment.split("\\.");
+        	for (String andSegment : andSegments) {
+        		andRunModes.add(andSegment);
+        	}
+        	requiredRunModes.add(andRunModes);
         }
         return requiredRunModes;
     }
