@@ -258,7 +258,7 @@ The following steps are performed:
 
 1. All AC entries are removed from the repository which refer to an authorizable being mentioned in the YAML configuration file (no matter to which path those entries refer).
 1. All authorizables being mentioned in the YAML configuration get created (if necessary, i.e. if they do no exist yet).
-1. All AC entries generated from the YAML configuration get persisted in the repository. If there are already existing entries for one path (and referring to another authorizable) those are not touched. New AC entries are added at the end of the list. All new AC entries are sorted, so that the Deny rules come in front of the Allow rules.
+1. All AC entries generated from the YAML configuration get persisted in the repository. If there are already existing entries for one path (and referring to another authorizable) those are not touched. New AC entries are added at the end of the list. All new AC entries are sorted, so that the Deny entries are listed above the Allow entries. Since the AC entry nodes are evaluated bottom-to-top this sorting order leads to less restrictions (e.g. for a user which is member of two groups where one group sets a Deny and the other one sets an Allow, this order ensures that the allow has a higher priority).
 
     
 ### Installation Hook
