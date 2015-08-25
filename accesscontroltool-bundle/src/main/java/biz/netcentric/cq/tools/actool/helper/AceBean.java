@@ -8,10 +8,27 @@
  */
 package biz.netcentric.cq.tools.actool.helper;
 
+import java.security.Principal;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.security.AccessControlManager;
+import javax.jcr.security.Privilege;
+
 import org.apache.commons.lang.StringUtils;
+import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
+
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElement;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementVisitor;
+import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+
+import com.day.cq.security.util.CqActions;
 
 /**
  * 
@@ -203,4 +220,89 @@ public class AceBean implements AcDumpElement {
     public void accept(AcDumpElementVisitor acDumpElementVisitor) {
         acDumpElementVisitor.visit(this);
     }
+
+	private void removeRedundantPrivileges(Session session) throws RepositoryException {
+		Set<String> cleanedPrivileges = removeRedundantPrivileges(session, getPrivileges(), getActions());
+		privilegesString = StringUtils.join(cleanedPrivileges, ",");
+	}
+	
+	/** 
+	 * Modifies the privileges so that privileges already covered by actions are removed.
+	 * This is only a best effort operation as one action can lead to privileges on multiple nodes.
+	 * @throws RepositoryException 
+	 */
+	private static Set<String> removeRedundantPrivileges(Session session, String[] privileges, String[] actions) throws RepositoryException {
+		CqActions cqActions = new CqActions(session);
+		Set<String> cleanedPrivileges = new HashSet<String>();
+		if (privileges == null) {
+			return cleanedPrivileges;
+		}
+		cleanedPrivileges.addAll(Arrays.asList(privileges));
+		if (actions == null) {
+			return cleanedPrivileges;
+		}
+		for (String action : actions) {
+			Set<Privilege> coveredPrivileges = cqActions.getPrivileges(action);
+			for (Privilege coveredPrivilege : coveredPrivileges) {
+				cleanedPrivileges.remove(coveredPrivilege.getName());
+			}
+		}
+		return cleanedPrivileges;
+	}
+	/**
+	 * Persists the AccessControlEntry being represented by this bean to the
+	 * repository
+	 * 
+	 * @param session
+	 * @param principal
+	 * @param history 
+	 * @throws RepositoryException
+	 */
+	public void writeToRepository(final Session session, Principal principal, AcInstallationHistoryPojo history)
+			throws RepositoryException {
+		AccessControlManager acMgr = session.getAccessControlManager();
+		
+		// Convert actions to permissions, if necessary
+        if (getActions() != null) {
+            // install actions
+            history.addVerboseMessage("adding action for path: "
+                    + getJcrPath() + ", principal: "
+                    + principal.getName() + ", actions: "
+                    + getActionsString() + ", permission: "
+                    + getPermission());
+            AccessControlUtils.addActions(session, this, principal,
+                    history);
+            removeRedundantPrivileges(session);
+        }
+        
+        
+		JackrabbitAccessControlList acl = AccessControlUtils.getModifiableAcl(
+				acMgr, getJcrPath());
+		Set<Privilege> privileges = AccessControlUtils.getPrivilegeSet(
+				getPrivileges(), acMgr);
+		
+		if (!privileges.isEmpty()) {
+			Map<String, Value> restrictions = null;
+			if (getRepGlob() != null) {
+				// is rep:glob supported?
+				for (String rName : acl.getRestrictionNames()) {
+					if ("rep:glob".equals(rName)) {
+						Value v = session.getValueFactory().createValue(
+								getRepGlob(), acl.getRestrictionType(rName));
+						restrictions = Collections.singletonMap(rName, v);
+						break;
+					}
+				}
+			}
+			if (restrictions != null) {
+				acl.addEntry(principal, (Privilege[]) privileges
+						.toArray(new Privilege[privileges.size()]), isAllow(),
+						restrictions);
+			} else {
+				acl.addEntry(principal, (Privilege[]) privileges
+						.toArray(new Privilege[privileges.size()]), isAllow());
+			}
+		}
+		acMgr.setPolicy(getJcrPath(), acl);
+	}
 }

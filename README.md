@@ -250,23 +250,16 @@ In general the parent node may specify required Sling run modes being separated 
 
 During the installation all groups defined in the groups section of the configuration file get created in the system. In a next step all ACEs configured in the ACE section get installed in CRX. Any old ACEs regarding these groups not contained anymore in the config but in the repository gets automatically purged thus no old or obsolete ACEs stay in the system and any manual change of ACEs regarding these groups get reverted thus ensuring a defined state again. ACEs not belongig to those groups in the configuration files remain untouched. So after the installation took place all groups and the corresponding ACEs exactly as defined in the configuration(s) are installed on the system.
 
-If at any point during the installation an ecxeption occurs, no changes get persisted in the system. This prevents ending up having a undefined state in the repository.
+If at any point during the installation an exception occurs, no changes get persisted in the system. This prevents ending up having a undefined state in the repository.
 
-During the installation a history containing the most important events gets ceated and persisted in CRX for later examination.
+During the installation a history containing the most important events gets created and persisted in CRX for later examination.
 
-### Merging of ACEs
+The following steps are performed:
 
-To achieve the aforementioned requirements every new installation comprises the following steps:
+1. All AC entries are removed from the repository which refer to an authorizable being mentioned in the YAML configuration file (no matter to which path those entries refer).
+1. All authorizables being mentioned in the YAML configuration get created (if necessary, i.e. if they do no exist yet).
+1. All AC entries generated from the YAML configuration get persisted in the repository. If there are already existing entries for one path (and referring to another authorizable) those are not touched. New AC entries are added at the end of the list. All new AC entries are sorted, so that the Deny rules come in front of the Allow rules.
 
-* The group based ACE configuration from configuration file gets transformed into a node based configuration
-* A dump in the same format gets fetched from the repository
-* On each node contained in this file the following steps get performed:
-    * The ACL from dump and from the configuration gets compared
-    * If there are already ACEs in the repository regarding a group from the configuration, these ACEs get removed
-    * The other ACEs not contained in the respective ACL from config get merged into the ACL from the config and get ordered (deny ACEs followed by allow ACEs)
-    * The ACL from in repo gets replaced by the merged one from config
-* In case there is a node in repository dump that is not covered in the config the following step gets performed
-    * if the ACL of that node has one or several ACEs belonging to one or several groups from config, these ACEs get deleted
     
 ### Installation Hook
 

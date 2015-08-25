@@ -12,82 +12,71 @@ import java.security.Principal;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
-import javax.jcr.security.AccessControlEntry;
+import javax.jcr.ValueFormatException;
 import javax.jcr.security.Privilege;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
 
 /**
- * class that wraps an javax.jcr.security.AccessControlEntry and stores an
- * additional path information Also provides some getter methods which return
- * ACE data. Created and used during the reading of ACEs from a system, in order
- * to create a ACE Dump
+ * Wraps an {@link JackrabbitAccessControlEntry} and stores an
+ * additional path information. Created and used during the reading of ACEs from a system, in order
+ * to create an ACE Dump.
  * 
  * @author jochenkoschorke
  *
  */
-public class AceWrapper {
-    private static final Logger LOG = LoggerFactory.getLogger(AceWrapper.class);
-    private static final String PERM_DENY = "deny";
-    private static final String PERM_ALLOW = "allow";
-    private static final String REP_GLOB_RESTRICTION = "rep:glob";
-    private AccessControlEntry ace;
+public class AceWrapper implements JackrabbitAccessControlEntry {
+    private JackrabbitAccessControlEntry ace;
     private String jcrPath;
 
-    public AceWrapper(AccessControlEntry ace, String jcrPath) {
+    public AceWrapper(JackrabbitAccessControlEntry ace, String jcrPath) {
         super();
         this.ace = ace;
         this.jcrPath = jcrPath;
-    }
-
-    public AccessControlEntry getAce() {
-        return ace;
-    }
-
-    public void setAce(AccessControlEntry ace) {
-        this.ace = ace;
     }
 
     public String getJcrPath() {
         return jcrPath;
     }
 
-    public Principal getPrincipal() {
-        return this.ace.getPrincipal();
-    }
-
-    public void setJcrPath(String jcrPath) {
-        this.jcrPath = jcrPath;
-    }
-
     @Override
-    public boolean equals(Object obj) {
-        return this.toString().equals(obj.toString());
-    }
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((ace == null) ? 0 : ace.hashCode());
+		result = prime * result + ((jcrPath == null) ? 0 : jcrPath.hashCode());
+		return result;
+	}
 
-    @Override
-    public String toString() {
-        return this.ace.toString();
-    }
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		AceWrapper other = (AceWrapper) obj;
+		if (ace == null) {
+			if (other.ace != null)
+				return false;
+		} else if (!ace.equals(other.ace))
+			return false;
+		if (jcrPath == null) {
+			if (other.jcrPath != null)
+				return false;
+		} else if (!jcrPath.equals(other.jcrPath))
+			return false;
+		return true;
+	}
 
-    public Privilege[] getPrivileges() {
-        return ace.getPrivileges();
-    }
+	@Override
+	public String toString() {
+		return "AceWrapper [ace=" + ace + ", jcrPath=" + jcrPath + "]";
+	}
 
-    public boolean isAllow() {
-        return ((JackrabbitAccessControlEntry) this.ace).isAllow();
-    }
-
-    public Value getRestrictionAsValue(String name) throws RepositoryException {
-        return ((JackrabbitAccessControlEntry) ace).getRestriction(name);
-    }
-
-    public String getRestrictionAsString(String name)
+	public String getRestrictionAsString(String name)
             throws RepositoryException {
         Value val = ((JackrabbitAccessControlEntry) ace).getRestriction(name);
         if (val != null) {
@@ -108,9 +97,36 @@ public class AceWrapper {
         return privilegesString;
     }
 
+	@Override
+	public Principal getPrincipal() {
+		return ace.getPrincipal();
+	}
 
-    public int hashCode() {
-        return this.ace.hashCode();
-    }
+	@Override
+	public Privilege[] getPrivileges() {
+		return ace.getPrivileges();
+	}
+
+	@Override
+	public boolean isAllow() {
+		return ace.isAllow();
+	}
+
+	@Override
+	public String[] getRestrictionNames() throws RepositoryException {
+		return ace.getRestrictionNames();
+	}
+
+	@Override
+	public Value getRestriction(String restrictionName)
+			throws ValueFormatException, RepositoryException {
+		return ace.getRestriction(restrictionName);
+	}
+
+	@Override
+	public Value[] getRestrictions(String restrictionName)
+			throws RepositoryException {
+		return ace.getRestrictions(restrictionName);
+	}
 
 }

@@ -74,13 +74,7 @@ public interface Dumpservice {
      * @throws ValueFormatException
      * @throws IllegalStateException
      * @throws RepositoryException */
-    public AceDumpData createFilteredAclDumpMap(final Session session,
-            final int keyOrder, final int aclOrdering,
-            final String[] excludePaths) throws ValueFormatException,
-            IllegalArgumentException, IllegalStateException,
-            RepositoryException;
-
-    public AceDumpData createUnfilteredAclDumpMap(final Session session,
+    public AceDumpData createAclDumpMap(final Session session,
             final int keyOrder, final int aclOrdering,
             final String[] excludePaths) throws ValueFormatException,
             IllegalArgumentException, IllegalStateException,

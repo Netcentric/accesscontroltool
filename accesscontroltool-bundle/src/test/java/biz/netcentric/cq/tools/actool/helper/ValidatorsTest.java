@@ -13,8 +13,9 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
 import biz.netcentric.cq.tools.actool.validators.Validators;
+
+import com.day.cq.security.util.CqActions;
 
 public class ValidatorsTest {
 
@@ -43,12 +44,7 @@ public class ValidatorsTest {
 
     @Test
     public void isValidActionTest() {
-        String[] actionStrings = { CqActionsMapping.ACTION_READ,
-                CqActionsMapping.ACTION_MODIFY, CqActionsMapping.ACTION_CREATE,
-                CqActionsMapping.ACTION_DELETE,
-                CqActionsMapping.ACTION_ACL_READ,
-                CqActionsMapping.ACTION_ACL_EDIT,
-                CqActionsMapping.ACTION_REPLICATE };
+        String[] actionStrings = CqActions.ACTIONS;
 
         for (String action : actionStrings) {
             assertTrue(Validators.isValidAction(action));

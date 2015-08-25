@@ -8,19 +8,20 @@
  */
 package biz.netcentric.cq.tools.actool.validators;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import javax.jcr.RepositoryException;
-import javax.jcr.security.AccessControlException;
 import javax.jcr.security.AccessControlManager;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
+import com.day.cq.security.util.CqActions;
 
 public class Validators {
 
@@ -73,11 +74,12 @@ public class Validators {
     }
 
     public static boolean isValidAction(String action) {
+    	List<String> validActions = Arrays.asList(CqActions.ACTIONS);
         if (action == null) {
             return false;
         }
 
-        if (!CqActionsMapping.ACTIONS_MAP.keySet().contains(action)) {
+        if (!validActions.contains(action)) {
             return false;
         }
 
