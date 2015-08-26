@@ -77,12 +77,9 @@ public class AcHelper {
      * configuration don't get altered
      *
      * @param pathBasedAceMapFromConfig map containing the ACE data from the merged configurations path based
-     * @param authorizablesSet set which contains all group names contained in the configurations
-     * @param session
-     * @param out
+     * @param session the jcr session
      * @param history history object
-     * @throws Exception */
-
+     */
     public static void installPathBasedACEs(
             final Map<String, Set<AceBean>> pathBasedAceMapFromConfig,
             final Session session,
@@ -238,9 +235,10 @@ public class AcHelper {
 
     /** changes a group based ACE map into a path based ACE map
      *
-     * @param groupBasedAceMap
+     * @param groupBasedAceMap the group based ace map
      * @param sorting specifies whether ACEs get sorted by permissions (all denies followed by all allows)
-     * @return */
+     * @return the path based ace map
+     */
     public static Map<String, Set<AceBean>> getPathBasedAceMap(
             final Map<String, Set<AceBean>> groupBasedAceMap, final int sorting) {
         Map<String, Set<AceBean>> pathBasedAceMap = new HashMap<String, Set<AceBean>>(

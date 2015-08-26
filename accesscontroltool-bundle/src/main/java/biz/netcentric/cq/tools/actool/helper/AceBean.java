@@ -252,11 +252,6 @@ public class AceBean implements AcDumpElement {
 	/**
 	 * Persists the AccessControlEntry being represented by this bean to the
 	 * repository
-	 * 
-	 * @param session
-	 * @param principal
-	 * @param history 
-	 * @throws RepositoryException
 	 */
 	public void writeToRepository(final Session session, Principal principal, AcInstallationHistoryPojo history)
 			throws RepositoryException {

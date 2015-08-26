@@ -52,7 +52,8 @@ public class YamlConfigReaderTest {
         assertEquals("Number of ACEs for groupB", 2, group2.size());
     }
 
-    /** See {@link https://github.com/Netcentric/accesscontroltool/issues/14} */
+    /** 
+     * @see <a href="https://github.com/Netcentric/accesscontroltool/issues/14">https://github.com/Netcentric/accesscontroltool/issues/14</a> */
     @Test
     public void testLoopWithHyphen() throws IOException, AcConfigBeanValidationException, RepositoryException {
         final YamlConfigReader yamlConfigReader = new YamlConfigReader();

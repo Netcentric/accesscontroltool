@@ -34,7 +34,7 @@ public interface AcInstallService {
 	
 	/**
 	 * Purges all ACLs being set on the given root path (and below)
-	 * @param rootPath the rootPath for which the ACLs should be removed
+	 * @param rootNodePath the rootPath for which the ACLs should be removed
 	 * @param isRecursive if {@code true} will remove ACLs recursively from the given rootPath and its children, otherwise only for the given rootPath.
 	 * @param listener the listener which should receive methods callbacks whenever something should be logged.
 	 */

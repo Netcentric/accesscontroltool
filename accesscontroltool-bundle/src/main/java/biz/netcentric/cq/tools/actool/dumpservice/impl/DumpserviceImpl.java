@@ -401,12 +401,6 @@ public class DumpserviceImpl implements Dumpservice {
         return usersFromACEs;
     }
 
-    /** returns a dump of the ACEs installed in the system using a PrintWriter.
-     *
-     * @param out PrintWriter
-     * @param aceMap map containing all ACE data, either path based or group based
-     * @param mapOrdering
-     * @param aceOrdering */
     @Override
     public void returnAceDump(final PrintWriter out,
             Map<String, Set<AceBean>> aceMap, final int mapOrdering,
@@ -813,8 +807,7 @@ public class DumpserviceImpl implements Dumpservice {
      *
      * @param usersFromACEs set holding users
      * @return set holding AuthorizableConfigBeans
-     * @throws RepositoryException
-     * @throws UnsupportedRepositoryOperationException */
+     */
     public Set<AuthorizableConfigBean> getUserBeans(Set<User> usersFromACEs)
             throws RepositoryException, UnsupportedRepositoryOperationException {
 
@@ -842,9 +835,7 @@ public class DumpserviceImpl implements Dumpservice {
      *
      * @param session session with sufficient rights to read group informations
      * @return set holding AuthorizableConfigBeans
-     * @throws AccessDeniedException
-     * @throws UnsupportedRepositoryOperationException
-     * @throws RepositoryException */
+     */
     @Override
     public Set<AuthorizableConfigBean> getGroupBeans(Session session)
             throws AccessDeniedException,

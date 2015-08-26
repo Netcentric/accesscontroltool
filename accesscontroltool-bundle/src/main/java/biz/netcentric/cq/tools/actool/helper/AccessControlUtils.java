@@ -199,7 +199,7 @@ public class AccessControlUtils {
 
     /**
      * A utility method to add a new access control entry.<br>
-     * Please note, that calling {@link javax.jcr.Session#save()()} is required
+     * Please note, that calling {@link javax.jcr.Session#save()} is required
      * in order to persist the changes.
      *
      * @param session
@@ -226,7 +226,7 @@ public class AccessControlUtils {
 
     /**
      * A utility method to add a new access control entry. Please note, that a
-     * call to {@link javax.jcr.Session#save()()} is required in order to
+     * call to {@link javax.jcr.Session#save()} is required in order to
      * persist the changes.
      *
      * @param session
@@ -341,8 +341,6 @@ public class AccessControlUtils {
      * @param authorizableID
      *            ID of authorizable to be deleted from ACL of node specified by
      *            path
-     * @throws UnsupportedRepositoryOperationException
-     * @throws RepositoryException
      */
     public static void deleteAllEntriesForAuthorizableFromACL(final Session session,
             final String path, String authorizableID)

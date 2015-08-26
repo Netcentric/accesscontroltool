@@ -22,24 +22,24 @@ public interface AceService {
 
     /** method that indicates whether the service is ready for installation (if at least one configurations was found in repository)
      *
-     * @return true if ready, otherwise false */
+     * @return {@code true} if ready, otherwise {@code false} */
     public boolean isReadyToStart();
 
     /** purges all acls of the node specified by path (no deletion of acls of subnodes)
      *
-     * @param path
+     * @param path the path from which to purge the ACL
      * @return status message */
     public String purgeACL(final String path);
 
     /** purges all acls of the node specified by path and all acls of all subnodes
      *
-     * @param path
+     * @param path the path from which to purge the ACL (including those of all subnodes)
      * @return status message */
     public String purgeACLs(final String path);
 
     /** method that purges authorizable(s) and all respective aces from the system
      *
-     * @param authorizableId
+     * @param authorizableIds comma-separated list of authorizable ids
      * @return status message */
     public String purgeAuthorizables(String authorizableIds);
 
