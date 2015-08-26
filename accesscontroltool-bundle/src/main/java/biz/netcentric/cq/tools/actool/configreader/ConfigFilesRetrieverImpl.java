@@ -38,12 +38,10 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
 
     @Override
     public Map<String, String> getConfigFileContentFromNode(Node rootNode) throws Exception {
-
         if (rootNode == null) {
             throw new IllegalArgumentException("No configuration path configured! please check the configuration of AcService!");
         }
         Map<String, String> configurations = getConfigurations(new NodeInJcr(rootNode));
-
         return configurations;
     }
 
@@ -53,8 +51,8 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
         if (rootEntry == null) {
             throw new IllegalStateException("Invalid package: It does not contain a JCR root element");
         }
-        getConfigurations(new EntryInPackage(archive, "/", rootEntry));
-        return null;
+        Map<String, String> configurations = getConfigurations(new EntryInPackage(archive, "/", rootEntry));
+        return configurations;
     }
 
     private Map<String, String> getConfigurations(PackageEntryOrNode configFileOrDir) throws Exception {
