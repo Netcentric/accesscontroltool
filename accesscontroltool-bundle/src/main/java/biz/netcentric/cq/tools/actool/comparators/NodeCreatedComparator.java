@@ -53,7 +53,7 @@ public class NodeCreatedComparator implements Comparator<Node> {
      * @param node
      *            article node
      * @return Date creation date of the article
-     * @throws RepositoryException
+     * @throws RepositoryException if an error occurs
      */
     public static Date getArticleDateProperty(final Node node)
             throws RepositoryException {

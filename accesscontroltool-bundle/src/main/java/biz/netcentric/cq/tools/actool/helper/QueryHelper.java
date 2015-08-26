@@ -39,7 +39,7 @@ public class QueryHelper {
 	 * Method that returns a set containing all rep:policy nodes from repository
 	 * excluding those contained in paths which are excluded from search
 	 * 
-	 * @param session
+	 * @param session the jcr session
 	 * @param excludePaths
 	 *            paths which are excluded from search
 	 * @return all rep:policy nodes delivered by query
@@ -97,12 +97,6 @@ public class QueryHelper {
 
   /**
    * Get Nodes with XPATH Query.
-   * 
-   * @param session
-   * @param xpathQuery
-   * @return
-   * @throws InvalidQueryException
-   * @throws RepositoryException
    */
   public static Set<Node> getNodes(final Session session,
 			final String xpathQuery) throws InvalidQueryException,
@@ -112,12 +106,9 @@ public class QueryHelper {
 	}
 
   /**
-   * @param session
+   * @param session the jcr session
    * @param queryStatement - ex. "SELECT * FROM [rep:ACL]"
    * @param queryLanguageType - ex. Query.JCR_SQL2
-   * @return
-   * @throws InvalidQueryException
-   * @throws RepositoryException
    */
   public static Set<Node> getNodes(final Session session,
       final String queryStatement, String queryLanguageType) throws InvalidQueryException,

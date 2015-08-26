@@ -8,18 +8,13 @@
  */
 package biz.netcentric.cq.tools.actool.aceservice.impl;
 
-import java.io.InputStream;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -27,7 +22,6 @@ import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -49,12 +43,13 @@ import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
-import biz.netcentric.cq.tools.actool.comparators.NodeCreatedComparator;
-import biz.netcentric.cq.tools.actool.configReader.ConfigReader;
-import biz.netcentric.cq.tools.actool.configReader.ConfigurationMerger;
-import biz.netcentric.cq.tools.actool.configReader.YamlConfigurationMerger;
+import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetriever;
+import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
+import biz.netcentric.cq.tools.actool.configreader.ConfigurationMerger;
+import biz.netcentric.cq.tools.actool.configreader.YamlConfigurationMerger;
 import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
+import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.helper.AclBean;
 import biz.netcentric.cq.tools.actool.helper.PurgeHelper;
@@ -68,8 +63,6 @@ public class AceServiceImpl implements AceService {
     private static final Logger LOG = LoggerFactory.getLogger(AceServiceImpl.class);
 
     static final String PROPERTY_CONFIGURATION_PATH = "AceService.configurationPath";
-
-    private static final String PROP_JCR_DATA = "jcr:data";
 
     @Reference
     AuthorizableCreatorService authorizableCreatorService;
@@ -85,6 +78,9 @@ public class AceServiceImpl implements AceService {
 
     @Reference
     private ConfigReader configReader;
+
+    @Reference
+    private ConfigFilesRetriever configFilesRetriever;
 
     private boolean isExecuting = false;
 
@@ -124,44 +120,50 @@ public class AceServiceImpl implements AceService {
             LOG.error(message);
             throw new IllegalArgumentException(message);
         }
-
-        installAuthorizables(history, authorizableHistorySet,
-                authorizablesMapfromConfig);
-        installAces(history, session, repositoryDumpAceMap,
-                authorizablesMapfromConfig, aceMapFromConfig);
+        removeAcesForAuthorizable(history, session, authorizablesMapfromConfig.keySet(), repositoryDumpAceMap);
+        installAuthorizables(history, authorizableHistorySet, authorizablesMapfromConfig);
+        installAces(history, session, aceMapFromConfig);
+    }
+    
+    private void removeAcesForAuthorizable(AcInstallationHistoryPojo history, Session session, Set<String> authorizablesSet, Map<String, Set<AceBean>> repositoryDumpAceMap) throws UnsupportedRepositoryOperationException, RepositoryException {
+    	// loop through all ACLs found in the repository
+        for (Map.Entry<String, Set<AceBean>> entry : repositoryDumpAceMap.entrySet()) {
+            Set<AceBean> acl = entry.getValue();
+            for (AceBean aceBean : acl) {
+                // if the ACL form repo contains an ACE regarding an
+                // authorizable from the groups config then delete all ACEs from
+                // this authorizable from current ACL
+                if (authorizablesSet.contains(aceBean.getPrincipalName())) {
+                    AccessControlUtils.deleteAllEntriesForAuthorizableFromACL(session,
+                            aceBean.getJcrPath(), aceBean.getPrincipalName());
+                    String message = "deleted all ACEs of authorizable "
+                            + aceBean.getPrincipalName()
+                            + " from ACL of path: " + aceBean.getJcrPath();
+                    LOG.info(message);
+                    history.addVerboseMessage(message);
+                }
+            }
+        }
     }
 
     private void installAces(
             AcInstallationHistoryPojo history,
             final Session session,
-            Map<String, Set<AceBean>> repositoryDumpAceMap,
-            Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig,
             Map<String, Set<AceBean>> aceMapFromConfig) throws Exception {
-        String message;
         // --- installation of ACEs from configuration ---
         Map<String, Set<AceBean>> pathBasedAceMapFromConfig = AcHelper
                 .getPathBasedAceMap(aceMapFromConfig,
                         AcHelper.ACE_ORDER_DENY_ALLOW);
 
         LOG.info("--- start installation of access control configuration ---");
-
-        if (repositoryDumpAceMap != null) {
-            Set<String> authorizablesSet = authorizablesMapfromConfig.keySet();
-            // FIXME: templateMappings is passed down too many levels of method calls
-            AcHelper.installPathBasedACEs(pathBasedAceMapFromConfig,
-                    repositoryDumpAceMap, authorizablesSet, session, history);
-        } else {
-            message = "Could not create dump of repository ACEs (null). Installation aborted!";
-            history.addMessage(message);
-            LOG.error(message);
-        }
+        AcHelper.installPathBasedACEs(pathBasedAceMapFromConfig, session, history);
     }
 
     private void installAuthorizables(
             AcInstallationHistoryPojo history,
             Set<AuthorizableInstallationHistory> authorizableHistorySet,
             Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig)
-                    throws RepositoryException, Exception {
+            throws RepositoryException, Exception {
         // --- installation of Authorizables from configuration ---
 
         LOG.info("--- start installation of Authorizable Configuration ---");
@@ -211,9 +213,9 @@ public class AceServiceImpl implements AceService {
 
         try {
             session = repository.loginAdministrative(null);
-            String path = getConfigurationRootPath();
-            Map<String, String> newestConfigurations = getNewestConfigurationNodes(
-                    path, session, history);
+            String rootPath = getConfigurationRootPath();
+            Node rootNode = session.getNode(rootPath);
+            Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(rootNode);
 
             installNewConfigurations(session, history, newestConfigurations, authorizableInstallationHistorySet);
         } catch (AuthorizableCreatorException e) {
@@ -254,7 +256,7 @@ public class AceServiceImpl implements AceService {
     public void installNewConfigurations(Session session,
             AcInstallationHistoryPojo history,
             Map<String, String> newestConfigurations, Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet)
-                    throws Exception {
+            throws Exception {
 
         StopWatch sw = new StopWatch();
         sw.start();
@@ -294,7 +296,7 @@ public class AceServiceImpl implements AceService {
 
         Map<String, Set<AceBean>> repositoryDumpAceMap = null;
         LOG.info("start building dump from repository");
-        repositoryDumpAceMap = dumpservice.createUnfilteredAclDumpMap(
+        repositoryDumpAceMap = dumpservice.createAclDumpMap(
                 session, AcHelper.PATH_BASED_ORDER,
                 AcHelper.ACE_ORDER_NONE,
                 dumpservice.getQueryExcludePaths()).getAceDump();
@@ -304,143 +306,14 @@ public class AceServiceImpl implements AceService {
                 repositoryDumpAceMap);
     }
 
-    /** @param configurationsRootPath parent path in repository where one or several configurations are stored underneath
-     * @param session admin session
-     * @return set containing paths to the newest configurations
-     * @throws Exception */
-    @Override
-    public Map<String, String> getNewestConfigurationNodes(
-            final String configurationsRootPath, final Session session,
-            AcInstallationHistoryPojo history) throws Exception {
-        Node configurationRootNode = null;
-        Set<Node> configs = new LinkedHashSet<Node>();
-        if (configurationsRootPath.isEmpty()) {
-            String message = "no configuration path configured! please check the configuration of AcService!";
-            LOG.error(message);
-            throw new IllegalArgumentException(message);
-        }
-        try {
-            configurationRootNode = session.getNode(configurationsRootPath);
-        } catch (RepositoryException e) {
-            String message = "no configuration node found specified by given path! please check the configuration of AcService!";
-            if (history != null) {
-                history.addWarning(message);
-            }
-            LOG.error(message);
-            throw e;
-        }
-
-        if (configurationRootNode != null) {
-            LOG.info("found configurationRootNode: {}", configurationRootNode);
-            Iterator<Node> childNodesIterator = configurationRootNode
-                    .getNodes();
-
-            if (childNodesIterator != null) {
-                while (childNodesIterator.hasNext()) {
-                    Node folderNode = childNodesIterator.next();
-                    LOG.info(
-                            "found project folder: {}. searching for configuration files...",
-                            folderNode.getPath());
-
-                    if (folderNode.hasNodes()) {
-                        Iterator<Node> configNodesIterator = folderNode
-                                .getNodes();
-                        // only take the newest
-                        Set<Node> projectConfigs = new TreeSet<Node>(
-                                new NodeCreatedComparator());
-                        while (configNodesIterator.hasNext()) {
-                            Node configurationNode = configNodesIterator.next();
-                            LOG.info("found configuration file: {}",
-                                    configurationNode);
-                            projectConfigs.add(configurationNode);
-                        }
-                        if (!projectConfigs.isEmpty()) {
-                            // add first (newest) node
-                            Node newestConfigNode = projectConfigs.iterator()
-                                    .next();
-                            LOG.info("found newest configuration node: {}",
-                                    newestConfigNode.getPath());
-                            configs.add(newestConfigNode);
-                        }
-                    }
-
-                }
-            } else {
-                String message = "ACL root configuration node "
-                        + configurationsRootPath
-                        + " doesn't have any children!";
-                LOG.warn(message);
-                if (history != null) {
-                    history.addWarning(message);
-                }
-                return null;
-            }
-            LOG.info("found following configs: {}", configs);
-        }
-
-        String configData;
-        StringWriter writer = null;
-        InputStream configInputStream = null;
-
-        // FIXME: This should be more flexible and look for config files at any level under the configured root path
-        Map<String, String> configurations = new LinkedHashMap<String, String>();
-        LOG.info("Trying to store content of found configuration files into configurations map");
-        try {
-            for (Node configNode : configs) {
-                if (!configNode.hasNode("jcr:content")) {
-                    LOG.warn("Node {} has no jcr:content", configNode.getPath());
-                    continue;
-                }
-                Node contentNode = configNode.getNode("jcr:content");
-                if (contentNode.hasProperty(PROP_JCR_DATA)) {
-                    writer = new StringWriter();
-                    configInputStream = contentNode
-                            .getProperty(PROP_JCR_DATA).getBinary()
-                            .getStream();
-                    IOUtils.copy(configInputStream, writer, "UTF-8");
-                    configData = writer.toString();
-                    if (configData != null) {
-                        if (!configData.isEmpty()) {
-                            LOG.info("found configuration data of node: {}",
-                                    configNode.getPath());
-                            configurations
-                            .put(configNode.getPath(), configData);
-                        } else {
-                            LOG.warn(
-                                    "config data of node: {} is empty!",
-                                    configNode.getPath());
-                        }
-                    } else {
-                        LOG.error("configData is null!");
-                    }
-                } else {
-                    LOG.error(
-                            "property: {} not found under contentNode: {}",
-                            PROP_JCR_DATA, contentNode.getPath());
-                }
-
-            }
-        } finally {
-            if (writer != null) {
-                writer.flush();
-                writer.close();
-            }
-            if (configInputStream != null) {
-                configInputStream.close();
-            }
-
-        }
-        return configurations;
-    }
-
     @Override
     public boolean isReadyToStart() {
-        String path = getConfigurationRootPath();
+        String rootPath = getConfigurationRootPath();
         Session session = null;
         try {
             session = repository.loginAdministrative(null);
-            return !getNewestConfigurationNodes(path, session,
-                    new AcInstallationHistoryPojo()).isEmpty();
+            Node rootNode = session.getNode(rootPath);
+            return !configFilesRetriever.getConfigFileContentFromNode(rootNode).isEmpty();
         } catch (Exception e) {
 
         } finally {
@@ -647,8 +520,8 @@ public class AceServiceImpl implements AceService {
 
         try {
             session = repository.loginAdministrative(null);
-            paths = getNewestConfigurationNodes(configurationPath,
-                    session, null).keySet();
+            Node rootNode = session.getNode(configurationPath);
+            paths = configFilesRetriever.getConfigFileContentFromNode(rootNode).keySet();
         } catch (Exception e) {
 
         } finally {
@@ -662,12 +535,13 @@ public class AceServiceImpl implements AceService {
     public Set<String> getAllAuthorizablesFromConfig(Session session)
             throws Exception {
         AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
-        Map<String, String> newestConfigurations = getNewestConfigurationNodes(
-                configurationPath, session, history);
+        Node rootNode = session.getNode(configurationPath);
+        Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(rootNode);
         ConfigurationMerger configurationMeger = new YamlConfigurationMerger();
         List mergedConfigurations = configurationMeger.getMergedConfigurations(
                 newestConfigurations, history, configReader);
         return ((Map<String, Set<AceBean>>) mergedConfigurations.get(0))
                 .keySet();
     }
+
 }

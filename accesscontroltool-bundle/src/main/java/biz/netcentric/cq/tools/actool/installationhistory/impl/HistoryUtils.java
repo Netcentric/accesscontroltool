@@ -59,14 +59,13 @@ public class HistoryUtils {
      * Method that persists a new history log in CRX under
      * '/var/statistics/achistory'
      * 
-     * @param session
+     * @param session the jcr session
      * @param history
      *            history to persist
      * @param nrOfHistoriesToSave
      *            number of newest histories which should be kept in CRX. older
      *            histories get automatically deleted
-     * @return
-     * @throws RepositoryException
+     * @return the node being created
      */
     public static Node persistHistory(final Session session,
             AcInstallationHistoryPojo history, final int nrOfHistoriesToSave)
@@ -201,13 +200,7 @@ public class HistoryUtils {
     /**
      * Method which assembles String containing informations of the properties
      * of the respective history node which is specified by the path parameter
-     * 
-     * @param session
-     * @param path
-     * @param lineFeedSymbol
-     * @return
      */
-
     public static String getLog(final Session session, final String path,
             final String lineFeedSymbol) {
 

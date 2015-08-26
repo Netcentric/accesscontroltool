@@ -8,12 +8,6 @@
  */
 package biz.netcentric.cq.tools.actool.aceservice;
 
-import static org.junit.Assert.assertTrue;
-
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import javax.jcr.AccessDeniedException;
 import javax.jcr.InvalidItemStateException;
 import javax.jcr.ItemExistsException;
@@ -33,11 +27,6 @@ import org.apache.sling.commons.testing.jcr.RepositoryUtil;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl;
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 public class AceServiceImplTest {
 
@@ -53,9 +42,9 @@ public class AceServiceImplTest {
 
     @Before
     public void setup() throws AccessDeniedException, ItemExistsException,
-            ReferentialIntegrityException, ConstraintViolationException,
-            InvalidItemStateException, VersionException, LockException,
-            NoSuchNodeTypeException, RepositoryException {
+    ReferentialIntegrityException, ConstraintViolationException,
+    InvalidItemStateException, VersionException, LockException,
+    NoSuchNodeTypeException, RepositoryException {
         SlingRepository repo = RepositoryProvider.instance().getRepository();
         session = repo.login();
         Node rootNode = session.getRootNode();
@@ -74,41 +63,25 @@ public class AceServiceImplTest {
             ConstraintViolationException, RepositoryException {
         Node node = acToolNode.addNode(projectNodeName, "nt:folder");
         node.addNode(projectNodeName + "_0.txt", "nt:file")
-                .addNode("jcr:content", "nt:resource")
-                .setProperty("jcr:data", ".");
+        .addNode("jcr:content", "nt:resource")
+        .setProperty("jcr:data", ".");
         ;
-        this.session.save();
+        session.save();
         node.addNode(projectNodeName + "_1.txt", "nt:file")
-                .addNode("jcr:content", "nt:resource")
-                .setProperty("jcr:data", ".");
+        .addNode("jcr:content", "nt:resource")
+        .setProperty("jcr:data", ".");
         ;
-        this.session.save();
+        session.save();
         node.addNode(projectNodeName + "_2.txt", "nt:file")
-                .addNode("jcr:content", "nt:resource")
-                .setProperty("jcr:data", ".");
-        this.session.save();
+        .addNode("jcr:content", "nt:resource")
+        .setProperty("jcr:data", ".");
+        session.save();
         return node;
-    }
-
-    @Ignore // Fails with an error like 
-    // java.io.FileNotFoundException: ...accesscontroltool-bundle/target/repository/workspaces/default/db/seg0/c20.dat (Too many open files in system)
-    public void getNewestConfiguationNodesTest() throws Exception {
-        AceService aceService = new AceServiceImpl();
-        Map<String, String> configNodes = aceService
-                .getNewestConfigurationNodes(configurationRootPath, session,
-                        new AcInstallationHistoryPojo());
-        Set<String> paths = configNodes.keySet();
-
-        Set<String> expectedSet = new HashSet<String>();
-        expectedSet.add("/var/actool/project1/project1_2.txt");
-        expectedSet.add("/var/actool/project2/project2_2.txt");
-        expectedSet.add("/var/actool/project3/project3_2.txt");
-        assertTrue(expectedSet.containsAll(paths));
     }
 
     @After
     public void tearDown() throws NamingException {
-        this.session.logout();
+        session.logout();
         RepositoryUtil.stopRepository();
     }
 

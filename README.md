@@ -7,7 +7,7 @@ The Access Control Tool for Adobe Experience Manager (ACTool) is a tool that sim
 
 Building the ACTool requires Java 7 and Maven 3.2.
 
-Installing ACTool requires CQ5.6/AEM 6.0.
+Installing ACTool requires CQ5.6/AEM 6.0/AEM 6.1.
 
 # Installation
 
@@ -28,6 +28,7 @@ mvn -PautoInstallPackage install
 # Configuration File Format
 
 For better human readability and easy editing the ACL configuration files use the YAML format.
+
 
 ## Overall structure a of an AC configuration file
 
@@ -67,6 +68,17 @@ isp-editor
 If the isMemberOf property of a group contains a group which is not yet installed in the repository, this group gets created and its rep:members property gets filled accordingly. if another configuration gets installed having a actual definition for that group the data gets merged into the already existing one.
 
 The members property contains a list of groups where this group is added as isMemberOf.
+
+## Configuration of users
+
+In general it is best practice to not generate regular users by the AC Tool but use other mechanism (e.g. LDAP) to create users. However, it can be useful to create system users (e.g. for replication agents or OSGi service authentiation) or test users on staging environments.
+
+Users can be configured in the same way as groups in the **user_config** section. There are two differences to groups:
+
+* the attribute "members" cannot be used (for obvious reasons)
+* the attribute "password" can be used for preset passwords 
+* the boolean attribute isSystemUser is used to create system users in AEM 6.1
+
 
 ## Configuration of ACEs
 
@@ -230,28 +242,24 @@ Example showing 3 separate project-specific configuration sub-nodes each contain
 
 <img src="docs/images/crx-storage.png">
 
-The projectspecific configuration files get stored in CRX under a node which can be set in the OSGi configuration of the AcService (system/console/configMgr). Each child node contains the project specific configuration file(s). Everytime a new installation gets executed, the newest configuration file gets used. The folder structure gets created by deployment or manually in CRX. Each time a new configuration file gets uploaded in CRX (e.g. deployment) or the content of a file gets changed a node listener can trigger a new installation of the configurations. This behaviour can be enabled/disabled in UploadListenerService OSGi config.
+The project specific configuration files are stored in CRX under a node which can be set in the OSGi configuration of the AcService (system/console/configMgr). Each folder underneath this location may contain `*.yaml` files that contain AC configuration. The folder structure gets created by deployment or manually in CRX. 
+
+In general the parent node may specify required Sling run modes being separated by a dot (```.```). Folder names can contain runmodes in the same way as OSGi configurations ([installation of OSGi bundles through JCR packages in Sling](http://sling.apache.org/documentation/bundles/jcr-installer-provider.html)) using a `.` (e.g. `myproject.author` will only become active on author). Additionally, multiple runmodes combinations can be given separated by comma to avoid duplication of configuration (e.g. `myproject.author.test,author.dev` will be active on authors of dev and test environment only). Each time a new configuration file gets uploaded in CRX (e.g. deployment) or the content of a file gets changed a node listener can trigger a new installation of the configurations. This behaviour can be enabled/disabled in UploadListenerService OSGi config.
 
 ## Installation process
 
 During the installation all groups defined in the groups section of the configuration file get created in the system. In a next step all ACEs configured in the ACE section get installed in CRX. Any old ACEs regarding these groups not contained anymore in the config but in the repository gets automatically purged thus no old or obsolete ACEs stay in the system and any manual change of ACEs regarding these groups get reverted thus ensuring a defined state again. ACEs not belongig to those groups in the configuration files remain untouched. So after the installation took place all groups and the corresponding ACEs exactly as defined in the configuration(s) are installed on the system.
 
-If at any point during the installation an ecxeption occurs, no changes get persisted in the system. This prevents ending up having a undefined state in the repository.
+If at any point during the installation an exception occurs, no changes get persisted in the system. This prevents ending up having a undefined state in the repository.
 
-During the installation a history containing the most important events gets ceated and persisted in CRX for later examination.
-Merging of  ACEs
+During the installation a history containing the most important events gets created and persisted in CRX for later examination.
 
-To achieve the aforementioned requirements every new installation comprises the following steps:
+The following steps are performed:
 
-* The group based ACE configuration from configuration file gets transformed into a node based configuration
-* A dump in the same format gets fetched from the repository
-* On each node contained in this file the following steps get performed:
-    * The ACL from dump and from the configuration gets compared
-    * If there are already ACEs in the repository regarding a group from the configuration, these ACEs get removed
-    * The other ACEs not contained in the respective ACL from config get merged into the ACL from the config and get ordered (deny ACEs followed by allow ACEs)
-    * The ACL from in repo gets replaced by the merged one from config
-* In case there is a node in repository dump that is not covered in the config the following step gets performed
-    * if the ACL of that node has one or several ACEs belonging to one or several groups from config, these ACEs get deleted
+1. All AC entries are removed from the repository which refer to an authorizable being mentioned in the YAML configuration file (no matter to which path those entries refer).
+1. All authorizables being mentioned in the YAML configuration get created (if necessary, i.e. if they do no exist yet).
+1. All AC entries generated from the YAML configuration get persisted in the repository. If there are already existing entries for one path (and referring to another authorizable) those are not touched. New AC entries are added at the end of the list. All new AC entries are sorted, so that the Deny entries are listed above the Allow entries. Since the AC entry nodes are evaluated bottom-to-top this sorting order leads to less restrictions (e.g. for a user which is member of two groups where one group sets a Deny and the other one sets an Allow, this order ensures that the allow has a higher priority).
+
     
 ### Installation Hook
 
@@ -270,11 +278,7 @@ To enable that on a package being created with Maven through the content-package
 </plugin>
 ```
 
-Now it depends on where those ```*.yaml``` are located in the package, because not in all cases they are being installed.
-In general the parent node may specify required Sling run modes being separated by a dot (```.```). They specify the minimum required Sling run modes to be set in order for the YAML children files to be installed. This mechanism works similar as the [installation of OSGi bundles through JCR packages in Sling](http://sling.apache.org/documentation/bundles/jcr-installer-provider.html).
-
-E.g. the parent node name ```somename.publish``` will require at least the ```publish``` run mode to be set in order for the YAML children to be installed by the Installation Hook mechanism. The parent node name may also specify multiple required run modes.
-If the parent node name does not contain a dot it will always be installed up (independent of any run modes). Except for those parent name limitations it does not matter at all where those ```*.yaml``` are located within the package (they will always be found by the install hook).
+The ```*.yaml``` files are installed directly from the package content and respect the same runmode semantics as described above. 
 
 Although it is not necessary that the YAML files are covered by the filter rules of the ```filter.xml```, this is recommended practice. That way you can see afterwards in the repository which YAML files have been processed. However if you would not let the ```filter.xml``` cover your YAML files, those files would still be processed by the installation hook.
     

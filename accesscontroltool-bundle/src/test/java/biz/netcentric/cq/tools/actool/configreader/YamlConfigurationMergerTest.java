@@ -1,4 +1,4 @@
-package biz.netcentric.cq.tools.actool.configReader;
+package biz.netcentric.cq.tools.actool.configreader;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -14,6 +14,10 @@ import javax.jcr.RepositoryException;
 import org.junit.Test;
 
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
+import biz.netcentric.cq.tools.actool.configreader.ConfigurationMerger;
+import biz.netcentric.cq.tools.actool.configreader.YamlConfigReader;
+import biz.netcentric.cq.tools.actool.configreader.YamlConfigurationMerger;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 

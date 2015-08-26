@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package biz.netcentric.cq.tools.actool.configReader;
+package biz.netcentric.cq.tools.actool.configreader;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -32,6 +32,7 @@ import org.junit.Test;
 import org.yaml.snakeyaml.Yaml;
 
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configreader.YamlConfigReader;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
@@ -51,7 +52,8 @@ public class YamlConfigReaderTest {
         assertEquals("Number of ACEs for groupB", 2, group2.size());
     }
 
-    /** See {@link https://github.com/Netcentric/accesscontroltool/issues/14} */
+    /** 
+     * @see <a href="https://github.com/Netcentric/accesscontroltool/issues/14">https://github.com/Netcentric/accesscontroltool/issues/14</a> */
     @Test
     public void testLoopWithHyphen() throws IOException, AcConfigBeanValidationException, RepositoryException {
         final YamlConfigReader yamlConfigReader = new YamlConfigReader();

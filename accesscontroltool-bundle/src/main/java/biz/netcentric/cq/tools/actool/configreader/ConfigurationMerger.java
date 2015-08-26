@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package biz.netcentric.cq.tools.actool.configReader;
+package biz.netcentric.cq.tools.actool.configreader;
 
 import java.util.List;
 import java.util.Map;
@@ -24,7 +24,6 @@ public interface ConfigurationMerger {
      * Validation ensures that no doubled defined groups and only valid section
      * identifiers in configuration files are possible
      * 
-     * @param session
      * @param newestConfigurations
      *            map which contains all paths and configuration in YAML format.
      *            key is the node path in CRX under which the respective
@@ -35,8 +34,8 @@ public interface ConfigurationMerger {
      *         holding sets of AuthorizableConfigBeans) as first element and the
      *         combined ACE configurations (as map holding sets of AceBeans) as
      *         second element
-     * @throws RepositoryException
-     * @throws AcConfigBeanValidationException
+     * @throws RepositoryException in case some repository error has occurred
+     * @throws AcConfigBeanValidationException in case the given configuration is invalid
      */
     public abstract List getMergedConfigurations(
             final Map<String, String> newestConfigurations,

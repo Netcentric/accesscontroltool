@@ -26,7 +26,6 @@ public interface ConfigurationsValidator {
      *            configuration
      * @param configPath
      *            repository path of current config
-     * @throws IllegalArgumentException
      */
     public abstract void validateDuplicateAuthorizables(Set<String> authorizablesFromAllConfig,
             Set<String> authorizablesFromCurrentConfig, String configPath)
@@ -38,10 +37,9 @@ public interface ConfigurationsValidator {
      * 
      * @param configPath
      *            repository path of current config
-     * @param yamlList
+     * @param configurations
      *            list holding the group and ACE configuration as LinkedHashMap
      *            (as returned by YAML parser)
-     * @throws IllegalArgumentException
      */
     public abstract void validateSectionContentExistence(String configPath,
             Collection<?> configurations) throws IllegalArgumentException;
@@ -49,10 +47,6 @@ public interface ConfigurationsValidator {
     /**
      * Method that checks if mandatory configuration section identifiers (group
      * and ACE) exist in the current configuration file
-     * 
-     * @param entry
-     *            Map.Entry containing a configuration
-     * @throws IllegalArgumentException
      */
     public abstract void validateMandatorySectionIdentifiersExistence(
             String configuration, String filePath);
@@ -60,10 +54,6 @@ public interface ConfigurationsValidator {
     /**
      * Method that checks if only valid configuration section identifiers (group
      * (and optional users) and ACE) exist in the current configuration file
-     * 
-     * @param sectionIdentifiers
-     * @param filePath
-     * @throws IllegalArgumentException
      */
     public abstract void validateSectionIdentifiers(
             Set<String> sectionIdentifiers, String filePath)

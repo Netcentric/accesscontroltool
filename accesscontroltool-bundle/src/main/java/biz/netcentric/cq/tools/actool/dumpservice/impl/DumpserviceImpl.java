@@ -48,6 +48,7 @@ import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.api.JackrabbitSession;
+import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.Query;
@@ -71,7 +72,6 @@ import biz.netcentric.cq.tools.actool.comparators.AcePathComparator;
 import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
 import biz.netcentric.cq.tools.actool.comparators.AuthorizableBeanIDComparator;
 import biz.netcentric.cq.tools.actool.comparators.JcrCreatedComparator;
-import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementYamlVisitor;
 import biz.netcentric.cq.tools.actool.dumpservice.AceDumpData;
 import biz.netcentric.cq.tools.actool.dumpservice.CompleteAcDump;
@@ -313,7 +313,7 @@ public class DumpserviceImpl implements Dumpservice {
 
         try {
             session = repository.loginAdministrative(null);
-            AceDumpData aceDumpData = createFilteredAclDumpMap(session,
+            AceDumpData aceDumpData = createAclDumpMap(session,
                     aclMapKeyOrder, AcHelper.ACE_ORDER_ALPHABETICAL,
                     queryExcludePaths);
             Map<String, Set<AceBean>> aclDumpMap = aceDumpData.getAceDump();
@@ -401,12 +401,6 @@ public class DumpserviceImpl implements Dumpservice {
         return usersFromACEs;
     }
 
-    /** returns a dump of the ACEs installed in the system using a PrintWriter.
-     *
-     * @param out PrintWriter
-     * @param aceMap map containing all ACE data, either path based or group based
-     * @param mapOrdering
-     * @param aceOrdering */
     @Override
     public void returnAceDump(final PrintWriter out,
             Map<String, Set<AceBean>> aceMap, final int mapOrdering,
@@ -636,24 +630,14 @@ public class DumpserviceImpl implements Dumpservice {
     }
 
     @Override
-    public AceDumpData createFilteredAclDumpMap(final Session session,
+    public AceDumpData createAclDumpMap(final Session session,
             final int keyOrder, final int aclOrdering,
             final String[] excludePaths) throws ValueFormatException,
             IllegalArgumentException, IllegalStateException,
             RepositoryException {
-        return createAclDumpMap(session, keyOrder, aclOrdering, excludePaths,
-                isFilteredDump, includeUsersInDumps);
+        return createAclDumpMap(session, keyOrder, aclOrdering, excludePaths, includeUsersInDumps);
     }
-
-    @Override
-    public AceDumpData createUnfilteredAclDumpMap(final Session session,
-            final int keyOrder, final int aclOrdering,
-            final String[] excludePaths) throws ValueFormatException,
-            IllegalArgumentException, IllegalStateException,
-            RepositoryException {
-        return createAclDumpMap(session, keyOrder, aclOrdering, excludePaths,
-                false, true);
-    }
+   
 
     /** returns a Map with holds either principal or path based ACE data
      *
@@ -669,7 +653,7 @@ public class DumpserviceImpl implements Dumpservice {
      * @throws RepositoryException */
     private AceDumpData createAclDumpMap(final Session session,
             final int keyOrder, final int aclOrdering,
-            final String[] excludePaths, final boolean isFilterACEs,
+            final String[] excludePaths,
             final boolean isIncludeUsers) throws ValueFormatException,
             IllegalArgumentException, IllegalStateException,
             RepositoryException {
@@ -695,12 +679,11 @@ public class DumpserviceImpl implements Dumpservice {
 
             for (AccessControlEntry ace : aclBean.getAcl()
                     .getAccessControlEntries()) {
-                AceWrapper tmpBean = new AceWrapper(ace, aclBean.getJcrPath());
-                AceBean tmpAceBean = AcHelper.getAceBean(tmpBean, session.getAccessControlManager());
-
-                if (isUnwantedAce(tmpAceBean) && isFilterACEs) {
-                    continue;
-                }
+            	if (!(ace instanceof JackrabbitAccessControlEntry)) {
+            		throw new IllegalStateException("AC entry is not a JackrabbitAccessControlEntry: " + ace);
+            	}
+                AceWrapper tmpBean = new AceWrapper((JackrabbitAccessControlEntry)ace, aclBean.getJcrPath());
+                AceBean tmpAceBean = AcHelper.getAceBean(tmpBean);
 
                 Authorizable authorizable = um.getAuthorizable(tmpAceBean
                         .getPrincipalName());
@@ -824,8 +807,7 @@ public class DumpserviceImpl implements Dumpservice {
      *
      * @param usersFromACEs set holding users
      * @return set holding AuthorizableConfigBeans
-     * @throws RepositoryException
-     * @throws UnsupportedRepositoryOperationException */
+     */
     public Set<AuthorizableConfigBean> getUserBeans(Set<User> usersFromACEs)
             throws RepositoryException, UnsupportedRepositoryOperationException {
 
@@ -853,9 +835,7 @@ public class DumpserviceImpl implements Dumpservice {
      *
      * @param session session with sufficient rights to read group informations
      * @return set holding AuthorizableConfigBeans
-     * @throws AccessDeniedException
-     * @throws UnsupportedRepositoryOperationException
-     * @throws RepositoryException */
+     */
     @Override
     public Set<AuthorizableConfigBean> getGroupBeans(Session session)
             throws AccessDeniedException,
@@ -902,47 +882,6 @@ public class DumpserviceImpl implements Dumpservice {
             memberOfList.add(it.next().getID());
         }
         bean.setMemberOf(memberOfList.toArray(new String[memberOfList.size()]));
-    }
-
-    /** Method that checks if passed ACE is one of the 2 ACEs which belong to the cq actions "create", "delete" and "modify" in an AceDump
-     * containing a repGlob. Reason is the fact that each of these 2 actions use 2 identical ACEs. one with an additional repGlob and one
-     * without. In a dump we only want to have one ACE for each of these actions without a repGlob.
-     *
-     * @param aceBean bean holding the properties of an ACE
-     * @return true if ace belongs to one of the 3 actions */
-    private boolean isUnwantedAce(final AceBean aceBean) {
-        boolean ret = false;
-        List<String> tmpList = null;
-        if (StringUtils.equals(aceBean.getRepGlob(), "*/jcr:content*")) {
-            tmpList = new ArrayList<String>(Arrays.asList(aceBean
-                    .getPrivilegesString().split(",")));
-
-            // set when action allow/deny:create is used
-            if (tmpList.containsAll(CqActionsMapping.ACTIONS_MAP.get("create"))
-                    && (tmpList.size() == CqActionsMapping.ACTIONS_MAP.get(
-                            "create").size())) {
-                ret = true;
-            }
-            // set when action allow/deny:delete is used
-            else if (tmpList.containsAll(CqActionsMapping.ACTIONS_MAP
-                    .get("delete"))
-                    && (tmpList.size() == CqActionsMapping.ACTIONS_MAP.get(
-                            "delete").size())) {
-                ret = true;
-            }
-            // set when action allow/deny:modify and allow create,delete and
-            // allow modify,create,delete are used
-            else if (tmpList.containsAll(CqActionsMapping.ACTIONS_MAP
-                    .get("create"))
-                    && tmpList.containsAll(CqActionsMapping.ACTIONS_MAP
-                            .get("delete"))
-                    && (tmpList.size() == (CqActionsMapping.ACTIONS_MAP.get(
-                            "create").size() + CqActionsMapping.ACTIONS_MAP
-                            .get("delete").size()))) {
-                ret = true;
-            }
-        }
-        return ret;
     }
 
     private Set<AceBean> getNewAceSet(final int aclOrdering) {
