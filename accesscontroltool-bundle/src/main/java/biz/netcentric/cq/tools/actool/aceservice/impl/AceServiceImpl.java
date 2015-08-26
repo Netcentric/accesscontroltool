@@ -49,6 +49,7 @@ import biz.netcentric.cq.tools.actool.configreader.ConfigurationMerger;
 import biz.netcentric.cq.tools.actool.configreader.YamlConfigurationMerger;
 import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
+import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.helper.AclBean;
 import biz.netcentric.cq.tools.actool.helper.PurgeHelper;
@@ -119,36 +120,43 @@ public class AceServiceImpl implements AceService {
             LOG.error(message);
             throw new IllegalArgumentException(message);
         }
-
-        installAuthorizables(history, authorizableHistorySet,
-                authorizablesMapfromConfig);
-        installAces(history, session, repositoryDumpAceMap,
-                authorizablesMapfromConfig, aceMapFromConfig);
+        removeAcesForAuthorizable(history, session, authorizablesMapfromConfig.keySet(), repositoryDumpAceMap);
+        installAuthorizables(history, authorizableHistorySet, authorizablesMapfromConfig);
+        installAces(history, session, aceMapFromConfig);
+    }
+    
+    private void removeAcesForAuthorizable(AcInstallationHistoryPojo history, Session session, Set<String> authorizablesSet, Map<String, Set<AceBean>> repositoryDumpAceMap) throws UnsupportedRepositoryOperationException, RepositoryException {
+    	// loop through all ACLs found in the repository
+        for (Map.Entry<String, Set<AceBean>> entry : repositoryDumpAceMap.entrySet()) {
+            Set<AceBean> acl = entry.getValue();
+            for (AceBean aceBean : acl) {
+                // if the ACL form repo contains an ACE regarding an
+                // authorizable from the groups config then delete all ACEs from
+                // this authorizable from current ACL
+                if (authorizablesSet.contains(aceBean.getPrincipalName())) {
+                    AccessControlUtils.deleteAllEntriesForAuthorizableFromACL(session,
+                            aceBean.getJcrPath(), aceBean.getPrincipalName());
+                    String message = "deleted all ACEs of authorizable "
+                            + aceBean.getPrincipalName()
+                            + " from ACL of path: " + aceBean.getJcrPath();
+                    LOG.info(message);
+                    history.addVerboseMessage(message);
+                }
+            }
+        }
     }
 
     private void installAces(
             AcInstallationHistoryPojo history,
             final Session session,
-            Map<String, Set<AceBean>> repositoryDumpAceMap,
-            Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig,
             Map<String, Set<AceBean>> aceMapFromConfig) throws Exception {
-        String message;
         // --- installation of ACEs from configuration ---
         Map<String, Set<AceBean>> pathBasedAceMapFromConfig = AcHelper
                 .getPathBasedAceMap(aceMapFromConfig,
                         AcHelper.ACE_ORDER_DENY_ALLOW);
 
         LOG.info("--- start installation of access control configuration ---");
-
-        if (repositoryDumpAceMap != null) {
-            Set<String> authorizablesSet = authorizablesMapfromConfig.keySet();
-            AcHelper.installPathBasedACEs(pathBasedAceMapFromConfig,
-                    repositoryDumpAceMap, authorizablesSet, session, history);
-        } else {
-            message = "Could not create dump of repository ACEs (null). Installation aborted!";
-            history.addMessage(message);
-            LOG.error(message);
-        }
+        AcHelper.installPathBasedACEs(pathBasedAceMapFromConfig, session, history);
     }
 
     private void installAuthorizables(
@@ -288,7 +296,7 @@ public class AceServiceImpl implements AceService {
 
         Map<String, Set<AceBean>> repositoryDumpAceMap = null;
         LOG.info("start building dump from repository");
-        repositoryDumpAceMap = dumpservice.createUnfilteredAclDumpMap(
+        repositoryDumpAceMap = dumpservice.createAclDumpMap(
                 session, AcHelper.PATH_BASED_ORDER,
                 AcHelper.ACE_ORDER_NONE,
                 dumpservice.getQueryExcludePaths()).getAceDump();

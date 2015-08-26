@@ -17,7 +17,8 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
+import com.day.cq.security.util.CqActions;
+
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.Validators;
@@ -28,10 +29,10 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.DoubledDefinedJcrPri
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidActionException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidGroupNameException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidJcrPrivilegeException;
+import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidPathException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidPermissionException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidRepGlobException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.NoActionOrPrivilegeDefinedException;
-import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidPathException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.NoGroupDefinedException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.TooManyActionsException;
 
@@ -142,7 +143,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
 
         String[] actions = tmpAclBean.getActionsStringFromConfig().split(",");
 
-        if (actions.length > CqActionsMapping.ACTIONS_MAP.size()) {
+        if (actions.length > CqActions.ACTIONS.length) {
             String errorMessage = getBeanDescription(this.currentBeanCounter,
                     principal) + " too many actions defined!";
             LOG.error(errorMessage);

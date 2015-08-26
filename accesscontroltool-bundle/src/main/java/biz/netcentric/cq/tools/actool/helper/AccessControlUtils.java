@@ -16,19 +16,19 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
 import javax.jcr.AccessDeniedException;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
-import javax.jcr.Value;
-import javax.jcr.ValueFactory;
 import javax.jcr.security.AccessControlEntry;
 import javax.jcr.security.AccessControlException;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.AccessControlPolicy;
 import javax.jcr.security.AccessControlPolicyIterator;
 import javax.jcr.security.Privilege;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
@@ -37,8 +37,9 @@ import org.apache.jackrabbit.api.security.JackrabbitAccessControlManager;
 import org.apache.jackrabbit.api.security.principal.PrincipalManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import biz.netcentric.cq.tools.actool.configuration.CqActionsMapping;
+
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+
 import com.day.cq.security.util.CqActions;
 
 /**
@@ -308,104 +309,17 @@ public class AccessControlUtils {
     }
 
     /**
-     * 
-     * @param session
-     * @param path
-     *            path which is restricted by ACL
-     * @param authorizable
-     *            authorizable for which a repGlob gets added
-     * @param globString
-     * @param actions
-     * @throws UnsupportedRepositoryOperationException
+     * Converts the given privilege names into a set of privilege objects.
+     * @param privNames (may be {@code null}
+     * @param acMgr
+     * @return a set of privileges (never {@code null}, but may be empty set)
      * @throws RepositoryException
      */
-    static void setPermissionAndRestriction(final Session session,
-            final AceBean bean, final String authorizable)
-            throws UnsupportedRepositoryOperationException, RepositoryException {
-        String path = bean.getJcrPath();
-        String globString = bean.getRepGlob();
-        String[] actions = bean.getActions();
-        String[] beanPrivileges = bean.getPrivileges();
-
-        ValueFactory vf = session.getValueFactory();
-        AccessControlManager accessControlManager = session
-                .getAccessControlManager();
-        JackrabbitSession js = (JackrabbitSession) session;
-        PrincipalManager principalManager = js.getPrincipalManager();
-
-        JackrabbitAccessControlList acl = AccessControlUtils.getModifiableAcl(
-                accessControlManager, path);
-
-        // AccessControlPolicy[] ps = accessControlManager.getPolicies(path); //
-        // or getApplicablePolicies()
-        // JackrabbitAccessControlList acl = (JackrabbitAccessControlList)
-        // ps[0];
-
-        if (acl != null) {
-
-            // get ACEs of the node
-            AccessControlEntry[] aces = acl.getAccessControlEntries();
-
-            // loop through ACEs and find the one of the given principal
-            for (AccessControlEntry ace : aces) {
-                JackrabbitAccessControlEntry jace = (JackrabbitAccessControlEntry) ace;
-
-                // if an ACE for current authorizable has been found
-                if (StringUtils.equals(jace.getPrincipal().getName(),
-                        authorizable)) {
-
-                    // check if the privileges of the current ACE match the
-                    // action(s) given in parameter
-                    Privilege[] privileges = jace.getPrivileges();
-                    String actionsString = CqActionsMapping
-                            .getCqActions(privileges, session.getAccessControlManager());
-
-                    if (Arrays.asList(actions).containsAll(
-                            Arrays.asList(actionsString.split(",")))) {
-                        acl.removeAccessControlEntry(jace);
-                        Map<String, Value> restrictions = new HashMap<String, Value>();
-
-                        if (globString != null) {
-                            restrictions.put("rep:glob",
-                                    vf.createValue(globString));
-                            AcHelper.LOG.info("set rep:Glob: {} in path {}",
-                                    globString, path);
-                        }
-
-                        if (beanPrivileges != null) {
-                            Set<Privilege> newPrivileges = AccessControlUtils
-                                    .getPrivilegeSet(beanPrivileges,
-                                            accessControlManager);
-                            for (Privilege privilege : privileges) {
-                                newPrivileges.add(privilege);
-                            }
-                            privileges = (Privilege[]) newPrivileges
-                                    .toArray(new Privilege[newPrivileges.size()]);
-                        }
-
-                        // exchange old ACE with new one
-                        if (globString != null) {
-                            acl.addEntry(
-                                    principalManager.getPrincipal(authorizable),
-                                    privileges, jace.isAllow(), restrictions);
-                        } else {
-                            acl.addEntry(
-                                    principalManager.getPrincipal(authorizable),
-                                    privileges, jace.isAllow());
-                        }
-
-                        // bind new policy
-                        accessControlManager.setPolicy(path, acl);
-                        break;
-                    }
-
-                }
-            }
-        }
-    }
-
     static Set<Privilege> getPrivilegeSet(String[] privNames,
             AccessControlManager acMgr) throws RepositoryException {
+    	if (privNames == null) {
+    		return Collections.emptySet();
+    	}
         Set privileges = new HashSet(privNames.length);
         for (String name : privNames) {
             Privilege p = acMgr.privilegeFromName(name);
@@ -430,16 +344,18 @@ public class AccessControlUtils {
      * @throws UnsupportedRepositoryOperationException
      * @throws RepositoryException
      */
-    public static void deleteAuthorizableFromACL(final Session session,
+    public static void deleteAllEntriesForAuthorizableFromACL(final Session session,
             final String path, String authorizableID)
             throws UnsupportedRepositoryOperationException, RepositoryException {
         AccessControlManager accessControlManager = session
                 .getAccessControlManager();
-        JackrabbitSession js = (JackrabbitSession) session;
-        PrincipalManager principalManager = js.getPrincipalManager();
 
         JackrabbitAccessControlList acl = AccessControlUtils.getModifiableAcl(
                 accessControlManager, path);
+        if (acl == null) {
+        	// do nothing, if there is no content node at the given path
+        	return;
+        }
         // get ACEs of the node
         AccessControlEntry[] aces = acl.getAccessControlEntries();
 
@@ -484,40 +400,6 @@ public class AccessControlUtils {
             throw new AccessControlException("No modifiable ACL at " + path);
         }
         return null;
-    }
-
-    public static void installPermissions(final Session session,
-            final String nodePath, final Principal principal,
-            final boolean isAllow, final String globString,
-            final String[] privNames) throws RepositoryException {
-        AccessControlManager acMgr = session.getAccessControlManager();
-        JackrabbitAccessControlList acl = getModifiableAcl(acMgr, nodePath);
-        Set<Privilege> privileges = getPrivilegeSet(privNames, acMgr);
-
-        Map<String, Value> restrictions = null;
-        if (globString != null) {
-
-            for (String rName : acl.getRestrictionNames()) {
-                if ("rep:glob".equals(rName)) {
-                    Value v = session.getValueFactory().createValue(globString,
-                            acl.getRestrictionType(rName));
-                    restrictions = Collections.singletonMap(rName, v);
-                    break;
-                }
-            }
-
-        }
-        if (privileges != null) {
-            if (restrictions != null) {
-                acl.addEntry(principal, (Privilege[]) privileges
-                        .toArray(new Privilege[privileges.size()]), isAllow,
-                        restrictions);
-            } else {
-                acl.addEntry(principal, (Privilege[]) privileges
-                        .toArray(new Privilege[privileges.size()]), isAllow);
-            }
-        }
-        acMgr.setPolicy(nodePath, acl);
     }
 
 }
