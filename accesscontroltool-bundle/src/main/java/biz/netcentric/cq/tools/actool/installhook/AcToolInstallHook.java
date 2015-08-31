@@ -4,6 +4,9 @@ import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.installationhistory.HistoryEntry;
+
 import com.day.jcr.vault.packaging.InstallContext;
 import com.day.jcr.vault.packaging.PackageException;
 
@@ -45,11 +48,30 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
 			}
 			//
 			try {
-				acService.installYamlFilesFromPackage(context.getPackage().getArchive(), context.getSession());
-				log("Installed ACLs through AcToolInstallHook!", context.getOptions());
-			} catch (Exception e) {
-			    log("Exception while installing configurations: " + e, context.getOptions());
-			    throw new PackageException(e.getMessage(), e);
+				AcInstallationHistoryPojo history;
+				try {
+					history = acService.installYamlFilesFromPackage(context
+							.getPackage().getArchive(), context.getSession());
+
+				} catch (Exception e) {
+					log("Exception while installing configurations: " + e,
+							context.getOptions());
+					throw new PackageException(e.getMessage(), e);
+				}
+				
+				if (!history.isSuccess()) {
+					for (HistoryEntry entry : history.getException()) {
+						log(entry.toString(), context.getOptions());
+					}
+					throw new PackageException(
+							"Could not install configurations. Check log for detailed error message!");
+				} else {
+					// convert to correct (HTML) linebreaks for the package manager
+					String log = history.toString().replaceAll("\\\n", "<br />");
+					log(log, context.getOptions());
+					log("Installed ACLs successfully through AcToolInstallHook!",
+							context.getOptions());
+				}
 			} finally {
 				getBundleContext().ungetService(acToolInstallHookService);
 			}
@@ -61,6 +83,4 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
 
 		}
 	}
-	
-	
 }
