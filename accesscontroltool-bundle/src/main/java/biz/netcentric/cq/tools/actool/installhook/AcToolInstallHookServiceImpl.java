@@ -32,7 +32,7 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
     private ConfigFilesRetriever configFilesRetriever;
 
     @Override
-    public void installYamlFilesFromPackage(Archive archive, Session session)
+    public AcInstallationHistoryPojo installYamlFilesFromPackage(Archive archive, Session session)
             throws Exception {
         AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
         Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet = new LinkedHashSet<AuthorizableInstallationHistory>();
@@ -47,5 +47,6 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
             // TODO: acHistoryService.persistHistory(history,
             // this.configurationPath);
         }
+        return history;
     }
 }

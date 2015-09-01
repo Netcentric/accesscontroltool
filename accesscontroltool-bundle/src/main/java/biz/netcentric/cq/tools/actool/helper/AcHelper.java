@@ -144,18 +144,7 @@ public class AcHelper {
             } else {
                 history.addVerboseMessage("starting installation of bean: \n"
                         + bean);
-                // check if path exists in CRX
-                if (session.itemExists(bean.getJcrPath())) {
-                    bean.writeToRepository(session, currentPrincipal, history);
-                } else {
-                    String warningMessage = "path: "
-                            + bean.getJcrPath()
-                            + " doesn't exist in repository. Skipped installation of this ACE!";
-                    LOG.warn(warningMessage);
-                    history.addWarning(warningMessage);
-                    continue;
-                }
-
+                bean.install(session, currentPrincipal, history);
             }
         }
     }

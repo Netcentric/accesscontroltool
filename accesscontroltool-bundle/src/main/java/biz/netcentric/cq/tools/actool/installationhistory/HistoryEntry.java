@@ -47,4 +47,12 @@ public class HistoryEntry {
         this.index = index;
     }
 
+	@Override
+	public String toString() {
+		return "HistoryEntry [timestamp=" + timestamp + ", message=" + message
+				+ ", index=" + index + "]";
+	}
+    
+    
+
 }

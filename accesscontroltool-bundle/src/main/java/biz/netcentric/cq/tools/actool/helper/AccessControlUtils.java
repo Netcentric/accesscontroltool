@@ -22,6 +22,7 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
+import javax.jcr.Value;
 import javax.jcr.security.AccessControlEntry;
 import javax.jcr.security.AccessControlException;
 import javax.jcr.security.AccessControlManager;
@@ -44,8 +45,8 @@ import com.day.cq.security.util.CqActions;
 
 /**
  * This class provides common access control related utilities.
+ * Mostly a copy of org.apache.jackrabbit.commons.AccessControlUtils.
  */
-
 public class AccessControlUtils {
 
     private AccessControlUtils() {
@@ -258,45 +259,6 @@ public class AccessControlUtils {
         return false;
     }
 
-    public static void addActions(Session session, AceBean aceBean,
-            Principal principal, AcInstallationHistoryPojo history)
-            throws RepositoryException {
-
-        boolean isAllow = aceBean.isAllow();
-        String[] actions = aceBean.getActions();
-        CqActions cqActions = new CqActions(session);
-        String absPath = aceBean.getJcrPath();
-        String globString = aceBean.getRepGlob();
-        String[] privNames = aceBean.getPrivileges();
-        Map<String, Boolean> actionMap = new HashMap<String, Boolean>();
-
-        if (actions != null) {
-            for (String action : actions) {
-                if ("create".equals(action) || "modify".equals(action) || "delete".equals(action)) {
-                    actionMap.put(action, isAllow);
-                }
-            }
-
-            Collection<String> inheritedAllows = new HashSet<String>();
-            inheritedAllows.add("read");
-
-            LOG.info("setting actions for path: {} and principal {}", absPath,
-                    principal.getName());
-            cqActions.installActions(absPath, principal, actionMap,
-                    inheritedAllows);
-        } else {
-            String message = "Could not install Actions for " + aceBean
-                    + ", no actions defined!";
-            history.addWarning(message);
-
-        }
-        // if(privNames != null){
-        // installPermissions(session, absPath, principal, isAllow, globString,
-        // privNames);
-        // }
-
-    }
-
     private static Principal getEveryonePrincipal(Session session)
             throws RepositoryException {
         if (session instanceof JackrabbitSession) {
@@ -399,5 +361,17 @@ public class AccessControlUtils {
         }
         return null;
     }
-
+    
+    public static void extendExistingAceWithRestrictions(JackrabbitAccessControlList accessControlList, JackrabbitAccessControlEntry accessControlEntry, Map<String, Value> restrictions) throws AccessControlException, UnsupportedRepositoryOperationException, RepositoryException {
+		// 1. add new entry
+		if (!accessControlList.addEntry(accessControlEntry.getPrincipal(), accessControlEntry.getPrivileges(), accessControlEntry.isAllow(), restrictions)) {
+			throw new IllegalStateException("Could not add entry, probably because it was already there!");
+		}
+		// we assume the entry being added is the last one
+		AccessControlEntry newAccessControlEntry = accessControlList.getAccessControlEntries()[accessControlList.size() - 1];
+		// 2. put it to the right position now!
+		accessControlList.orderBefore(newAccessControlEntry, accessControlEntry);
+		// 3. remove old entry
+		accessControlList.removeAccessControlEntry(accessControlEntry);
+    }
 }
