@@ -322,12 +322,12 @@ public class AceBean implements AcDumpElement {
 		cqActions.installActions(getJcrPath(), principal, actionMap,
 				inheritedAllows);
 		
-		Map<String, Value> restrictions = getSingleValueRestrictions(session, acl);
-		if (restrictions.isEmpty()) {
-			return acl;
-		}
 		// since the aclist has been modified, retrieve it again
 		JackrabbitAccessControlList newAcl = AccessControlUtils.getAccessControlList(session, getJcrPath());
+		Map<String, Value> restrictions = getSingleValueRestrictions(session, acl);
+		if (restrictions.isEmpty()) {
+			return newAcl;
+		}
 		// additionally set restrictions on the installed actions (this is not supported by CQ Security API)
 		int newAclSize = newAcl.size();
 		if (previousAclSize >= newAclSize) {
