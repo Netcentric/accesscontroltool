@@ -308,7 +308,7 @@ public class AceBean implements AcDumpElement {
 	 * @return either the same acl as given in the parameter {@code acl} if no actions have been installed otherwise the new AccessControlList (comprising the entres being installed for the actions).
 	 * @throws RepositoryException
 	 */
-	private JackrabbitAccessControlList installActions(Principal principal, JackrabbitAccessControlList acl, Session session, AccessControlManager acMgr) throws RepositoryException {
+	private JackrabbitAccessControlList installActions(Principal principal, JackrabbitAccessControlList acl, Session session, AccessControlManager acMgr, AcInstallationHistoryPojo history) throws RepositoryException {
 		Map<String, Boolean> actionMap = getActionMap();
 		if (actionMap.isEmpty()) {
 			return acl;
@@ -331,18 +331,22 @@ public class AceBean implements AcDumpElement {
 		// additionally set restrictions on the installed actions (this is not supported by CQ Security API)
 		int newAclSize = newAcl.size();
 		if (previousAclSize >= newAclSize) {
-			throw new IllegalStateException("No new entries have been set for AccessControlList at " + getJcrPath());
-		}
-		AccessControlEntry[] aces = newAcl.getAccessControlEntries();
-		for (int acEntryIndex = previousAclSize; acEntryIndex < newAclSize; acEntryIndex++) {
-			if (!(aces[acEntryIndex] instanceof JackrabbitAccessControlEntry)) {
-				throw new IllegalStateException("Can not deal with non JackrabbitAccessControlEntrys, but entry is of type " + aces[acEntryIndex].getClass().getName());
-			}
-			JackrabbitAccessControlEntry ace = (JackrabbitAccessControlEntry)aces[acEntryIndex];
-			// only extend those AccessControlEntries which do not yet have a restriction
-			if (ace.getRestrictions("rep:glob") == null) {
-				// modify this AccessControlEntry by adding the restriction
-				AccessControlUtils.extendExistingAceWithRestrictions(newAcl, ace, restrictions);
+			history.addWarning("Could not install restriction for actions " + StringUtils.join(actions, ",") + " at " + getJcrPath() + " because action installation did not lead to a new AC entry. Probably you have defined redundant actions/privileges.");
+		} else {
+			AccessControlEntry[] aces = newAcl.getAccessControlEntries();
+			for (int acEntryIndex = previousAclSize; acEntryIndex < newAclSize; acEntryIndex++) {
+				if (!(aces[acEntryIndex] instanceof JackrabbitAccessControlEntry)) {
+					// this is a non-recoverable error and should never happen
+					throw new IllegalStateException("Can not deal with non JackrabbitAccessControlEntrys, but entry is of type " + aces[acEntryIndex].getClass().getName());
+				}
+				JackrabbitAccessControlEntry ace = (JackrabbitAccessControlEntry)aces[acEntryIndex];
+				// only extend those AccessControlEntries which do not yet have a restriction
+				if (ace.getRestriction("rep:glob") == null) {
+					// modify this AccessControlEntry by adding the restriction
+					AccessControlUtils.extendExistingAceWithRestrictions(newAcl, ace, restrictions);
+				} else {
+					history.addWarning("Could not install restriction for actions " + StringUtils.join(actions, ",") + " at " + getJcrPath() + " because action already has a restriction " + ace.getRestriction("rep:glob").getString());
+				}
 			}
 		}
 		return newAcl;
@@ -382,7 +386,7 @@ public class AceBean implements AcDumpElement {
 		}
 		
 		// first install actions
-		JackrabbitAccessControlList newAcl = installActions(principal, acl, session, acMgr);
+		JackrabbitAccessControlList newAcl = installActions(principal, acl, session, acMgr, history);
 		if (acl != newAcl) {
 			history.addVerboseMessage("added action(s) for path: " + getJcrPath()
 					+ ", principal: " + principal.getName() + ", actions: "
