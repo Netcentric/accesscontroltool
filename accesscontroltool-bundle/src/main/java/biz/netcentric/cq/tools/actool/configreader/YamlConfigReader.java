@@ -62,6 +62,8 @@ public class YamlConfigReader implements ConfigReader {
 
     private static final String USER_CONFIG_PROPERTY_IS_SYSTEM_USER = "isSystemUser";
 
+    private static final String GROUP_CONFIG_PROPERTY_MIGRATE_FROM = "migrateFrom";
+
     @Reference
     private SlingRepository repository;
 
@@ -124,7 +126,7 @@ public class YamlConfigReader implements ConfigReader {
 
     private Map<String, Set<AuthorizableConfigBean>> getAuthorizablesMap(
             final List<LinkedHashMap> yamlMap, final AuthorizableValidator authorizableValidator, boolean isGroupSection)
-            throws AcConfigBeanValidationException {
+                    throws AcConfigBeanValidationException {
         final Set<String> alreadyProcessedGroups = new HashSet<String>();
         final Map<String, Set<AuthorizableConfigBean>> principalMap = new LinkedHashMap<String, Set<AuthorizableConfigBean>>();
 
@@ -466,6 +468,10 @@ public class YamlConfigReader implements ConfigReader {
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBERS));
         authorizableConfigBean.setPath(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_PATH));
+
+        authorizableConfigBean.setMigrateFrom(getMapValueAsString(currentPrincipalDataMap,
+                GROUP_CONFIG_PROPERTY_MIGRATE_FROM));
+
         authorizableConfigBean.setIsGroup(isGroupSection);
         authorizableConfigBean.setIsSystemUser(Boolean.valueOf(getMapValueAsString(currentPrincipalDataMap,
                 USER_CONFIG_PROPERTY_IS_SYSTEM_USER)));

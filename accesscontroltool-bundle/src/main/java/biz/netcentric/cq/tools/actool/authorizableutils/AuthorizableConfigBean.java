@@ -32,6 +32,8 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private String path;
     private String password;
 
+    private String migrateFrom;
+
     private boolean isGroup = true;
     private boolean isSystemUser = false;
 
@@ -184,6 +186,14 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     public void setPath(final String path) {
         this.path = path;
+    }
+
+    public String getMigrateFrom() {
+        return migrateFrom;
+    }
+
+    public void setMigrateFrom(String migrateFrom) {
+        this.migrateFrom = migrateFrom;
     }
 
     @Override
