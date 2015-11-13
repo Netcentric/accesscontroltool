@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,9 +24,11 @@ import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.Value;
 import javax.jcr.ValueFormatException;
 import javax.jcr.security.AccessControlEntry;
+import javax.jcr.security.AccessControlException;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.Privilege;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
@@ -308,12 +311,11 @@ public class AceBean implements AcDumpElement {
 	 * @return either the same acl as given in the parameter {@code acl} if no actions have been installed otherwise the new AccessControlList (comprising the entres being installed for the actions).
 	 * @throws RepositoryException
 	 */
-	private JackrabbitAccessControlList installActions(Principal principal, JackrabbitAccessControlList acl, Session session, AccessControlManager acMgr) throws RepositoryException {
+	private JackrabbitAccessControlList installActions(Principal principal, JackrabbitAccessControlList acl, Session session, AccessControlManager acMgr, AcInstallationHistoryPojo history) throws RepositoryException {
 		Map<String, Boolean> actionMap = getActionMap();
 		if (actionMap.isEmpty()) {
 			return acl;
 		}
-		int previousAclSize = acl.size();
 		
 		CqActions cqActions = new CqActions(session);
 		Collection<String> inheritedAllows = cqActions.getAllowedActions(
@@ -329,23 +331,56 @@ public class AceBean implements AcDumpElement {
 			return newAcl;
 		}
 		// additionally set restrictions on the installed actions (this is not supported by CQ Security API)
-		int newAclSize = newAcl.size();
-		if (previousAclSize >= newAclSize) {
-			throw new IllegalStateException("No new entries have been set for AccessControlList at " + getJcrPath());
-		}
-		AccessControlEntry[] aces = newAcl.getAccessControlEntries();
-		for (int acEntryIndex = previousAclSize; acEntryIndex < newAclSize; acEntryIndex++) {
-			if (!(aces[acEntryIndex] instanceof JackrabbitAccessControlEntry)) {
-				throw new IllegalStateException("Can not deal with non JackrabbitAccessControlEntrys, but entry is of type " + aces[acEntryIndex].getClass().getName());
-			}
-			JackrabbitAccessControlEntry ace = (JackrabbitAccessControlEntry)aces[acEntryIndex];
-			// only extend those AccessControlEntries which do not yet have a restriction
-			if (ace.getRestrictions("rep:glob") == null) {
-				// modify this AccessControlEntry by adding the restriction
-				AccessControlUtils.extendExistingAceWithRestrictions(newAcl, ace, restrictions);
-			}
-		}
+
+		addAdditionalRestriction(acl, newAcl, restrictions);
 		return newAcl;
+	}
+	
+	private void addAdditionalRestriction(JackrabbitAccessControlList oldAcl, JackrabbitAccessControlList newAcl,
+			Map<String, Value> restrictions)
+					throws RepositoryException, AccessControlException, UnsupportedRepositoryOperationException {
+		List<AccessControlEntry> changedAces = getModifiedAces(oldAcl, newAcl);
+		if(!changedAces.isEmpty()){
+			for(AccessControlEntry newAce : changedAces){
+				addRestrictionIfNotSet(newAcl, restrictions, newAce);
+			}
+		}else{
+			// check cornercase: yaml file contains 2 ACEs with same action same principal same path but one with additional restriction (e.g. read and repGlob: '')
+			// in that case old and new acl contain the same elements (equals == true) and in both lists the last ace contains the action without restriction
+			// for that group
+			AccessControlEntry lastOldAce = oldAcl.getAccessControlEntries()[oldAcl.getAccessControlEntries().length-1];
+			AccessControlEntry lastNewAce = newAcl.getAccessControlEntries()[newAcl.getAccessControlEntries().length-1];
+
+			if(lastOldAce.equals(lastNewAce) && lastNewAce.getPrincipal().getName().equals(this.getPrincipalName())){
+				addRestrictionIfNotSet(newAcl, restrictions, lastNewAce);
+
+			}else{
+				throw new IllegalStateException("No new entries have been set for AccessControlList at " + getJcrPath());
+			}
+		}
+	}
+
+	private void addRestrictionIfNotSet(JackrabbitAccessControlList newAcl, Map<String, Value> restrictions,
+			AccessControlEntry newAce)
+					throws RepositoryException, AccessControlException, UnsupportedRepositoryOperationException {
+		if (!(newAce instanceof JackrabbitAccessControlEntry)) {
+			throw new IllegalStateException("Can not deal with non JackrabbitAccessControlEntrys, but entry is of type " + newAce.getClass().getName());
+		}
+		JackrabbitAccessControlEntry ace = (JackrabbitAccessControlEntry)newAce;
+		// only extend those AccessControlEntries which do not yet have a restriction
+
+		if (ace.getRestrictions("rep:glob") == null) {
+			// modify this AccessControlEntry by adding the restriction
+			AccessControlUtils.extendExistingAceWithRestrictions(newAcl, ace, restrictions);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<AccessControlEntry> getModifiedAces(final JackrabbitAccessControlList oldAcl, JackrabbitAccessControlList newAcl) throws RepositoryException{
+		List<AccessControlEntry> oldAces = Arrays.asList(oldAcl.getAccessControlEntries());
+		List<AccessControlEntry> newAces = Arrays.asList(newAcl.getAccessControlEntries());
+		return (List<AccessControlEntry>) CollectionUtils.subtract(newAces, oldAces);
+
 	}
 	
 	private boolean installPrivileges(Principal principal, JackrabbitAccessControlList acl, Session session, AccessControlManager acMgr) throws RepositoryException {
@@ -382,7 +417,7 @@ public class AceBean implements AcDumpElement {
 		}
 		
 		// first install actions
-		JackrabbitAccessControlList newAcl = installActions(principal, acl, session, acMgr);
+		JackrabbitAccessControlList newAcl = installActions(principal, acl, session, acMgr, history);
 		if (acl != newAcl) {
 			history.addVerboseMessage("added action(s) for path: " + getJcrPath()
 					+ ", principal: " + principal.getName() + ", actions: "
