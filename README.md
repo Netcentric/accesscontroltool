@@ -54,7 +54,8 @@ Overall format
      - isMemberOf: comma separated list of other groups
      - members: comma separated list of groups that are member of this group
      - description: (optional, description)
-     - path: ?
+     - path: (optional, path the group is located)
+     - migrateFrom: (optional, a group name assigned member users are taken over from)
 ```
 
 Example
@@ -68,6 +69,8 @@ isp-editor
 If the isMemberOf property of a group contains a group which is not yet installed in the repository, this group gets created and its rep:members property gets filled accordingly. if another configuration gets installed having a actual definition for that group the data gets merged into the already existing one.
 
 The members property contains a list of groups where this group is added as isMemberOf.
+
+The property 'migrateFrom' allows to migrate a group name without loosing their members (members of the group given in migrateFrom are taken over and the source=old group deleted afterwards). This property is only to be used temporarily (usually only included in one released version that travels all environments, once all groups are migrated the config should be removed). If not set (the default) nothing happens. If the property points to a group that does not exist (anymore), the property is ignored.
 
 ## Configuration of users
 
