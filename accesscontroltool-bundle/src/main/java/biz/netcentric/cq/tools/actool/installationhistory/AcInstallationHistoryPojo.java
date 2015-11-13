@@ -9,6 +9,8 @@
 package biz.netcentric.cq.tools.actool.installationhistory;
 
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -39,18 +41,20 @@ public class AcInstallationHistoryPojo {
     private long msgIndex = 0;
     Rendition rendition;
 
+    private DateFormat timestampFormat = new SimpleDateFormat("HH:mm:ss.SSS");
+
     public enum Rendition {
         HTML, TXT;
     }
 
     public AcInstallationHistoryPojo() {
-        this.rendition = rendition.TXT;
-        this.setInstallationDate(new Date());
+        rendition = Rendition.TXT;
+        setInstallationDate(new Date());
     }
 
     public AcInstallationHistoryPojo(Rendition rendition) {
         this.rendition = rendition;
-        this.setInstallationDate(new Date());
+        setInstallationDate(new Date());
     }
 
     public Date getInstallationDate() {
@@ -66,7 +70,7 @@ public class AcInstallationHistoryPojo {
     }
 
     public void setExecutionTime(final long time) {
-        this.executionTime = time;
+        executionTime = time;
     }
 
     public Set<HistoryEntry> getWarnings() {
@@ -74,12 +78,12 @@ public class AcInstallationHistoryPojo {
     }
 
     public void addWarning(String warning) {
-        if (this.rendition.equals(Rendition.HTML)) {
-            this.warnings.add(new HistoryEntry(msgIndex, new Timestamp(
+        if (rendition.equals(Rendition.HTML)) {
+            warnings.add(new HistoryEntry(msgIndex, new Timestamp(
                     new Date().getTime()), "<font color='orange'><b>"
                     + MSG_IDENTIFIER_WARNING + " " + warning + "</b></font>"));
-        } else if (this.rendition.equals(Rendition.TXT)) {
-            this.warnings.add(new HistoryEntry(msgIndex, new Timestamp(
+        } else if (rendition.equals(Rendition.TXT)) {
+            warnings.add(new HistoryEntry(msgIndex, new Timestamp(
                     new Date().getTime()), MSG_IDENTIFIER_WARNING + " "
                     + warning));
         }
@@ -87,39 +91,39 @@ public class AcInstallationHistoryPojo {
     }
 
     public void addMessage(String message) {
-        this.messages.add(new HistoryEntry(msgIndex, new Timestamp(new Date()
+        messages.add(new HistoryEntry(msgIndex, new Timestamp(new Date()
                 .getTime()), " " + message));
         msgIndex++;
     }
 
     public void addError(final String exception) {
-        if (this.rendition.equals(Rendition.HTML)) {
-            this.exceptions.add(new HistoryEntry(msgIndex, new Timestamp(
+        if (rendition.equals(Rendition.HTML)) {
+            exceptions.add(new HistoryEntry(msgIndex, new Timestamp(
                     new Date().getTime()), "<font color='red'><b>"
                     + MSG_IDENTIFIER_EXCEPTION + "</b>" + " " + exception
                     + "</b></font>"));
-        } else if (this.rendition.equals(Rendition.TXT)) {
-            this.exceptions.add(new HistoryEntry(msgIndex, new Timestamp(
+        } else if (rendition.equals(Rendition.TXT)) {
+            exceptions.add(new HistoryEntry(msgIndex, new Timestamp(
                     new Date().getTime()), MSG_IDENTIFIER_EXCEPTION + " "
                     + exception));
 
         }
-        this.success = false;
+        success = false;
         msgIndex++;
     }
 
     public void addVerboseMessage(String message) {
-        this.verboseMessages.add(new HistoryEntry(msgIndex, new Timestamp(
+        verboseMessages.add(new HistoryEntry(msgIndex, new Timestamp(
                 new Date().getTime()), " " + message));
         msgIndex++;
     }
 
     public Set<HistoryEntry> getMessages() {
-        return this.messages;
+        return messages;
     }
 
     public Set<HistoryEntry> getException() {
-        return this.exceptions;
+        return exceptions;
     }
 
     public boolean isSuccess() {
@@ -135,22 +139,22 @@ public class AcInstallationHistoryPojo {
         StringBuilder sb = new StringBuilder();
 
         sb.append("\n" + "Installation triggered: "
-                + this.installationDate.toString() + "\n");
+                + installationDate.toString() + "\n");
 
         sb.append("\n" + getMessageHistory() + "\n");
 
-        sb.append("\n" + "Execution time: " + this.executionTime + " ms\n");
+        sb.append("\n" + "Execution time: " + executionTime + " ms\n");
 
-        if (this.rendition.equals(rendition.HTML)) {
-            if (this.success) {
+        if (rendition.equals(Rendition.HTML)) {
+            if (success) {
                 sb.append(HtmlConstants.FONT_COLOR_SUCCESS_HTML_OPEN);
             } else {
                 sb.append(HtmlConstants.FONT_COLOR_NO_SUCCESS_HTML_OPEN);
             }
         }
-        sb.append("\n" + "Success: " + this.success);
+        sb.append("\n" + "Success: " + success);
 
-        if (this.rendition.equals(rendition.HTML)) {
+        if (rendition.equals(Rendition.HTML)) {
             sb.append(HtmlConstants.FONT_COLOR_SUCCESS_HTML_CLOSE);
         }
         return sb.toString();
@@ -158,14 +162,14 @@ public class AcInstallationHistoryPojo {
 
     @SuppressWarnings("unchecked")
     public String getMessageHistory() {
-        return getMessageString(getMessageSet(this.warnings, this.messages,
-                this.exceptions));
+        return getMessageString(getMessageSet(warnings, messages,
+                exceptions));
     }
 
     @SuppressWarnings("unchecked")
     public String getVerboseMessageHistory() {
-        return getMessageString(getMessageSet(this.warnings, this.messages,
-                this.verboseMessages, this.exceptions));
+        return getMessageString(getMessageSet(warnings, messages,
+                verboseMessages, exceptions));
     }
 
     private Set<HistoryEntry> getMessageSet(Set<HistoryEntry>... sets) {
@@ -184,7 +188,7 @@ public class AcInstallationHistoryPojo {
         StringBuilder sb = new StringBuilder();
         if (!messageHistorySet.isEmpty()) {
             for (HistoryEntry entry : messageHistorySet) {
-                sb.append("\n" + entry.getTimestamp() + ": "
+                sb.append("\n" + timestampFormat.format(entry.getTimestamp()) + ": "
                         + entry.getMessage());
             }
         }

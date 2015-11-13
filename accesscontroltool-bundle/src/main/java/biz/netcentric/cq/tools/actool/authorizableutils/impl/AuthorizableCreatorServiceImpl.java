@@ -611,7 +611,7 @@ public class AuthorizableCreatorServiceImpl implements
             newUser.setProperty("profile/familyName", vf.createValue(familyName));
         }
 
-        if ((memberOf != null) && (memberOf.length > 0)) {
+        if ((newUser != null) && (memberOf != null) && (memberOf.length > 0)) {
 
             // add group to groups according to configuration
             Set<Authorizable> authorizables = validateAssignedGroups(
@@ -632,8 +632,9 @@ public class AuthorizableCreatorServiceImpl implements
             AcInstallationHistoryPojo status)
                     throws RepositoryException {
 
+    	// make sure all relative intermediate paths get the prefix suffix (but don't touch absolute paths)
         String systemPrefix = "system/";
-        if ((intermediatePath != null) && !intermediatePath.startsWith(systemPrefix)) {
+        if ((intermediatePath != null) && !intermediatePath.startsWith(systemPrefix) && !intermediatePath.startsWith("/")) {
             intermediatePath = systemPrefix + intermediatePath;
         }
 
