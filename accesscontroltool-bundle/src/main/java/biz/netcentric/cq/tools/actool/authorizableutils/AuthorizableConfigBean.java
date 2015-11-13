@@ -32,6 +32,8 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private String path;
     private String password;
 
+    private String migrateFrom;
+
     private boolean isGroup = true;
     private boolean isSystemUser = false;
 
@@ -184,6 +186,20 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     public void setPath(final String path) {
         this.path = path;
+    }
+
+    public String getMigrateFrom() {
+        return migrateFrom;
+    }
+
+    /** Set a group name, from which the users are taken over to this group. The group given is deleted after the run. This property is only
+     * to be used temporarily (usually only included in one released version that travels all environments, once all groups are migrated the
+     * config should be removed). If not set (the default) nothing happens. If the property points to a group that does not exist (anymore),
+     * the property is ignored.
+     * 
+     * @param migrateFrom */
+    public void setMigrateFrom(String migrateFrom) {
+        this.migrateFrom = migrateFrom;
     }
 
     @Override
