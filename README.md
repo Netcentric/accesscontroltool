@@ -54,8 +54,8 @@ Overall format
      - isMemberOf: comma separated list of other groups
      - members: comma separated list of groups that are member of this group
      - description: (optional, description)
-     - path: (optional, path the group is located)
-     - migrateFrom: (optional, a group name assigned member users are taken over from)
+     - path: (optional, path of the group in JCR)
+     - migrateFrom: (optional, a group name assigned member users are taken over from, available from v1.7)
 ```
 
 Example
