@@ -11,10 +11,14 @@ package biz.netcentric.cq.tools.actool.validators;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 
+import biz.netcentric.cq.tools.actool.helper.AcHelper;
+import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 
 public class YamlConfigurationsValidator implements ConfigurationsValidator {
@@ -109,6 +113,28 @@ public class YamlConfigurationsValidator implements ConfigurationsValidator {
                                     + "\n"
                                     + "valid configuration section identifiers are: "
                                     + Constants.VALID_CONFIG_SECTION_IDENTIFIERS);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void validateInitialContentForNoDuplicates(Map<String, Set<AceBean>> mergedAceMapFromConfig)
+            throws IllegalArgumentException {
+
+        Map<String, Set<AceBean>> pathBasedAceMapFromConfig = AcHelper
+                .getPathBasedAceMap(mergedAceMapFromConfig, AcHelper.ACE_ORDER_DENY_ALLOW);
+
+        for (String path : pathBasedAceMapFromConfig.keySet()) {
+            Set<AceBean> aceBeanSet = pathBasedAceMapFromConfig.get(path);
+            String initialContent = null;
+            for (AceBean aceBean : aceBeanSet) {
+                if (StringUtils.isNotBlank(aceBean.getInitialContent())) {
+                    if (initialContent == null) {
+                        initialContent = aceBean.getInitialContent();
+                    } else {
+                        throw new IllegalArgumentException("Duplicate 'initialContent' for path " + path);
+                    }
                 }
             }
         }

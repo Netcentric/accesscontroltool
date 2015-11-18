@@ -56,6 +56,7 @@ class InitialContentHelper {
                 if (initialContent == null) {
                     initialContent = currentInitialContent;
                 } else {
+                    // this should not happen as it is validated at YamlConfigurationsValidator#validateInitialContentForNoDuplic already
                     throw new IllegalStateException("Invalid Configuration: Path " + aceBean.getJcrPath()
                             + " defines initial content at two locations");
                 }

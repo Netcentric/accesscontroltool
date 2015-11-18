@@ -122,6 +122,8 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
                 mergedAceMapFromConfig.putAll(aceMapFromConfig);
             }
 
+            configurationsValidator.validateInitialContentForNoDuplicates(mergedAceMapFromConfig);
+
         }
         // set member groups
         final AuthorizableMemberGroupsValidator membersValidator = new AuthorizableMemberGroupsValidator();
