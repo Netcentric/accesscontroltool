@@ -52,6 +52,7 @@ public class YamlConfigReader implements ConfigReader {
     private static final String ACE_CONFIG_PROPERTY_PRIVILEGES = "privileges";
     private static final String ACE_CONFIG_PROPERTY_ACTIONS = "actions";
     private static final String ACE_CONFIG_PROPERTY_PATH = "path";
+    private static final String ACE_CONFIG_INITIAL_CONTENT = "initialContent";
 
     private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF = "isMemberOf";
     private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY = "memberOf";
@@ -442,6 +443,10 @@ public class YamlConfigReader implements ConfigReader {
                 currentAceDefinition, ASSERTED_EXCEPTION));
         tmpAclBean.setActions(parseActionsString(getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_PROPERTY_ACTIONS)));
+
+        String initialContent = getMapValueAsString(currentAceDefinition,
+                ACE_CONFIG_INITIAL_CONTENT);
+        tmpAclBean.setInitialContent(initialContent);
     }
 
     private String[] parseActionsString(final String actionsStringFromConfig) {

@@ -59,6 +59,7 @@ public class AceBean implements AcDumpElement {
     private String[] actions;
     private String assertedExceptionString;
     
+    private String initialContent;
     
     public static final String RESTRICTION_NAME_GLOB = "rep:glob";
 
@@ -151,6 +152,14 @@ public class AceBean implements AcDumpElement {
 
     public void setPrivilegesString(String privilegesString) {
         this.privilegesString = privilegesString;
+    }
+
+    public String getInitialContent() {
+        return initialContent;
+    }
+
+    public void setInitialContent(String initialContent) {
+        this.initialContent = initialContent;
     }
 
     @Override
