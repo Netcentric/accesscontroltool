@@ -416,6 +416,11 @@ public class AceBean implements AcDumpElement {
 	 */
 	public void install(final Session session, Principal principal,
 			AcInstallationHistoryPojo history) throws RepositoryException {
+
+        if (isInitialContentOnlyConfig()) {
+            return;
+        }
+
 		AccessControlManager acMgr = session.getAccessControlManager();
 		
 		JackrabbitAccessControlList acl = AccessControlUtils.getModifiableAcl(
@@ -443,4 +448,12 @@ public class AceBean implements AcDumpElement {
 		}
 		acMgr.setPolicy(getJcrPath(), acl);
 	}
+
+    public boolean isInitialContentOnlyConfig() {
+        return StringUtils.isNotBlank(initialContent)
+                && StringUtils.isBlank(permission)
+                && StringUtils.isBlank(privilegesString)
+                && StringUtils.isBlank(actionsStringFromConfig);
+    }
+
 }
