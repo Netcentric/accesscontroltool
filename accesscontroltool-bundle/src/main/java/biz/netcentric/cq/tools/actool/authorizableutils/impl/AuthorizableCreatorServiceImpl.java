@@ -114,7 +114,6 @@ public class AuthorizableCreatorServiceImpl implements
         ValueFactory vf = session.getValueFactory();
 
         // if current authorizable from config doesn't exist yet
-
         Authorizable authorizableForPrincipalId = userManager.getAuthorizable(principalId);
         if (authorizableForPrincipalId == null) {
             createNewAuthorizable(authorizableConfigBean, history,
