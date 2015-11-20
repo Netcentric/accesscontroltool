@@ -114,12 +114,16 @@ public class AuthorizableCreatorServiceImpl implements
         ValueFactory vf = session.getValueFactory();
 
         // if current authorizable from config doesn't exist yet
-        if (userManager.getAuthorizable(principalId) == null) {
+        Authorizable authorizableForPrincipalId = userManager.getAuthorizable(principalId);
+        if (authorizableForPrincipalId == null) {
             createNewAuthorizable(authorizableConfigBean, history,
                     authorizableInstallationHistory, userManager, vf);
         }
         // if current authorizable from config already exists in repository
         else {
+
+            // update name for both groups and users
+            setAuthorizableName(authorizableForPrincipalId, vf, authorizableConfigBean.getPrincipalName());
 
             if (authorizableConfigBean.isGroup()) {
 
@@ -619,10 +623,21 @@ public class AuthorizableCreatorServiceImpl implements
             }
         }
 
-        if (StringUtils.isNotBlank(name)) {
-            newGroup.setProperty("profile/givenName", vf.createValue(name));
-        }
+        setAuthorizableName(newGroup, vf, name);
         return newGroup;
+    }
+
+    private void setAuthorizableName(Authorizable authorizable, ValueFactory vf, String name) throws RepositoryException {
+        if (StringUtils.isNotBlank(name)) {
+            if (authorizable.isGroup()) {
+                authorizable.setProperty("profile/givenName", vf.createValue(name));
+            } else {
+                String givenName = StringUtils.substringBeforeLast(name, " ");
+                String familyName = StringUtils.substringAfterLast(name, " ");
+                authorizable.setProperty("profile/givenName", vf.createValue(givenName));
+                authorizable.setProperty("profile/familyName", vf.createValue(familyName));
+            }
+        }
     }
 
     private Authorizable createNewUser(
@@ -648,11 +663,8 @@ public class AuthorizableCreatorServiceImpl implements
             newUser = userManager.createUser(principalId, password, new PrincipalImpl(principalId), intermediatePath);
         }
 
-        if (!isSystemUser && StringUtils.isNotBlank(name)) {
-            String givenName = StringUtils.substringBeforeLast(name, " ");
-            String familyName = StringUtils.substringAfterLast(name, " ");
-            newUser.setProperty("profile/givenName", vf.createValue(givenName));
-            newUser.setProperty("profile/familyName", vf.createValue(familyName));
+        if (!isSystemUser) {
+            setAuthorizableName(newUser, vf, name);
         }
 
         if ((newUser != null) && (memberOf != null) && (memberOf.length > 0)) {
