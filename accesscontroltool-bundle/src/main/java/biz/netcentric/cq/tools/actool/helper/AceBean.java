@@ -59,6 +59,7 @@ public class AceBean implements AcDumpElement {
     private String[] actions;
     private String assertedExceptionString;
     
+    private String initialContent;
     
     public static final String RESTRICTION_NAME_GLOB = "rep:glob";
 
@@ -151,6 +152,14 @@ public class AceBean implements AcDumpElement {
 
     public void setPrivilegesString(String privilegesString) {
         this.privilegesString = privilegesString;
+    }
+
+    public String getInitialContent() {
+        return initialContent;
+    }
+
+    public void setInitialContent(String initialContent) {
+        this.initialContent = initialContent;
     }
 
     @Override
@@ -407,6 +416,11 @@ public class AceBean implements AcDumpElement {
 	 */
 	public void install(final Session session, Principal principal,
 			AcInstallationHistoryPojo history) throws RepositoryException {
+
+        if (isInitialContentOnlyConfig()) {
+            return;
+        }
+
 		AccessControlManager acMgr = session.getAccessControlManager();
 		
 		JackrabbitAccessControlList acl = AccessControlUtils.getModifiableAcl(
@@ -434,4 +448,12 @@ public class AceBean implements AcDumpElement {
 		}
 		acMgr.setPolicy(getJcrPath(), acl);
 	}
+
+    public boolean isInitialContentOnlyConfig() {
+        return StringUtils.isNotBlank(initialContent)
+                && StringUtils.isBlank(permission)
+                && StringUtils.isBlank(privilegesString)
+                && StringUtils.isBlank(actionsStringFromConfig);
+    }
+
 }
