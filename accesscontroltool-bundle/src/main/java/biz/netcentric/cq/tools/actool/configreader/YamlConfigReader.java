@@ -52,6 +52,7 @@ public class YamlConfigReader implements ConfigReader {
     private static final String ACE_CONFIG_PROPERTY_PRIVILEGES = "privileges";
     private static final String ACE_CONFIG_PROPERTY_ACTIONS = "actions";
     private static final String ACE_CONFIG_PROPERTY_PATH = "path";
+    private static final String ACE_CONFIG_INITIAL_CONTENT = "initialContent";
 
     private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF = "isMemberOf";
     private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY = "memberOf";
@@ -61,6 +62,8 @@ public class YamlConfigReader implements ConfigReader {
     private static final String GROUP_CONFIG_PROPERTY_NAME = "name";
 
     private static final String USER_CONFIG_PROPERTY_IS_SYSTEM_USER = "isSystemUser";
+
+    private static final String GROUP_CONFIG_PROPERTY_MIGRATE_FROM = "migrateFrom";
 
     @Reference
     private SlingRepository repository;
@@ -124,7 +127,7 @@ public class YamlConfigReader implements ConfigReader {
 
     private Map<String, Set<AuthorizableConfigBean>> getAuthorizablesMap(
             final List<LinkedHashMap> yamlMap, final AuthorizableValidator authorizableValidator, boolean isGroupSection)
-            throws AcConfigBeanValidationException {
+                    throws AcConfigBeanValidationException {
         final Set<String> alreadyProcessedGroups = new HashSet<String>();
         final Map<String, Set<AuthorizableConfigBean>> principalMap = new LinkedHashMap<String, Set<AuthorizableConfigBean>>();
 
@@ -440,6 +443,10 @@ public class YamlConfigReader implements ConfigReader {
                 currentAceDefinition, ASSERTED_EXCEPTION));
         tmpAclBean.setActions(parseActionsString(getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_PROPERTY_ACTIONS)));
+
+        String initialContent = getMapValueAsString(currentAceDefinition,
+                ACE_CONFIG_INITIAL_CONTENT);
+        tmpAclBean.setInitialContent(initialContent);
     }
 
     private String[] parseActionsString(final String actionsStringFromConfig) {
@@ -466,6 +473,10 @@ public class YamlConfigReader implements ConfigReader {
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBERS));
         authorizableConfigBean.setPath(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_PATH));
+
+        authorizableConfigBean.setMigrateFrom(getMapValueAsString(currentPrincipalDataMap,
+                GROUP_CONFIG_PROPERTY_MIGRATE_FROM));
+
         authorizableConfigBean.setIsGroup(isGroupSection);
         authorizableConfigBean.setIsSystemUser(Boolean.valueOf(getMapValueAsString(currentPrincipalDataMap,
                 USER_CONFIG_PROPERTY_IS_SYSTEM_USER)));

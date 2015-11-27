@@ -113,13 +113,17 @@ public class AuthorizableCreatorServiceImpl implements
         UserManager userManager = getUsermanager(session);
         ValueFactory vf = session.getValueFactory();
 
-        // if current authorizable from config doesn't yet exist
-        if (userManager.getAuthorizable(principalId) == null) {
+        // if current authorizable from config doesn't exist yet
+        Authorizable authorizableForPrincipalId = userManager.getAuthorizable(principalId);
+        if (authorizableForPrincipalId == null) {
             createNewAuthorizable(authorizableConfigBean, history,
                     authorizableInstallationHistory, userManager, vf);
         }
         // if current authorizable from config already exists in repository
         else {
+
+            // update name for both groups and users
+            setAuthorizableName(authorizableForPrincipalId, vf, authorizableConfigBean.getPrincipalName());
 
             if (authorizableConfigBean.isGroup()) {
 
@@ -127,14 +131,62 @@ public class AuthorizableCreatorServiceImpl implements
                         authorizableInstallationHistory, userManager);
                 mergeGroup(history, authorizableInstallationHistory,
                         authorizableConfigBean, userManager);
+
             } else {
                 String msg = "- authorizable " + principalId
                         + " exists and is a user - moving and updating of users is not implemented yet.";
                 LOG.info(msg);
                 history.addMessage(msg);
             }
-
         }
+
+        if (StringUtils.isNotBlank(authorizableConfigBean.getMigrateFrom()) && authorizableConfigBean.isGroup()) {
+            migrateFromOldGroup(authorizableConfigBean, userManager);
+        }
+
+    }
+
+    private void migrateFromOldGroup(AuthorizableConfigBean authorizableConfigBean, UserManager userManager) throws RepositoryException {
+        Authorizable groupForMigration = userManager.getAuthorizable(authorizableConfigBean.getMigrateFrom());
+
+        String principalId = authorizableConfigBean.getPrincipalID();
+
+        if (groupForMigration == null) {
+            status.addMessage("Group " + authorizableConfigBean.getMigrateFrom()
+                    + " does not exist (specified as migrateFrom in group "
+                    + principalId + ") - no action taken");
+            return;
+        }
+        if (!groupForMigration.isGroup()) {
+            status.addWarning("Specifying a user in 'migrateFrom' does not make sense (migrateFrom="
+                    + authorizableConfigBean.getMigrateFrom() + " in " + principalId + ")");
+            return;
+        }
+
+        status.addMessage("Migrating from group " + authorizableConfigBean.getMigrateFrom()
+                + "  to " + principalId);
+
+        Set<Authorizable> usersFromGroupToTakeOver = new HashSet<Authorizable>();
+        Iterator<Authorizable> membersIt = ((Group) groupForMigration).getMembers();
+        while (membersIt.hasNext()) {
+            Authorizable member = membersIt.next();
+            if (!member.isGroup()) {
+                usersFromGroupToTakeOver.add(member);
+            }
+        }
+
+        if (!usersFromGroupToTakeOver.isEmpty()) {
+            status.addMessage("- Taking over " + usersFromGroupToTakeOver.size() + " member users from group "
+                    + authorizableConfigBean.getMigrateFrom() + " to group " + principalId);
+            Group currentGroup = (Group) userManager.getAuthorizable(principalId);
+            for (Authorizable user : usersFromGroupToTakeOver) {
+                currentGroup.addMember(user);
+            }
+        }
+
+        groupForMigration.remove();
+        status.addMessage("- Deleted group " + authorizableConfigBean.getMigrateFrom());
+
     }
 
     private UserManager getUsermanager(Session session)
@@ -164,17 +216,12 @@ public class AuthorizableCreatorServiceImpl implements
             AuthorizableConfigBean principalConfigBean,
             AcInstallationHistoryPojo history,
             AuthorizableInstallationHistory authorizableInstallationHistory,
-            UserManager userManager) throws RepositoryException,
-            UnsupportedRepositoryOperationException,
-            AuthorizableExistsException, AuthorizableCreatorException,
-            PathNotFoundException, VersionException, LockException,
-            ConstraintViolationException, AccessDeniedException {
+            UserManager userManager) throws RepositoryException, AuthorizableCreatorException {
 
         String principalId = principalConfigBean.getPrincipalID();
 
         // compare intermediate paths
-        Authorizable existingAuthorizable = userManager
-                .getAuthorizable(principalId);
+        Authorizable existingAuthorizable = userManager.getAuthorizable(principalId);
 
         if (existingAuthorizable.isGroup()) {
             Group existingGroup = (Group) existingAuthorizable;
@@ -270,36 +317,37 @@ public class AuthorizableCreatorServiceImpl implements
     private void mergeGroup(AcInstallationHistoryPojo status,
             AuthorizableInstallationHistory authorizableInstallationHistory,
             AuthorizableConfigBean principalConfigBean, UserManager userManager)
-            throws RepositoryException, ValueFormatException,
-            UnsupportedRepositoryOperationException,
-            AuthorizableExistsException, AuthorizableCreatorException {
+                    throws RepositoryException, ValueFormatException,
+                    UnsupportedRepositoryOperationException,
+                    AuthorizableExistsException, AuthorizableCreatorException {
         String[] memberOf = principalConfigBean.getMemberOf();
         String principalId = principalConfigBean.getPrincipalID();
 
-        String message = "Problem while trying to create new authorizable: "
-                + principalId + ". Authorizable already exists!";
-        LOG.warn(message);
+        LOG.debug("Authorizable {} already exists", principalId);
 
-        Authorizable currentGroupFromRepository = userManager
-                .getAuthorizable(principalId);
+        Authorizable currentGroupFromRepository = userManager.getAuthorizable(principalId);
         Set<String> membershipGroupsFromConfig = getMembershipGroupsFromConfig(memberOf);
         Set<String> membershipGroupsFromRepository = getMembershipGroupsFromRepository(currentGroupFromRepository);
 
         // create snapshot bean
-        String authorizableName = "";
-
-        if (currentGroupFromRepository.getProperty("profile/givenName") != null) {
-            authorizableName = currentGroupFromRepository
-                    .getProperty("profile/givenName")[0].getString();
-        }
         authorizableInstallationHistory.addAuthorizable(
-                currentGroupFromRepository.getID(), authorizableName,
+                currentGroupFromRepository.getID(), getAuthorizableName(currentGroupFromRepository),
                 currentGroupFromRepository.getPath(),
                 membershipGroupsFromRepository);
 
         mergeMemberOfGroups(principalId, status, userManager,
                 currentGroupFromRepository, membershipGroupsFromConfig,
                 membershipGroupsFromRepository);
+    }
+
+    private String getAuthorizableName(Authorizable currentGroupFromRepository) throws RepositoryException, ValueFormatException {
+        String authorizableName = "";
+
+        if (currentGroupFromRepository.getProperty("profile/givenName") != null) {
+            authorizableName = currentGroupFromRepository
+                    .getProperty("profile/givenName")[0].getString();
+        }
+        return authorizableName;
     }
 
     private Authorizable createNewAuthorizable(
@@ -575,10 +623,21 @@ public class AuthorizableCreatorServiceImpl implements
             }
         }
 
-        if (StringUtils.isNotBlank(name)) {
-            newGroup.setProperty("profile/givenName", vf.createValue(name));
-        }
+        setAuthorizableName(newGroup, vf, name);
         return newGroup;
+    }
+
+    private void setAuthorizableName(Authorizable authorizable, ValueFactory vf, String name) throws RepositoryException {
+        if (StringUtils.isNotBlank(name)) {
+            if (authorizable.isGroup()) {
+                authorizable.setProperty("profile/givenName", vf.createValue(name));
+            } else {
+                String givenName = StringUtils.substringBeforeLast(name, " ");
+                String familyName = StringUtils.substringAfterLast(name, " ");
+                authorizable.setProperty("profile/givenName", vf.createValue(givenName));
+                authorizable.setProperty("profile/familyName", vf.createValue(familyName));
+            }
+        }
     }
 
     private Authorizable createNewUser(
@@ -604,14 +663,11 @@ public class AuthorizableCreatorServiceImpl implements
             newUser = userManager.createUser(principalId, password, new PrincipalImpl(principalId), intermediatePath);
         }
 
-        if (!isSystemUser && StringUtils.isNotBlank(name)) {
-            String givenName = StringUtils.substringBeforeLast(name, " ");
-            String familyName = StringUtils.substringAfterLast(name, " ");
-            newUser.setProperty("profile/givenName", vf.createValue(givenName));
-            newUser.setProperty("profile/familyName", vf.createValue(familyName));
+        if (!isSystemUser) {
+            setAuthorizableName(newUser, vf, name);
         }
 
-        if ((memberOf != null) && (memberOf.length > 0)) {
+        if ((newUser != null) && (memberOf != null) && (memberOf.length > 0)) {
 
             // add group to groups according to configuration
             Set<Authorizable> authorizables = validateAssignedGroups(
@@ -630,10 +686,11 @@ public class AuthorizableCreatorServiceImpl implements
     // using reflection with fallback to create a system user in order to be backwards compatible
     public User userManagerCreateSystemUserViaReflection(UserManager userManager, String userID, String intermediatePath,
             AcInstallationHistoryPojo status)
-                    throws RepositoryException {
+            throws RepositoryException {
 
+        // make sure all relative intermediate paths get the prefix suffix (but don't touch absolute paths)
         String systemPrefix = "system/";
-        if ((intermediatePath != null) && !intermediatePath.startsWith(systemPrefix)) {
+        if ((intermediatePath != null) && !intermediatePath.startsWith(systemPrefix) && !intermediatePath.startsWith("/")) {
             intermediatePath = systemPrefix + intermediatePath;
         }
 

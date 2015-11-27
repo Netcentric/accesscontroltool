@@ -10,11 +10,12 @@ package biz.netcentric.cq.tools.actool.helper;
 
 import java.security.Principal;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import javax.jcr.AccessDeniedException;
@@ -78,8 +79,7 @@ public class AcHelper {
      *
      * @param pathBasedAceMapFromConfig map containing the ACE data from the merged configurations path based
      * @param session the jcr session
-     * @param history history object
-     */
+     * @param history history object */
     public static void installPathBasedACEs(
             final Map<String, Set<AceBean>> pathBasedAceMapFromConfig,
             final Session session,
@@ -95,9 +95,17 @@ public class AcHelper {
         for (String path : paths) {
 
             Set<AceBean> aceBeanSetFromConfig = pathBasedAceMapFromConfig
-                    .get(path); // Set which holds the AceBeans of the current
-            // path in configuration
-            
+                    .get(path); // Set which holds the AceBeans of the current path in configuration
+
+            // check if the path even exists
+            boolean pathExits = AccessControlUtils.getModifiableAcl(session.getAccessControlManager(), path) != null;
+            if (!pathExits) {
+                if (!InitialContentHelper.createInitialContent(session, history, path, aceBeanSetFromConfig)) {
+                    history.addWarning("Skipped installing privileges/actions for non existing path: " + path);
+                    continue;
+                }
+            }
+
             // order entries (denies in front of allows)
             Set<AceBean> orderedAceBeanSetFromConfig = new TreeSet<AceBean>(
                     new AcePermissionComparator());
@@ -107,7 +115,7 @@ public class AcHelper {
             // loop has ended only paths are left which are not contained in
             // current config
             for (AceBean bean : orderedAceBeanSetFromConfig) {
-            	AccessControlUtils.deleteAllEntriesForAuthorizableFromACL(session,
+                AccessControlUtils.deleteAllEntriesForAuthorizableFromACL(session,
                         path, bean.getPrincipalName());
                 String message = "deleted all ACEs of authorizable "
                         + bean.getPrincipalName()
@@ -226,12 +234,10 @@ public class AcHelper {
      *
      * @param groupBasedAceMap the group based ace map
      * @param sorting specifies whether ACEs get sorted by permissions (all denies followed by all allows)
-     * @return the path based ace map
-     */
+     * @return the path based ace map */
     public static Map<String, Set<AceBean>> getPathBasedAceMap(
             final Map<String, Set<AceBean>> groupBasedAceMap, final int sorting) {
-        Map<String, Set<AceBean>> pathBasedAceMap = new HashMap<String, Set<AceBean>>(
-                groupBasedAceMap.size());
+        Map<String, Set<AceBean>> pathBasedAceMap = new TreeMap<String, Set<AceBean>>();
 
         // loop through all Sets of groupBasedAceMap
         for (Entry<String, Set<AceBean>> entry : groupBasedAceMap.entrySet()) {
@@ -252,7 +258,7 @@ public class AcHelper {
 
                     Set<AceBean> aceSet = null;
                     if (sorting == AcHelper.ACE_ORDER_NONE) {
-                        aceSet = new HashSet<AceBean>();
+                        aceSet = new LinkedHashSet<AceBean>();
                     } else if (sorting == AcHelper.ACE_ORDER_DENY_ALLOW) {
                         aceSet = new TreeSet<AceBean>(
                                 new biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator());

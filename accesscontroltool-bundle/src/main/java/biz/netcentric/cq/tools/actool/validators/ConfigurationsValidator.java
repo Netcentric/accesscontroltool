@@ -9,7 +9,10 @@
 package biz.netcentric.cq.tools.actool.validators;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
+
+import biz.netcentric.cq.tools.actool.helper.AceBean;
 
 public interface ConfigurationsValidator {
 
@@ -58,5 +61,11 @@ public interface ConfigurationsValidator {
     public abstract void validateSectionIdentifiers(
             Set<String> sectionIdentifiers, String filePath)
             throws IllegalArgumentException;
+
+    /** Checks that no duplicate initialContent property is set
+     * 
+     * @param history */
+    public abstract void validateInitialContentForNoDuplicates(
+            Map<String, Set<AceBean>> mergedAceMapFromConfig) throws IllegalArgumentException;
 
 }

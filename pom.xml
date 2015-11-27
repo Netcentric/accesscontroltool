@@ -11,7 +11,7 @@
 
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
     <artifactId>accesscontroltool</artifactId>
-    <version>1.6.2</version>
+    <version>1.7.0</version>
     <packaging>pom</packaging>
 
     <name>Access Control Tool - Reactor Project</name>
@@ -296,7 +296,7 @@
                 <plugin>
                     <groupId>com.day.jcr.vault</groupId>
                     <artifactId>content-package-maven-plugin</artifactId>
-                    <version>0.0.23</version>
+                    <version>0.0.24</version>
                     <extensions>true</extensions>
                     <configuration>
                         <failOnError>true</failOnError>

@@ -10,6 +10,7 @@ package biz.netcentric.cq.tools.actool.aceservice.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -22,6 +23,8 @@ import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -120,17 +123,49 @@ public class AceServiceImpl implements AceService {
             LOG.error(message);
             throw new IllegalArgumentException(message);
         }
-        removeAcesForAuthorizable(history, session, authorizablesMapfromConfig.keySet(), repositoryDumpAceMap);
+
+        Set<String> authorizablesToRemoveAcesFor = getAuthorizablesToRemoveAcesFor(authorizablesMapfromConfig);
+
+        removeAcesForAuthorizables(history, session, authorizablesToRemoveAcesFor, repositoryDumpAceMap);
         installAuthorizables(history, authorizableHistorySet, authorizablesMapfromConfig);
         installAces(history, session, aceMapFromConfig);
     }
-    
-    private void removeAcesForAuthorizable(AcInstallationHistoryPojo history, Session session, Set<String> authorizablesSet, Map<String, Set<AceBean>> repositoryDumpAceMap) throws UnsupportedRepositoryOperationException, RepositoryException {
-    	// loop through all ACLs found in the repository
+
+    private Set<String> getAuthorizablesToRemoveAcesFor(Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig) {
+        Set<String> authorizablesToRemoveAcesFor = new HashSet<String>(authorizablesMapfromConfig.keySet());
+        Set<String> authorizablesToBeMigrated = collectAuthorizablesToBeMigrated(authorizablesMapfromConfig);
+        Collection<?> invalidAuthorizablesInConfig = CollectionUtils.intersection(authorizablesToRemoveAcesFor, authorizablesToBeMigrated);
+        if (!invalidAuthorizablesInConfig.isEmpty()) {
+            String message = "If migrateFrom feature is used, groups that shall be migrated from must not be present in regular configuration (offending groups: "
+                    + invalidAuthorizablesInConfig + ")";
+            LOG.error(message);
+            throw new IllegalArgumentException(message);
+        }
+        authorizablesToRemoveAcesFor.addAll(authorizablesToBeMigrated);
+        return authorizablesToRemoveAcesFor;
+    }
+
+    private Set<String> collectAuthorizablesToBeMigrated(Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig) {
+        Set<String> authorizablesToBeMigrated = new HashSet<String>();
+        for (String principalStr : authorizablesMapfromConfig.keySet()) {
+            LinkedHashSet<AuthorizableConfigBean> authorizableConfigBeans = authorizablesMapfromConfig.get(principalStr);
+            for (AuthorizableConfigBean authorizableConfigBean : authorizableConfigBeans) {
+                String migrateFrom = authorizableConfigBean.getMigrateFrom();
+                if (StringUtils.isNotBlank(migrateFrom)) {
+                    authorizablesToBeMigrated.add(migrateFrom);
+                }
+            }
+        }
+        return authorizablesToBeMigrated;
+    }
+
+    private void removeAcesForAuthorizables(AcInstallationHistoryPojo history, Session session, Set<String> authorizablesSet,
+            Map<String, Set<AceBean>> repositoryDumpAceMap) throws UnsupportedRepositoryOperationException, RepositoryException {
+        // loop through all ACLs found in the repository
         for (Map.Entry<String, Set<AceBean>> entry : repositoryDumpAceMap.entrySet()) {
             Set<AceBean> acl = entry.getValue();
             for (AceBean aceBean : acl) {
-                // if the ACL form repo contains an ACE regarding an
+                // if the ACL from repo contains an ACE regarding an
                 // authorizable from the groups config then delete all ACEs from
                 // this authorizable from current ACL
                 if (authorizablesSet.contains(aceBean.getPrincipalName())) {
@@ -163,7 +198,7 @@ public class AceServiceImpl implements AceService {
             AcInstallationHistoryPojo history,
             Set<AuthorizableInstallationHistory> authorizableHistorySet,
             Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig)
-            throws RepositoryException, Exception {
+                    throws RepositoryException, Exception {
         // --- installation of Authorizables from configuration ---
 
         LOG.info("--- start installation of Authorizable Configuration ---");
@@ -198,7 +233,7 @@ public class AceServiceImpl implements AceService {
             }
         }
 
-        String message = "finished installation of groups configuration without errors!";
+        String message = "Finished installation of groups configuration without errors";
         history.addMessage(message);
         LOG.info(message);
     }
@@ -256,7 +291,7 @@ public class AceServiceImpl implements AceService {
     public void installNewConfigurations(Session session,
             AcInstallationHistoryPojo history,
             Map<String, String> newestConfigurations, Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet)
-            throws Exception {
+                    throws Exception {
 
         StopWatch sw = new StopWatch();
         sw.start();

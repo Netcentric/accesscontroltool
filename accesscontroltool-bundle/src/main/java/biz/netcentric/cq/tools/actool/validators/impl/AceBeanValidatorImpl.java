@@ -17,8 +17,6 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.day.cq.security.util.CqActions;
-
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.Validators;
@@ -35,6 +33,8 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidRepGlobExcept
 import biz.netcentric.cq.tools.actool.validators.exceptions.NoActionOrPrivilegeDefinedException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.NoGroupDefinedException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.TooManyActionsException;
+
+import com.day.cq.security.util.CqActions;
 
 public class AceBeanValidatorImpl implements AceBeanValidator {
 
@@ -64,6 +64,10 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
 
     private boolean validate(AccessControlManager aclManager) throws AcConfigBeanValidationException {
 
+        if (aceBean.isInitialContentOnlyConfig()) {
+            return true;
+        }
+
         // mandatory properties per AceBean
         boolean isActionDefined = false;
         boolean isPrivilegeDefined = false;
@@ -78,10 +82,11 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
         validatePermission(aceBean);
 
         // either action(s) or permission(s) or both have to be defined!
-        boolean isActionOrPrivilegeDefined = isActionDefined
-                || isPrivilegeDefined;
+        boolean isActionOrPrivilegeDefined = isActionDefined || isPrivilegeDefined;
 
-        if (!isActionOrPrivilegeDefined) {
+        boolean hasInitialContent = StringUtils.isNotBlank(aceBean.getInitialContent());
+
+        if (!isActionOrPrivilegeDefined && !hasInitialContent) {
             String errorMessage = getBeanDescription(this.currentBeanCounter,
                     this.aceBean.getPrincipalName())
                     + ", no actions or privileges defined"
@@ -117,19 +122,22 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
 
     public boolean validatePermission(final AceBean tmpAclBean)
             throws InvalidPermissionException {
-        boolean valid = true;
+
         String permission = tmpAclBean.getPermission();
-        String principal = tmpAclBean.getPrincipalName();
+        if (StringUtils.isNotBlank(aceBean.getInitialContent()) && StringUtils.isBlank(permission)) {
+            return true;
+        }
+
         if (Validators.isValidPermission(permission)) {
             tmpAclBean.setPermission(permission);
         } else {
-            valid = false;
+            String principal = tmpAclBean.getPrincipalName();
             String errorMessage = getBeanDescription(this.currentBeanCounter,
-                    principal) + ", invalid permission: " + permission;
+                    principal) + ", invalid permission: '" + permission + "'";
             LOG.error(errorMessage);
             throw new InvalidPermissionException(errorMessage);
         }
-        return valid;
+        return true;
     }
 
     public boolean validateActions(final AceBean tmpAclBean)
