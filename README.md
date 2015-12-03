@@ -25,6 +25,9 @@ The package can be installed using the AEM Package Manager or directly from the 
 mvn -PautoInstallPackage install
 ```
 
+## Working on CQ5.6
+To deploy to CQ5.6 switch to branch `develop-cq56`.
+
 # Configuration File Format
 
 For better human readability and easy editing the ACL configuration files use the YAML format.
