@@ -432,6 +432,13 @@
             </build>
         </profile>
 
+        <profile>
+            <id>oakindex</id>
+            <modules>
+                <module>accesscontroltool-oakindex-package</module>
+            </modules>
+        </profile>
+
     </profiles>
 
 </project>
