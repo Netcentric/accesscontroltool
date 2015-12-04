@@ -64,6 +64,7 @@
 				<version>2.10</version>
 				<executions>
 					<execution>
+						<!-- integrate the hook from https://github.com/code-distillery/filevault-oak-reindex-hook to only reindex if really necessary -->
 						<id>copy-reindex-hook-into-package</id>
 						<phase>generate-resources</phase>
 						<goals>
