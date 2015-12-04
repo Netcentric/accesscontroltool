@@ -31,9 +31,11 @@ import javax.jcr.security.AccessControlList;
 import javax.jcr.security.AccessControlManager;
 
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
-import org.apache.jackrabbit.oak.spi.security.user.UserConstants;
 
 public class QueryHelper {
+
+	private static final String NT_REP_USER = "rep:User";
+	private static final String NT_REP_GROUP = "rep:Group";
 
 	/**
 	 * Method that returns a set containing all rep:policy nodes from repository
@@ -133,13 +135,13 @@ public class QueryHelper {
 
 	public static Set<String> getUsersFromHome(final Session session)
       throws InvalidQueryException, RepositoryException {
-		Set<String> users = getPrincipalsFromHome(session, UserConstants.NT_REP_USER);
+		Set<String> users = getPrincipalsFromHome(session, NT_REP_USER);
 		return users;
 	}
 
 	public static Set<String> getGroupsFromHome(final Session session)
 			throws InvalidQueryException, RepositoryException {
-		Set<String> groups = getPrincipalsFromHome(session, UserConstants.NT_REP_GROUP);
+		Set<String> groups = getPrincipalsFromHome(session, NT_REP_GROUP);
 		return groups;
 	}
 
