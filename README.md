@@ -25,8 +25,11 @@ The package can be installed using the AEM Package Manager or directly from the 
 mvn -PautoInstallPackage install
 ```
 
-## AEM6.x
-To add an Oak Index install, run all commands with profile `oakindex`, e.g.
+## AEM6.x/Oak
+
+The `oakindex-package` contains an optimized Oak index to cover all queries being issued by the Access Control Tool. To build (and optionally deploy) the content-package use the Maven profile oakindex. This package is only compatible with Oak and even there it is optional (as it will only speed up queries).
+
+To use the package, run all commands with profile `oakindex`, e.g.
  ```
 mvn clean install -Poakindex
  ```
