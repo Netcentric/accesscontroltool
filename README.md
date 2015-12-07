@@ -7,7 +7,7 @@ The Access Control Tool for Adobe Experience Manager (ACTool) is a tool that sim
 
 Building the ACTool requires Java 7 and Maven 3.2.
 
-Installing ACTool requires CQ5.6/AEM 6.0/AEM 6.1.
+Installing ACTool requires CQ5.6 (min. SP2)/AEM 6.0/AEM 6.1.
 
 # Installation
 

@@ -80,7 +80,7 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Runtime dependencies should be CQ 5.6.1 compatible -->
+            <!-- Runtime dependencies should be CQ 5.6.1 (SP2) compatible -->
             <dependency>
                 <groupId>org.apache.jackrabbit</groupId>
                 <artifactId>jackrabbit-jcr-commons</artifactId>
@@ -192,8 +192,8 @@
             <dependency>
                 <groupId>org.apache.jackrabbit</groupId>
                 <artifactId>jackrabbit-api</artifactId>
-                <!-- FIXME: CQ 5.6.1 only comes with 2.6.2 but ACTool uses JackrabbitAccessControlEntry.getRestrictions(), which was only added in 2.7.1 (https://issues.apache.org/jira/browse/JCR-3637, https://github.com/apache/jackrabbit/commit/73acfb1c21b4827caf91122bbd6cb96665c30a61) -->
-                <version>2.7.1</version>
+                <!-- 2.7.5 is included in CQ 5.6.1 since SP2, AEM 6.0 ships with 2.8.0 -->
+                <version>2.7.5</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
