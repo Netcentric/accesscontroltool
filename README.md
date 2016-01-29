@@ -117,7 +117,7 @@ Overall format
      actions: actions string
      privileges: privileges string  
      repGlob: regex    (optional, path restriction as regular expression)
-     initialContent: <jcr:root jcr:primaryType="sling:Folder">   (optional)
+     initialContent: <jcr:root jcr:primaryType="sling:Folder"/>   (optional)
 ```
 
 Only ACEs for groups which are defined in the same configuration file can be installed! This ensures a consistency between the groups and their ACE definitions per configuration file.
