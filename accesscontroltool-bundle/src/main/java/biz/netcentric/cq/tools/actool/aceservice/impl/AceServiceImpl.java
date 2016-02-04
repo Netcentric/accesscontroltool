@@ -49,7 +49,6 @@ import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallation
 import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetriever;
 import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
 import biz.netcentric.cq.tools.actool.configreader.ConfigurationMerger;
-import biz.netcentric.cq.tools.actool.configreader.YamlConfigurationMerger;
 import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
@@ -81,6 +80,9 @@ public class AceServiceImpl implements AceService {
 
     @Reference
     private ConfigReader configReader;
+
+    @Reference
+    private ConfigurationMerger configurationMerger;
 
     @Reference
     private ConfigFilesRetriever configFilesRetriever;
@@ -299,7 +301,6 @@ public class AceServiceImpl implements AceService {
 
         if (newestConfigurations != null) {
 
-            ConfigurationMerger configurationMerger = new YamlConfigurationMerger();
             List mergedConfigurations = configurationMerger.getMergedConfigurations(newestConfigurations, history, configReader);
 
             installMergedConfigurations(history, session,
@@ -572,11 +573,9 @@ public class AceServiceImpl implements AceService {
         AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
         Node rootNode = session.getNode(configurationPath);
         Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(rootNode);
-        ConfigurationMerger configurationMeger = new YamlConfigurationMerger();
-        List mergedConfigurations = configurationMeger.getMergedConfigurations(
+        List mergedConfigurations = configurationMerger.getMergedConfigurations(
                 newestConfigurations, history, configReader);
-        return ((Map<String, Set<AceBean>>) mergedConfigurations.get(0))
-                .keySet();
+        return ((Map<String, Set<AceBean>>) mergedConfigurations.get(0)).keySet();
     }
 
 }

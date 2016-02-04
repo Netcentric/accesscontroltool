@@ -129,6 +129,26 @@
             <groupId>com.day.jcr.vault</groupId>
             <artifactId>com.day.jcr.vault</artifactId>
         </dependency>
+        
+        
+        <dependency>
+          <groupId>org.apache.tomcat</groupId>
+          <artifactId>el-api</artifactId>
+          <version>6.0.41</version>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.tomcat</groupId>
+          <artifactId>jasper-el</artifactId>
+          <version>6.0.41</version>
+        </dependency> 
+        
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.6</version>
+
+        </dependency>          
+        
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>oak-core</artifactId>
@@ -142,6 +162,17 @@
     <!-- ====================================================================== -->
     <build>
         <plugins>
+        
+            <plugin>
+              <groupId>org.apache.felix</groupId>
+              <artifactId>maven-bundle-plugin</artifactId>
+              <configuration>
+                <instructions>
+                    <Embed-Dependency>el-api,jasper-el</Embed-Dependency>
+                </instructions>
+                
+              </configuration>
+            </plugin>        
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-scr-plugin</artifactId>

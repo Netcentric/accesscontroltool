@@ -1,3 +1,11 @@
+/*
+ * (C) Copyright 2015 Netcentric AG.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package biz.netcentric.cq.tools.actool.configreader;
 
 import static org.junit.Assert.assertEquals;
@@ -11,13 +19,10 @@ import java.util.Set;
 
 import javax.jcr.RepositoryException;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
-import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
-import biz.netcentric.cq.tools.actool.configreader.ConfigurationMerger;
-import biz.netcentric.cq.tools.actool.configreader.YamlConfigReader;
-import biz.netcentric.cq.tools.actool.configreader.YamlConfigurationMerger;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
@@ -26,11 +31,18 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
  * @author Roland Gruber */
 public class YamlConfigurationMergerTest {
 
+    private YamlConfigurationMerger merger;
+
+    @Before
+    public void setup() {
+        merger = new YamlConfigurationMerger();
+        merger.yamlMacroProcessor = new YamlMacroProcessorImpl();
+    }
+
     @Test
     public void testMemberGroups() throws IOException, RepositoryException, AcConfigBeanValidationException {
         final String config = YamlConfigReaderTest.getTestConfigAsString("test-membergroups.yaml");
         final ConfigReader reader = new YamlConfigReader();
-        final ConfigurationMerger merger = new YamlConfigurationMerger();
         final Map<String, String> configs = new HashMap<String, String>();
         configs.put("/etc/config", config);
         final List results = merger.getMergedConfigurations(configs, mock(AcInstallationHistoryPojo.class), reader);

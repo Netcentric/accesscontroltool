@@ -242,6 +242,54 @@ This will create 12 groups:
 * content-BRAND2-MKT2-reader
 * content-BRAND2-MKT2-writer
 
+### Loops derived from content structure (since 1.8.x)
+
+For some use cases it is useful to dynamically derive the list of possible values from the content structure. FOR ... IN CHILDREN OF will loop over the children of the provided path (skipping 'jcr:content' nodes) and provide an object with the properties name, path, primaryType, jcr:content (a map of all properties of the respective node) and title (./jcr:content/jcr:title added to root map for convenience).
+
+```
+- FOR site IN CHILDREN OF /content/myPrj:
+
+    - content-reader-${site.name}:
+       - name: Content Reader ${site.title}
+         isMemberOf: 
+         path: /home/groups/${site.name}
+```
+
+
+### Conditional entries (since 1.8.x)
+
+When looping over content structures, entries can be applied conditionally using the "IF" keyword:
+
+```
+- FOR site IN CHILDREN OF /content/myPrj:
+
+    - content-reader-${site.name}:
+       - name: Content Reader ${site.title}
+         isMemberOf: 
+         path: /home/groups/${site.name}
+
+    IF ${endsWith(site.name,'-master')}:
+        - content-reader-master-${site.name}:
+           - name: Master Content Reader ${site.title}
+             isMemberOf: 
+             path: /home/groups/global
+```
+
+Expressions are evaluated using javax.el expression language. The following utility functions are made available to any EL expression used in yaml:
+
+- split(str,separator) 
+- join(array,separator)
+- subarray(array,startIndexInclusive,endIndexExclusive)
+- upperCase(str) 
+- lowerCase(str) 
+- substringAfter(str,separator) 
+- substringBefore(str,separator) 
+- substringAfterLast(str,separator) 
+- substringBeforeLast(str,separator) 
+- contains(str,fragmentStr) 
+- endsWith(str,fragmentStr) 
+- startsWith(str,fragmentStr) 
+
 ## Validation
 
 First the validation of the different configuration lines is performed based on regular expressions and gets applied while reading the file. Further validation consists of checking paths for existence as well as for double entries, checks for conflicting ACEs (e.g. allow and deny for same actions on same node), checks whether principals are existing under home. If an invalid parameter or aforementioned issue gets detected, the reading gets aborted and an appropriate error message gets append in the installation history and log.
