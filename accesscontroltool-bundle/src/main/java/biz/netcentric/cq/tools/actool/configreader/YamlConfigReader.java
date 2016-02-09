@@ -10,15 +10,12 @@ package biz.netcentric.cq.tools.actool.configreader;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.jcr.Node;
@@ -126,7 +123,7 @@ public class YamlConfigReader implements ConfigReader {
     }
 
     private Map<String, Set<AuthorizableConfigBean>> getAuthorizablesMap(
-            final List<LinkedHashMap> yamlMap, final AuthorizableValidator authorizableValidator, boolean isGroupSection)
+            List<LinkedHashMap> yamlMap, final AuthorizableValidator authorizableValidator, boolean isGroupSection)
                     throws AcConfigBeanValidationException {
         final Set<String> alreadyProcessedGroups = new HashSet<String>();
         final Map<String, Set<AuthorizableConfigBean>> principalMap = new LinkedHashMap<String, Set<AuthorizableConfigBean>>();
@@ -134,32 +131,10 @@ public class YamlConfigReader implements ConfigReader {
         if (yamlMap == null) {
             return principalMap;
         }
+
         for (final LinkedHashMap currentMap : yamlMap) {
 
-            final String currentPrincipal = (String) currentMap.keySet().iterator()
-                    .next();
-
-            final Matcher matcher = forLoopPattern.matcher(currentPrincipal);
-            if (matcher.find()) {
-                LOG.info("Principal name {} matches FOR loop pattern. Unrolling {}", currentPrincipal, currentMap.get(currentPrincipal));
-                final List<AuthorizableConfigBean> groups = unrollGroupForLoop(currentPrincipal,
-                        (List<Map<String, ?>>) currentMap.get(currentPrincipal),
-                        new HashMap<String, String>(), isGroupSection);
-                for (final AuthorizableConfigBean group : groups) {
-                    final String principal = group.getPrincipalID();
-                    if (!alreadyProcessedGroups.add(principal)) {
-                        throw new IllegalArgumentException(
-                                "There is more than one group definition for group: "
-                                        + principal);
-                    }
-                    if (authorizableValidator != null) {
-                        authorizableValidator.validate(group);
-                    }
-                    final Set<AuthorizableConfigBean> tmpSet = new LinkedHashSet<AuthorizableConfigBean>();
-                    tmpSet.add(group);
-                    principalMap.put(principal, tmpSet);
-                }
-            } else {
+            final String currentPrincipal = (String) currentMap.keySet().iterator().next();
 
                 if (!alreadyProcessedGroups.add(currentPrincipal)) {
                     throw new IllegalArgumentException(
@@ -185,14 +160,14 @@ public class YamlConfigReader implements ConfigReader {
                         principalMap.get(currentPrincipal).add(tmpPrincipalConfigBean);
                     }
                 }
-            }
+
         }
         return principalMap;
 
     }
 
     private Map<String, Set<AceBean>> getPreservedOrderdAceMap(
-            final List<LinkedHashMap> aceYamlList,
+            List<LinkedHashMap> aceYamlList,
             final Set<String> groupsFromCurrentConfig,
             final AceBeanValidator aceBeanValidator) throws RepositoryException,
             AcConfigBeanValidationException {
@@ -202,6 +177,7 @@ public class YamlConfigReader implements ConfigReader {
         if (aceYamlList == null) {
             return aceMap;
         }
+
         Session session = null;
         try {
             if (repository != null) {
@@ -212,20 +188,7 @@ public class YamlConfigReader implements ConfigReader {
                 final String principalName = currentPrincipalAceMap.keySet()
                         .iterator().next();
 
-                final Matcher matcher = forLoopPattern.matcher(principalName);
-                if (matcher.find()) {
-                    LOG.info("Principal name {} matches FOR loop pattern. Unrolling {}", principalName,
-                            currentPrincipalAceMap.get(principalName));
-                    final List<AceBean> aces = unrollAceForLoop(principalName, currentPrincipalAceMap.get(principalName),
-                            new HashMap<String, String>());
-                    for (final AceBean ace : aces) {
-                        if (aceMap.get(ace.getPrincipalName()) == null) {
-                            final Set<AceBean> tmpSet = new LinkedHashSet<AceBean>();
-                            aceMap.put(ace.getPrincipalName(), tmpSet);
-                        }
-                        aceMap.get(ace.getPrincipalName()).add(ace);
-                    }
-                } else {
+
                     final List<Map<String, ?>> aceDefinitions = currentPrincipalAceMap.get(principalName);
 
                     LOG.info("start reading ACE configuration of authorizable: {}",
@@ -270,7 +233,7 @@ public class YamlConfigReader implements ConfigReader {
                             aceMap.get(principalName).add(newAceBean);
                         }
                     }
-                }
+
             }
             return aceMap;
         } finally {
@@ -278,119 +241,6 @@ public class YamlConfigReader implements ConfigReader {
                 session.logout();
             }
         }
-    }
-
-    protected List<AceBean> unrollAceForLoop(final String forSpec, final List<Map<String, ?>> groups,
-            final Map<String, String> substitutions) {
-        final List<AceBean> beans = new LinkedList<AceBean>();
-        final Matcher matcher = forLoopPattern.matcher(forSpec);
-        if (matcher.find()) {
-            final String var = matcher.group(1);
-            final String in = matcher.group(2);
-            final String[] values = in.split(",\\s+");
-            // Looping over values in FOR statement
-            for (final String value : values) {
-                // Replace variables in config
-                final String regex = "\\$\\{" + var + "}";
-                // Looping over groups
-                for (final Map<String, ?> group : groups) {
-                    final String key = group.keySet().iterator().next();
-                    final Matcher matcher2 = forLoopPattern.matcher(key);
-                    if (matcher2.find()) {
-                        substitutions.put(regex, value);
-                        LOG.info("Detected nested loop {}. Unrolling with {}", key, substitutions);
-                        final List<AceBean> nestedAces = unrollAceForLoop(key, (List<Map<String, ?>>) group.get(key), substitutions);
-                        beans.addAll(nestedAces);
-                    } else {
-                        String principalName = key.replaceAll(regex, value.trim());
-                        for (final String sub : substitutions.keySet()) {
-                            principalName = principalName.replaceAll(sub, substitutions.get(sub).trim());
-                        }
-                        final List<Map<String, ?>> aces = (List<Map<String, ?>>) group.get(key);
-                        // Looping over ACEs for group
-                        for (final Map<String, ?> ace : aces) {
-                            final Map<String, String> unrolledGroup = new HashMap<String, String>();
-                            final AceBean newAceBean = new AceBean();
-                            // Looping over property values and child objects
-                            for (final String key2 : ace.keySet()) {
-                                final Object val = ace.get(key2);
-                                if (val == null) {
-                                    unrolledGroup.put(key2, null);
-                                } else if (val instanceof String) {
-                                    String newVal = ((String) val).replaceAll(regex, value.trim());
-                                    for (final String sub : substitutions.keySet()) {
-                                        newVal = newVal.replaceAll(sub, substitutions.get(sub).trim());
-                                    }
-                                    unrolledGroup.put(key2, newVal);
-                                }
-                            }
-                            setupAceBean(principalName, unrolledGroup, newAceBean);
-                            beans.add(newAceBean);
-                        }
-                    }
-                }
-            }
-        } else {
-            LOG.error("Incorrect for loop syntax: {}", forSpec);
-        }
-        return beans;
-    }
-
-    protected List<AuthorizableConfigBean> unrollGroupForLoop(final String forSpec, final List<Map<String, ?>> groups,
-            final Map<String, String> substitutions, boolean isGroupSection) {
-        final List<AuthorizableConfigBean> beans = new LinkedList<AuthorizableConfigBean>();
-        final Matcher matcher = forLoopPattern.matcher(forSpec);
-        if (matcher.find()) {
-            final String var = matcher.group(1);
-            final String in = matcher.group(2);
-            final String[] values = in.split(",\\s+");
-            // Looping over values in FOR statement
-            for (final String value : values) {
-                // Replace variables in config
-                final String regex = "\\$\\{" + var + "}";
-                // Looping over groups
-                for (final Map<String, ?> group : groups) {
-                    final String key = group.keySet().iterator().next();
-                    final Matcher matcher2 = forLoopPattern.matcher(key);
-                    if (matcher2.find()) {
-                        substitutions.put(regex, value);
-                        LOG.info("Detected nested loop {}. Unrolling with {}", key, substitutions);
-                        final List<AuthorizableConfigBean> nestedGroups = unrollGroupForLoop(key, (List<Map<String, ?>>) group.get(key),
-                                substitutions, isGroupSection);
-                        beans.addAll(nestedGroups);
-                    } else {
-                        String principalName = key.replaceAll(regex, value.trim());
-                        for (final String sub : substitutions.keySet()) {
-                            principalName = principalName.replaceAll(sub, substitutions.get(sub).trim());
-                        }
-                        final List<Map<String, ?>> groupMaps = (List<Map<String, ?>>) group.get(key);
-                        // Looping over ACEs for group
-                        for (final Map<String, ?> props : groupMaps) {
-                            final Map<String, String> unrolledGroup = new HashMap<String, String>();
-                            final AuthorizableConfigBean newGroupBean = new AuthorizableConfigBean();
-                            // Looping over property values and child objects
-                            for (final String key2 : props.keySet()) {
-                                final Object val = props.get(key2);
-                                if (val == null) {
-                                    unrolledGroup.put(key2, null);
-                                } else if (val instanceof String) {
-                                    String newVal = ((String) val).replaceAll(regex, value.trim());
-                                    for (final String sub : substitutions.keySet()) {
-                                        newVal = newVal.replaceAll(sub, substitutions.get(sub).trim());
-                                    }
-                                    unrolledGroup.put(key2, newVal);
-                                }
-                            }
-                            setupAuthorizableBean(newGroupBean, unrolledGroup, principalName, isGroupSection);
-                            beans.add(newGroupBean);
-                        }
-                    }
-                }
-            }
-        } else {
-            LOG.error("Incorrect for loop syntax: {}", forSpec);
-        }
-        return beans;
     }
 
     private void handleWildcards(final Session session,

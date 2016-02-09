@@ -1,0 +1,53 @@
+#
+# (C) Copyright 2015 Netcentric AG.
+#
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+    
+- group_config:
+    
+    - if ${false}:
+    
+        - content-reader:
+
+           - name: 
+             isMemberOf: 
+             path: /home/groups/folder1
+
+    - content-writer:
+
+        - name: 
+          isMemberOf: 
+          path: /home/groups/folder2
+         
+         
+- ace_config:
+    
+    - if ${true}:
+
+       - content-reader:
+          
+          - path:  /content/BRAND
+            permission: allow
+            actions: read,acl_read
+            privileges: 
+            repGlob:          
+  
+
+    - content-writer:
+        
+        - path:  /content/test1
+          permission: allow
+          actions: read,acl_read
+          privileges: 
+          repGlob:          
+    
+        - path:  /content/test2
+          permission: allow
+          actions: read,acl_read
+          privileges: 
+          repGlob:          
+    
