@@ -18,6 +18,9 @@ import java.util.Set;
 
 import javax.jcr.RepositoryException;
 
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
@@ -34,9 +37,14 @@ import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
 import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableMemberGroupsValidator;
 import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
 
+@Service
+@Component
 public class YamlConfigurationMerger implements ConfigurationMerger {
 
     private static final Logger LOG = LoggerFactory.getLogger(YamlConfigurationMerger.class);
+
+    @Reference
+    YamlMacroProcessor yamlMacroProcessor;
 
     @Override
     public List getMergedConfigurations(
@@ -63,7 +71,9 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
 
             history.addMessage(message);
             final Yaml yaml = new Yaml();
-            final List<LinkedHashMap> yamlList = (List<LinkedHashMap>) yaml.load(entry.getValue());
+            List<LinkedHashMap> yamlList = (List<LinkedHashMap>) yaml.load(entry.getValue());
+
+            yamlList = yamlMacroProcessor.processMacros(yamlList, history);
 
             final Set<String> sectionIdentifiers = new LinkedHashSet<String>();
 

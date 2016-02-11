@@ -1,0 +1,26 @@
+#
+# (C) Copyright 2015 Netcentric AG.
+#
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+    
+- group_config:
+
+    - FOR childNode IN CHILDREN OF /content/test:
+    
+        - content-${childNode.name}-reader:
+
+           - name: Jcr Content Property in Name ${childNode['jcr:content'].prop}
+             isMemberOf: 
+             path: /home/groups/${ split(childNode.path,'/')[1] }
+
+        - content-${childNode.name}-writer:
+
+           - name: Writer of ${childNode.title}
+             isMemberOf: 
+             path: /home/groups/${ split(childNode.path,'/')[1] }
+
+              

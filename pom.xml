@@ -11,7 +11,7 @@
 
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
     <artifactId>accesscontroltool</artifactId>
-    <version>1.7.0</version>
+    <version>1.8.0</version>
     <packaging>pom</packaging>
 
     <name>Access Control Tool - Reactor Project</name>
@@ -76,15 +76,33 @@
     <modules>
         <module>accesscontroltool-bundle</module>
         <module>accesscontroltool-package</module>
-        <module>accesscontroltool-oakindex-package</module>
-    </modules>    
+    </modules>
 
     <dependencyManagement>
         <dependencies>
+            <!-- Runtime dependencies should be CQ 5.6.1 (SP2) compatible -->
             <dependency>
-                <groupId>com.adobe.aem</groupId>
-                <artifactId>aem-api</artifactId>
-                <version>6.0.0.1</version>
+                <groupId>org.apache.jackrabbit</groupId>
+                <artifactId>jackrabbit-jcr-commons</artifactId>
+                <version>2.11.2</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.settings</artifactId>
+                <version>1.2.2</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.day.jcr.vault</groupId>
+                <artifactId>com.day.jcr.vault</artifactId>
+                <version>2.4.32</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.day.cq</groupId>
+                <artifactId>cq-commons</artifactId>
+                <version>5.6.4</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
@@ -174,19 +192,14 @@
             <dependency>
                 <groupId>org.apache.jackrabbit</groupId>
                 <artifactId>jackrabbit-api</artifactId>
-                <version>2.3.0</version>
+                <!-- 2.7.5 is included in CQ 5.6.1 since SP2, AEM 6.0 ships with 2.8.0 -->
+                <version>2.7.5</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.day.cq</groupId>
                 <artifactId>cq-security</artifactId>
                 <version>5.6.2</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.day.cq</groupId>
-                <artifactId>cq-commons</artifactId>
-                <version>5.8.2</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
@@ -420,6 +433,13 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+
+        <profile>
+            <id>oakindex</id>
+            <modules>
+                <module>accesscontroltool-oakindex-package</module>
+            </modules>
         </profile>
 
     </profiles>

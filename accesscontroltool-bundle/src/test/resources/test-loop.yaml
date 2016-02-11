@@ -28,7 +28,16 @@
            - name: 
              isMemberOf: 
              path: /home/groups/${brand}
-         
+
+    # checking consecutive loops
+    - for var IN [ VAR1, VAR2, VAR3 ]:
+    
+        - content-${var}:
+
+           - name: 
+             isMemberOf: 
+             path: /home/groups/${var}
+
          
 - ace_config:
     

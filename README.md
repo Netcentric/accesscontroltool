@@ -7,7 +7,7 @@ The Access Control Tool for Adobe Experience Manager (ACTool) is a tool that sim
 
 Building the ACTool requires Java 7 and Maven 3.2.
 
-Installing ACTool requires CQ5.6/AEM 6.0/AEM 6.1.
+Installing ACTool requires CQ5.6.1 (min. SP2)/AEM 6.0/AEM 6.1.
 
 # Installation
 
@@ -24,6 +24,15 @@ The package can be installed using the AEM Package Manager or directly from the 
 ```
 mvn -PautoInstallPackage install
 ```
+
+## AEM6.x/Oak
+
+The `oakindex-package` contains an optimized Oak index to cover all queries being issued by the Access Control Tool. To build (and optionally deploy) the content-package use the Maven profile oakindex. This package is only compatible with Oak and even there it is optional (as it will only speed up queries).
+
+To use the package, run all commands with profile `oakindex`, e.g.
+ ```
+mvn clean install -Poakindex
+ ```
 
 # Configuration File Format
 
@@ -108,7 +117,7 @@ Overall format
      actions: actions string
      privileges: privileges string  
      repGlob: regex    (optional, path restriction as regular expression)
-     initialContent: <jcr:root jcr:primaryType="sling:Folder">   (optional)
+     initialContent: <jcr:root jcr:primaryType="sling:Folder"/>   (optional)
 ```
 
 Only ACEs for groups which are defined in the same configuration file can be installed! This ensures a consistency between the groups and their ACE definitions per configuration file.
@@ -232,6 +241,54 @@ This will create 12 groups:
 * content-BRAND2-MKT1-writer
 * content-BRAND2-MKT2-reader
 * content-BRAND2-MKT2-writer
+
+### Loops derived from content structure (since 1.8.x)
+
+For some use cases it is useful to dynamically derive the list of possible values from the content structure. FOR ... IN CHILDREN OF will loop over the children of the provided path (skipping 'jcr:content' nodes) and provide an object with the properties name, path, primaryType, jcr:content (a map of all properties of the respective node) and title (./jcr:content/jcr:title added to root map for convenience).
+
+```
+- FOR site IN CHILDREN OF /content/myPrj:
+
+    - content-reader-${site.name}:
+       - name: Content Reader ${site.title}
+         isMemberOf: 
+         path: /home/groups/${site.name}
+```
+
+
+### Conditional entries (since 1.8.x)
+
+When looping over content structures, entries can be applied conditionally using the "IF" keyword:
+
+```
+- FOR site IN CHILDREN OF /content/myPrj:
+
+    - content-reader-${site.name}:
+       - name: Content Reader ${site.title}
+         isMemberOf: 
+         path: /home/groups/${site.name}
+
+    IF ${endsWith(site.name,'-master')}:
+        - content-reader-master-${site.name}:
+           - name: Master Content Reader ${site.title}
+             isMemberOf: 
+             path: /home/groups/global
+```
+
+Expressions are evaluated using javax.el expression language. The following utility functions are made available to any EL expression used in yaml:
+
+- split(str,separator) 
+- join(array,separator)
+- subarray(array,startIndexInclusive,endIndexExclusive)
+- upperCase(str) 
+- lowerCase(str) 
+- substringAfter(str,separator) 
+- substringBefore(str,separator) 
+- substringAfterLast(str,separator) 
+- substringBeforeLast(str,separator) 
+- contains(str,fragmentStr) 
+- endsWith(str,fragmentStr) 
+- startsWith(str,fragmentStr) 
 
 ## Validation
 
