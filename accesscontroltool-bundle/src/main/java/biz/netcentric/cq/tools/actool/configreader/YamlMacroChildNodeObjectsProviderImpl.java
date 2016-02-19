@@ -77,9 +77,9 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
                     Node jcrContentNode = childNode.getNode(JcrConstants.JCR_CONTENT);
 
                     PropertyIterator propertiesIt = jcrContentNode.getProperties();
+                    Map<String, Object> jcrContentSubNode = new HashMap<String, Object>();
                     while (propertiesIt.hasNext()) {
                         Property prop = (Property) propertiesIt.next();
-                        Map<String, Object> jcrContentSubNode = new HashMap<String, Object>();
                         if (prop.isMultiple()) {
                             jcrContentSubNode.put(prop.getName(), valuesToStringArr(prop.getValues()));
                         } else {
@@ -92,8 +92,8 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
                             }
                         }
 
-                        childNodeObjectForEl.put(JcrConstants.JCR_CONTENT, jcrContentSubNode);
                     }
+                    childNodeObjectForEl.put(JcrConstants.JCR_CONTENT, jcrContentSubNode);
 
                 } catch (PathNotFoundException epnf) {
                     LOG.debug("Node " + node.getPath() + " does not have a jcr content node (legitimate for folders)");

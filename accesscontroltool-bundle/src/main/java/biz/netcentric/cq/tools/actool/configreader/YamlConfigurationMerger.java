@@ -62,6 +62,8 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         // groups in
         // configurations
 
+        final Yaml yaml = new Yaml();
+
         final ConfigurationsValidator configurationsValidator = new YamlConfigurationsValidator();
 
         for (final Map.Entry<String, String> entry : newestConfigurations.entrySet()) {
@@ -70,10 +72,13 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             configurationsValidator.validateMandatorySectionIdentifiersExistence(entry.getValue(), entry.getKey());
 
             history.addMessage(message);
-            final Yaml yaml = new Yaml();
+
             List<LinkedHashMap> yamlList = (List<LinkedHashMap>) yaml.load(entry.getValue());
 
             yamlList = yamlMacroProcessor.processMacros(yamlList, history);
+            // set merged config per file to ensure it is there in case of validation errors (for success, the actual merged config is set
+            // after this loop)
+            history.setMergedAndProcessedConfig("# File " + entry.getKey() + "\n" + yaml.dump(yamlList));
 
             final Set<String> sectionIdentifiers = new LinkedHashSet<String>();
 
@@ -140,6 +145,8 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         membersValidator.validate(mergedAuthorizablesMapfromConfig);
         c.add(mergedAuthorizablesMapfromConfig);
         c.add(mergedAceMapFromConfig);
+
+        history.setMergedAndProcessedConfig("# Merged configuration of " + newestConfigurations.size() + " files \n" + yaml.dump(c));
 
         return c;
     }
