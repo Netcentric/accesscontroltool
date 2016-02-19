@@ -34,7 +34,7 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
 
     private final Pattern forLoopPattern = Pattern.compile("for +(\\w+) +in +(?:\\[([,/\\s\\w\\-]+)\\]|children +of +([^\\s]+))",
             Pattern.CASE_INSENSITIVE);
-    private final Pattern ifPattern = Pattern.compile("if +([^\\s]+)", Pattern.CASE_INSENSITIVE);
+    private final Pattern ifPattern = Pattern.compile("if +(\\$\\{[^\\}]+\\})", Pattern.CASE_INSENSITIVE);
 
     YamlMacroElEvaluator elEvaluator = new YamlMacroElEvaluator();
 

@@ -41,6 +41,8 @@ public class AcInstallationHistoryPojo {
     private long msgIndex = 0;
     Rendition rendition;
 
+    private String mergedAndProcessedConfig;
+
     private DateFormat timestampFormat = new SimpleDateFormat("HH:mm:ss.SSS");
 
     public enum Rendition {
@@ -75,6 +77,15 @@ public class AcInstallationHistoryPojo {
 
     public Set<HistoryEntry> getWarnings() {
         return warnings;
+    }
+
+
+    public String getMergedAndProcessedConfig() {
+        return mergedAndProcessedConfig;
+    }
+
+    public void setMergedAndProcessedConfig(String mergedAndProcessedConfig) {
+        this.mergedAndProcessedConfig = mergedAndProcessedConfig;
     }
 
     public void addWarning(String warning) {
@@ -194,4 +205,5 @@ public class AcInstallationHistoryPojo {
         }
         return sb.toString();
     }
+
 }
