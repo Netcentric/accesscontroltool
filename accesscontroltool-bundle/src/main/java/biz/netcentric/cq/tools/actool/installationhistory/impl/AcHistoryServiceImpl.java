@@ -8,6 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.installationhistory.impl;
 
+import java.io.ByteArrayInputStream;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -17,22 +18,24 @@ import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
+import org.apache.jackrabbit.commons.JcrUtils;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.day.cq.commons.jcr.JcrUtil;
+
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
-
-import com.day.cq.commons.jcr.JcrUtil;
 
 @Service
 @Component(metatype = true, label = "AC History Service", immediate = true, description = "Service that writes & fetches Ac installation histories")
@@ -68,6 +71,13 @@ public class AcHistoryServiceImpl implements AcHistoryService {
                 session = repository.loginAdministrative(null);
                 Node historyNode = HistoryUtils.persistHistory(session,
                         history, this.nrOfSavedHistories);
+
+                String mergedAndProcessedConfig = history.getMergedAndProcessedConfig();
+                if (StringUtils.isNotBlank(mergedAndProcessedConfig)) {
+                    JcrUtils.putFile(historyNode, "mergedConfig.yaml", "text/yaml",
+                        new ByteArrayInputStream(mergedAndProcessedConfig.getBytes()));
+                }
+
                 session.save();
                 if (history.isSuccess()) {
                     Node configurationRootNode = session
