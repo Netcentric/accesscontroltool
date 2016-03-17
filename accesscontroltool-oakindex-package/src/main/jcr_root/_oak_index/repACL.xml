@@ -4,4 +4,3 @@
     declaringNodeTypes="{Name}[rep:ACL]"
     propertyNames="{Name}[jcr:primaryType,jcr:mixinTypes]"
     type="property"/>
-</jcr:root>
