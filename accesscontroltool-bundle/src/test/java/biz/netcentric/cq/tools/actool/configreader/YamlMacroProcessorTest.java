@@ -59,12 +59,18 @@ public class YamlMacroProcessorTest {
 
         Map<String, Set<AuthorizableConfigBean>> groups = readGroupConfigs(yamlList);
         assertEquals("Number of groups", 10, groups.size());
-        assertEquals("Path of group", "/home/groups/BRAND1", groups.get("content-BRAND1-reader").iterator().next().getPath());
-        assertEquals("Path of group", "/home/groups/BRAND1", groups.get("content-BRAND1-writer").iterator().next().getPath());
-        assertEquals("Path of group", "/home/groups/BRAND2", groups.get("content-BRAND2-reader").iterator().next().getPath());
-        assertEquals("Path of group", "/home/groups/BRAND2", groups.get("content-BRAND2-writer").iterator().next().getPath());
-        assertEquals("Path of group", "/home/groups/BRAND3", groups.get("content-BRAND3-reader").iterator().next().getPath());
-        assertEquals("Path of group", "/home/groups/BRAND3", groups.get("content-BRAND3-writer").iterator().next().getPath());
+        assertEquals("Path of group", "/home/groups/BRAND1", groups.get("content-BRAND1-reader").iterator().next()
+                .getPath());
+        assertEquals("Path of group", "/home/groups/BRAND1", groups.get("content-BRAND1-writer").iterator().next()
+                .getPath());
+        assertEquals("Path of group", "/home/groups/BRAND2", groups.get("content-BRAND2-reader").iterator().next()
+                .getPath());
+        assertEquals("Path of group", "/home/groups/BRAND2", groups.get("content-BRAND2-writer").iterator().next()
+                .getPath());
+        assertEquals("Path of group", "/home/groups/BRAND3", groups.get("content-BRAND3-reader").iterator().next()
+                .getPath());
+        assertEquals("Path of group", "/home/groups/BRAND3", groups.get("content-BRAND3-writer").iterator().next()
+                .getPath());
 
         assertEquals("Path of group", "/home/groups/VAR1", groups.get("content-VAR1").iterator().next().getPath());
         assertEquals("Path of group", "/home/groups/VAR2", groups.get("content-VAR2").iterator().next().getPath());
@@ -82,8 +88,10 @@ public class YamlMacroProcessorTest {
         final Map<String, Set<AuthorizableConfigBean>> groups = readGroupConfigs(yamlList);
 
         assertEquals("Number of groups", 13, groups.size());
-        assertEquals("Path of group", "/home/groups/BRAND1", groups.get("content-BRAND1-reader").iterator().next().getPath());
-        assertEquals("Path of group", "/home/groups/BRAND1/MKT1", groups.get("content-BRAND1-MKT1-writer").iterator().next().getPath());
+        assertEquals("Path of group", "/home/groups/BRAND1", groups.get("content-BRAND1-reader").iterator().next()
+                .getPath());
+        assertEquals("Path of group", "/home/groups/BRAND1/MKT1", groups.get("content-BRAND1-MKT1-writer").iterator()
+                .next().getPath());
     }
 
     @Test
@@ -101,7 +109,9 @@ public class YamlMacroProcessorTest {
         assertEquals("Number of ACEs for groupB", 2, group2.size());
     }
 
-    /** @see <a href="https://github.com/Netcentric/accesscontroltool/issues/14">https://github.com/Netcentric/accesscontroltool/issues/14
+    /** @see <a
+     *      href="https://github.com/Netcentric/accesscontroltool/issues/14">https://github.com/Netcentric/accesscontroltool/issues/14
+
      *      </a> */
     @Test
     public void testAceLoopWithHyphen() throws IOException, AcConfigBeanValidationException, RepositoryException {
@@ -227,6 +237,20 @@ public class YamlMacroProcessorTest {
         return result;
     }
 
+    @Test
+    public void testSystemUser() throws IOException, AcConfigBeanValidationException, RepositoryException {
+
+        List<LinkedHashMap> yamlList = getYamlList("test-system-user.yaml");
+
+        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo);
+
+        Map<String, Set<AuthorizableConfigBean>> users = readUserConfigs(yamlList);
+        assertEquals("Number of users", 1, users.size());
+        AuthorizableConfigBean user = users.get("test-system-user").iterator().next();
+        assertEquals(user.isSystemUser(), true);
+        assertEquals(user.getPrincipalName(), "Test System User");
+    }
+
     // --- using YamlConfigReader to make assertions easier (the raw yaml structure makes it really hard)
 
     private Map<String, Set<AceBean>> readAceConfigs(final List<LinkedHashMap> yamlList)
@@ -235,8 +259,14 @@ public class YamlMacroProcessorTest {
         return new YamlConfigReader().getAceConfigurationBeans(yamlList, groups.keySet(), null);
     }
 
-    private Map<String, Set<AuthorizableConfigBean>> readGroupConfigs(List<LinkedHashMap> yamlList) throws AcConfigBeanValidationException {
+    private Map<String, Set<AuthorizableConfigBean>> readGroupConfigs(List<LinkedHashMap> yamlList)
+            throws AcConfigBeanValidationException {
         return new YamlConfigReader().getGroupConfigurationBeans(yamlList, null);
+    }
+
+    private Map<String, Set<AuthorizableConfigBean>> readUserConfigs(List<LinkedHashMap> yamlList)
+            throws AcConfigBeanValidationException {
+        return new YamlConfigReader().getUserConfigurationBeans(yamlList, null);
     }
 
 }

@@ -32,7 +32,8 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(YamlMacroProcessorImpl.class);
 
-    private final Pattern forLoopPattern = Pattern.compile("for +(\\w+) +in +(?:\\[([,/\\s\\w\\-]+)\\]|children +of +([^\\s]+))",
+    private final Pattern forLoopPattern = Pattern.compile(
+            "for +(\\w+) +in +(?:\\[([,/\\s\\w\\-]+)\\]|children +of +([^\\s]+))",
             Pattern.CASE_INSENSITIVE);
     private final Pattern ifPattern = Pattern.compile("if +(\\$\\{[^\\}]+\\})", Pattern.CASE_INSENSITIVE);
 
@@ -59,6 +60,9 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
             String result = elEvaluator.evaluateEl(str, String.class, variables);
             return result;
 
+        } else if (o instanceof Boolean) {
+            return (Boolean) o;
+
         } else if (o instanceof List) {
             List list = (List) o;
             List transformedList = new LinkedList();
@@ -77,14 +81,14 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
                 if (forMatcher.matches()) {
                     // map is skipped and value returned directly
                     return evaluateForStatement(variables, objVal, forMatcher, history);
-                } 
+                }
 
                 Matcher ifMatcher = ifPattern.matcher(key.toString());
                 if (ifMatcher.matches()) {
                     // map is skipped and value returned directly
                     return evaluateIfStatement(variables, objVal, ifMatcher, history);
-                } 
-                
+                }
+
                 // default: transform both key and value
                 Object transformedKey = transform(key, variables, history);
                 Object transformedVal = transform(objVal, variables, history);
@@ -93,7 +97,8 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
             }
             return resultMap;
         } else {
-            throw new IllegalStateException("Unexpected class " + o.getClass() + " in object structure produced by yaml: " + o);
+            throw new IllegalStateException("Unexpected class " + o.getClass()
+                    + " in object structure produced by yaml: " + o);
 
         }
     }
@@ -176,7 +181,6 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
             addToListWithPotentialUnfolding(resultList, transformedListItem);
         }
     }
-
 
     // marker class
     private class ToBeUnfoldedList extends LinkedList {
