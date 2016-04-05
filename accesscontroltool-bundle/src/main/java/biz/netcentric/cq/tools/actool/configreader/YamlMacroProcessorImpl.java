@@ -32,8 +32,7 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(YamlMacroProcessorImpl.class);
 
-    private final Pattern forLoopPattern = Pattern.compile(
-            "for +(\\w+) +in +(?:\\[([,/\\s\\w\\-]+)\\]|children +of +([^\\s]+))",
+    private final Pattern forLoopPattern = Pattern.compile("for +(\\w+) +in +(?:\\[([,/\\s\\w\\-]+)\\]|children +of +([^\\s]+))",
             Pattern.CASE_INSENSITIVE);
     private final Pattern ifPattern = Pattern.compile("if +(\\$\\{[^\\}]+\\})", Pattern.CASE_INSENSITIVE);
 
@@ -97,8 +96,7 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
             }
             return resultMap;
         } else {
-            throw new IllegalStateException("Unexpected class " + o.getClass()
-                    + " in object structure produced by yaml: " + o);
+            throw new IllegalStateException("Unexpected class " + o.getClass() + " in object structure produced by yaml: " + o);
 
         }
     }
