@@ -101,8 +101,7 @@ public class YamlMacroProcessorTest {
         assertEquals("Number of ACEs for groupB", 2, group2.size());
     }
 
-    /** @see <a href="https://github.com/Netcentric/accesscontroltool/issues/14">https://github.com/Netcentric/accesscontroltool/issues/14
-     *      </a> */
+    /** @see <a href="https://github.com/Netcentric/accesscontroltool/issues/14">https://github.com/Netcentric/accesscontroltool/issues/14</a> */
     @Test
     public void testAceLoopWithHyphen() throws IOException, AcConfigBeanValidationException, RepositoryException {
 
@@ -227,6 +226,20 @@ public class YamlMacroProcessorTest {
         return result;
     }
 
+    @Test
+    public void testSystemUser() throws IOException, AcConfigBeanValidationException, RepositoryException {
+
+        List<LinkedHashMap> yamlList = getYamlList("test-system-user.yaml");
+
+        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo);
+
+        Map<String, Set<AuthorizableConfigBean>> users = readUserConfigs(yamlList);
+        assertEquals("Number of users", 1, users.size());
+        AuthorizableConfigBean user = users.get("test-system-user").iterator().next();
+        assertEquals(user.isSystemUser(), true);
+        assertEquals(user.getPrincipalName(), "Test System User");
+    }
+
     // --- using YamlConfigReader to make assertions easier (the raw yaml structure makes it really hard)
 
     private Map<String, Set<AceBean>> readAceConfigs(final List<LinkedHashMap> yamlList)
@@ -237,6 +250,11 @@ public class YamlMacroProcessorTest {
 
     private Map<String, Set<AuthorizableConfigBean>> readGroupConfigs(List<LinkedHashMap> yamlList) throws AcConfigBeanValidationException {
         return new YamlConfigReader().getGroupConfigurationBeans(yamlList, null);
+    }
+
+    private Map<String, Set<AuthorizableConfigBean>> readUserConfigs(List<LinkedHashMap> yamlList)
+            throws AcConfigBeanValidationException {
+        return new YamlConfigReader().getUserConfigurationBeans(yamlList, null);
     }
 
 }
