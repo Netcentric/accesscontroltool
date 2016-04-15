@@ -54,6 +54,7 @@ public class AuthorizableCreatorServiceImpl implements
         AuthorizableCreatorService {
 
     private static final String PATH_HOME_GROUPS = "/home/groups";
+    private static final String PATH_HOME_USERS = "/home/users";
 
     private static final Logger LOG = LoggerFactory
             .getLogger(AuthorizableCreatorServiceImpl.class);
@@ -125,19 +126,11 @@ public class AuthorizableCreatorServiceImpl implements
             // update name for both groups and users
             setAuthorizableName(authorizableForPrincipalId, vf, authorizableConfigBean.getPrincipalName());
 
-            if (authorizableConfigBean.isGroup()) {
+            handleIntermediatePath(session, authorizableConfigBean, history,
+                    authorizableInstallationHistory, userManager);
+            mergeGroup(history, authorizableInstallationHistory,
+                    authorizableConfigBean, userManager);
 
-                handleIntermediatePath(session, authorizableConfigBean, history,
-                        authorizableInstallationHistory, userManager);
-                mergeGroup(history, authorizableInstallationHistory,
-                        authorizableConfigBean, userManager);
-
-            } else {
-                String msg = "- authorizable " + principalId
-                        + " exists and is a user - moving and updating of users is not implemented yet.";
-                LOG.info(msg);
-                history.addMessage(msg);
-            }
         }
 
         if (StringUtils.isNotBlank(authorizableConfigBean.getMigrateFrom()) && authorizableConfigBean.isGroup()) {
@@ -223,62 +216,60 @@ public class AuthorizableCreatorServiceImpl implements
         // compare intermediate paths
         Authorizable existingAuthorizable = userManager.getAuthorizable(principalId);
 
-        if (existingAuthorizable.isGroup()) {
-            Group existingGroup = (Group) existingAuthorizable;
-            String intermediatedPathOfExistingGroup = existingGroup.getPath()
-                    .substring(0, existingGroup.getPath().lastIndexOf("/"));
-            // Relative paths need to be prefixed with /home/groups (issue #10)
-            String groupPathFromBean = principalConfigBean.getPath();
-            if (groupPathFromBean.charAt(0) != '/') {
-                groupPathFromBean = PATH_HOME_GROUPS + "/" + groupPathFromBean;
-            }
-            if (!StringUtils.equals(intermediatedPathOfExistingGroup,
-                    groupPathFromBean)) {
-                StringBuilder message = new StringBuilder();
-                message.append("found change of intermediate path:").append(
-                        "\n");
-                message.append(
-                        "existing group: " + existingGroup.getID()
-                                + " has intermediate path: "
-                                + intermediatedPathOfExistingGroup)
-                        .append("\n");
-                message.append(
-                        "group from config: "
-                                + principalConfigBean.getPrincipalID()
-                                + " has intermediate path: "
-                                + groupPathFromBean).append("\n");
+        String intermediatedPathOfExistingAuthorizable = existingAuthorizable.getPath()
+                .substring(0, existingAuthorizable.getPath().lastIndexOf("/"));
+        // Relative paths need to be prefixed with /home/groups (issue #10)
+        String authorizablePathFromBean = principalConfigBean.getPath();
+        if (authorizablePathFromBean.charAt(0) != '/') {
+            authorizablePathFromBean = (principalConfigBean.isGroup() ? PATH_HOME_GROUPS : PATH_HOME_USERS) + "/"
+                    + authorizablePathFromBean;
+        }
+        if (!StringUtils.equals(intermediatedPathOfExistingAuthorizable, authorizablePathFromBean)) {
+            StringBuilder message = new StringBuilder();
+            message.append("found change of intermediate path:\n"
+                    + "existing authorizable: " + existingAuthorizable.getID()  + " has intermediate path: "   + intermediatedPathOfExistingAuthorizable +"\n"
+                    + "authorizable from config: " + principalConfigBean.getPrincipalID() + " has intermediate path: " + authorizablePathFromBean
+                    + "\n");
 
-                // save members of existing group before deletion
-                Set<Authorizable> membersOfDeletedGroup = new HashSet<Authorizable>();
-                Iterator<Authorizable> memberIt = existingGroup
-                        .getDeclaredMembers();
+            // save members of existing group before deletion
+            Set<Authorizable> membersOfDeletedGroup = new HashSet<Authorizable>();
+            if (existingAuthorizable.isGroup()) {
+                Group existingGroup = (Group) existingAuthorizable;
+                Iterator<Authorizable> memberIt = existingGroup.getDeclaredMembers();
                 while (memberIt.hasNext()) {
                     membersOfDeletedGroup.add(memberIt.next());
                 }
+            }
 
-                // delete existingGroup;
-                existingGroup.remove();
+            // delete existingAuthorizable;
+            existingAuthorizable.remove();
 
-                // create group again using values form config
-                ValueFactory vf = session.getValueFactory();
-                Group newGroup = (Group) createNewAuthorizable(
-                        principalConfigBean, history,
-                        authorizableInstallationHistory, userManager, vf);
+            // create group again using values form config
+            ValueFactory vf = session.getValueFactory();
+            Authorizable newAuthorizable = createNewAuthorizable(
+                    principalConfigBean, history,
+                    authorizableInstallationHistory, userManager, vf);
 
+            int countMovedMembersOfGroup = 0;
+            if (newAuthorizable.isGroup()) {
+                Group newGroup = (Group) newAuthorizable;
                 // add members of deleted group
                 for (Authorizable authorizable : membersOfDeletedGroup) {
                     newGroup.addMember(authorizable);
+                    countMovedMembersOfGroup++;
                 }
-
-                deleteOldIntermediatePath(session,
-                        session.getNode(intermediatedPathOfExistingGroup));
-
-                message.append("recreated group with new intermediate path!");
-                history.addMessage(message.toString());
-                LOG.warn(message.toString());
-
             }
+
+            deleteOldIntermediatePath(session,
+                    session.getNode(intermediatedPathOfExistingAuthorizable));
+
+            message.append("recreated authorizable with new intermediate path! "
+                    + (newAuthorizable.isGroup() ? "(retained " + countMovedMembersOfGroup + " members of group)" : ""));
+            history.addMessage(message.toString());
+            LOG.warn(message.toString());
+
         }
+
     }
 
     /** // deletes old intermediatePath parent node and all empty parent nodes up to /home/groups or /home/users
@@ -302,7 +293,7 @@ public class AuthorizableCreatorServiceImpl implements
         // stored under this path get deleted
         while (!StringUtils.equals(PATH_HOME_GROUPS,
                 oldIntermediateNode.getPath())
-                && !StringUtils.equals("/home/users",
+                && !StringUtils.equals(PATH_HOME_USERS,
                         oldIntermediateNode.getPath())
                 && !oldIntermediateNode.hasNodes()) {
             // delete old intermediatedPath
