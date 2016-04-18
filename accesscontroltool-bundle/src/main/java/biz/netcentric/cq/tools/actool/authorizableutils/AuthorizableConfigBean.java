@@ -28,7 +28,6 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private String[] members;
     String membersStringFromConfig;
 
-    private String description;
     private String path;
     private String password;
 
@@ -172,14 +171,6 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.members = members;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public String getPath() {
         return path;
     }
@@ -207,7 +198,6 @@ public class AuthorizableConfigBean implements AcDumpElement {
         final StringBuilder sb = new StringBuilder();
         sb.append("\n" + "id: " + principalID + "\n");
         sb.append("name: " + principalName + "\n");
-        sb.append("description: " + description + "\n");
         sb.append("path: " + path + "\n");
         sb.append("memberOf: " + getMemberOfString() + "\n");
         sb.append("members: " + getMembersString() + "\n");
