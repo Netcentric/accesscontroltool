@@ -124,10 +124,17 @@ public class AuthorizableCreatorServiceImpl implements
         else {
 
             // update name for both groups and users
-            setAuthorizableName(authorizableForPrincipalId, vf, authorizableConfigBean.getPrincipalName());
+            setAuthorizableName(authorizableForPrincipalId, vf, authorizableConfigBean);
+            // update password for users
+            if (!authorizableForPrincipalId.isGroup() && !authorizableConfigBean.isSystemUser()
+                    && StringUtils.isNotBlank(authorizableConfigBean.getPassword())) {
+                ((User) authorizableForPrincipalId).changePassword(authorizableConfigBean.getPassword());
+            }
 
+            // move authorizable if path changed (retaining existing members)
             handleIntermediatePath(session, authorizableConfigBean, history,
                     authorizableInstallationHistory, userManager);
+
             mergeGroup(history, authorizableInstallationHistory,
                     authorizableConfigBean, userManager);
 
@@ -586,7 +593,6 @@ public class AuthorizableCreatorServiceImpl implements
             AuthorizableCreatorException {
 
         String groupID = principalConfigBean.getPrincipalID();
-        String name = principalConfigBean.getPrincipalName();
         String[] memberOf = principalConfigBean.getMemberOf();
         String intermediatePath = principalConfigBean.getPath();
 
@@ -614,11 +620,14 @@ public class AuthorizableCreatorServiceImpl implements
             }
         }
 
-        setAuthorizableName(newGroup, vf, name);
+        setAuthorizableName(newGroup, vf, principalConfigBean);
         return newGroup;
     }
 
-    private void setAuthorizableName(Authorizable authorizable, ValueFactory vf, String name) throws RepositoryException {
+    private void setAuthorizableName(Authorizable authorizable, ValueFactory vf, AuthorizableConfigBean principalConfigBean)
+            throws RepositoryException {
+
+        String name = principalConfigBean.getPrincipalName();
         if (StringUtils.isNotBlank(name)) {
             if (authorizable.isGroup()) {
                 authorizable.setProperty("profile/givenName", vf.createValue(name));
@@ -629,6 +638,7 @@ public class AuthorizableCreatorServiceImpl implements
                 authorizable.setProperty("profile/familyName", vf.createValue(familyName));
             }
         }
+
     }
 
     private Authorizable createNewUser(
@@ -641,7 +651,6 @@ public class AuthorizableCreatorServiceImpl implements
             throws AuthorizableExistsException, RepositoryException,
             AuthorizableCreatorException {
         String principalId = principalConfigBean.getPrincipalID();
-        String name = principalConfigBean.getPrincipalName();
         String[] memberOf = principalConfigBean.getMemberOf();
         String password = principalConfigBean.getPassword();
         boolean isSystemUser = principalConfigBean.isSystemUser();
@@ -653,10 +662,7 @@ public class AuthorizableCreatorServiceImpl implements
         } else {
             newUser = userManager.createUser(principalId, password, new PrincipalImpl(principalId), intermediatePath);
         }
-
-        if (!isSystemUser) {
-            setAuthorizableName(newUser, vf, name);
-        }
+        setAuthorizableName(newUser, vf, principalConfigBean);
 
         if ((newUser != null) && (memberOf != null) && (memberOf.length > 0)) {
 
