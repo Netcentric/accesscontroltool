@@ -290,6 +290,11 @@ Expressions are evaluated using javax.el expression language. The following util
 - endsWith(str,fragmentStr) 
 - startsWith(str,fragmentStr) 
 
+## Configure permissions for anonymous (since 1.8.2)
+
+Normally it is ensured by validation that a configuration's group system is self-contained - this means out-of-the-box groups like ```contributor``` cannot be used. For registered users in the system this approach works well since either the users are manually assigned to groups (by a user admin) or the membership relationship is maintained by LDAP or SSO extensions. For the ```anonymous``` user on publish that is not logged in by definition, there is no hook that allows to assign it to a group in the AC Tools configuration. Therefore as an exception, it is allowed to use the user ```anonymous``` in the ```members``` attribute of a group configuration.
+  
+
 ## Validation
 
 First the validation of the different configuration lines is performed based on regular expressions and gets applied while reading the file. Further validation consists of checking paths for existence as well as for double entries, checks for conflicting ACEs (e.g. allow and deny for same actions on same node), checks whether principals are existing under home. If an invalid parameter or aforementioned issue gets detected, the reading gets aborted and an appropriate error message gets append in the installation history and log.
@@ -428,6 +433,3 @@ For any of these purge actions a separate purge history (node) containing all lo
 curl -sS --retry 1 -u ${CQ_ADMINUSER}:${CQ_ADMINPW} -X POST "http://${CQ_SERVER}:${CQ_PORT}/system/console/jmx/biz.netcentric.cq.tools.actool:id='ac+installation'/op/execute/"
 ```
 
-# Architectural Overview
-
-<img src="docs/images/architectural-overview.png">
