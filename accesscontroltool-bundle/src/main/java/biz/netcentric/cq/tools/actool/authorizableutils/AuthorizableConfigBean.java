@@ -12,10 +12,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElement;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementVisitor;
+import biz.netcentric.cq.tools.actool.helper.Constants;
 
 public class AuthorizableConfigBean implements AcDumpElement {
 
@@ -76,10 +78,6 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     public void setIsSystemUser(final boolean isSystemUser) {
         this.isSystemUser = isSystemUser;
-    }
-
-    public void memberOf(final boolean isGroup) {
-        this.isGroup = isGroup;
     }
 
     public String getPrincipalName() {
@@ -193,13 +191,17 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.migrateFrom = migrateFrom;
     }
 
+    public boolean membersContainsAnonymous() {
+        return ArrayUtils.contains(members, Constants.USER_ANONYMOUS);
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append("\n" + "id: " + principalID + "\n");
         sb.append("name: " + principalName + "\n");
         sb.append("path: " + path + "\n");
-        sb.append("memberOf: " + getMemberOfString() + "\n");
+        sb.append("isMemberOf: " + getMemberOfString() + "\n");
         sb.append("members: " + getMembersString() + "\n");
         return sb.toString();
     }

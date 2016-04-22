@@ -46,6 +46,7 @@ import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
+import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 @Service
@@ -115,20 +116,20 @@ public class AuthorizableCreatorServiceImpl implements
         ValueFactory vf = session.getValueFactory();
 
         // if current authorizable from config doesn't exist yet
-        Authorizable authorizableForPrincipalId = userManager.getAuthorizable(principalId);
-        if (authorizableForPrincipalId == null) {
-            createNewAuthorizable(authorizableConfigBean, history,
+        Authorizable authorizableToInstall = userManager.getAuthorizable(principalId);
+        if (authorizableToInstall == null) {
+            authorizableToInstall = createNewAuthorizable(authorizableConfigBean, history,
                     authorizableInstallationHistory, userManager, vf);
         }
         // if current authorizable from config already exists in repository
         else {
 
             // update name for both groups and users
-            setAuthorizableName(authorizableForPrincipalId, vf, authorizableConfigBean);
+            setAuthorizableName(authorizableToInstall, vf, authorizableConfigBean);
             // update password for users
-            if (!authorizableForPrincipalId.isGroup() && !authorizableConfigBean.isSystemUser()
+            if (!authorizableToInstall.isGroup() && !authorizableConfigBean.isSystemUser()
                     && StringUtils.isNotBlank(authorizableConfigBean.getPassword())) {
-                ((User) authorizableForPrincipalId).changePassword(authorizableConfigBean.getPassword());
+                ((User) authorizableToInstall).changePassword(authorizableConfigBean.getPassword());
             }
 
             // move authorizable if path changed (retaining existing members)
@@ -138,6 +139,17 @@ public class AuthorizableCreatorServiceImpl implements
             mergeGroup(history, authorizableInstallationHistory,
                     authorizableConfigBean, userManager);
 
+        }
+
+        if (authorizableConfigBean.isGroup()) {
+            // this has to be added explicitly here (all other memberships are maintained isMemberOf)
+            Group groupToInstall = (Group) authorizableToInstall;
+            Authorizable anonymous = userManager.getAuthorizable(Constants.USER_ANONYMOUS);
+            if (authorizableConfigBean.membersContainsAnonymous()) {
+                groupToInstall.addMember(anonymous);
+            } else {
+                groupToInstall.removeMember(anonymous);
+            }
         }
 
         if (StringUtils.isNotBlank(authorizableConfigBean.getMigrateFrom()) && authorizableConfigBean.isGroup()) {
@@ -365,14 +377,14 @@ public class AuthorizableCreatorServiceImpl implements
                     status, authorizableInstallationHistory, vf,
                     principalMapFromConfig);
             authorizableInstallationHistory
-                    .addNewCreatedAuthorizabe(principalId);
+                    .addNewCreatedAuthorizable(principalId);
             LOG.info("Successfully created new Group: {}", principalId);
         } else {
             newAuthorizable = createNewUser(userManager, principalConfigBean, status, authorizableInstallationHistory, vf,
                     principalMapFromConfig);
             LOG.info("Successfully created new User: {}", principalId);
             authorizableInstallationHistory
-                    .addNewCreatedAuthorizabe(principalId);
+                    .addNewCreatedAuthorizable(principalId);
         }
         return newAuthorizable;
     }
@@ -477,15 +489,13 @@ public class AuthorizableCreatorServiceImpl implements
                 "{}: authorizable in repo is not member of any other group  but authorizable in config is member of at least one other group",
                 principalId);
 
-        Set<Authorizable> validatedGroups = validateAssignedGroups(userManager,
-                principalId, membershipGroupsFromConfig.toArray(new String[0]));
+        Set<Group> validatedGroups = validateAssignedGroups(userManager,
+                principalId, membershipGroupsFromConfig.toArray(new String[membershipGroupsFromConfig.size()]));
 
-        for (Authorizable membershipGroup : validatedGroups) {
+        for (Group membershipGroup : validatedGroups) {
             LOG.info(
                     "{}: add authorizable to members of group {} in repository",
                     principalId, membershipGroup.getID());
-            // Group membershipGroup =
-            // (Group)userManager.getAuthorizable(group);
 
             if (StringUtils.equals(membershipGroup.getID(), principalId)) {
                 String warning = "Attempt to add a group as member of itself ("
@@ -538,15 +548,15 @@ public class AuthorizableCreatorServiceImpl implements
                 }
             }
 
-            Set<Authorizable> validatedGroups = validateAssignedGroups(
+            Set<Group> validatedGroups = validateAssignedGroups(
                     userManager, principalId,
                     membershipGroupsFromConfig.toArray(new String[0]));
-            for (Authorizable authorizable : validatedGroups) {
+            for (Group validatedGroup : validatedGroups) {
 
                 // is current group also contained in memberOf-groups property
                 // of repo group?
 
-                if (membershipGroupsFromRepository.contains(authorizable
+                if (membershipGroupsFromRepository.contains(validatedGroup
                         .getID())) {
                     continue;
                 } else {
@@ -555,14 +565,14 @@ public class AuthorizableCreatorServiceImpl implements
                     // group
 
                     LOG.info("add {} to members of group {} in repository",
-                            principalId, authorizable);
-                    if (StringUtils.equals(authorizable.getID(), principalId)) {
+                            principalId, validatedGroup);
+                    if (StringUtils.equals(validatedGroup.getID(), principalId)) {
                         String warning = "Attempt to add a group as member of itself ("
-                                + authorizable + ").";
+                                + validatedGroup + ").";
                         LOG.warn(warning);
                         status.addWarning(warning);
                     } else {
-                        ((Group) authorizable).addMember(userManager
+                        ((Group) validatedGroup).addMember(userManager
                                 .getAuthorizable(principalId));
 
                     }
@@ -593,7 +603,6 @@ public class AuthorizableCreatorServiceImpl implements
             AuthorizableCreatorException {
 
         String groupID = principalConfigBean.getPrincipalID();
-        String[] memberOf = principalConfigBean.getMemberOf();
         String intermediatePath = principalConfigBean.getPath();
 
         // create new Group
@@ -606,19 +615,7 @@ public class AuthorizableCreatorServiceImpl implements
             newGroup = (Group) userManager.getAuthorizable(groupID);
         }
 
-        // add group to groups according to configuration
-        if ((memberOf != null) && (memberOf.length > 0)) {
-            Set<Authorizable> assignedGroups = validateAssignedGroups(
-                    userManager, groupID, memberOf);
-
-            if (!assignedGroups.isEmpty()) {
-                LOG.info("start adding {} to assignedGroups", groupID);
-                for (Authorizable authorizable : assignedGroups) {
-                    ((Group) authorizable).addMember(newGroup);
-                    LOG.info("added to {} ", authorizable);
-                }
-            }
-        }
+        addMembersToReferencingAuthorizables(newGroup, principalConfigBean, userManager);
 
         setAuthorizableName(newGroup, vf, principalConfigBean);
         return newGroup;
@@ -651,7 +648,6 @@ public class AuthorizableCreatorServiceImpl implements
             throws AuthorizableExistsException, RepositoryException,
             AuthorizableCreatorException {
         String principalId = principalConfigBean.getPrincipalID();
-        String[] memberOf = principalConfigBean.getMemberOf();
         String password = principalConfigBean.getPassword();
         boolean isSystemUser = principalConfigBean.isSystemUser();
         String intermediatePath = principalConfigBean.getPath();
@@ -664,24 +660,30 @@ public class AuthorizableCreatorServiceImpl implements
         }
         setAuthorizableName(newUser, vf, principalConfigBean);
 
-        if ((newUser != null) && (memberOf != null) && (memberOf.length > 0)) {
+        addMembersToReferencingAuthorizables(newUser, principalConfigBean, userManager);
 
-            // add group to groups according to configuration
-            Set<Authorizable> authorizables = validateAssignedGroups(
-                    userManager, principalId, memberOf);
-
-            if (!authorizables.isEmpty()) {
-
-                for (Authorizable authorizable : authorizables) {
-                    ((Group) authorizable).addMember(newUser);
-                }
-            }
-        }
         return newUser;
     }
 
+    private void addMembersToReferencingAuthorizables(Authorizable authorizable, AuthorizableConfigBean principalConfigBean,
+            final UserManager userManager) throws RepositoryException, AuthorizableCreatorException {
+        String principalId = principalConfigBean.getPrincipalID();
+        String[] memberOf = principalConfigBean.getMemberOf();
+        if ((authorizable != null) && (memberOf != null) && (memberOf.length > 0)) {
+            // add group to groups according to configuration
+            Set<Group> referencingAuthorizablesToBeChanged = validateAssignedGroups(userManager, principalId, memberOf);
+            if (!referencingAuthorizablesToBeChanged.isEmpty()) {
+                LOG.debug("start adding {} to assignedGroups", principalId);
+                for (Group referencingAuthorizableToBeChanged : referencingAuthorizablesToBeChanged) {
+                    referencingAuthorizableToBeChanged.addMember(authorizable);
+                    LOG.debug("added to {} ", referencingAuthorizableToBeChanged);
+                }
+            }
+        }
+    }
+
     // using reflection with fallback to create a system user in order to be backwards compatible
-    public User userManagerCreateSystemUserViaReflection(UserManager userManager, String userID, String intermediatePath,
+    private User userManagerCreateSystemUserViaReflection(UserManager userManager, String userID, String intermediatePath,
             AcInstallationHistoryPojo status)
             throws RepositoryException {
 
@@ -706,25 +708,25 @@ public class AuthorizableCreatorServiceImpl implements
         return null;
     }
 
-    /** Validates the authorizables in 'membersOf' array of a given authorizable. Validation fails if an authorizable is a user If an
-     * authorizable contained in membersOf array doesn't exist it gets created and the current authorizable gets added as a member
+    /** Validates the authorizables in 'membersOf' array of a given authorizable. Validation fails if an authorizable is a user.
+     * 
+     * If an authorizable contained in membersOf array doesn't exist it gets created and the current authorizable gets added as a member.
      *
-     * @param out
      * @param userManager
      * @param authorizablelID the ID of authorizable to validate
      * @param memberOf String array that contains the groups which the authorizable should be a member of
      * @return Set of authorizables which the current authorizable is a member of
      * @throws RepositoryException
      * @throws AuthorizableCreatorException if one of the authorizables contained in membersOf array is a user */
-    private Set<Authorizable> validateAssignedGroups(
+    private Set<Group> validateAssignedGroups(
             final UserManager userManager, final String authorizablelID,
             final String[] memberOf) throws RepositoryException,
             AuthorizableCreatorException {
 
-        Set<Authorizable> authorizableSet = new HashSet<Authorizable>();
-        for (String principal : memberOf) {
+        Set<Group> authorizableSet = new HashSet<Group>();
+        for (String memberOfPrincipal : memberOf) {
 
-            Authorizable authorizable = userManager.getAuthorizable(principal);
+            Authorizable authorizable = userManager.getAuthorizable(memberOfPrincipal);
 
             // validation
 
@@ -733,16 +735,16 @@ public class AuthorizableCreatorServiceImpl implements
 
                 // check if authorizable is a group
                 if (authorizable.isGroup()) {
-                    authorizableSet.add(authorizable);
+                    authorizableSet.add((Group) authorizable);
                 } else {
                     String message = "Failed to add authorizable "
-                            + authorizablelID + "to autorizable " + principal
+                            + authorizablelID + "to autorizable " + memberOfPrincipal
                             + "! Authorizable is not a group";
                     LOG.warn(message);
 
                     throw new AuthorizableCreatorException(
                             "Failed to add authorizable " + authorizablelID
-                                    + "to autorizable " + principal
+                                    + "to autorizable " + memberOfPrincipal
                                     + "! Authorizable is not a group");
                 }
                 // if authorizable doesn't exist yet, it gets created and the
@@ -750,13 +752,11 @@ public class AuthorizableCreatorServiceImpl implements
             } else {
                 // check if authorizable is contained in any of the
                 // configurations
-                if (principalMapFromConfig.keySet().contains(principal)) {
+                if (principalMapFromConfig.keySet().contains(memberOfPrincipal)) {
 
                     // get authorizable intermediatePath
-                    LinkedHashSet<AuthorizableConfigBean> authorizableConfigSet = principalMapFromConfig
-                            .get(principal);
-                    Iterator<AuthorizableConfigBean> it = authorizableConfigSet
-                            .iterator();
+                    LinkedHashSet<AuthorizableConfigBean> authorizableConfigSet = principalMapFromConfig.get(memberOfPrincipal);
+                    Iterator<AuthorizableConfigBean> it = authorizableConfigSet.iterator();
                     AuthorizableConfigBean authorizableConfigBean = null;
                     while (it.hasNext()) {
                         authorizableConfigBean = it.next();
@@ -766,22 +766,20 @@ public class AuthorizableCreatorServiceImpl implements
                     // if authorizableConfigBean.getPath() returns an empty
                     // string (no path defined in configuration) the standard
                     // path gets used
-                    Authorizable newGroup = userManager.createGroup(
-                            new PrincipalImpl(principal),
+                    Group newGroup = userManager.createGroup(
+                            new PrincipalImpl(memberOfPrincipal),
                             authorizableConfigBean.getPath());
                     authorizableSet.add(newGroup);
-                    authorizableInstallationHistory
-                            .addNewCreatedAuthorizabe(newGroup.getID());
-                    LOG.warn(
-                            "Failed to add group: {} to authorizable: {}. Didn't find this authorizable under /home! Created group",
-                            authorizablelID, principal);
+                    authorizableInstallationHistory.addNewCreatedAuthorizable(newGroup.getID());
+                    LOG.warn("Failed to add {} to group {} -  Created group",
+                            authorizablelID, memberOfPrincipal);
                 } else {
                     String message = "Failed to add group: "
                             + authorizablelID
                             + " as member to authorizable: "
-                            + principal
+                            + memberOfPrincipal
                             + ". Neither found this authorizable ("
-                            + principal
+                            + memberOfPrincipal
                             + ") in any of the configurations nor installed in the system!";
                     LOG.error(message);
 
