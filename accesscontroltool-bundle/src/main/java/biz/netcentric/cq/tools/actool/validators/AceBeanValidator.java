@@ -14,16 +14,15 @@ import javax.jcr.security.AccessControlManager;
 
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
-import biz.netcentric.cq.tools.actool.validators.exceptions.AlreadyDefinedGroupException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.DoubledDefinedActionException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.DoubledDefinedJcrPrivilegeException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidActionException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidGroupNameException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidJcrPrivilegeException;
+import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidPathException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidPermissionException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidRepGlobException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.NoActionOrPrivilegeDefinedException;
-import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidPathException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.NoGroupDefinedException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.TooManyActionsException;
 
@@ -56,8 +55,7 @@ public interface AceBeanValidator {
 
     public void setBeanCounter(long value);
 
-    public void setCurrentAuthorizableName(final String name)
-            throws AlreadyDefinedGroupException;
+    public void setCurrentAuthorizableName(final String name);
 
     public void enable();
 

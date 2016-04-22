@@ -23,7 +23,6 @@ import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.Validators;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
-import biz.netcentric.cq.tools.actool.validators.exceptions.AlreadyDefinedGroupException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.DoubledDefinedActionException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.DoubledDefinedJcrPrivilegeException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidActionException;
@@ -289,8 +288,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
     }
 
     @Override
-    public void setCurrentAuthorizableName(final String name)
-            throws AlreadyDefinedGroupException {
+    public void setCurrentAuthorizableName(final String name) {
         if (this.enabled) {
             LOG.info("start validation of ACEs for authorizable: {}", name);
             this.currentBeanCounter = 0;
