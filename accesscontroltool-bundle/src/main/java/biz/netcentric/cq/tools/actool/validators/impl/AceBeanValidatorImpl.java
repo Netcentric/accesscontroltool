@@ -17,11 +17,12 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.day.cq.security.util.CqActions;
+
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.Validators;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
-import biz.netcentric.cq.tools.actool.validators.exceptions.AlreadyDefinedGroupException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.DoubledDefinedActionException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.DoubledDefinedJcrPrivilegeException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidActionException;
@@ -34,8 +35,6 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.NoActionOrPrivilegeD
 import biz.netcentric.cq.tools.actool.validators.exceptions.NoGroupDefinedException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.TooManyActionsException;
 
-import com.day.cq.security.util.CqActions;
-
 public class AceBeanValidatorImpl implements AceBeanValidator {
 
     private static final Logger LOG = LoggerFactory
@@ -43,7 +42,6 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
     private long currentBeanCounter = 0;
     private AceBean aceBean;
     private Set<String> groupsFromCurrentConfig;
-    private Set<String> alreadyProcessedAuthorizables = new HashSet<String>();
     private boolean enabled = true;
 
     public AceBeanValidatorImpl(Set<String> groupsFromCurrentConfig) {
@@ -290,17 +288,8 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
     }
 
     @Override
-    public void setCurrentAuthorizableName(final String name)
-            throws AlreadyDefinedGroupException {
+    public void setCurrentAuthorizableName(final String name) {
         if (this.enabled) {
-            LOG.info("insert {} into set", name);
-            if (!alreadyProcessedAuthorizables.add(name)) {
-                String errorMessage = getBeanDescription(1, name)
-                        + ", found more than one ACE definition block for this group!";
-                LOG.error(errorMessage);
-                throw new AlreadyDefinedGroupException(errorMessage);
-            }
-
             LOG.info("start validation of ACEs for authorizable: {}", name);
             this.currentBeanCounter = 0;
         }
