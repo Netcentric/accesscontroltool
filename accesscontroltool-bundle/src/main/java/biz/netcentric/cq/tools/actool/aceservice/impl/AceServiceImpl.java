@@ -161,21 +161,21 @@ public class AceServiceImpl implements AceService {
         return authorizablesToBeMigrated;
     }
 
-    private void removeAcesForAuthorizables(AcInstallationHistoryPojo history, Session session, Set<String> authorizablesSet,
+    private void removeAcesForAuthorizables(AcInstallationHistoryPojo history, Session session, Set<String> authorizablesInConfig,
             Map<String, Set<AceBean>> repositoryDumpAceMap) throws UnsupportedRepositoryOperationException, RepositoryException {
         // loop through all ACLs found in the repository
         for (Map.Entry<String, Set<AceBean>> entry : repositoryDumpAceMap.entrySet()) {
-            Set<AceBean> acl = entry.getValue();
-            for (AceBean aceBean : acl) {
+            Set<AceBean> existingAcl = entry.getValue();
+            for (AceBean existingAce : existingAcl) {
                 // if the ACL from repo contains an ACE regarding an
                 // authorizable from the groups config then delete all ACEs from
                 // this authorizable from current ACL
-                if (authorizablesSet.contains(aceBean.getPrincipalName())) {
+                if (authorizablesInConfig.contains(existingAce.getPrincipalName())) {
                     AccessControlUtils.deleteAllEntriesForAuthorizableFromACL(session,
-                            aceBean.getJcrPath(), aceBean.getPrincipalName());
+                            existingAce.getJcrPath(), existingAce.getPrincipalName());
                     String message = "deleted all ACEs of authorizable "
-                            + aceBean.getPrincipalName()
-                            + " from ACL of path: " + aceBean.getJcrPath();
+                            + existingAce.getPrincipalName()
+                            + " from ACL of path: " + existingAce.getJcrPath();
                     LOG.info(message);
                     history.addVerboseMessage(message);
                 }
