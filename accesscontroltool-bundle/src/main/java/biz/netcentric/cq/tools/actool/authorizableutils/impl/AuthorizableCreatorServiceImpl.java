@@ -47,6 +47,7 @@ import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorExcep
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
 import biz.netcentric.cq.tools.actool.helper.Constants;
+import biz.netcentric.cq.tools.actool.helper.ContentHelper;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 @Service
@@ -119,13 +120,13 @@ public class AuthorizableCreatorServiceImpl implements
         Authorizable authorizableToInstall = userManager.getAuthorizable(principalId);
         if (authorizableToInstall == null) {
             authorizableToInstall = createNewAuthorizable(authorizableConfigBean, history,
-                    authorizableInstallationHistory, userManager, vf);
+                    authorizableInstallationHistory, userManager, vf, session);
         }
         // if current authorizable from config already exists in repository
         else {
 
             // update name for both groups and users
-            setAuthorizableName(authorizableToInstall, vf, authorizableConfigBean);
+            setAuthorizableProperties(authorizableToInstall, vf, authorizableConfigBean, session);
             // update password for users
             if (!authorizableToInstall.isGroup() && !authorizableConfigBean.isSystemUser()
                     && StringUtils.isNotBlank(authorizableConfigBean.getPassword())) {
@@ -267,7 +268,7 @@ public class AuthorizableCreatorServiceImpl implements
             ValueFactory vf = session.getValueFactory();
             Authorizable newAuthorizable = createNewAuthorizable(
                     principalConfigBean, history,
-                    authorizableInstallationHistory, userManager, vf);
+                    authorizableInstallationHistory, userManager, vf, session);
 
             int countMovedMembersOfGroup = 0;
             if (newAuthorizable.isGroup()) {
@@ -364,7 +365,7 @@ public class AuthorizableCreatorServiceImpl implements
             AuthorizableConfigBean principalConfigBean,
             AcInstallationHistoryPojo status,
             AuthorizableInstallationHistory authorizableInstallationHistory,
-            UserManager userManager, ValueFactory vf)
+            UserManager userManager, ValueFactory vf, Session session)
             throws AuthorizableExistsException, RepositoryException,
             AuthorizableCreatorException {
 
@@ -375,13 +376,13 @@ public class AuthorizableCreatorServiceImpl implements
         if (isGroup) {
             newAuthorizable = createNewGroup(userManager, principalConfigBean,
                     status, authorizableInstallationHistory, vf,
-                    principalMapFromConfig);
+                    principalMapFromConfig, session);
             authorizableInstallationHistory
                     .addNewCreatedAuthorizable(principalId);
             LOG.info("Successfully created new Group: {}", principalId);
         } else {
             newAuthorizable = createNewUser(userManager, principalConfigBean, status, authorizableInstallationHistory, vf,
-                    principalMapFromConfig);
+                    principalMapFromConfig, session);
             LOG.info("Successfully created new User: {}", principalId);
             authorizableInstallationHistory
                     .addNewCreatedAuthorizable(principalId);
@@ -598,7 +599,7 @@ public class AuthorizableCreatorServiceImpl implements
             AcInstallationHistoryPojo status,
             AuthorizableInstallationHistory authorizableInstallationHistory,
             ValueFactory vf,
-            Map<String, LinkedHashSet<AuthorizableConfigBean>> principalMapFromConfig)
+            Map<String, LinkedHashSet<AuthorizableConfigBean>> principalMapFromConfig, Session session)
             throws AuthorizableExistsException, RepositoryException,
             AuthorizableCreatorException {
 
@@ -617,12 +618,24 @@ public class AuthorizableCreatorServiceImpl implements
 
         addMembersToReferencingAuthorizables(newGroup, principalConfigBean, userManager);
 
-        setAuthorizableName(newGroup, vf, principalConfigBean);
+
+        setAuthorizableProperties(newGroup, vf, principalConfigBean, session);
         return newGroup;
     }
 
-    private void setAuthorizableName(Authorizable authorizable, ValueFactory vf, AuthorizableConfigBean principalConfigBean)
+    private void setAuthorizableProperties(Authorizable authorizable, ValueFactory vf, AuthorizableConfigBean principalConfigBean,
+            Session session)
             throws RepositoryException {
+
+        String profileContent = principalConfigBean.getProfileContent();
+        if (StringUtils.isNotBlank(profileContent)) {
+            ContentHelper.importContent(session, authorizable.getPath() + "/profile", profileContent, true);
+        }
+
+        String preferencesContent = principalConfigBean.getPreferencesContent();
+        if (StringUtils.isNotBlank(preferencesContent)) {
+            ContentHelper.importContent(session, authorizable.getPath() + "/preferences", preferencesContent, true);
+        }
 
         String name = principalConfigBean.getPrincipalName();
         if (StringUtils.isNotBlank(name)) {
@@ -636,15 +649,22 @@ public class AuthorizableCreatorServiceImpl implements
             }
         }
 
+        String description = principalConfigBean.getDescription();
+        if (StringUtils.isNotBlank(description)) {
+            authorizable.setProperty("profile/aboutMe", vf.createValue(description));
+        }
     }
 
+    
+
+    
     private Authorizable createNewUser(
             final UserManager userManager,
             AuthorizableConfigBean principalConfigBean,
             AcInstallationHistoryPojo status,
             AuthorizableInstallationHistory authorizableInstallationHistory,
             ValueFactory vf,
-            Map<String, LinkedHashSet<AuthorizableConfigBean>> principalMapFromConfig)
+            Map<String, LinkedHashSet<AuthorizableConfigBean>> principalMapFromConfig, Session session)
             throws AuthorizableExistsException, RepositoryException,
             AuthorizableCreatorException {
         String principalId = principalConfigBean.getPrincipalID();
@@ -658,7 +678,7 @@ public class AuthorizableCreatorServiceImpl implements
         } else {
             newUser = userManager.createUser(principalId, password, new PrincipalImpl(principalId), intermediatePath);
         }
-        setAuthorizableName(newUser, vf, principalConfigBean);
+        setAuthorizableProperties(newUser, vf, principalConfigBean, session);
 
         addMembersToReferencingAuthorizables(newUser, principalConfigBean, userManager);
 

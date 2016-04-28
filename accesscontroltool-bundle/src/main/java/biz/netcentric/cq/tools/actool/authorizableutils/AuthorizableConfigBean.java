@@ -23,29 +23,56 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     private String principalID;
     private String principalName;
+    private String description;
 
     private String[] memberOf;
-    String memberOfStringFromConfig;
+    private String memberOfStringFromConfig;
 
     private String[] members;
-    String membersStringFromConfig;
+    private String membersStringFromConfig;
 
     private String path;
     private String password;
 
+    private String profileContent;
+    private String preferencesContent;
+    
     private String migrateFrom;
 
     private boolean isGroup = true;
     private boolean isSystemUser = false;
 
-    private String assertedExceptionString = null;
-
-    public String getAssertedExceptionString() {
-        return assertedExceptionString;
+    public String getPrincipalID() {
+        return principalID;
     }
 
-    public void setAssertedExceptionString(final String assertedException) {
-        assertedExceptionString = assertedException;
+    public void setPrincipalID(final String principalID) {
+        this.principalID = principalID;
+    }
+
+    public String getPrincipalName() {
+        return principalName;
+    }
+
+    public void setPrincipalName(final String principalName) {
+        this.principalName = principalName;
+    }
+
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(final String path) {
+        this.path = path;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getPassword() {
@@ -54,6 +81,22 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     public void setPassword(final String password) {
         this.password = password;
+    }
+    
+    public String getProfileContent() {
+        return profileContent;
+    }
+
+    public void setProfileContent(String profileContent) {
+        this.profileContent = profileContent;
+    }
+
+    public String getPreferencesContent() {
+        return preferencesContent;
+    }
+
+    public void setPreferencesContent(String preferencesContent) {
+        this.preferencesContent = preferencesContent;
     }
 
     public void setMemberOfString(final String memberOfString) {
@@ -78,22 +121,6 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     public void setIsSystemUser(final boolean isSystemUser) {
         this.isSystemUser = isSystemUser;
-    }
-
-    public String getPrincipalName() {
-        return principalName;
-    }
-
-    public void setAuthorizableName(final String principalName) {
-        this.principalName = principalName;
-    }
-
-    public String getPrincipalID() {
-        return principalID;
-    }
-
-    public void setPrincipalID(final String principalID) {
-        this.principalID = principalID;
     }
 
     public String[] getMemberOf() {
@@ -169,13 +196,6 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.members = members;
     }
 
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(final String path) {
-        this.path = path;
-    }
 
     public String getMigrateFrom() {
         return migrateFrom;
@@ -209,5 +229,17 @@ public class AuthorizableConfigBean implements AcDumpElement {
     @Override
     public void accept(final AcDumpElementVisitor acDumpElementVisitor) {
         acDumpElementVisitor.visit(this);
+    }
+
+    // --- only for junit test (TODO: check if test can be refactored to not require
+
+    private String assertedExceptionString = null;
+
+    public String getAssertedExceptionString() {
+        return assertedExceptionString;
+    }
+
+    public void setAssertedExceptionString(final String assertedException) {
+        assertedExceptionString = assertedException;
     }
 }

@@ -9,24 +9,30 @@
 package biz.netcentric.cq.tools.actool.validators;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.security.AccessControlManager;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.sling.jcr.api.SlingRepository;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.yaml.snakeyaml.Yaml;
 
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
@@ -37,18 +43,37 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
 import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
 
-@Ignore
+
 public class BeanValidatorsTest {
+
+    @Mock
+    SlingRepository repository;
+
+    @Mock
+    Session session;
+
+    @Mock
+    AccessControlManager accessControlManager;
+
+    @InjectMocks
+    ConfigReader yamlConfigReader = new YamlConfigReader();
+
+    
     List<LinkedHashMap> aclList;
     Set<String> groupsFromConfig;
     List<AceBean> aceBeanList = new ArrayList<AceBean>();
     List<AuthorizableConfigBean> authorizableBeanList = new ArrayList<AuthorizableConfigBean>();
-    ConfigReader yamlConfigReader = null;
 
     @Before
     public void setup() throws IOException, RepositoryException,
             AcConfigBeanValidationException {
-        yamlConfigReader = new YamlConfigReader();
+
+        initMocks(this);
+        doReturn(session).when(repository).loginAdministrative(null);
+        doReturn(accessControlManager).when(session).getAccessControlManager();
+        doThrow(new RepositoryException("invalid permission")).when(accessControlManager).privilegeFromName("read");
+        doThrow(new RepositoryException("invalid permission")).when(accessControlManager).privilegeFromName("jcr_all");
+
         List<LinkedHashMap> yamlList = getYamlList();
         AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl();
         authorizableValidator.disable();
@@ -127,16 +152,15 @@ public class BeanValidatorsTest {
         AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(
                 this.groupsFromConfig);
         for (AceBean aceBean : this.aceBeanList) {
-            assertEquals(
-                    getSimpleValidationException(aceBean, aceBeanValidator),
-                    aceBean.getAssertedExceptionString());
+            assertEquals("Problem in bean " + aceBean, aceBean.getAssertedExceptionString(),
+                    getSimpleValidationException(aceBean, aceBeanValidator));
         }
     }
 
     private String getSimpleValidationException(final AceBean aceBean,
             final AceBeanValidator aceBeanValidator) {
         try {
-            aceBeanValidator.validate(aceBean, null);
+            aceBeanValidator.validate(aceBean, accessControlManager);
         } catch (Exception e) {
             return e.getClass().getSimpleName();
         }

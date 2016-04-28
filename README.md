@@ -47,15 +47,7 @@ Every configuration file comprises a group section where groups and their member
 
 ## Configuration of groups
 
-A principal record in configuration file starts with the principal id followed by some indented data records which comprise of:
-
-    optional principalname
-    comma separated list of other groups which the current principal should belong to
-    comma separated list of other groups which are members of the group
-    optional description 
-
-
-Overall format
+A authorizable record in the configuration file starts with the principal id followed by some indented data records containing properties like name/description and group membership:
 
 ```
 [Groupd Id]
@@ -64,7 +56,9 @@ Overall format
      - members: comma separated list of groups that are member of this group
      - description: (optional, description)
      - path: (optional, path of the group in JCR)
-     - migrateFrom: (optional, a group name assigned member users are taken over from, available from v1.7)
+     - migrateFrom: (optional, a group name assigned member users are taken over from, since v1.7)
+
+     
 ```
 
 Example
@@ -85,12 +79,13 @@ The property 'migrateFrom' allows to migrate a group name without loosing their 
 
 In general it is best practice to not generate regular users by the AC Tool but use other mechanism (e.g. LDAP) to create users. However, it can be useful to create system users (e.g. for replication agents or OSGi service authentiation) or test users on staging environments.
 
-Users can be configured in the same way as groups in the **user_config** section. There are two differences to groups:
+Users can be configured in the same way as groups in the **user_config** section. The following properties are different to groups (all optional):
 
 * the attribute "members" cannot be used (for obvious reasons)
-* the attribute "password" can be used for preset passwords 
+* the attribute "password" can be used for preset passwords (not allowed for system users)
 * the boolean attribute isSystemUser is used to create system users in AEM 6.1
-
+* the attribute profileContent allows to provide docview xml that will reset the profile to the given structure after each run, since (since v1.8.2)
+* the attribute preferencesContent allows to provide docview xml that will reset the preferences node to the given structure after each run (since v1.8.2)
 
 ## Configuration of ACEs
 
