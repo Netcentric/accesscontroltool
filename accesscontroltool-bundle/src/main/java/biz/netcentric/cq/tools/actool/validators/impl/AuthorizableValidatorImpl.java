@@ -16,6 +16,7 @@ import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
 import biz.netcentric.cq.tools.actool.validators.Validators;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
+import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidAuthorizableException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidGroupNameException;
 
 public class AuthorizableValidatorImpl implements AuthorizableValidator {
@@ -36,16 +37,58 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
 
     private boolean validate() throws AcConfigBeanValidationException {
         if (enabled) {
-            return validateMemberOf(this.authorizableConfigBean)
+            return validateAuthorizableProperties(this.authorizableConfigBean)
+                    && validateMemberOf(this.authorizableConfigBean)
                     && validateMembers(this.authorizableConfigBean)
                     && validateAuthorizableId(this.authorizableConfigBean);
         }
         return true;
     }
 
+    public boolean validateAuthorizableProperties(
+            final AuthorizableConfigBean tmpPrincipalConfigBean)
+                    throws InvalidAuthorizableException {
+
+        if (tmpPrincipalConfigBean.isGroup()) {
+            if (StringUtils.isNotBlank(tmpPrincipalConfigBean.getPassword())) {
+                final String message = "Group " + tmpPrincipalConfigBean.getPrincipalID()
+                        + " may not be configured with password";
+                LOG.error(message);
+                throw new InvalidAuthorizableException(message);
+            }
+        } else {
+            if (tmpPrincipalConfigBean.isSystemUser()) {
+                if (StringUtils.isNotBlank(tmpPrincipalConfigBean.getPassword())) {
+                    final String message = "System user " + tmpPrincipalConfigBean.getPrincipalID()
+                            + " may not be configured with password";
+                    LOG.error(message);
+                    throw new InvalidAuthorizableException(message);
+                }
+            } else {
+                if (StringUtils.isBlank(tmpPrincipalConfigBean.getPassword())) {
+                    final String message = "Password is required for user " + tmpPrincipalConfigBean.getPrincipalID();
+                    LOG.error(message);
+                    throw new InvalidAuthorizableException(message);
+                }
+            }
+
+            if (StringUtils.isNotBlank(tmpPrincipalConfigBean.getMigrateFrom())) {
+                final String message = "migrateFrom can only be used with groups (found in " + tmpPrincipalConfigBean.getPrincipalID()
+                        + ")";
+                LOG.error(message);
+                throw new InvalidAuthorizableException(message);
+            }
+
+        }
+
+
+
+        return true;
+    }
+
     public boolean validateMemberOf(
             final AuthorizableConfigBean tmpPrincipalConfigBean)
-            throws InvalidGroupNameException {
+                    throws InvalidGroupNameException {
         final String currentPrincipal = tmpPrincipalConfigBean.getPrincipalID();
         final String currentEntryValue = tmpPrincipalConfigBean
                 .getMemberOfStringFromConfig();

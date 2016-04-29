@@ -100,7 +100,7 @@ public class AcHelper {
             // check if the path even exists
             boolean pathExits = AccessControlUtils.getModifiableAcl(session.getAccessControlManager(), path) != null;
             if (!pathExits) {
-                if (!InitialContentHelper.createInitialContent(session, history, path, aceBeanSetFromConfig)) {
+                if (!ContentHelper.createInitialContent(session, history, path, aceBeanSetFromConfig)) {
                     history.addWarning("Skipped installing privileges/actions for non existing path: " + path);
                     continue;
                 }

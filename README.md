@@ -47,15 +47,7 @@ Every configuration file comprises a group section where groups and their member
 
 ## Configuration of groups
 
-A principal record in configuration file starts with the principal id followed by some indented data records which comprise of:
-
-    optional principalname
-    comma separated list of other groups which the current principal should belong to
-    comma separated list of other groups which are members of the group
-    optional description 
-
-
-Overall format
+A authorizable record in the configuration file starts with the principal id followed by some indented data records containing properties like name/description and group membership:
 
 ```
 [Groupd Id]
@@ -64,7 +56,7 @@ Overall format
      - members: comma separated list of groups that are member of this group
      - description: (optional, description)
      - path: (optional, path of the group in JCR)
-     - migrateFrom: (optional, a group name assigned member users are taken over from, available from v1.7)
+     - migrateFrom: (optional, a group name assigned member users are taken over from, since v1.7)     
 ```
 
 Example
@@ -85,12 +77,13 @@ The property 'migrateFrom' allows to migrate a group name without loosing their 
 
 In general it is best practice to not generate regular users by the AC Tool but use other mechanism (e.g. LDAP) to create users. However, it can be useful to create system users (e.g. for replication agents or OSGi service authentiation) or test users on staging environments.
 
-Users can be configured in the same way as groups in the **user_config** section. There are two differences to groups:
+Users can be configured in the same way as groups in the **user_config** section. The following properties are different to groups (all optional):
 
 * the attribute "members" cannot be used (for obvious reasons)
-* the attribute "password" can be used for preset passwords 
+* the attribute "password" can be used for preset passwords (not allowed for system users)
 * the boolean attribute isSystemUser is used to create system users in AEM 6.1
-
+* the attribute profileContent allows to provide docview xml that will reset the profile to the given structure after each run (since v1.8.2)
+* the attribute preferencesContent allows to provide docview xml that will reset the preferences node to the given structure after each run (since v1.8.2)
 
 ## Configuration of ACEs
 
@@ -102,7 +95,7 @@ path | a node path. Wildcards `*` are possible. e.g. assuming we have the langua
 permission | the permission (either `allow` or `deny`) | yes
 actions | the actions (`read,modify,create,delete,acl_read,acl_edit,replicate`). Reference: <http://docs.adobe.com/docs/en/cq/current/administering/security.html#Actions> | either actions or privileges need to be present; also a mix of both is possible
 privileges | the privileges (`jcr:read, rep:write, jcr:all, crx:replicate, jcr:addChildNodes, jcr:lifecycleManagement, jcr:lockManagement, jcr:modifyAccessControl, jcr:modifyProperties, jcr:namespaceManagement, jcr:nodeTypeDefinitionManagement, jcr:nodeTypeManagement, jcr:readAccessControl, jcr:removeChildNodes, jcr:removeNode, jcr:retentionManagement, jcr:versionManagement, jcr:workspaceManagement, jcr:write, rep:privilegeManagement`). References: <http://jackrabbit.apache.org/oak/docs/security/privilege.html> <http://www.day.com/specs/jcr/2.0/16_Access_Control_Management.html#16.2.3%20Standard%20Privileges> | either actions or privileges need to be present; also a mix of both is possible
-repGlob |a repGlob expression | no
+repGlob |A repGlob expression like "/jcr:*". Please note that repGlobs do not play well together with actions. Use privileges instead (e.g. "jcr:read" instead of read action). See [issue #48](https://github.com/Netcentric/accesscontroltool/issues/48) | no
 initialContent | Allows to specify docview xml to create the path if it does not exist. The namespaces for jcr, sling and cq are added automatically if not provided to keep xml short. Initial content must only be specified exactly once per path (this is validated). If paths without permissions should be created, it is possible to provide only a path/initialContent tuple. Available form version 1.7.0. | no
 
 Every new data entry starts with a "-". 
@@ -290,6 +283,11 @@ Expressions are evaluated using javax.el expression language. The following util
 - endsWith(str,fragmentStr) 
 - startsWith(str,fragmentStr) 
 
+## Configure permissions for anonymous (since 1.8.2)
+
+Normally it is ensured by validation that a configuration's group system is self-contained - this means out-of-the-box groups like ```contributor``` cannot be used. For registered users in the system this approach works well since either the users are manually assigned to groups (by a user admin) or the membership relationship is maintained by LDAP or SSO extensions. For the ```anonymous``` user on publish that is not logged in by definition, there is no hook that allows to assign it to a group in the AC Tools configuration. Therefore as an exception, it is allowed to use the user ```anonymous``` in the ```members``` attribute of a group configuration.
+  
+
 ## Validation
 
 First the validation of the different configuration lines is performed based on regular expressions and gets applied while reading the file. Further validation consists of checking paths for existence as well as for double entries, checks for conflicting ACEs (e.g. allow and deny for same actions on same node), checks whether principals are existing under home. If an invalid parameter or aforementioned issue gets detected, the reading gets aborted and an appropriate error message gets append in the installation history and log.
@@ -428,6 +426,3 @@ For any of these purge actions a separate purge history (node) containing all lo
 curl -sS --retry 1 -u ${CQ_ADMINUSER}:${CQ_ADMINPW} -X POST "http://${CQ_SERVER}:${CQ_PORT}/system/console/jmx/biz.netcentric.cq.tools.actool:id='ac+installation'/op/execute/"
 ```
 
-# Architectural Overview
-
-<img src="docs/images/architectural-overview.png">

@@ -21,7 +21,7 @@ public class AuthorizableInstallationHistory {
         authorizables.add(new AuthorizableBean(members, name, id, path));
     }
 
-    public void addNewCreatedAuthorizabe(String id) {
+    public void addNewCreatedAuthorizable(String id) {
         this.newCreatedAuthorizables.add(id);
     }
 

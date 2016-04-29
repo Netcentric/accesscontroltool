@@ -8,10 +8,9 @@
  */
 package biz.netcentric.cq.tools.actool.validators.exceptions;
 
-public class AlreadyDefinedGroupException extends
-        AcConfigBeanValidationException {
+public class InvalidAuthorizableException extends AcConfigBeanValidationException {
 
-    public AlreadyDefinedGroupException(String message) {
+    public InvalidAuthorizableException(String message) {
         super(message);
     }
 

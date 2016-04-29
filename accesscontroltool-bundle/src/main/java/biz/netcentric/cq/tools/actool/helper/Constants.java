@@ -25,4 +25,6 @@ public class Constants {
             Arrays.asList(GROUP_CONFIGURATION_KEY, USER_CONFIGURATION_KEY,
                     ACE_CONFIGURATION_KEY));
 
+    public static final String USER_ANONYMOUS = "anonymous";
+
 }

@@ -16,6 +16,7 @@ import javax.jcr.AccessDeniedException;
 import javax.jcr.ImportUUIDBehavior;
 import javax.jcr.InvalidSerializedDataException;
 import javax.jcr.ItemExistsException;
+import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -29,10 +30,10 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
-class InitialContentHelper {
-    public static final Logger LOG = LoggerFactory.getLogger(InitialContentHelper.class);
+public class ContentHelper {
+    public static final Logger LOG = LoggerFactory.getLogger(ContentHelper.class);
 
-    private InitialContentHelper() {
+    private ContentHelper() {
     }
 
     static boolean createInitialContent(final Session session, final AcInstallationHistoryPojo history, String path,
@@ -43,8 +44,17 @@ class InitialContentHelper {
         if (StringUtils.isBlank(initialContent)) {
             return false;
         } else {
-            boolean success = createPathWithInitialContent(session, path, initialContent, history);
-            return success;
+
+            try {
+                importContent(session, path, initialContent, false);
+                history.addMessage("Created initial content for path " + path);
+                return true;
+            } catch (Exception e) {
+                history.addWarning("Failed creating initial content for path: " + e);
+                LOG.warn("Failed creating initial content for path: " + path + " e=" + e, e);
+                return false;
+            }
+
         }
     }
 
@@ -65,17 +75,22 @@ class InitialContentHelper {
         return initialContent;
     }
 
-    private static boolean createPathWithInitialContent(final Session session, String path,
-            String initialContent, AcInstallationHistoryPojo history) throws RepositoryException, PathNotFoundException,
-            ItemExistsException, ConstraintViolationException, VersionException, InvalidSerializedDataException, LockException,
-            AccessDeniedException {
+    public static void importContent(final Session session, String path,
+            String initialContent, boolean removeNodeIfExists) throws RepositoryException {
         String parentPath = StringUtils.substringBeforeLast(path, "/");
         try {
             session.getNode(parentPath);
         } catch (PathNotFoundException e) {
-            history.addWarning("Skipped installing initial content for path " + path + " since parent " + parentPath
-                    + " does not exist");
-            return false;
+            throw new PathNotFoundException("Parent path " + parentPath + " for creating content at " + path + " does not exist", e);
+        }
+
+        if (removeNodeIfExists) {
+            try {
+                Node node = session.getNode(path);
+                node.remove();
+            } catch (PathNotFoundException e) {
+                LOG.trace("Path {} does not exist and does not have to be removed therefore", path);
+            }
         }
 
         String rootElementStr = "<jcr:root ";
@@ -100,17 +115,16 @@ class InitialContentHelper {
         String nodeName = StringUtils.substringAfterLast(path, "/");
         initialContentAdjusted = initialContentAdjusted.replace("jcr:root", nodeName);
 
-        history.addVerboseMessage("Adding initial content for path " + path + "\n" + initialContentAdjusted);
+        LOG.debug("Adding initial content for path {}\n{}", path, initialContentAdjusted);
         try {
             session.importXML(parentPath, new ByteArrayInputStream(initialContentAdjusted.getBytes()),
                     ImportUUIDBehavior.IMPORT_UUID_CREATE_NEW);
-
-            history.addMessage("Created initial content for path " + path);
         } catch (IOException e) {
-            history.addWarning("Failed creating initial content for path " + path + ": " + e);
-            return false;
+            throw new RepositoryException("I/O Error during import operation", e);
         }
-        return true;
+
+        LOG.debug("Imported content for path {}\n{}", path, initialContentAdjusted);
+
     }
 
 }

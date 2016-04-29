@@ -59,6 +59,9 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
             String result = elEvaluator.evaluateEl(str, String.class, variables);
             return result;
 
+        } else if (o instanceof Boolean) {
+            return (Boolean) o;
+
         } else if (o instanceof List) {
             List list = (List) o;
             List transformedList = new LinkedList();
@@ -77,14 +80,14 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
                 if (forMatcher.matches()) {
                     // map is skipped and value returned directly
                     return evaluateForStatement(variables, objVal, forMatcher, history);
-                } 
+                }
 
                 Matcher ifMatcher = ifPattern.matcher(key.toString());
                 if (ifMatcher.matches()) {
                     // map is skipped and value returned directly
                     return evaluateIfStatement(variables, objVal, ifMatcher, history);
-                } 
-                
+                }
+
                 // default: transform both key and value
                 Object transformedKey = transform(key, variables, history);
                 Object transformedVal = transform(objVal, variables, history);
@@ -176,7 +179,6 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
             addToListWithPotentialUnfolding(resultList, transformedListItem);
         }
     }
-
 
     // marker class
     private class ToBeUnfoldedList extends LinkedList {
