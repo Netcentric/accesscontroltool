@@ -57,10 +57,14 @@ public class YamlConfigReader implements ConfigReader {
     private static final String GROUP_CONFIG_PROPERTY_PATH = "path";
     private static final String GROUP_CONFIG_PROPERTY_PASSWORD = "password";
     private static final String GROUP_CONFIG_PROPERTY_NAME = "name";
+    private static final String GROUP_CONFIG_PROPERTY_DESCRIPTION = "description";
+
+    private static final String GROUP_CONFIG_PROPERTY_MIGRATE_FROM = "migrateFrom";
 
     private static final String USER_CONFIG_PROPERTY_IS_SYSTEM_USER = "isSystemUser";
 
-    private static final String GROUP_CONFIG_PROPERTY_MIGRATE_FROM = "migrateFrom";
+    private static final String USER_CONFIG_PROFILE_CONTENT = "profileContent";
+    private static final String USER_CONFIG_PREFERENCES_CONTENT = "preferencesContent";
 
     @Reference
     private SlingRepository repository;
@@ -310,8 +314,11 @@ public class YamlConfigReader implements ConfigReader {
             final String authorizableId,
             boolean isGroupSection) {
         authorizableConfigBean.setPrincipalID(authorizableId);
-        authorizableConfigBean.setAuthorizableName(getMapValueAsString(
+        authorizableConfigBean.setPrincipalName(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_NAME));
+        authorizableConfigBean.setDescription(getMapValueAsString(
+                currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_DESCRIPTION));
+
         authorizableConfigBean.setMemberOfString(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBER_OF));
         // read also memberOf property from legacy scripts
@@ -333,8 +340,16 @@ public class YamlConfigReader implements ConfigReader {
 
         authorizableConfigBean.setPassword(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_PASSWORD));
+
+
+        authorizableConfigBean.setProfileContent(getMapValueAsString(
+                currentPrincipalDataMap, USER_CONFIG_PROFILE_CONTENT));
+        authorizableConfigBean.setPreferencesContent(getMapValueAsString(
+                currentPrincipalDataMap, USER_CONFIG_PREFERENCES_CONTENT));
+
         authorizableConfigBean.setAssertedExceptionString(getMapValueAsString(
                 currentPrincipalDataMap, ASSERTED_EXCEPTION));
+
     }
 
     private String getMapValueAsString(
