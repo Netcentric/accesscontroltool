@@ -464,7 +464,7 @@ public class DumpserviceImpl implements Dumpservice {
             final Set<AuthorizableConfigBean> userSet, final int mapOrder) throws IOException {
         StringBuilder sb = new StringBuilder(20000);
 
-        // add creation date and URL of current author instance as first line
+        // add creation date as first line
         String dumpComment = bundleDescription + "\n# Dump created: "
                 + new Date();
 
