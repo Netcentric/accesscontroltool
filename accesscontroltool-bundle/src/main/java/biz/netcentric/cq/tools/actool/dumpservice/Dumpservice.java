@@ -42,8 +42,7 @@ public interface Dumpservice {
     
     public String getConfigurationDumpAsString(final AceDumpData aceDumpData,
             final Set<AuthorizableConfigBean> groupSet,
-            final Set<AuthorizableConfigBean> userSet, final int mapOrder,
-            final String serverUrl) throws IOException;
+            final Set<AuthorizableConfigBean> userSet, final int mapOrder) throws IOException;
 
    
     public Set<AclBean> getACLDumpBeans(final Session session)
