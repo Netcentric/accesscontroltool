@@ -46,9 +46,9 @@ You need to setup [Yaml configuration files](docs/Configuration.md) to specify y
 
 The ACTool also supports [loops, conditional statements and permissions for anonymous](docs/AdvancedFeatures.md).
 
-# Installation of ACL entries
+# Applying the ACL entries
 
-There are multiple options to [install the ACL entries](docs/Deploy.md) (e.g. install hook, JMX and upload listener) to your target system.
+There are multiple options to [apply the ACL entries](docs/ApplyConfig.md) (e.g. install hook, JMX and upload listener) to your target system.
 
 ## JMX interface
 

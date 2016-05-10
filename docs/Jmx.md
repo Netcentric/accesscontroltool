@@ -25,6 +25,10 @@ Also important status messages are shown here:
 This will install the configuration files listed on top.    
 Before installing a new configuration on an instance a validation of the data stored in the configuration file takes place. In case an issue gets detected the installation does not get performed.
 
+The path of the config files is configured in OSGi - AC Installation Service.
+
+<img src="images/installation-service.png">
+
 ### pathBasedDump() and groupBasedDump()
 
 * path based dumps: here all ACEs in the dump are grouped by path thus representing a complete ACL. This kind of dump gets triggered by the method: pathBasedDump().
