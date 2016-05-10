@@ -46,7 +46,7 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
     @Override
     public List<Object> getValuesForPath(String pathOfChildrenOfClause, AcInstallationHistoryPojo history) {
 
-        LOG.info("FOR Loop: Getting children for " + pathOfChildrenOfClause);
+        LOG.debug("FOR Loop: Getting children for " + pathOfChildrenOfClause);
 
         List<Object> results = new ArrayList<Object>();
 
@@ -113,7 +113,9 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
             }
         }
 
-        history.addMessage("Loop for children of " + pathOfChildrenOfClause + " evaluates to " + results.size() + " children");
+        String msg = "Loop for children of " + pathOfChildrenOfClause + " evaluates to " + results.size() + " children";
+        LOG.debug(msg);
+        history.addMessage(msg);
 
         return results;
     }

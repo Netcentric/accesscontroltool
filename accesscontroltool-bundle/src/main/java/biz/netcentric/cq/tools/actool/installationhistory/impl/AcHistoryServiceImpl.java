@@ -66,34 +66,33 @@ public class AcHistoryServiceImpl implements AcHistoryService {
             final String configurationRootPath) {
         Session session = null;
         try {
-            try {
-                session = repository.loginAdministrative(null);
-                Node historyNode = HistoryUtils.persistHistory(session,
-                        history, this.nrOfSavedHistories);
 
-                String mergedAndProcessedConfig = history.getMergedAndProcessedConfig();
-                if (StringUtils.isNotBlank(mergedAndProcessedConfig)) {
-                    JcrUtils.putFile(historyNode, "mergedConfig.yaml", "text/yaml",
-                            new ByteArrayInputStream(mergedAndProcessedConfig.getBytes()));
-                }
+            session = repository.loginAdministrative(null);
+            Node historyNode = HistoryUtils.persistHistory(session,
+                    history, this.nrOfSavedHistories);
 
-                session.save();
-                if (history.isSuccess()) {
-                    Node configurationRootNode = session
-                            .getNode(configurationRootPath);
-                    if (configurationRootNode != null) {
-                        persistInstalledConfigurations(session.getWorkspace(), historyNode,
-                                configurationRootNode, history);
-                    } else {
-                        String message = "Couldn't find configuration root Node under path: "
-                                + configurationRootPath;
-                        LOG.error(message);
-                        history.addWarning(message);
-                    }
-                }
-            } catch (RepositoryException e) {
-                LOG.error("RepositoryException: ", e);
+            String mergedAndProcessedConfig = history.getMergedAndProcessedConfig();
+            if (StringUtils.isNotBlank(mergedAndProcessedConfig)) {
+                JcrUtils.putFile(historyNode, "mergedConfig.yaml", "text/yaml",
+                        new ByteArrayInputStream(mergedAndProcessedConfig.getBytes()));
             }
+
+            session.save();
+            if (history.isSuccess()) {
+                Node configurationRootNode = session
+                        .getNode(configurationRootPath);
+                if (configurationRootNode != null) {
+                    persistInstalledConfigurations(session.getWorkspace(), historyNode,
+                            configurationRootNode, history);
+                } else {
+                    String message = "Couldn't find configuration root Node under path: "
+                            + configurationRootPath;
+                    LOG.error(message);
+                    history.addWarning(message);
+                }
+            }
+        } catch (RepositoryException e) {
+            LOG.error("RepositoryException: ", e);
         } finally {
             if (session != null) {
                 session.logout();
@@ -168,8 +167,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         }
 
         try {
-            history.addMessage("saved installed configuration files under : "
-                    + historyNode.getPath() + "/" + INSTALLED_CONFIGS_NODE_NAME);
+            history.addMessage("Saved installed configuration files under : " + historyNode.getPath() + "/" + INSTALLED_CONFIGS_NODE_NAME);
         } catch (RepositoryException e) {
             LOG.error("Exception: ", e);
         }
@@ -260,7 +258,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
                     previousPurgeNode.getName());
         }
 
-        String message = "saved history in node: " + purgeHistoryNode.getPath();
+        String message = "Saved history in node: " + purgeHistoryNode.getPath();
         history.addMessage(message);
         LOG.info(message);
         HistoryUtils.setHistoryNodeProperties(purgeHistoryNode, history);

@@ -32,12 +32,14 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.day.cq.security.util.CqActions;
 
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElement;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementVisitor;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
-
-import com.day.cq.security.util.CqActions;
 
 /**
  * 
@@ -49,6 +51,7 @@ import com.day.cq.security.util.CqActions;
  *         configuration file again on the other hand.
  */
 public class AceBean implements AcDumpElement {
+    public static final Logger LOG = LoggerFactory.getLogger(AceBean.class);
 
     private String jcrPath;
     private String repGlob;
@@ -426,7 +429,9 @@ public class AceBean implements AcDumpElement {
 		JackrabbitAccessControlList acl = AccessControlUtils.getModifiableAcl(
 				acMgr, getJcrPath());
 		if (acl == null) {
-			history.addWarning("Skipped installing privileges/actions for non existing path: " + getJcrPath());
+		    String msg = "Skipped installing privileges/actions for non existing path: " + getJcrPath();
+		    LOG.debug(msg);
+			history.addMessage(msg);
 			return;
 		}
 		
