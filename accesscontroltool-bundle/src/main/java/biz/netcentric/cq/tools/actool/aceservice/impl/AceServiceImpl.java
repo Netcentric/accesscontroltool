@@ -176,7 +176,7 @@ public class AceServiceImpl implements AceService {
                     String message = "deleted all ACEs of authorizable "
                             + existingAce.getPrincipalName()
                             + " from ACL of path: " + existingAce.getJcrPath();
-                    LOG.info(message);
+                    LOG.debug(message);
                     history.addVerboseMessage(message);
                 }
             }

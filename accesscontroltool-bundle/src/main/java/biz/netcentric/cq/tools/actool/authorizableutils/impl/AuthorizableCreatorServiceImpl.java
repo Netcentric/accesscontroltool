@@ -58,8 +58,7 @@ public class AuthorizableCreatorServiceImpl implements
     private static final String PATH_HOME_GROUPS = "/home/groups";
     private static final String PATH_HOME_USERS = "/home/users";
 
-    private static final Logger LOG = LoggerFactory
-            .getLogger(AuthorizableCreatorServiceImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AuthorizableCreatorServiceImpl.class);
 
     AcInstallationHistoryPojo status;
     Map<String, LinkedHashSet<AuthorizableConfigBean>> principalMapFromConfig;
@@ -111,7 +110,7 @@ public class AuthorizableCreatorServiceImpl implements
             AuthorizableExistsException, AuthorizableCreatorException {
 
         String principalId = authorizableConfigBean.getPrincipalID();
-        LOG.info("- start installation of authorizable: {}", principalId);
+        LOG.debug("- start installation of authorizable: {}", principalId);
 
         UserManager userManager = getUsermanager(session);
         ValueFactory vf = session.getValueFactory();
@@ -286,7 +285,7 @@ public class AuthorizableCreatorServiceImpl implements
             message.append("recreated authorizable with new intermediate path! "
                     + (newAuthorizable.isGroup() ? "(retained " + countMovedMembersOfGroup + " members of group)" : ""));
             history.addMessage(message.toString());
-            LOG.warn(message.toString());
+            LOG.info(message.toString());
 
         }
 
@@ -426,14 +425,14 @@ public class AuthorizableCreatorServiceImpl implements
             Set<String> membershipGroupsFromRepository)
             throws RepositoryException, AuthorizableExistsException,
             AuthorizableCreatorException {
-        LOG.info("...checking differences");
+        LOG.debug("...checking differences");
 
         // group in repo doesn't have any members and group in config doesn't
         // have any members
         // do nothing
         if (!isMemberOfOtherGroup(currentGroupFromRepository)
                 && membershipGroupsFromConfig.isEmpty()) {
-            LOG.info(
+            LOG.debug(
                     "{}: authorizable in repo is not member of any other group and group in config is not member of any other group. No change necessary here!",
                     principalId);
         }
@@ -469,12 +468,12 @@ public class AuthorizableCreatorServiceImpl implements
     private void mergeMemberOfGroupsFromRepo(String principalId,
             UserManager userManager, Set<String> membershipGroupsFromRepository)
             throws RepositoryException {
-        LOG.info(
+        LOG.debug(
                 "{}: authorizable in repo is member of at least one other group and authorizable in config is not member of any other group",
                 principalId);
         // delete memberOf groups of that group in repo
         for (String group : membershipGroupsFromRepository) {
-            LOG.info(
+            LOG.debug(
                     "{}: delete authorizable from members of group {} in repository",
                     principalId, group);
             ((Group) userManager.getAuthorizable(group))
@@ -486,7 +485,7 @@ public class AuthorizableCreatorServiceImpl implements
             AcInstallationHistoryPojo status, UserManager userManager,
             Set<String> membershipGroupsFromConfig) throws RepositoryException,
             AuthorizableExistsException, AuthorizableCreatorException {
-        LOG.info(
+        LOG.debug(
                 "{}: authorizable in repo is not member of any other group  but authorizable in config is member of at least one other group",
                 principalId);
 
@@ -494,7 +493,7 @@ public class AuthorizableCreatorServiceImpl implements
                 principalId, membershipGroupsFromConfig.toArray(new String[membershipGroupsFromConfig.size()]));
 
         for (Group membershipGroup : validatedGroups) {
-            LOG.info(
+            LOG.debug(
                     "{}: add authorizable to members of group {} in repository",
                     principalId, membershipGroup.getID());
 
@@ -520,11 +519,11 @@ public class AuthorizableCreatorServiceImpl implements
         // are both groups members of exactly the same groups?
         if (membershipGroupsFromRepository.equals(membershipGroupsFromConfig)) {
             // do nothing!
-            LOG.info(
+            LOG.debug(
                     "{}: authorizable in repo  and authorizable in config are members of the same group(s). No change necessary here!",
                     principalId);
         } else {
-            LOG.info(
+            LOG.debug(
                     "{}: authorizable in repo is member of at least one other group and authorizable in config is member of at least one other group",
                     principalId);
 
@@ -540,7 +539,7 @@ public class AuthorizableCreatorServiceImpl implements
                     // if not delete that group of membersOf-property of
                     // existing group
 
-                    LOG.info(
+                    LOG.debug(
                             "delete {} from members of group {} in repository",
                             principalId, authorizable);
                     ((Group) userManager.getAuthorizable(authorizable))
@@ -565,7 +564,7 @@ public class AuthorizableCreatorServiceImpl implements
                     // if not add that group to membersOf-property of existing
                     // group
 
-                    LOG.info("add {} to members of group {} in repository",
+                    LOG.debug("add {} to members of group {} in repository",
                             principalId, validatedGroup);
                     if (StringUtils.equals(validatedGroup.getID(), principalId)) {
                         String warning = "Attempt to add a group as member of itself ("
