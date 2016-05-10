@@ -38,10 +38,6 @@ You can get the ZIP file via Maven. Install it e.g. via CRX package manager.
     <artifactId>accesscontroltool-oakindex-package</artifactId>
 ```
 
-# OSGI configuration
-
-Depending on your needs there is only little to [configure in OSGI](docs/OSGI.md).
-
 # Configuration of ACL entries
 
 You need to setup [Yaml configuration files](docs/Configuration.md) to specify your users, groups and ACL entries.
@@ -56,7 +52,7 @@ There are multiple options to [install the ACL entries](docs/Deploy.md) (e.g. in
 
 ## JMX interface
 
-The [Jmx interface](docs/Jmx.md) provides utility functions such as installing and dumping ACLs or showing the history. 
+The [JMX interface](docs/Jmx.md) provides utility functions such as installing and dumping ACLs or showing the history. 
 
 ## History Service
 

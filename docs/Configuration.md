@@ -55,7 +55,7 @@ Users can be configured in the same way as groups in the **user_config** section
 
 * the attribute "members" cannot be used (for obvious reasons)
 * the attribute "password" can be used for preset passwords (not allowed for system users)
-* the boolean attribute isSystemUser is used to create system users in AEM 6.1
+* the boolean attribute isSystemUser is used to create system users starting AEM 6.1
 * the attribute profileContent allows to provide docview xml that will reset the profile to the given structure after each run (since v1.8.2)
 * the attribute preferencesContent allows to provide docview xml that will reset the preferences node to the given structure after each run (since v1.8.2)
 
