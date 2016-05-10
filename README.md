@@ -5,7 +5,7 @@ The Access Control Tool for Adobe Experience Manager (ACTool) is a tool that sim
 Instead of building a content package with actual ACL nodes you can write simple configuration files and deploy them with your content packages.
 
 Features:
-* compatible with CQ 5.6.1 and AEM 6.x
+* compatible with AEM 6.x and CQ 5.6.1
 * easy-to-read Yaml configuration file format
 * run mode support
 * automatic installation with install hook
@@ -15,7 +15,7 @@ Features:
 
 # Requirements
 
-The ACTool requires Java 7 and CQ5.6.1 (min. SP2)/AEM 6.0/AEM 6.1.
+The ACTool requires Java 7 and AEM 6.0 - 6.2 or CQ 5.6.1 (min. SP2).
 
 # Installation
 
@@ -25,8 +25,6 @@ The package is available via [Maven](https://repo1.maven.org/maven2/biz/netcentr
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
     <artifactId>accesscontroltool-package</artifactId>
 ```
-
-
 
 ## AEM6.x/Oak
 
@@ -155,145 +153,10 @@ In case the configuration file contains ACEs for groups which are not present in
 
 All important steps performed by the service as well as all error/warning messages get written to error log and history.
 
-## Loops
+## Advanced configuration options
 
-Configuration sections for groups and ACEs allow to use loops to specify multiple, similar entries. In order to do this, a FOR statement has to be used in place of a group name. The FOR statement names a loop variable and lists the values to iterate over. All the children of the FOR element are repeated once per iteration and all group names and property values of child elements that contain the name of the loop variable within '${' and '}' have that expression substituted with the current value of the loop variable.
+The ACTool also supports [loops, conditional statements and permissions for anonymous](docs/AdvancedFeatures.md).
 
-For example, the following configuration element:
-
-```
-- FOR brand IN [ BRAND1, BRAND2, BRAND3 ]:
-
-    - content-${brand}-reader:
-
-       - name: 
-         isMemberOf: 
-         path: /home/groups/${brand}
-```
-
-Gets replaced with
-
-```
-    - content-BRAND1-reader:
-
-       - name: 
-         isMemberOf: 
-         path: /home/groups/BRAND1
-
-    - content-BRAND2-reader:
-
-       - name: 
-         isMemberOf: 
-         path: /home/groups/BRAND2
-
-    - content-BRAND3-reader:
-
-       - name: 
-         isMemberOf: 
-         path: /home/groups/BRAND3
-```
-
-### Nested Loops
-
-FOR loops can be nested to any level:
-
-```
-- for brand IN [ BRAND1, BRAND2 ]:
-
-    - content-${brand}-reader:
-
-       - name: 
-         isMemberOf: 
-         path: /home/groups/${brand}
-
-    - content-${brand}-writer:
-
-       - name: 
-         isMemberOf: 
-         path: /home/groups/${brand}
-         
-    - for mkt in [ MKT1, MKT2 ]:
-                       
-        - content-${brand}-${mkt}-reader:
-
-           - name: 
-             isMemberOf: 
-             path: /home/groups/${brand}/${mkt}
-
-        - content-${brand}-${mkt}-writer:
-
-           - name: 
-             isMemberOf: 
-             path: /home/groups/${brand}/${mkt}
-```
-
-This will create 12 groups:
-
-* content-BRAND1-reader
-* content-BRAND1-writer
-* content-BRAND1-MKT1-reader
-* content-BRAND1-MKT1-writer
-* content-BRAND1-MKT2-reader
-* content-BRAND1-MKT2-writer
-* content-BRAND2-reader
-* content-BRAND2-writer
-* content-BRAND2-MKT1-reader
-* content-BRAND2-MKT1-writer
-* content-BRAND2-MKT2-reader
-* content-BRAND2-MKT2-writer
-
-### Loops derived from content structure (since 1.8.x)
-
-For some use cases it is useful to dynamically derive the list of possible values from the content structure. FOR ... IN CHILDREN OF will loop over the children of the provided path (skipping 'jcr:content' nodes) and provide an object with the properties name, path, primaryType, jcr:content (a map of all properties of the respective node) and title (./jcr:content/jcr:title added to root map for convenience).
-
-```
-- FOR site IN CHILDREN OF /content/myPrj:
-
-    - content-reader-${site.name}:
-       - name: Content Reader ${site.title}
-         isMemberOf: 
-         path: /home/groups/${site.name}
-```
-
-
-### Conditional entries (since 1.8.x)
-
-When looping over content structures, entries can be applied conditionally using the "IF" keyword:
-
-```
-- FOR site IN CHILDREN OF /content/myPrj:
-
-    - content-reader-${site.name}:
-       - name: Content Reader ${site.title}
-         isMemberOf: 
-         path: /home/groups/${site.name}
-
-    IF ${endsWith(site.name,'-master')}:
-        - content-reader-master-${site.name}:
-           - name: Master Content Reader ${site.title}
-             isMemberOf: 
-             path: /home/groups/global
-```
-
-Expressions are evaluated using javax.el expression language. The following utility functions are made available to any EL expression used in yaml:
-
-- split(str,separator) 
-- join(array,separator)
-- subarray(array,startIndexInclusive,endIndexExclusive)
-- upperCase(str) 
-- lowerCase(str) 
-- substringAfter(str,separator) 
-- substringBefore(str,separator) 
-- substringAfterLast(str,separator) 
-- substringBeforeLast(str,separator) 
-- contains(str,fragmentStr) 
-- endsWith(str,fragmentStr) 
-- startsWith(str,fragmentStr) 
-
-## Configure permissions for anonymous (since 1.8.2)
-
-Normally it is ensured by validation that a configuration's group system is self-contained - this means out-of-the-box groups like ```contributor``` cannot be used. For registered users in the system this approach works well since either the users are manually assigned to groups (by a user admin) or the membership relationship is maintained by LDAP or SSO extensions. For the ```anonymous``` user on publish that is not logged in by definition, there is no hook that allows to assign it to a group in the AC Tools configuration. Therefore as an exception, it is allowed to use the user ```anonymous``` in the ```members``` attribute of a group configuration.
-  
 
 ## Validation
 
@@ -349,37 +212,6 @@ The ```*.yaml``` files are installed directly from the package content and respe
 
 Although it is not necessary that the YAML files are covered by the filter rules of the ```filter.xml```, this is recommended practice. That way you can see afterwards in the repository which YAML files have been processed. However if you would not let the ```filter.xml``` cover your YAML files, those files would still be processed by the installation hook.
     
-## AC Service
-    
-The main operation purpose of the AC service is the installation of ACE / group definitions from one or several configuration files to a CQ instance on the one hand or the creation of such files (dump) out of an existing configuration on the other hand. It offers possibilities like purging existing ACEs / principals from the instance before installing new ones, merging / adding new ACEs or performing a rollback to a previously saved state if needed. 
- 
-The configuration for ACEs principals and groups can be maintained in one file or in dedicated files.
- 
-The configurations are contained in textual files.These files get transferred to CRX usually via deployment. The service can be triggered by a JCR listener which reacts on node changes underneath a configurable path to detect a new configuration in the system, or by triggering the executing it via JMX.
- 
-Before installing a new configuration on an instance a validation of the data stored in the configuration file takes place. In case an issue gets detected the installation doesn't get performed.
-
-<img src="docs/images/ac-service.png">
-    
-## Dump service
-
-The dump Service is responsible for creating dumps which are accessible via JMX whiteboard. There are 2 kinds of dumps supported: path ordered- and principal ordered dumps.
-
-* path ordered dumps: here all ACEs in the dump are grouped by path thus representing a complete ACL. This kind of dump gets triggered by the method: pathBasedDump().
-* group based dumps: here all ACEs in the dump are grouped by their respective principal (group or user). This kind of dump gets triggered by the method: groupBasedDump().
-
-<img src="docs/images/dump-service.png">
-
-Every created dump can be watched directly in JMX and also gets saved in CRX under /var/statistics/achistory/dump_[Timestamp]. The number of dumps to be saved in CRX can be configured in the OSGi configuration of the dump service in the field: "Number of dumps to save" (see Screenshot)
-
-There are also 3 additional options available in the OSGi configuration of the dump service:
-
-* Include user in ACEs in dumps: if checked, all users which have ACEs directly set in the repository get added to the dump (ACEs in section "- ace_config:" and users in section "- user_config:")
-* filtered dump: if checked, all ACEs belonging to the cq actions: modifiy, create or delete which have a repGlob set don't get added to the dump. Per default they are omitted since they're automatically set within CQ if one of the action gets set and are not necessary to expicitly being set in a new configuration file.
-* include legacy ACEs in dump: if checked, legacy ACEs (ACEs of groups/users which can not be found under /home) also get added to the dump in an extra section called "legacy_aces" at the end of the dump. The order of ACEs listed there is the same as it is for the "valid" ACEs (path based or group based). If needed these ACEs can be manually deleted using the "purge_Authorizables" function by entering the respective principal name(s).
-
-Internal dumps which get created and used everytime an new AC installation takes place get also created by this service and contain always all ACEs (users and unfilteredACEs).
-
 ## AC (search) Query
 
 In order to exclude certain direct child nodes of the jcr:root node from the query (e.g. /home, since we don't want to have the rep: policy nodes of each user) to get all the rep: policy nodes in the system, these nodes can be configured. This configuration takes place in the OSGi configuration of the AcService ('/home', '/jcr:system' and '/tmp' are exclude by default). When a query is performed (e.g. during a new installation) , the results of the single queries performed on the nodes which are not excluded get assembled and returned as collective result for further processing.
@@ -392,21 +224,7 @@ If enabled each new upload of a projectspecific configuration file triggers the 
 
 ## JMX interface
 
-The JMX interface offers the possibility to trigger the functions offered by the ACE service. These are:
-
-* starting a new installation of the newest configuration files in CRX.
-* purging of ACLs (of a single node or recursively for all subnodes)
-* deletion of single ACEs
-* purging users/groups from the instance (including all related ACEs).
-* creation of dumps (ordered by path or by group)
-* showing of history logs created during the installation
-
-Also important status messages are shown here:
-
-* readiness for installation (if at least one configuration file is stored in CRX)
-* success status of the last installation
-* display of the newest installation files (incl. date information)
-* display of the paths of last 5 history logs saved in CTX and a success status of each of those installation
+The [Jmx interface](docs/Jmx.md) provides utility functions such as installing and dumping ACLs or showing the history. 
 
 ## History Service
 
