@@ -85,7 +85,6 @@ import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.installationhistory.impl.HistoryUtils;
 
-import com.day.cq.commons.Externalizer;
 
 @Service
 @Component(metatype = true, label = "AC Dump Service", description = "Service that creates dumps of the current AC configurations (groups&ACEs)")
@@ -323,15 +322,9 @@ public class DumpserviceImpl implements Dumpservice {
             Set<User> usersFromACEs = getUsersFromAces(mapOrder, session,
                     aclDumpMap);
             Set<AuthorizableConfigBean> userBeans = getUserBeans(usersFromACEs);
-
-            resourceResolver = resourceResolverFactory
-                    .getAdministrativeResourceResolver(null);
-            Externalizer externalizer = resourceResolver
-                    .adaptTo(Externalizer.class);
-            String serverUrl = externalizer.authorLink(resourceResolver, "");
-
+            
             return getConfigurationDumpAsString(aceDumpData, groupBeans,
-                    userBeans, mapOrder, serverUrl);
+                    userBeans, mapOrder);
         } catch (ValueFormatException e) {
             LOG.error("ValueFormatException in AceServiceImpl: {}", e);
         } catch (IllegalStateException e) {
@@ -340,14 +333,9 @@ public class DumpserviceImpl implements Dumpservice {
             LOG.error("IOException in AceServiceImpl: {}", e);
         } catch (RepositoryException e) {
             LOG.error("RepositoryException in AceServiceImpl: {}", e);
-        } catch (LoginException e) {
-            LOG.error("LoginException in AceServiceImpl: {}", e);
         } finally {
             if (session != null) {
                 session.logout();
-            }
-            if (resourceResolver != null) {
-                resourceResolver.close();
             }
         }
         return null;
@@ -473,13 +461,12 @@ public class DumpserviceImpl implements Dumpservice {
     @Override
     public String getConfigurationDumpAsString(AceDumpData aceDumpData,
             final Set<AuthorizableConfigBean> groupSet,
-            final Set<AuthorizableConfigBean> userSet, final int mapOrder,
-            final String serverUrl) throws IOException {
+            final Set<AuthorizableConfigBean> userSet, final int mapOrder) throws IOException {
         StringBuilder sb = new StringBuilder(20000);
 
-        // add creation date and URL of current author instance as first line
+        // add creation date as first line
         String dumpComment = bundleDescription + "\n# Dump created: "
-                + new Date() + " on: " + serverUrl;
+                + new Date();
 
         new CompleteAcDump(aceDumpData, groupSet, userSet, mapOrder,
                 dumpComment, this).accept(new AcDumpElementYamlVisitor(

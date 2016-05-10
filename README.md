@@ -7,7 +7,7 @@ The Access Control Tool for Adobe Experience Manager (ACTool) is a tool that sim
 
 Building the ACTool requires Java 7 and Maven 3.2.
 
-Installing ACTool requires CQ5.6.1 (min. SP2)/AEM 6.0/AEM 6.1.
+Installing ACTool requires CQ5.6.1 (min. SP2)/AEM 6.0/AEM 6.1/AEM 6.2.
 
 # Installation
 
@@ -81,7 +81,7 @@ Users can be configured in the same way as groups in the **user_config** section
 
 * the attribute "members" cannot be used (for obvious reasons)
 * the attribute "password" can be used for preset passwords (not allowed for system users)
-* the boolean attribute isSystemUser is used to create system users in AEM 6.1
+* the boolean attribute isSystemUser is used to create system users starting AEM 6.1
 * the attribute profileContent allows to provide docview xml that will reset the profile to the given structure after each run (since v1.8.2)
 * the attribute preferencesContent allows to provide docview xml that will reset the preferences node to the given structure after each run (since v1.8.2)
 

@@ -54,13 +54,12 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
         try {
             session = repository.loginAdministrative(null);
 
-
             Node node = session.getNode(pathOfChildrenOfClause);
-            
+
             NodeIterator childrenIt = node.getNodes();
-            while(childrenIt.hasNext()) {
+            while (childrenIt.hasNext()) {
                 Node childNode = (Node) childrenIt.next();
-                
+
                 if (childNode.getName().startsWith("jcr:")
                         || childNode.getName().startsWith("rep:")
                         || childNode.getName().startsWith("oak:")) {
@@ -98,8 +97,7 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
                 } catch (PathNotFoundException epnf) {
                     LOG.debug("Node " + node.getPath() + " does not have a jcr content node (legitimate for folders)");
                 }
-                
-                
+
                 results.add(childNodeObjectForEl);
             }
 
