@@ -17,6 +17,7 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Workspace;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
@@ -31,7 +32,6 @@ import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.day.cq.commons.jcr.JcrUtil;
 
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
@@ -83,9 +83,8 @@ public class AcHistoryServiceImpl implements AcHistoryService {
                     Node configurationRootNode = session
                             .getNode(configurationRootPath);
                     if (configurationRootNode != null) {
-                        persistInstalledConfigurations(historyNode,
+                        persistInstalledConfigurations(session.getWorkspace(),historyNode,
                                 configurationRootNode, history);
-                        session.save();
                     } else {
                         String message = "Couldn't find configuration root Node under path: "
                                 + configurationRootPath;
@@ -159,12 +158,10 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         return history;
     }
 
-    public void persistInstalledConfigurations(final Node historyNode,
+    public void persistInstalledConfigurations(final Workspace workspace,final Node historyNode,
             final Node configurationRootNode, AcInstallationHistoryPojo history) {
-
         try {
-            JcrUtil.copy(configurationRootNode, historyNode,
-                    INSTALLED_CONFIGS_NODE_NAME);
+            workspace.copy(configurationRootNode.getPath(), historyNode.getPath() + "/" + INSTALLED_CONFIGS_NODE_NAME);
         } catch (RepositoryException e) {
             String message = e.toString();
             history.addError(e.toString());
