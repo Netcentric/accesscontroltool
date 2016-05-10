@@ -32,7 +32,6 @@ import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
@@ -75,7 +74,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
                 String mergedAndProcessedConfig = history.getMergedAndProcessedConfig();
                 if (StringUtils.isNotBlank(mergedAndProcessedConfig)) {
                     JcrUtils.putFile(historyNode, "mergedConfig.yaml", "text/yaml",
-                        new ByteArrayInputStream(mergedAndProcessedConfig.getBytes()));
+                            new ByteArrayInputStream(mergedAndProcessedConfig.getBytes()));
                 }
 
                 session.save();
@@ -83,7 +82,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
                     Node configurationRootNode = session
                             .getNode(configurationRootPath);
                     if (configurationRootNode != null) {
-                        persistInstalledConfigurations(session.getWorkspace(),historyNode,
+                        persistInstalledConfigurations(session.getWorkspace(), historyNode,
                                 configurationRootNode, history);
                     } else {
                         String message = "Couldn't find configuration root Node under path: "
@@ -158,7 +157,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         return history;
     }
 
-    public void persistInstalledConfigurations(final Workspace workspace,final Node historyNode,
+    public void persistInstalledConfigurations(final Workspace workspace, final Node historyNode,
             final Node configurationRootNode, AcInstallationHistoryPojo history) {
         try {
             workspace.copy(configurationRootNode.getPath(), historyNode.getPath() + "/" + INSTALLED_CONFIGS_NODE_NAME);
@@ -237,7 +236,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
 
     private static Node persistPurgeAceHistory(final Session session,
             AcInstallationHistoryPojo history, final Node historyNode)
-            throws RepositoryException {
+                    throws RepositoryException {
 
         Node purgeHistoryNode = historyNode.addNode(
                 "purge_" + System.currentTimeMillis(),
