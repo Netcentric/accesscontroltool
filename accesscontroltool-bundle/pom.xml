@@ -168,7 +168,6 @@
               <artifactId>maven-bundle-plugin</artifactId>
               <configuration>
                 <instructions>
-                    <Import-Package>com.day.cq.commons.jcr;version="[5.6,7)",*</Import-Package>
                     <Embed-Dependency>el-api,jasper-el</Embed-Dependency>
                 </instructions>
                 
