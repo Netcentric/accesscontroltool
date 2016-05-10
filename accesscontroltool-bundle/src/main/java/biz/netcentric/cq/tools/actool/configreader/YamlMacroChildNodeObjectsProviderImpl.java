@@ -26,19 +26,17 @@ import javax.jcr.ValueFormatException;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
-import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.day.cq.commons.jcr.JcrConstants;
 
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 @Service
 @Component
 public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNodeObjectsProvider {
-
-    private static final String PN_JCR_TITLE = "jcr:title";
 
 	private static final Logger LOG = LoggerFactory.getLogger(YamlMacroChildNodeObjectsProviderImpl.class);
 
@@ -89,7 +87,7 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
                             jcrContentSubNode.put(prop.getName(), strVal);
 
                             // add the title also to root map to simplify access
-                            if (PN_JCR_TITLE.equals(prop.getName())) {
+                            if (JcrConstants.JCR_TITLE.equals(prop.getName())) {
                                 childNodeObjectForEl.put("title", strVal);
                             }
                         }
