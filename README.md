@@ -2,37 +2,44 @@ Access Control Tool for Adobe Experience Manager
 ================================================
 
 The Access Control Tool for Adobe Experience Manager (ACTool) is a tool that simplifies the specification and deployment of complex [Access Control Lists in AEM] (http://docs.adobe.com/docs/en/cq/current/administering/security.html#Access%20Control%20Lists%20and%20how%20they%20are%20evaluated).
+Instead of building a content package with actual ACL nodes you can write simple configuration files and deploy them with your content packages.
 
-# Prerequisites
+Features:
+* compatible with CQ 5.6.1 and AEM 6.x
+* easy-to-read Yaml configuration file format
+* run mode support
+* automatic installation with install hook
+* cleans obsolete ACL entries when configuration is changed
+* ACLs can be dumped
+* stores history of changes
 
-Building the ACTool requires Java 7 and Maven 3.2.
+# Requirements
 
-Installing ACTool requires CQ5.6.1 (min. SP2)/AEM 6.0/AEM 6.1.
+The ACTool requires Java 7 and CQ5.6.1 (min. SP2)/AEM 6.0/AEM 6.1.
 
 # Installation
 
-A full build of ACTool can be executed by running:
+The package is available via [Maven](https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-package/). Install it e.g. via CRX package manager.
 
 ```
-mvn clean install
+    <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
+    <artifactId>accesscontroltool-package</artifactId>
 ```
 
-This command, if successful, will create a CQ Package as a ZIP file inside accesscontroltool-package/target called accesscontroltool-package-<VERSION>.zip.
 
-The package can be installed using the AEM Package Manager or directly from the command line, assuming AEM is running on host localhost, port 4502, using the command:
-
-```
-mvn -PautoInstallPackage install
-```
 
 ## AEM6.x/Oak
 
-The `oakindex-package` contains an optimized Oak index to cover all queries being issued by the Access Control Tool. To build (and optionally deploy) the content-package use the Maven profile oakindex. This package is only compatible with Oak and even there it is optional (as it will only speed up queries).
+In case you run AEM 6 with Oak (required as of 6.1) we recommend to install the Oak index package.
+It will speed up installation of ACLs.
 
-To use the package, run all commands with profile `oakindex`, e.g.
- ```
-mvn clean install -Poakindex
- ```
+You can get the ZIP file via Maven. Install it e.g. via CRX package manager.
+
+```
+    <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
+    <artifactId>accesscontroltool-oakindex-package</artifactId>
+```
+
 
 # Configuration File Format
 
@@ -426,3 +433,10 @@ For any of these purge actions a separate purge history (node) containing all lo
 curl -sS --retry 1 -u ${CQ_ADMINUSER}:${CQ_ADMINPW} -X POST "http://${CQ_SERVER}:${CQ_PORT}/system/console/jmx/biz.netcentric.cq.tools.actool:id='ac+installation'/op/execute/"
 ```
 
+## Building the packages from source
+
+If needed you can [build ACTool yourself](docs/BuildPackage.md).
+
+## License
+
+The ACTool is licensed under the [Eclipse Public License - v 1.0](LICENSE.txt).
