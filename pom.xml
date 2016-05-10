@@ -442,6 +442,13 @@
             </modules>
         </profile>
 
+        <profile>
+            <id>exampleconfig</id>
+            <modules>
+                <module>accesscontroltool-exampleconfig-package</module>
+            </modules>
+        </profile>
+
     </profiles>
 
 </project>
