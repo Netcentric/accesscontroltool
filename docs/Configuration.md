@@ -2,14 +2,17 @@
 
 For better human readability and easy editing the ACL configuration files use the YAML format.
 
+You can split your configuration to multiple files and directories. See also [best practises](BestPractises.md). Each folder can include one or more Yaml files ("*.yaml").
+The file format is the same for all files.
+
 
 ## Storage of configurations in CRX
 
-Example showing 3 separate project-specific configuration sub-nodes each containing one or more configuration files:
+This example shows three separate project specific configuration subnodes (multipleFiles, runmodes, simple) each containing one or more configuration files:
 
 <img src="images/crx-storage.png">
 
-The project specific configuration files are stored in CRX under a node which can be set in the OSGi configuration of the AcService (system/console/configMgr). Each folder underneath this location may contain `*.yaml` files that contain AC configuration. The folder structure gets created by deployment or manually in CRX.
+The project specific configuration files are stored in CRX under a node which can be set in the OSGi configuration of the AcService (system/console/configMgr). Each folder underneath this location may contain `*.yaml` files that contain AC configuration. You can use a normal content package to deploy the files.
 
 ## Run modes 
 
