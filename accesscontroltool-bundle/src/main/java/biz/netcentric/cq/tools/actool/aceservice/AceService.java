@@ -60,6 +60,13 @@ public interface AceService {
 
     public String purgeAuthorizablesFromConfig();
 
+    /** Common entry point for JMX and install hook.
+     * 
+     * @param session
+     * @param history
+     * @param newestConfigurations
+     * @param authorizableInstallationHistorySet
+     * @throws Exception */
     public void installNewConfigurations(Session session,
             AcInstallationHistoryPojo history,
             Map<String, String> newestConfigurations, Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet)

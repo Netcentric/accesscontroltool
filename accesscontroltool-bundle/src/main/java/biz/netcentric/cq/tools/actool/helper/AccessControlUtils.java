@@ -10,9 +10,7 @@ package biz.netcentric.cq.tools.actool.helper;
 
 import java.security.Principal;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -35,13 +33,8 @@ import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlManager;
-import org.apache.jackrabbit.api.security.principal.PrincipalManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
-
-import com.day.cq.security.util.CqActions;
 
 /**
  * This class provides common access control related utilities.
@@ -49,11 +42,11 @@ import com.day.cq.security.util.CqActions;
  */
 public class AccessControlUtils {
 
+    private static final Logger LOG = LoggerFactory.getLogger(AccessControlUtils.class);
+
     private AccessControlUtils() {
     }
 
-    private static final Logger LOG = LoggerFactory
-            .getLogger(AccessControlUtils.class);
 
     /**
      * Retrieves the {@link Privilege}s from the specified privilege names.
@@ -338,9 +331,7 @@ public class AccessControlUtils {
         try {
             existing = acMgr.getPolicies(path);
         } catch (PathNotFoundException e) {
-            AcHelper.LOG
-                    .warn("No node could be found under: {}. Application of ACL for that node cancelled!",
-                            path);
+            LOG.debug("No node could be found under: {}. Application of ACL for that node cancelled!", path);
         }
         if (existing != null) {
             for (AccessControlPolicy p : existing) {
