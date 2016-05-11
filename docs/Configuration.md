@@ -5,7 +5,7 @@ For better human readability and easy editing the ACL configuration files use th
 You can split your configuration to multiple files and directories. See also [best practises](BestPractises.md). Each folder can include one or more Yaml files ("*.yaml").
 The file format is the same for all files.
 
-You can find some examples in [example config package](../accesscontroltool-exampleconfig-package/src/main/jcr_root/apps/netcentric/actool-exampleconfig/Readme.md).
+You can find some examples in [example config package](../accesscontroltool-exampleconfig-package/src/main/jcr_root/apps/netcentric/actool-exampleconfig).
 
 
 ## Storage of configurations in CRX
