@@ -10,9 +10,11 @@ package biz.netcentric.cq.tools.actool.installationhistory;
 
 import java.sql.Timestamp;
 import java.text.DateFormat;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -154,7 +156,7 @@ public class AcInstallationHistoryPojo {
 
         sb.append("\n" + getMessageHistory() + "\n");
 
-        sb.append("\n" + "Execution time: " + executionTime + " ms\n");
+        sb.append("\n" + "Execution time: " + msHumanReadable(executionTime) + "\n");
 
         if (rendition.equals(Rendition.HTML)) {
             if (success) {
@@ -204,6 +206,33 @@ public class AcInstallationHistoryPojo {
             }
         }
         return sb.toString();
+    }
+
+    /** Utility method to return any magnitude of milliseconds in a human readable format using the appropriate time unit (ms, sec, min)
+     * depending on the magnitude of the input.
+     * 
+     * @param millis milliseconds
+     * @return a string with a number and a unit */
+    public static String msHumanReadable(final long millis) {
+
+        double number = millis;
+        final String[] units = new String[] { "ms", "sec", "min", "h", "days" };
+        final double[] divisors = new double[] { 1000, 60, 60, 24 };
+
+        int magnitude = 0;
+        do {
+            double currentDivisor = divisors[Math.min(magnitude, divisors.length - 1)];
+            if (number < currentDivisor) {
+                break;
+            }
+            number /= currentDivisor;
+            magnitude++;
+        } while (magnitude < units.length - 1);
+        NumberFormat format = NumberFormat.getNumberInstance(Locale.UK);
+        format.setMinimumFractionDigits(0);
+        format.setMaximumFractionDigits(1);
+        String result = format.format(number) + units[magnitude];
+        return result;
     }
 
 }

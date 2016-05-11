@@ -8,6 +8,8 @@
  */
 package biz.netcentric.cq.tools.actool.aceservice.impl;
 
+import static biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo.msHumanReadable;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -176,7 +178,7 @@ public class AceServiceImpl implements AceService {
                     String message = "deleted all ACEs of authorizable "
                             + existingAce.getPrincipalName()
                             + " from ACL of path: " + existingAce.getJcrPath();
-                    LOG.info(message);
+                    LOG.debug(message);
                     history.addVerboseMessage(message);
                 }
             }
@@ -192,7 +194,9 @@ public class AceServiceImpl implements AceService {
                 .getPathBasedAceMap(aceMapFromConfig,
                         AcHelper.ACE_ORDER_DENY_ALLOW);
 
-        LOG.info("--- start installation of access control configuration ---");
+        String msg = "*** Starting installation of "+aceMapFromConfig.size()+" ACLs in content nodes...";
+        LOG.info(msg);
+        history.addMessage(msg);
         AcHelper.installPathBasedACEs(pathBasedAceMapFromConfig, session, history);
     }
 
@@ -203,7 +207,9 @@ public class AceServiceImpl implements AceService {
                     throws RepositoryException, Exception {
         // --- installation of Authorizables from configuration ---
 
-        LOG.info("--- start installation of Authorizable Configuration ---");
+        String msg = "*** Starting installation of "+authorizablesMapfromConfig.size()+" authorizables...";
+        LOG.info(msg);
+        history.addMessage(msg);
 
         // create own session for installation of authorizables since these have
         // to be persisted in order
@@ -235,17 +241,23 @@ public class AceServiceImpl implements AceService {
             }
         }
 
-        String message = "Finished installation of groups configuration without errors";
+        String message = "Finished installation of authorizables without errors";
         history.addMessage(message);
         LOG.info(message);
     }
 
-    /** executes the installation of the existing configurations */
+    /** Executes the installation of the existing configurations - entry point for JMX execute() method. */
     @Override
     public AcInstallationHistoryPojo execute() {
 
-        Session session = null;
         AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
+        if (isExecuting) {
+            history.addError("AC Tool is already executing.");
+            return history;
+        }
+
+        Session session = null;
+
         Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet = new LinkedHashSet<AuthorizableInstallationHistory>();
 
         try {
@@ -282,42 +294,57 @@ public class AceServiceImpl implements AceService {
             }
         } finally {
             session.logout();
-            isExecuting = false;
-            acHistoryService.persistHistory(history, configurationPath);
-
         }
         return history;
     }
 
+    /** Common entry point for JMX and install hook. */
     @Override
     public void installNewConfigurations(Session session,
             AcInstallationHistoryPojo history,
-            Map<String, String> newestConfigurations, Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet)
+            Map<String, String> currentConfiguration, Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet)
                     throws Exception {
 
-        StopWatch sw = new StopWatch();
-        sw.start();
-        isExecuting = true;
+        String origThreadName = Thread.currentThread().getName();
+        try {
+            Thread.currentThread().setName(origThreadName + "-ACTool-Config-Worker");
+            StopWatch sw = new StopWatch();
+            sw.start();
+            isExecuting = true;
+            String message = "*** Applying AC Tool Configuration...";
+            LOG.info(message);
+            history.addMessage(message);
 
-        if (newestConfigurations != null) {
+            if (currentConfiguration != null) {
 
-            List mergedConfigurations = configurationMerger.getMergedConfigurations(newestConfigurations, history, configReader);
+                List mergedConfigurations = configurationMerger.getMergedConfigurations(currentConfiguration, history, configReader);
 
-            installMergedConfigurations(history, session,
-                    authorizableInstallationHistorySet,
-                    mergedConfigurations);
+                installMergedConfigurations(history, session,
+                        authorizableInstallationHistorySet,
+                        mergedConfigurations);
 
-            // if everything went fine (no exceptions), save the session
-            // thus persisting the changed ACLs
-            history.addMessage("finished (transient) installation of access control configuration without errors!");
-            session.save();
-            history.addMessage("persisted changes of ACLs");
+                // if everything went fine (no exceptions), save the session
+                // thus persisting the changed ACLs
+                history.addVerboseMessage(
+                        "Finished (transient) installation of access control configuration without errors, saving now...");
+                session.save();
+                history.addMessage("Persisted changes of ACLs");
+            }
+            sw.stop();
+            long executionTime = sw.getTime();
+            LOG.info("Successfully applied AC Tool configuration in "+ msHumanReadable(executionTime));
+            history.setExecutionTime(executionTime);
+        } finally {
+            try {
+                acHistoryService.persistHistory(history, configurationPath);
+            } catch (Exception e) {
+                LOG.warn("Could not persist history, e=" + e, e);
+            }
+            
+            Thread.currentThread().setName(origThreadName);
+            isExecuting = false;
         }
-        sw.stop();
-        long executionTime = sw.getTime();
-        LOG.info("installation of AccessControlConfiguration took: {} ms",
-                executionTime);
-        history.setExecutionTime(executionTime);
+
     }
 
     private void installMergedConfigurations(
@@ -326,12 +353,13 @@ public class AceServiceImpl implements AceService {
             Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet,
             List mergedConfigurations) throws ValueFormatException,
             RepositoryException, Exception {
-        String message = "start installation of merged configurations";
-        LOG.info(message);
-        history.addMessage(message);
+
+        String message = "Starting installation of merged configurations...";
+        LOG.debug(message);
+        history.addVerboseMessage(message);
 
         Map<String, Set<AceBean>> repositoryDumpAceMap = null;
-        LOG.info("start building dump from repository");
+        LOG.debug("Building dump from repository (to compare delta with config to be installed)");
         repositoryDumpAceMap = dumpservice.createAclDumpMap(
                 session, AcHelper.PATH_BASED_ORDER,
                 AcHelper.ACE_ORDER_NONE,
@@ -340,6 +368,7 @@ public class AceServiceImpl implements AceService {
         installConfigurationFromYamlList(mergedConfigurations, history,
                 session, authorizableInstallationHistorySet,
                 repositoryDumpAceMap);
+
     }
 
     @Override

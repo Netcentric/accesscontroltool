@@ -68,7 +68,7 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
             }
 
             if (isRelevantConfiguration(entry.getName(), configFileOrDir.getName(), currentRunModes)) {
-                LOG.info("Reading YAML file {}", entry.getName());
+                LOG.debug("Found relevant YAML file {}", entry.getName());
                 configs.put(entry.getPath(), entry.getContentAsString());
             }
 
@@ -195,7 +195,7 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
                 IOUtils.copy(configInputStream, writer, "UTF-8");
                 String configData = writer.toString();
                 if (StringUtils.isNotBlank(configData)) {
-                    LOG.info("found configuration data of node: {}", node.getPath());
+                    LOG.debug("found configuration data of node: {}", node.getPath());
                     return configData;
                 } else {
                     throw new IllegalStateException("File " + node.getPath() + " is empty!");
@@ -248,7 +248,7 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
 
         @Override
         public String getContentAsString() throws Exception {
-            LOG.info("Reading YAML file {}", getPath());
+            LOG.debug("Reading YAML file {}", getPath());
             InputStream input = archive.getInputSource(entry).getByteStream();
             if (input == null) {
                 throw new IllegalStateException("Could not get input stream from entry " + getPath());

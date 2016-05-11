@@ -81,7 +81,7 @@ public class YamlConfigReader implements ConfigReader {
         final List<LinkedHashMap> aclList = (List<LinkedHashMap>) getConfigSection(Constants.ACE_CONFIGURATION_KEY, aceConfigData);
 
         if (aclList == null) {
-            LOG.error("ACL configuration not found in YAML configuration file");
+            LOG.debug("ACL configuration not found in this YAML configuration file");
             return null;
         }
 
@@ -98,7 +98,7 @@ public class YamlConfigReader implements ConfigReader {
         final List<LinkedHashMap> authorizableList = (List<LinkedHashMap>) getConfigSection(Constants.GROUP_CONFIGURATION_KEY, yamlList);
 
         if (authorizableList == null) {
-            LOG.error("Group configuration not found in YAML configuration file");
+            LOG.debug("Group configuration not found in this YAML configuration file");
             return null;
         }
 
@@ -141,12 +141,9 @@ public class YamlConfigReader implements ConfigReader {
             final String currentPrincipal = (String) currentMap.keySet().iterator().next();
 
             if (!alreadyProcessedGroups.add(currentPrincipal)) {
-                throw new IllegalArgumentException(
-                        "There is more than one group definition for group: "
-                                + currentPrincipal);
+                throw new IllegalArgumentException("There is more than one group definition for group: " + currentPrincipal);
             }
-            LOG.info("start reading group configuration");
-            LOG.info("Found principal: {} in config", currentPrincipal);
+            LOG.debug("Found principal: {} in config", currentPrincipal);
 
             final LinkedHashSet<AuthorizableConfigBean> tmpSet = new LinkedHashSet<AuthorizableConfigBean>();
             principalMap.put(currentPrincipal, tmpSet);
@@ -189,13 +186,11 @@ public class YamlConfigReader implements ConfigReader {
             }
             for (final Map<String, List<Map<String, ?>>> currentPrincipalAceMap : aceYamlList) {
 
-                final String principalName = currentPrincipalAceMap.keySet()
-                        .iterator().next();
+                final String principalName = currentPrincipalAceMap.keySet().iterator().next();
 
                 final List<Map<String, ?>> aceDefinitions = currentPrincipalAceMap.get(principalName);
 
-                LOG.info("start reading ACE configuration of authorizable: {}",
-                        principalName);
+                LOG.debug("start reading ACE configuration of authorizable: {}", principalName);
 
                 // if current principal is not yet in map, add new key and empty
                 // set for storing the pricipals ACE beans
