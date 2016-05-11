@@ -31,7 +31,7 @@ The package is available via [Maven](https://repo1.maven.org/maven2/biz/netcentr
 In case you run AEM 6 with Oak (required as of 6.1) we recommend to install the Oak index package.
 It will speed up installation of ACLs.
 
-You can get the ZIP file via [Maven](https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-package/). Install it e.g. via CRX package manager.
+You can get the ZIP file via [Maven](https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-oakindex-package/). Install it e.g. via CRX package manager.
 
 ```
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
@@ -54,7 +54,7 @@ There are multiple options to [apply the ACL entries](docs/ApplyConfig.md) (e.g.
 
 The [JMX interface](docs/Jmx.md) provides utility functions such as installing and dumping ACLs or showing the history. 
 
-## History Service
+## History service
 
 A history object collects messages, warnings, and also an exception in case something goes wrong. This history gets saved in CRX under /var/statistics/achistory. The number of histories to be saved can be configured in the history service.
 

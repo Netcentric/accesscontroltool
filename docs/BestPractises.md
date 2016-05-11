@@ -10,7 +10,11 @@ In case groups are shared between projects you should create a common package.
 
 Create multiple folders for e.g. service users, generic role definitions and actual roles that are assigned to users. This will help you to find the place where to make changes.
 
+## Use one package for all environments
+
+There is no need to setup multiple content packages to install the ACTool config files in multiple environments. You can use run modes in case there are differences between environments.
 
 ## Create demo users with test content
 
 Since you can also create users it makes perfect sense to add some demo users in your test content package. This way you always have a set of defined users with group permissions installed. Of course, test content must not be installed on production to have no security problem.
+
