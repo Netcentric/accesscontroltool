@@ -1,0 +1,17 @@
+- group_config:
+
+    - testgroup2-tags:
+
+       - name: Test group 2 for tag management
+         isMemberOf: 
+         members: 
+         path: t
+
+- ace_config:
+
+    - testgroup2-tags:
+
+       - path: /etc/tags
+         permission: allow
+         actions: read
+         privileges: 

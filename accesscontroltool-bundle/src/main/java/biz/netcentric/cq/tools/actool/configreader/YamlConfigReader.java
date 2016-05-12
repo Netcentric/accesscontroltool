@@ -40,7 +40,7 @@ import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
 @Service
-@Component(metatype = true, label = "AC Yaml Config Reader", description = "Service that installs groups & ACEs according to textual configuration files")
+@Component(label = "AC Yaml Config Reader", description = "Service that installs groups & ACEs according to textual configuration files")
 public class YamlConfigReader implements ConfigReader {
     private static final Logger LOG = LoggerFactory.getLogger(YamlConfigReader.class);
 
@@ -128,7 +128,7 @@ public class YamlConfigReader implements ConfigReader {
 
     private Map<String, Set<AuthorizableConfigBean>> getAuthorizablesMap(
             List<LinkedHashMap> yamlMap, final AuthorizableValidator authorizableValidator, boolean isGroupSection)
-                    throws AcConfigBeanValidationException {
+            throws AcConfigBeanValidationException {
         final Set<String> alreadyProcessedGroups = new HashSet<String>();
         final Map<String, Set<AuthorizableConfigBean>> principalMap = new LinkedHashMap<String, Set<AuthorizableConfigBean>>();
 
@@ -334,7 +334,6 @@ public class YamlConfigReader implements ConfigReader {
 
         authorizableConfigBean.setPassword(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_PASSWORD));
-
 
         authorizableConfigBean.setProfileContent(getMapValueAsString(
                 currentPrincipalDataMap, USER_CONFIG_PROFILE_CONTENT));
