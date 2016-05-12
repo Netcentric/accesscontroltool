@@ -20,6 +20,12 @@ The project specific configuration files are stored in CRX under a node which ca
 
 In general the parent node may specify required Sling run modes being separated by a dot (```.```). Folder names can contain runmodes in the same way as OSGi configurations ([installation of OSGi bundles through JCR packages in Sling](http://sling.apache.org/documentation/bundles/jcr-installer-provider.html)) using a `.` (e.g. `myproject.author` will only become active on author). Additionally, multiple runmodes combinations can be given separated by comma to avoid duplication of configuration (e.g. `myproject.author.test,author.dev` will be active on authors of dev and test environment only).
 
+Examples:
+
+* project.author: runs on "author" run mode only
+* project.author.dev: runs only when run modes "author" and "dev" are present
+* project.author.test,author.dev: requires run mode "author" and either "test" or "dev" to be present
+
 ## Overall structure a of an AC configuration file
 
 <img src="images/configuration-file-structure.png">
@@ -32,15 +38,15 @@ A authorizable record in the configuration file starts with the principal id fol
 
 ```
 [Groupd Id]
-     - name: groupname (optional, if empty groupd id is taken)
-     - isMemberOf: comma separated list of other groups
+     - name: group name (optional, if empty group id is taken)
+     - isMemberOf: comma separated list of other groups (optional)
      - members: comma separated list of groups that are member of this group
      - description: (optional, description)
      - path: (optional, path of the group in JCR)
      - migrateFrom: (optional, a group name assigned member users are taken over from, since v1.7)     
 ```
 
-Example
+Example:
 
 ```
 isp-editor      
@@ -48,11 +54,13 @@ isp-editor
    - members: editor
 ```
 
-If the isMemberOf property of a group contains a group which is not yet installed in the repository, this group gets created and its rep:members property gets filled accordingly. if another configuration gets installed having a actual definition for that group the data gets merged into the already existing one.
+If the isMemberOf property of a group contains a group which is not yet installed in the repository, this group gets created and its rep:members property gets filled accordingly. If another configuration gets installed having a actual definition for that group the data gets merged into the already existing one.
 
 The members property contains a list of groups where this group is added as isMemberOf.
 
-The property 'migrateFrom' allows to migrate a group name without loosing their members (members of the group given in migrateFrom are taken over and the source=old group deleted afterwards). This property is only to be used temporarily (usually only included in one released version that travels all environments, once all groups are migrated the config should be removed). If not set (the default) nothing happens. If the property points to a group that does not exist (anymore), the property is ignored.
+### Group migration
+
+The property 'migrateFrom' allows to migrate a group name without loosing their members. Members of the group given in migrateFrom are taken over and the source/old group is deleted afterwards. This property is only to be used temporarily. Usually, it is only included in one released version that travels all environments. Once all groups are migrated the migrateFrom property should be removed. If the property points to a group that does not exist (anymore) the property is ignored.
 
 ## Configuration of users
 
@@ -60,15 +68,29 @@ In general it is best practice to not generate regular users by the AC Tool but 
 
 Users can be configured in the same way as groups in the **user_config** section. The following properties are different to groups (all optional):
 
-* the attribute "members" cannot be used (for obvious reasons)
-* the attribute "password" can be used for preset passwords (not allowed for system users)
-* the boolean attribute isSystemUser is used to create system users starting AEM 6.1
-* the attribute profileContent allows to provide docview xml that will reset the profile to the given structure after each run (since v1.8.2)
-* the attribute preferencesContent allows to provide docview xml that will reset the preferences node to the given structure after each run (since v1.8.2)
+```
+[User Id]
+     - name: user name (optional, if empty user id is taken)
+     - isMemberOf: comma separated list of groups (optional)
+     - description: (optional, description)
+     - path: (optional, path of the group in JCR)
+     - isSystemUser: the created user is a system user (AEM 6.1 and later) (default: false, optional)
+     - password: can be used to preset passwords (not allowed for system users) (optional)
+     - profileContent: allows to provide docview xml that will reset the profile to the given structure after each run (optional, since v1.8.2)
+     - preferencesContent: allows to provide docview xml that will reset the preferences node to the given structure after each run (optional, since v1.8.2)
+```
+
+Example:
+
+```
+demo-author      
+   - isMemberOf: myauthors
+   - password: secret
+```
 
 ## Configuration of ACEs
 
-The configurations are done per principal followed by indented informations which comprise of config data which represents the settings per ACE. This data includes
+The configurations are done per principal followed by indented settings for each ACE. This data includes
 
 property | comment | required
 --- | --- | ---
@@ -131,7 +153,7 @@ All important steps performed by the service as well as all error/warning messag
 
 ## Validation
 
-First the validation of the different configuration lines is performed based on regular expressions and gets applied while reading the file. Further validation consists of checking paths for existence as well as for double entries, checks for conflicting ACEs (e.g. allow and deny for same actions on same node), checks whether principals are existing under home. If an invalid parameter or aforementioned issue gets detected, the reading gets aborted and an appropriate error message gets append in the installation history and log.
+First the validation of the different configuration lines is performed and gets applied while reading the file. Further validation consists of checking paths for existence as well as for double entries, checks for conflicting ACEs (e.g. allow and deny for same actions on same node), checks whether principals are existing under /home. If an issue is detected the reading is aborted and an appropriate error message is appended to the installation history and log.
 
-If issues occur during the application of the configurations in CRX the installation has to be aborted and the previous state has to stay untouched! Therefore the session used for the installation only gets saved if no exceptions occured thus persisting the changes.
+If issues occur during the application of the configurations in CRX the installation has to be aborted and the previous state has to stay untouched. Therefore the session used for the installation only gets saved if no issues occurred thus persisting the changes.
 
