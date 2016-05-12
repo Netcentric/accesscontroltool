@@ -44,26 +44,24 @@ You can get the ZIP file via [Maven](https://repo1.maven.org/maven2/biz/netcentr
 
 You need to setup [Yaml configuration files](docs/Configuration.md) to specify your users, groups and ACL entries. See also the [best practices](docs/BestPractices.md) for hints on structuring.
 
-## Advanced configuration options
-
-The ACTool also supports [loops, conditional statements and permissions for anonymous](docs/AdvancedFeatures.md).
+There are also some [advanced configuration options](docs/AdvancedFeatures.md) supported such as loops, conditional statements and permissions for anonymous.
 
 # Applying the ACL entries
 
 There are multiple options to [apply the ACL entries](docs/ApplyConfig.md) (e.g. install hook, JMX and upload listener) to your target system.
 
-## JMX interface
+# JMX interface
 
 The [JMX interface](docs/Jmx.md) provides utility functions such as installing and dumping ACLs or showing the history. 
 
-## History service
+# History service
 
 A history object collects messages, warnings, and also an exception in case something goes wrong. This history gets saved in CRX under /var/statistics/achistory. The number of histories to be saved can be configured in the history service.
 
-## Building the packages from source
+# Building the packages from source
 
 If needed you can [build the ACTool yourself](docs/BuildPackage.md).
 
-## License
+# License
 
 The ACTool is licensed under the [Eclipse Public License - v 1.0](LICENSE.txt).
