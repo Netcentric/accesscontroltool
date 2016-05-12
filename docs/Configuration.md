@@ -34,7 +34,7 @@ Every configuration file comprises a group section where groups and their member
 
 ## Configuration of groups
 
-A authorizable record in the configuration file starts with the principal id followed by some indented data records containing properties like name/description and group membership:
+Groups are specified in the **group_config** A group record in the configuration file starts with the principal id followed by some indented data records containing properties like name/description and group membership:
 
 ```
 [Groupd Id]
@@ -49,9 +49,16 @@ A authorizable record in the configuration file starts with the principal id fol
 Example:
 
 ```
-isp-editor      
-   - isMemberOf: fragment-restrict-for-everyone,fragment-allow-nst
-   - members: editor
+- group_config:
+
+  - myeditors:
+    - isMemberOf: mystaff
+    - members: editor
+
+  - system-read:
+    - isMemberOf: 
+    - description: system users with read access
+    - members: system-reader
 ```
 
 If the isMemberOf property of a group contains a group which is not yet installed in the repository, this group gets created and its rep:members property gets filled accordingly. If another configuration gets installed having a actual definition for that group the data gets merged into the already existing one.
@@ -66,7 +73,7 @@ The property 'migrateFrom' allows to migrate a group name without loosing their 
 
 In general it is best practice to not generate regular users by the AC Tool but use other mechanism (e.g. LDAP) to create users. However, it can be useful to create system users (e.g. for replication agents or OSGi service authentiation) or test users on staging environments.
 
-Users can be configured in the same way as groups in the **user_config** section. The following properties are different to groups (all optional):
+Users can be configured in the same way as groups in the **user_config** section.
 
 ```
 [User Id]
@@ -83,10 +90,20 @@ Users can be configured in the same way as groups in the **user_config** section
 Example:
 
 ```
-demo-author      
-   - isMemberOf: myauthors
-   - password: secret
+- user_config:
+
+  - editor:
+    - isMemberOf: myeditors
+    - password: secret
+
+  - system-reader:
+    - name: 
+    - isMemberOf: system-read
+    - path: s
+    - isSystemUser: true
 ```
+
+Group memberships can be set on user entry or group entry or both.
 
 ## Configuration of ACEs
 
