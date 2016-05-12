@@ -45,3 +45,49 @@ Since globbing expressions get implicitly applied to child nodes they are not di
 ## Remember that ACL evaluation slows down the system responsiveness
 
 The longer the list of ACEs get the longer the permission evaluation takes place. Therefore, try to keep the list short.
+
+## White listing nodes
+
+There are cases where you want to deny access to a node's children by default and only allow access to specific children. This requirement is quite common for /content.
+You can achieve this by using globbing. In the example below /content is denied for all users in fragment-restrict-for-everyone. But this will not only deny access to the child nodes but also to /content itself. So we need two more rules:
+
+* allow to /content with repGlob "": This will allow access to the /content node itself ("" as repGlob means just this node)
+* allow to /content with repGlob "jcr:*": This is needed e.g. for site admin since it needs to read the jcr:primaryType property.
+
+This will allow to see /content without its children.
+
+In a second group (fragment-project1) you can then allow to read the child node /content/project1.
+
+
+```
+    - fragment-restrict-for-everyone:
+
+       - path: /content
+         permission: deny
+         actions: 
+         privileges: jcr:read,jcr:readAccessControl
+         repGlob: 
+
+       - path: /content
+         permission: allow
+         actions: 
+         privileges: jcr:read,jcr:readAccessControl
+         repGlob: ""
+
+       - path: /content
+         permission: allow
+         actions: 
+         privileges: jcr:read,jcr:readAccessControl
+         repGlob: /jcr:*
+
+    - fragment-project1:
+
+       - path: /content/project1
+         permission: allow
+         actions: 
+         privileges: jcr:read,jcr:readAccessControl
+         repGlob: 
+
+```
+
+
