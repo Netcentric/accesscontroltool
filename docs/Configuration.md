@@ -53,12 +53,12 @@ Example:
 
   - myeditors:
     - isMemberOf: mystaff
-    - members: editor
+      members: editor
 
   - system-read:
     - isMemberOf: 
-    - description: system users with read access
-    - members: system-reader
+      description: system users with read access
+      members: system-reader
 ```
 
 If the isMemberOf property of a group contains a group which is not yet installed in the repository, this group gets created and its rep:members property gets filled accordingly. If another configuration gets installed having a actual definition for that group the data gets merged into the already existing one.
@@ -94,13 +94,13 @@ Example:
 
   - editor:
     - isMemberOf: myeditors
-    - password: secret
+      password: secret
 
   - system-reader:
-    - name: 
-    - isMemberOf: system-read
-    - path: s
-    - isSystemUser: true
+    - name: system-reader
+      isMemberOf: system-read
+      path: s
+      isSystemUser: true
 ```
 
 Group memberships can be set on user entry or group entry or both.
@@ -140,28 +140,30 @@ Cq actions and jcr: privileges can be mixed. If jcr: privileges are already cove
 Example:
 
 ```
-fragment-allow:
+- ace_config:
+
+  - fragment-allow:
+
+    - path: /content/myproject
+      permission: allow
+      actions: read,modify,create,delete,acl_read,acl_edit,replicate
+      repGlob: */jcr:content*
+
+    - path: '/content/myproject/*/articles'
+      permission: allow
+      actions: read,write
+      privileges:
  
-     - path: /content/isp
-       permission: allow
-       actions: read,modify,create,delete,acl_read,acl_edit,replicate
-       repGlob: */jcr:content*
- 
-     - path: '/content/isp/*/articles'
-       permission: allow
-       actions: read,write
-       privileges:
- 
-     - path: /content/intranet
-       permission: allow
-       actions: read,write
-       privileges: crx:replicate
- 
- fragment-deny:
- 
-     - path: /
-       permission: deny
-       actions: modify,create,delete,acl_read,acl_edit,replicate
+    - path: /content/mydemoproject
+      permission: allow
+      actions: read,write
+      privileges: crx:replicate
+
+  - fragment-deny:
+
+    - path: /
+      permission: deny
+      actions: modify,create,delete,acl_read,acl_edit,replicate
 ```
 
 In case the configuration file contains ACEs for groups which are not present in the current configuration no installation takes place and an appropriate error message gets displayed in the history log.
