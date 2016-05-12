@@ -1,4 +1,4 @@
-# Best Practises
+# Best Practices
 
 ## Split files by project
 

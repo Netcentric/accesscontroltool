@@ -1,7 +1,7 @@
 Access Control Tool for Adobe Experience Manager
 ================================================
 
-The Access Control Tool for Adobe Experience Manager (ACTool) is a tool that simplifies the specification and deployment of complex [Access Control Lists in AEM] (http://docs.adobe.com/docs/en/cq/current/administering/security.html#Access%20Control%20Lists%20and%20how%20they%20are%20evaluated).
+The Access Control Tool for Adobe Experience Manager (ACTool) simplifies the specification and deployment of complex [Access Control Lists in AEM] (http://docs.adobe.com/docs/en/cq/current/administering/security.html#Access%20Control%20Lists%20and%20how%20they%20are%20evaluated).
 Instead of building a content package with actual ACL nodes you can write simple configuration files and deploy them with your content packages.
 
 Features:
@@ -10,8 +10,10 @@ Features:
 * run mode support
 * automatic installation with install hook
 * cleans obsolete ACL entries when configuration is changed
-* ACLs can be dumped
+* ACLs can be exported
 * stores history of changes
+* ensured order of ACLs
+* built-in expression language to reduce rule duplication
 
 # Requirements
 
@@ -40,7 +42,7 @@ You can get the ZIP file via [Maven](https://repo1.maven.org/maven2/biz/netcentr
 
 # Configuration of ACL entries
 
-You need to setup [Yaml configuration files](docs/Configuration.md) to specify your users, groups and ACL entries. See also the [best practises](docs/BestPractises.md) for hints on structuring.
+You need to setup [Yaml configuration files](docs/Configuration.md) to specify your users, groups and ACL entries. See also the [best practices](docs/BestPractices.md) for hints on structuring.
 
 ## Advanced configuration options
 
