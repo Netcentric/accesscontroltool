@@ -143,12 +143,12 @@ public class AuthorizableCreatorServiceImpl implements
 
         if (authorizableConfigBean.isGroup()) {
             // this has to be added explicitly here (all other memberships are maintained isMemberOf)
-            Group groupToInstall = (Group) authorizableToInstall;
+            Group installedGroup = (Group) userManager.getAuthorizable(principalId);
             Authorizable anonymous = userManager.getAuthorizable(Constants.USER_ANONYMOUS);
             if (authorizableConfigBean.membersContainsAnonymous()) {
-                groupToInstall.addMember(anonymous);
+                installedGroup.addMember(anonymous);
             } else {
-                groupToInstall.removeMember(anonymous);
+                installedGroup.removeMember(anonymous);
             }
         }
 
