@@ -76,6 +76,8 @@
     <modules>
         <module>accesscontroltool-bundle</module>
         <module>accesscontroltool-package</module>
+        <module>accesscontroltool-oakindex-package</module>
+        <module>accesscontroltool-exampleconfig-package</module>
     </modules>
 
     <dependencyManagement>
@@ -433,20 +435,6 @@
                     </plugin>
                 </plugins>
             </build>
-        </profile>
-
-        <profile>
-            <id>oakindex</id>
-            <modules>
-                <module>accesscontroltool-oakindex-package</module>
-            </modules>
-        </profile>
-
-        <profile>
-            <id>exampleconfig</id>
-            <modules>
-                <module>accesscontroltool-exampleconfig-package</module>
-            </modules>
         </profile>
 
     </profiles>
