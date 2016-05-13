@@ -28,7 +28,7 @@ If you use the content-package-maven-plugin enable the installation hook via:
 </plugin>
 ```
 
-The ```*.yaml``` files are installed directly from the package content and respect the runmode semantics. 
+The ```*.yaml``` files are installed directly from the package content and respect the [run mode semantics](Configuration.md). 
 
 Although it is not necessary that the YAML files are covered by the filter rules of the ```filter.xml```, this is recommended practice. That way you can see afterwards in the repository which YAML files have been processed. However if you would not let the ```filter.xml``` cover your YAML files, those files would still be processed by the installation hook.
 

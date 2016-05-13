@@ -22,7 +22,7 @@ Also important status messages are shown here:
 
 ### execute()
 
-This will install the configuration files listed on top.    
+This will install the configuration files listed on top respecting the [run mode semantics](Configuration.md).    
 Before installing a new configuration on an instance a validation of the data stored in the configuration file takes place. In case an issue gets detected the installation does not get performed.
 
 The path of the config files is configured in OSGi - AC Installation Service.
