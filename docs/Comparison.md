@@ -1,6 +1,6 @@
 # Comparison of AC Tool to other approaches
 
-We considered existing solutions before starting our own AC Tool. These are basically content packages (including rep:policy nodes) and the ACL Setup provided by AEM.
+We considered existing solutions before starting our own AC Tool. These are basically content packages (including rep:policy nodes) and the ACL Setup Service provided by AEM.
 
 Aspect | AC Tool | Content Package | ACL Setup Service
 ------ | ------- | --------------- | -----------------
