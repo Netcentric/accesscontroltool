@@ -265,7 +265,6 @@ public class AceServiceImpl implements AceService {
             String rootPath = getConfigurationRootPath();
             Node rootNode = session.getNode(rootPath);
             Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(rootNode);
-
             installNewConfigurations(session, history, newestConfigurations, authorizableInstallationHistorySet);
         } catch (AuthorizableCreatorException e) {
             history.addError(e.toString());
@@ -300,9 +299,8 @@ public class AceServiceImpl implements AceService {
 
     /** Common entry point for JMX and install hook. */
     @Override
-    public void installNewConfigurations(Session session,
-            AcInstallationHistoryPojo history,
-            Map<String, String> currentConfiguration, Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet)
+    public void installNewConfigurations(Session session, AcInstallationHistoryPojo history, Map<String, String> currentConfiguration,
+            Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet)
                     throws Exception {
 
         String origThreadName = Thread.currentThread().getName();
@@ -317,11 +315,11 @@ public class AceServiceImpl implements AceService {
 
             if (currentConfiguration != null) {
 
+                history.setConfigFileContentsByName(currentConfiguration);
+
                 List mergedConfigurations = configurationMerger.getMergedConfigurations(currentConfiguration, history, configReader);
 
-                installMergedConfigurations(history, session,
-                        authorizableInstallationHistorySet,
-                        mergedConfigurations);
+                installMergedConfigurations(history, session, authorizableInstallationHistorySet, mergedConfigurations);
 
                 // if everything went fine (no exceptions), save the session
                 // thus persisting the changed ACLs
@@ -334,9 +332,12 @@ public class AceServiceImpl implements AceService {
             long executionTime = sw.getTime();
             LOG.info("Successfully applied AC Tool configuration in "+ msHumanReadable(executionTime));
             history.setExecutionTime(executionTime);
+        } catch (Exception e) {
+            history.addError(e.toString());
+            LOG.error("Could not apply AC Tool configuration: " + e, e);
         } finally {
             try {
-                acHistoryService.persistHistory(history, configurationPath);
+                acHistoryService.persistHistory(history);
             } catch (Exception e) {
                 LOG.warn("Could not persist history, e=" + e, e);
             }

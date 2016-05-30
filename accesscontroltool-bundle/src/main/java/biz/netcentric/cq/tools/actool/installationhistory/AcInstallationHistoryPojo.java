@@ -15,6 +15,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -44,6 +45,11 @@ public class AcInstallationHistoryPojo {
     Rendition rendition;
 
     private String mergedAndProcessedConfig;
+
+    private Map<String, String> configFileContentsByName;
+
+    // only for install hook case
+    private String crxPackageName;
 
     private DateFormat timestampFormat = new SimpleDateFormat("HH:mm:ss.SSS");
 
@@ -88,6 +94,22 @@ public class AcInstallationHistoryPojo {
 
     public void setMergedAndProcessedConfig(String mergedAndProcessedConfig) {
         this.mergedAndProcessedConfig = mergedAndProcessedConfig;
+    }
+
+    public Map<String, String> getConfigFileContentsByName() {
+        return configFileContentsByName;
+    }
+
+    public void setConfigFileContentsByName(Map<String, String> configFileContentsByName) {
+        this.configFileContentsByName = configFileContentsByName;
+    }
+
+    public String getCrxPackageName() {
+        return crxPackageName;
+    }
+
+    public void setCrxPackageName(String crxPackageName) {
+        this.crxPackageName = crxPackageName;
     }
 
     public void addWarning(String warning) {
