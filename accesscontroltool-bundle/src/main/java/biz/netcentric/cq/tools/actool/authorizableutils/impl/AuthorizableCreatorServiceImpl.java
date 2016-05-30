@@ -830,11 +830,17 @@ public class AuthorizableCreatorServiceImpl implements
                 history.addWarning("performing Groups rollback!");
 
                 for (String authorizableName : newCreatedAuthorizables) {
-                    userManager.getAuthorizable(authorizableName).remove();
-                    message = "removed authorizable " + authorizableName
-                            + " from the system!";
+                  Authorizable authorizable = userManager.getAuthorizable(authorizableName);
+                  if (authorizable != null) {
+                    authorizable.remove();
+                    message = "removed authorizable " + authorizableName + " from the system!";
                     LOG.info(message);
                     history.addWarning(message);
+                  } else {
+                    message = "Can't remove authorizable " + authorizableName + " from the system!";
+                    LOG.error(message);
+                    history.addError(message);
+                  }
                 }
             }
 
