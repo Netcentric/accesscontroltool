@@ -9,6 +9,7 @@
 package biz.netcentric.cq.tools.actool.installationhistory.impl;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -17,7 +18,6 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Workspace;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
@@ -31,6 +31,8 @@ import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.day.cq.commons.jcr.JcrConstants;
 
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
@@ -62,14 +64,12 @@ public class AcHistoryServiceImpl implements AcHistoryService {
     }
 
     @Override
-    public void persistHistory(AcInstallationHistoryPojo history,
-            final String configurationRootPath) {
+    public void persistHistory(AcInstallationHistoryPojo history) {
         Session session = null;
         try {
 
             session = repository.loginAdministrative(null);
-            Node historyNode = HistoryUtils.persistHistory(session,
-                    history, this.nrOfSavedHistories);
+            Node historyNode = HistoryUtils.persistHistory(session, history, this.nrOfSavedHistories);
 
             String mergedAndProcessedConfig = history.getMergedAndProcessedConfig();
             if (StringUtils.isNotBlank(mergedAndProcessedConfig)) {
@@ -77,20 +77,10 @@ public class AcHistoryServiceImpl implements AcHistoryService {
                         new ByteArrayInputStream(mergedAndProcessedConfig.getBytes()));
             }
 
-            session.save();
             if (history.isSuccess()) {
-                Node configurationRootNode = session
-                        .getNode(configurationRootPath);
-                if (configurationRootNode != null) {
-                    persistInstalledConfigurations(session.getWorkspace(), historyNode,
-                            configurationRootNode, history);
-                } else {
-                    String message = "Couldn't find configuration root Node under path: "
-                            + configurationRootPath;
-                    LOG.error(message);
-                    history.addWarning(message);
-                }
+                persistInstalledConfigurations(session, historyNode, history);
             }
+            session.save();
         } catch (RepositoryException e) {
             LOG.error("RepositoryException: ", e);
         } finally {
@@ -133,8 +123,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         try {
             session = repository.loginAdministrative(null);
 
-            Node statisticsRootNode = HistoryUtils
-                    .getAcHistoryRootNode(session);
+            Node statisticsRootNode = HistoryUtils.getAcHistoryRootNode(session);
             NodeIterator it = statisticsRootNode.getNodes();
 
             if (it.hasNext()) {
@@ -156,22 +145,34 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         return history;
     }
 
-    public void persistInstalledConfigurations(final Workspace workspace, final Node historyNode,
-            final Node configurationRootNode, AcInstallationHistoryPojo history) {
+    private void persistInstalledConfigurations(final Session session, final Node historyNode, AcInstallationHistoryPojo history) {
         try {
-            workspace.copy(configurationRootNode.getPath(), historyNode.getPath() + "/" + INSTALLED_CONFIGS_NODE_NAME);
+
+            Map<String, String> configFileContentsByName = history.getConfigFileContentsByName();
+            if (configFileContentsByName == null) {
+                return;
+            }
+            
+            String commonPrefix = StringUtils.getCommonPrefix(configFileContentsByName.keySet().toArray(new String[configFileContentsByName.size()]));
+            String crxPackageName = history.getCrxPackageName(); // for install hook case
+            historyNode.setProperty("installedFrom", StringUtils.defaultString(crxPackageName) + commonPrefix);
+            
+            for (String fullConfigFilePath : configFileContentsByName.keySet()) {
+                File targetPathFile = new File(
+                        INSTALLED_CONFIGS_NODE_NAME + "/" + StringUtils.substringAfter(fullConfigFilePath, commonPrefix));
+                Node configFolder = JcrUtils.getOrCreateByPath(historyNode, targetPathFile.getParentFile().getPath(), false,
+                        JcrConstants.NT_FOLDER, JcrConstants.NT_FOLDER, false);
+                ByteArrayInputStream configFileInputStream = new ByteArrayInputStream( configFileContentsByName.get(fullConfigFilePath).getBytes() );
+                JcrUtils.putFile(configFolder, targetPathFile.getName(), "text/yaml", configFileInputStream);
+            }
+
+            history.addVerboseMessage(
+                    "Saved installed configuration files under : " + historyNode.getPath() + "/" + INSTALLED_CONFIGS_NODE_NAME);
         } catch (RepositoryException e) {
             String message = e.toString();
-            history.addError(e.toString());
-            LOG.error("Exception: ", e);
+            history.addError(message);
+            LOG.error("Exception while saving history node " + historyNode + ": " + message, e);
         }
-
-        try {
-            history.addMessage("Saved installed configuration files under : " + historyNode.getPath() + "/" + INSTALLED_CONFIGS_NODE_NAME);
-        } catch (RepositoryException e) {
-            LOG.error("Exception: ", e);
-        }
-
     }
 
     public String showHistory(int n) {

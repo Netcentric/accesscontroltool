@@ -22,6 +22,7 @@ import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.version.VersionException;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,9 +72,14 @@ public class HistoryUtils {
             throws RepositoryException {
 
         Node acHistoryRootNode = getAcHistoryRootNode(session);
-        Node newHistoryNode = safeGetNode(acHistoryRootNode,
-                HISTORY_NODE_NAME_PREFIX + System.currentTimeMillis(),
-                NODETYPE_NT_UNSTRUCTURED);
+        String name = HISTORY_NODE_NAME_PREFIX + System.currentTimeMillis();
+        if (StringUtils.isNotBlank(history.getCrxPackageName())) {
+            name += "_via_" + history.getCrxPackageName();
+        } else {
+            name += "_via_jmx";
+        }
+
+        Node newHistoryNode = safeGetNode(acHistoryRootNode, name, NODETYPE_NT_UNSTRUCTURED);
         String path = newHistoryNode.getPath();
         setHistoryNodeProperties(newHistoryNode, history);
         deleteObsoleteHistoryNodes(acHistoryRootNode, nrOfHistoriesToSave);
