@@ -10,9 +10,12 @@ package biz.netcentric.cq.tools.actool.installationhistory;
 
 import java.sql.Timestamp;
 import java.text.DateFormat;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -31,7 +34,7 @@ public class AcInstallationHistoryPojo {
 
     private Set<HistoryEntry> warnings = new HashSet<HistoryEntry>();
     private Set<HistoryEntry> messages = new HashSet<HistoryEntry>();
-    private Set<HistoryEntry> exceptions = new HashSet<HistoryEntry>();
+    private Set<HistoryEntry> errors = new HashSet<HistoryEntry>();
 
     private Set<HistoryEntry> verboseMessages = new HashSet<HistoryEntry>();
 
@@ -42,6 +45,11 @@ public class AcInstallationHistoryPojo {
     Rendition rendition;
 
     private String mergedAndProcessedConfig;
+
+    private Map<String, String> configFileContentsByName;
+
+    // only for install hook case
+    private String crxPackageName;
 
     private DateFormat timestampFormat = new SimpleDateFormat("HH:mm:ss.SSS");
 
@@ -88,6 +96,22 @@ public class AcInstallationHistoryPojo {
         this.mergedAndProcessedConfig = mergedAndProcessedConfig;
     }
 
+    public Map<String, String> getConfigFileContentsByName() {
+        return configFileContentsByName;
+    }
+
+    public void setConfigFileContentsByName(Map<String, String> configFileContentsByName) {
+        this.configFileContentsByName = configFileContentsByName;
+    }
+
+    public String getCrxPackageName() {
+        return crxPackageName;
+    }
+
+    public void setCrxPackageName(String crxPackageName) {
+        this.crxPackageName = crxPackageName;
+    }
+
     public void addWarning(String warning) {
         if (rendition.equals(Rendition.HTML)) {
             warnings.add(new HistoryEntry(msgIndex, new Timestamp(
@@ -109,12 +133,12 @@ public class AcInstallationHistoryPojo {
 
     public void addError(final String exception) {
         if (rendition.equals(Rendition.HTML)) {
-            exceptions.add(new HistoryEntry(msgIndex, new Timestamp(
+            errors.add(new HistoryEntry(msgIndex, new Timestamp(
                     new Date().getTime()), "<font color='red'><b>"
                     + MSG_IDENTIFIER_EXCEPTION + "</b>" + " " + exception
                     + "</b></font>"));
         } else if (rendition.equals(Rendition.TXT)) {
-            exceptions.add(new HistoryEntry(msgIndex, new Timestamp(
+            errors.add(new HistoryEntry(msgIndex, new Timestamp(
                     new Date().getTime()), MSG_IDENTIFIER_EXCEPTION + " "
                     + exception));
 
@@ -133,8 +157,8 @@ public class AcInstallationHistoryPojo {
         return messages;
     }
 
-    public Set<HistoryEntry> getException() {
-        return exceptions;
+    public Set<HistoryEntry> getErrors() {
+        return errors;
     }
 
     public boolean isSuccess() {
@@ -154,7 +178,7 @@ public class AcInstallationHistoryPojo {
 
         sb.append("\n" + getMessageHistory() + "\n");
 
-        sb.append("\n" + "Execution time: " + executionTime + " ms\n");
+        sb.append("\n" + "Execution time: " + msHumanReadable(executionTime) + "\n");
 
         if (rendition.equals(Rendition.HTML)) {
             if (success) {
@@ -174,13 +198,13 @@ public class AcInstallationHistoryPojo {
     @SuppressWarnings("unchecked")
     public String getMessageHistory() {
         return getMessageString(getMessageSet(warnings, messages,
-                exceptions));
+                errors));
     }
 
     @SuppressWarnings("unchecked")
     public String getVerboseMessageHistory() {
         return getMessageString(getMessageSet(warnings, messages,
-                verboseMessages, exceptions));
+                verboseMessages, errors));
     }
 
     private Set<HistoryEntry> getMessageSet(Set<HistoryEntry>... sets) {
@@ -204,6 +228,33 @@ public class AcInstallationHistoryPojo {
             }
         }
         return sb.toString();
+    }
+
+    /** Utility method to return any magnitude of milliseconds in a human readable format using the appropriate time unit (ms, sec, min)
+     * depending on the magnitude of the input.
+     * 
+     * @param millis milliseconds
+     * @return a string with a number and a unit */
+    public static String msHumanReadable(final long millis) {
+
+        double number = millis;
+        final String[] units = new String[] { "ms", "sec", "min", "h", "days" };
+        final double[] divisors = new double[] { 1000, 60, 60, 24 };
+
+        int magnitude = 0;
+        do {
+            double currentDivisor = divisors[Math.min(magnitude, divisors.length - 1)];
+            if (number < currentDivisor) {
+                break;
+            }
+            number /= currentDivisor;
+            magnitude++;
+        } while (magnitude < units.length - 1);
+        NumberFormat format = NumberFormat.getNumberInstance(Locale.UK);
+        format.setMinimumFractionDigits(0);
+        format.setMaximumFractionDigits(1);
+        String result = format.format(number) + units[magnitude];
+        return result;
     }
 
 }

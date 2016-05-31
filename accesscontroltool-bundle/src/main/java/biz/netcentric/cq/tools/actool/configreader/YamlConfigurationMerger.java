@@ -67,10 +67,11 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         final ConfigurationsValidator configurationsValidator = new YamlConfigurationsValidator();
 
         for (final Map.Entry<String, String> entry : newestConfigurations.entrySet()) {
-            final String message = "Start merging configuration data from: " + entry.getKey();
 
             configurationsValidator.validateMandatorySectionIdentifiersExistence(entry.getValue(), entry.getKey());
 
+            final String message = "Found configuration " + entry.getKey();
+            LOG.info(message);
             history.addMessage(message);
 
             List<LinkedHashMap> yamlList = (List<LinkedHashMap>) yaml.load(entry.getValue());

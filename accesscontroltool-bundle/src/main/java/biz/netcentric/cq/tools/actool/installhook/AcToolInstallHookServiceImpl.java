@@ -1,7 +1,16 @@
+/*
+ * (C) Copyright 2015 Netcentric AG.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package biz.netcentric.cq.tools.actool.installhook;
 
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.jcr.Session;
@@ -12,12 +21,12 @@ import org.apache.felix.scr.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.day.jcr.vault.fs.io.Archive;
+
 import biz.netcentric.cq.tools.actool.aceservice.AceService;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
 import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetriever;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
-
-import com.day.jcr.vault.fs.io.Archive;
 
 @Component
 @Service(value = AcToolInstallHookService.class)
@@ -37,16 +46,16 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
         AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
         Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet = new LinkedHashSet<AuthorizableInstallationHistory>();
 
-        try {
-            Map<String, String> configs = configFilesRetriever.getConfigFileContentFromPackage(archive);
-            aceService.installNewConfigurations(session, history, configs, authorizableInstallationHistorySet);
-        } catch (Exception e) {
-            history.addError(e.toString());
-            throw e;
-        } finally {
-            // TODO: acHistoryService.persistHistory(history,
-            // this.configurationPath);
-        }
+        Map<String, String> configs = configFilesRetriever.getConfigFileContentFromPackage(archive);
+        history.setCrxPackageName(getArchiveName(archive));
+        aceService.installNewConfigurations(session, history, configs, authorizableInstallationHistorySet);
+
         return history;
+    }
+
+    private String getArchiveName(Archive archive) {
+        Properties properties = archive.getMetaInf().getProperties();
+        String archiveName = properties != null ? (properties.getProperty("name") + "-" + properties.getProperty("version")) : null;
+        return archiveName;
     }
 }

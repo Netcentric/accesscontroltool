@@ -162,8 +162,8 @@ public class PurgeHelper {
         }
         sw.stop();
         long executionTime = sw.getTime();
-        message.append("\n\ndeleted: " + aceCounter + " ACEs in repository");
-        message.append("\nexecution time: " + executionTime + " ms");
+        message.append("\n\nDeleted: " + aceCounter + " ACEs in repository");
+        message.append("\nExecution time: " + executionTime + " ms");
         return message.toString();
     }
 }

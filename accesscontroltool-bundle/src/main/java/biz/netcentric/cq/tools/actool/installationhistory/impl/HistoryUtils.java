@@ -22,6 +22,7 @@ import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.version.VersionException;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +30,7 @@ import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 public class HistoryUtils {
+    private static final Logger LOG = LoggerFactory.getLogger(HistoryUtils.class);
 
     public static final String HISTORY_NODE_NAME_PREFIX = "history_";
     public static final String NODETYPE_NT_UNSTRUCTURED = "nt:unstructured";
@@ -42,8 +44,6 @@ public class HistoryUtils {
     private static final String PROPERTY_SUCCESS = "success";
     private static final String PROPERTY_INSTALLATION_DATE = "installationDate";
 
-    private static final Logger LOG = LoggerFactory
-            .getLogger(HistoryUtils.class);
 
     public static Node getAcHistoryRootNode(final Session session)
             throws RepositoryException {
@@ -72,9 +72,14 @@ public class HistoryUtils {
             throws RepositoryException {
 
         Node acHistoryRootNode = getAcHistoryRootNode(session);
-        Node newHistoryNode = safeGetNode(acHistoryRootNode,
-                HISTORY_NODE_NAME_PREFIX + System.currentTimeMillis(),
-                NODETYPE_NT_UNSTRUCTURED);
+        String name = HISTORY_NODE_NAME_PREFIX + System.currentTimeMillis();
+        if (StringUtils.isNotBlank(history.getCrxPackageName())) {
+            name += "_via_" + history.getCrxPackageName();
+        } else {
+            name += "_via_jmx";
+        }
+
+        Node newHistoryNode = safeGetNode(acHistoryRootNode, name, NODETYPE_NT_UNSTRUCTURED);
         String path = newHistoryNode.getPath();
         setHistoryNodeProperties(newHistoryNode, history);
         deleteObsoleteHistoryNodes(acHistoryRootNode, nrOfHistoriesToSave);
@@ -85,16 +90,16 @@ public class HistoryUtils {
                     previousHistoryNode.getName());
         }
 
-        String message = "saved history in node: " + path;
+        String message = "Saved history in node: " + path;
         history.addMessage(message);
-        LOG.info(message);
+        LOG.debug(message);
         return newHistoryNode;
     }
 
     private static Node safeGetNode(final Node baseNode, final String name,
             final String typeToCreate) throws RepositoryException {
         if (!baseNode.hasNode(name)) {
-            LOG.info("create node: {}", name);
+            LOG.debug("create node: {}", name);
             return baseNode.addNode(name, typeToCreate);
 
         } else {
@@ -148,7 +153,7 @@ public class HistoryUtils {
         int index = 1;
         for (Node node : historyChildNodes) {
             if (index > nrOfHistoriesToSave) {
-                LOG.info("delete obsolete history node: ", node.getPath());
+                LOG.debug("delete obsolete history node: ", node.getPath());
                 node.remove();
             }
             index++;

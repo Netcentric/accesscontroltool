@@ -42,11 +42,11 @@ import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 public class AcHelper {
+    public static final Logger LOG = LoggerFactory.getLogger(AcHelper.class);
 
     private AcHelper() {
     }
 
-    public static final Logger LOG = LoggerFactory.getLogger(AcHelper.class);
 
     public static int ACE_ORDER_DENY_ALLOW = 1;
     public static int ACE_ORDER_NONE = 2;
@@ -86,10 +86,12 @@ public class AcHelper {
             final AcInstallationHistoryPojo history) throws Exception {
 
         Set<String> paths = pathBasedAceMapFromConfig.keySet();
-        LOG.info("Paths in merged config = {}", paths);
 
-        history.addVerboseMessage("found: " + paths.size()
-                + "  paths in merged config");
+        LOG.debug("Paths in merged config = {}", paths);
+
+        String msg = "Found " + paths.size() + "  paths in config";
+        LOG.debug(msg);
+        history.addVerboseMessage(msg);
 
         // loop through all nodes from config
         for (String path : paths) {
@@ -101,7 +103,9 @@ public class AcHelper {
             boolean pathExits = AccessControlUtils.getModifiableAcl(session.getAccessControlManager(), path) != null;
             if (!pathExits) {
                 if (!ContentHelper.createInitialContent(session, history, path, aceBeanSetFromConfig)) {
-                    history.addWarning("Skipped installing privileges/actions for non existing path: " + path);
+                    String msgNonExistingPath = "Skipped installing privileges/actions for non existing path: " + path;
+                    LOG.debug(msgNonExistingPath);
+                    history.addMessage(msgNonExistingPath);
                     continue;
                 }
             }
@@ -120,7 +124,7 @@ public class AcHelper {
                 String message = "deleted all ACEs of authorizable "
                         + bean.getPrincipalName()
                         + " from ACL of path: " + path;
-                LOG.info(message);
+                LOG.debug(message);
                 history.addVerboseMessage(message);
             }
             writeAcBeansToRepository(session, history, orderedAceBeanSetFromConfig);

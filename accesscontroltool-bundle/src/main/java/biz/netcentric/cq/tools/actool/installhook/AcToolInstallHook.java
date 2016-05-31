@@ -1,14 +1,22 @@
+/*
+ * (C) Copyright 2015 Netcentric AG.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package biz.netcentric.cq.tools.actool.installhook;
 
 import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
-import biz.netcentric.cq.tools.actool.installationhistory.HistoryEntry;
-
 import com.day.jcr.vault.packaging.InstallContext;
 import com.day.jcr.vault.packaging.PackageException;
+
+import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.installationhistory.HistoryEntry;
 
 public class AcToolInstallHook extends OsgiAwareInstallHook {
 
@@ -60,7 +68,7 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
 				}
 				
 				if (!history.isSuccess()) {
-					for (HistoryEntry entry : history.getException()) {
+					for (HistoryEntry entry : history.getErrors()) {
 						log(entry.toString(), context.getOptions());
 					}
 					throw new PackageException(
