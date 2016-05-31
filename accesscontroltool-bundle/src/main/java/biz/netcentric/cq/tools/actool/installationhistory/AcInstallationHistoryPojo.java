@@ -34,7 +34,7 @@ public class AcInstallationHistoryPojo {
 
     private Set<HistoryEntry> warnings = new HashSet<HistoryEntry>();
     private Set<HistoryEntry> messages = new HashSet<HistoryEntry>();
-    private Set<HistoryEntry> exceptions = new HashSet<HistoryEntry>();
+    private Set<HistoryEntry> errors = new HashSet<HistoryEntry>();
 
     private Set<HistoryEntry> verboseMessages = new HashSet<HistoryEntry>();
 
@@ -133,12 +133,12 @@ public class AcInstallationHistoryPojo {
 
     public void addError(final String exception) {
         if (rendition.equals(Rendition.HTML)) {
-            exceptions.add(new HistoryEntry(msgIndex, new Timestamp(
+            errors.add(new HistoryEntry(msgIndex, new Timestamp(
                     new Date().getTime()), "<font color='red'><b>"
                     + MSG_IDENTIFIER_EXCEPTION + "</b>" + " " + exception
                     + "</b></font>"));
         } else if (rendition.equals(Rendition.TXT)) {
-            exceptions.add(new HistoryEntry(msgIndex, new Timestamp(
+            errors.add(new HistoryEntry(msgIndex, new Timestamp(
                     new Date().getTime()), MSG_IDENTIFIER_EXCEPTION + " "
                     + exception));
 
@@ -157,8 +157,8 @@ public class AcInstallationHistoryPojo {
         return messages;
     }
 
-    public Set<HistoryEntry> getException() {
-        return exceptions;
+    public Set<HistoryEntry> getErrors() {
+        return errors;
     }
 
     public boolean isSuccess() {
@@ -198,13 +198,13 @@ public class AcInstallationHistoryPojo {
     @SuppressWarnings("unchecked")
     public String getMessageHistory() {
         return getMessageString(getMessageSet(warnings, messages,
-                exceptions));
+                errors));
     }
 
     @SuppressWarnings("unchecked")
     public String getVerboseMessageHistory() {
         return getMessageString(getMessageSet(warnings, messages,
-                verboseMessages, exceptions));
+                verboseMessages, errors));
     }
 
     private Set<HistoryEntry> getMessageSet(Set<HistoryEntry>... sets) {

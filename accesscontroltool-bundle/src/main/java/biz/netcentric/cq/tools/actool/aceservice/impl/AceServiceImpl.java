@@ -333,8 +333,8 @@ public class AceServiceImpl implements AceService {
             LOG.info("Successfully applied AC Tool configuration in "+ msHumanReadable(executionTime));
             history.setExecutionTime(executionTime);
         } catch (Exception e) {
-            history.addError(e.toString());
-            LOG.error("Could not apply AC Tool configuration: " + e, e);
+            history.addError(e.toString()); // ensure exception is added to history before it's persisted in log in finally clause
+            throw e; // handling is different depending on JMX or install hook case
         } finally {
             try {
                 acHistoryService.persistHistory(history);

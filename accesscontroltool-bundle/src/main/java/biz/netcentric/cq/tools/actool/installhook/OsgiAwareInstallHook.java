@@ -1,8 +1,15 @@
+/*
+ * (C) Copyright 2015 Netcentric AG.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package biz.netcentric.cq.tools.actool.installhook;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.BundleReference;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
@@ -40,7 +47,7 @@ public abstract class OsgiAwareInstallHook implements InstallHook {
 		return serviceReference;
 	}
 
-	public void log (String message, ImportOptions options) {
+    public void log(String message, ImportOptions options) {
 		ProgressTrackerListener listener = options.getListener();
 		if (listener != null) {
 			listener.onMessage(ProgressTrackerListener.Mode.TEXT, message, "");
