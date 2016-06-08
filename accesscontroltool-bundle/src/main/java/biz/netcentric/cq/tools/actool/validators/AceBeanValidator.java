@@ -22,6 +22,7 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidJcrPrivilegeE
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidPathException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidPermissionException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidRepGlobException;
+import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidRestrictionsException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.NoActionOrPrivilegeDefinedException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.NoGroupDefinedException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.TooManyActionsException;
@@ -31,7 +32,8 @@ public interface AceBeanValidator {
     boolean validate(final AceBean aceBean, AccessControlManager accessControlManager)
             throws AcConfigBeanValidationException;
 
-    boolean validateGlobbing(AceBean tmpAclBean) throws InvalidRepGlobException;
+    boolean validateRestrictions(final AceBean tmpAclBean, final AccessControlManager aclManager)
+            throws InvalidRepGlobException, InvalidRestrictionsException;
 
     boolean validatePermission(AceBean tmpAclBean)
             throws InvalidPermissionException;
@@ -41,13 +43,13 @@ public interface AceBeanValidator {
             InvalidJcrPrivilegeException, DoubledDefinedJcrPrivilegeException;
 
     boolean validateActions(AceBean tmpAclBean) throws InvalidActionException,
-            TooManyActionsException, DoubledDefinedActionException;
+    TooManyActionsException, DoubledDefinedActionException;
 
     boolean validateAcePath(AceBean tmpAclBean) throws InvalidPathException;
 
     boolean validateAuthorizableId(Set<String> groupsFromCurrentConfig,
             AceBean tmpAclBean) throws NoGroupDefinedException,
-            InvalidGroupNameException;
+    InvalidGroupNameException;
 
     public void setBean(AceBean aceBean);
 

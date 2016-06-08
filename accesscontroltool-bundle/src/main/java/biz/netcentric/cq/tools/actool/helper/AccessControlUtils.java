@@ -12,7 +12,6 @@ import java.security.Principal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.AccessDeniedException;
@@ -20,7 +19,6 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
-import javax.jcr.Value;
 import javax.jcr.security.AccessControlEntry;
 import javax.jcr.security.AccessControlException;
 import javax.jcr.security.AccessControlManager;
@@ -80,10 +78,10 @@ public class AccessControlUtils {
      */
     public static Privilege[] privilegesFromNames(
             AccessControlManager accessControlManager, String... privilegeNames)
-            throws RepositoryException {
-        Set<Privilege> privileges = new HashSet<Privilege>(
+                    throws RepositoryException {
+        final Set<Privilege> privileges = new HashSet<Privilege>(
                 privilegeNames.length);
-        for (String privName : privilegeNames) {
+        for (final String privName : privilegeNames) {
             privileges.add(accessControlManager.privilegeFromName(privName));
         }
         return privileges.toArray(new Privilege[privileges.size()]);
@@ -100,7 +98,7 @@ public class AccessControlUtils {
         if (privileges == null || privileges.length == 0) {
             return new String[0];
         } else {
-            String[] names = new String[privileges.length];
+            final String[] names = new String[privileges.length];
             for (int i = 0; i < privileges.length; i++) {
                 names[i] = privileges[i].getName();
             }
@@ -129,17 +127,17 @@ public class AccessControlUtils {
      */
     public static JackrabbitAccessControlList getAccessControlList(
             Session session, String absPath) throws RepositoryException {
-        AccessControlManager acMgr = session.getAccessControlManager();
+        final AccessControlManager acMgr = session.getAccessControlManager();
         return getAccessControlList(acMgr, absPath);
     }
 
     public static JackrabbitAccessControlList getAccessControlPolicies(
             Session session, Principal principal)
-            throws UnsupportedRepositoryOperationException, RepositoryException {
-        JackrabbitAccessControlManager acMgr = (JackrabbitAccessControlManager) session
+                    throws UnsupportedRepositoryOperationException, RepositoryException {
+        final JackrabbitAccessControlManager acMgr = (JackrabbitAccessControlManager) session
                 .getAccessControlManager();
         if (acMgr.getPolicies(principal).length > 0) {
-            JackrabbitAccessControlList jACL = (JackrabbitAccessControlList) acMgr
+            final JackrabbitAccessControlList jACL = (JackrabbitAccessControlList) acMgr
                     .getPolicies(principal)[0];
             return jACL;
         }
@@ -167,20 +165,20 @@ public class AccessControlUtils {
      */
     public static JackrabbitAccessControlList getAccessControlList(
             AccessControlManager accessControlManager, String absPath)
-            throws RepositoryException {
+                    throws RepositoryException {
         // try applicable (new) ACLs
-        AccessControlPolicyIterator itr = accessControlManager
+        final AccessControlPolicyIterator itr = accessControlManager
                 .getApplicablePolicies(absPath);
         while (itr.hasNext()) {
-            AccessControlPolicy policy = itr.nextAccessControlPolicy();
+            final AccessControlPolicy policy = itr.nextAccessControlPolicy();
             if (policy instanceof JackrabbitAccessControlList) {
                 return (JackrabbitAccessControlList) policy;
             }
         }
 
         // try if there is an acl that has been set before
-        AccessControlPolicy[] pcls = accessControlManager.getPolicies(absPath);
-        for (AccessControlPolicy policy : pcls) {
+        final AccessControlPolicy[] pcls = accessControlManager.getPolicies(absPath);
+        for (final AccessControlPolicy policy : pcls) {
             if (policy instanceof JackrabbitAccessControlList) {
                 return (JackrabbitAccessControlList) policy;
             }
@@ -241,7 +239,7 @@ public class AccessControlUtils {
     public static boolean addAccessControlEntry(Session session,
             String absPath, Principal principal, Privilege[] privileges,
             boolean isAllow) throws RepositoryException {
-        JackrabbitAccessControlList acl = getAccessControlList(session, absPath);
+        final JackrabbitAccessControlList acl = getAccessControlList(session, absPath);
         if (acl != null) {
             if (acl.addEntry(principal, privileges, isAllow)) {
                 session.getAccessControlManager().setPolicy(absPath, acl);
@@ -272,15 +270,15 @@ public class AccessControlUtils {
      */
     static Set<Privilege> getPrivilegeSet(String[] privNames,
             AccessControlManager acMgr) throws RepositoryException {
-    	if (privNames == null) {
-    		return Collections.emptySet();
-    	}
-        Set privileges = new HashSet(privNames.length);
-        for (String name : privNames) {
-            Privilege p = acMgr.privilegeFromName(name);
-            if (p.isAggregate())
+        if (privNames == null) {
+            return Collections.emptySet();
+        }
+        final Set privileges = new HashSet(privNames.length);
+        for (final String name : privNames) {
+            final Privilege p = acMgr.privilegeFromName(name);
+            if (p.isAggregate()) {
                 privileges.addAll(Arrays.asList(p.getAggregatePrivileges()));
-            else {
+            } else {
                 privileges.add(p);
             }
         }
@@ -288,7 +286,7 @@ public class AccessControlUtils {
     }
 
     /**
-     * 
+     *
      * @param session
      *            admin session
      * @param path
@@ -299,22 +297,22 @@ public class AccessControlUtils {
      */
     public static void deleteAllEntriesForAuthorizableFromACL(final Session session,
             final String path, String authorizableID)
-            throws UnsupportedRepositoryOperationException, RepositoryException {
-        AccessControlManager accessControlManager = session
+                    throws UnsupportedRepositoryOperationException, RepositoryException {
+        final AccessControlManager accessControlManager = session
                 .getAccessControlManager();
 
-        JackrabbitAccessControlList acl = AccessControlUtils.getModifiableAcl(
+        final JackrabbitAccessControlList acl = AccessControlUtils.getModifiableAcl(
                 accessControlManager, path);
         if (acl == null) {
-        	// do nothing, if there is no content node at the given path
-        	return;
+            // do nothing, if there is no content node at the given path
+            return;
         }
         // get ACEs of the node
-        AccessControlEntry[] aces = acl.getAccessControlEntries();
+        final AccessControlEntry[] aces = acl.getAccessControlEntries();
 
         // loop thorough ACEs and find the one of the given principal
-        for (AccessControlEntry ace : aces) {
-            JackrabbitAccessControlEntry jace = (JackrabbitAccessControlEntry) ace;
+        for (final AccessControlEntry ace : aces) {
+            final JackrabbitAccessControlEntry jace = (JackrabbitAccessControlEntry) ace;
             if (StringUtils.equals(jace.getPrincipal().getName(),
                     authorizableID)) {
                 acl.removeAccessControlEntry(jace);
@@ -324,25 +322,25 @@ public class AccessControlUtils {
         }
     }
 
-    static JackrabbitAccessControlList getModifiableAcl(
+    public static JackrabbitAccessControlList getModifiableAcl(
             AccessControlManager acMgr, String path)
-            throws RepositoryException, AccessDeniedException {
+                    throws RepositoryException, AccessDeniedException {
         AccessControlPolicy[] existing = null;
         try {
             existing = acMgr.getPolicies(path);
-        } catch (PathNotFoundException e) {
+        } catch (final PathNotFoundException e) {
             LOG.debug("No node could be found under: {}. Application of ACL for that node cancelled!", path);
         }
         if (existing != null) {
-            for (AccessControlPolicy p : existing) {
+            for (final AccessControlPolicy p : existing) {
                 if (p instanceof JackrabbitAccessControlList) {
                     return ((JackrabbitAccessControlList) p);
                 }
             }
 
-            AccessControlPolicyIterator it = acMgr.getApplicablePolicies(path);
+            final AccessControlPolicyIterator it = acMgr.getApplicablePolicies(path);
             while (it.hasNext()) {
-                AccessControlPolicy p = it.nextAccessControlPolicy();
+                final AccessControlPolicy p = it.nextAccessControlPolicy();
                 if (p instanceof JackrabbitAccessControlList) {
                     return ((JackrabbitAccessControlList) p);
                 }
@@ -352,17 +350,23 @@ public class AccessControlUtils {
         }
         return null;
     }
-    
-    public static void extendExistingAceWithRestrictions(JackrabbitAccessControlList accessControlList, JackrabbitAccessControlEntry accessControlEntry, Map<String, Value> restrictions) throws AccessControlException, UnsupportedRepositoryOperationException, RepositoryException {
-		// 1. add new entry
-		if (!accessControlList.addEntry(accessControlEntry.getPrincipal(), accessControlEntry.getPrivileges(), accessControlEntry.isAllow(), restrictions)) {
-			throw new IllegalStateException("Could not add entry, probably because it was already there!");
-		}
-		// we assume the entry being added is the last one
-		AccessControlEntry newAccessControlEntry = accessControlList.getAccessControlEntries()[accessControlList.size() - 1];
-		// 2. put it to the right position now!
-		accessControlList.orderBefore(newAccessControlEntry, accessControlEntry);
-		// 3. remove old entry
-		accessControlList.removeAccessControlEntry(accessControlEntry);
+
+    public static void extendExistingAceWithRestrictions(JackrabbitAccessControlList accessControlList, JackrabbitAccessControlEntry accessControlEntry, RestrictionMapsHolder restrictions) throws SecurityException, UnsupportedRepositoryOperationException, RepositoryException   {
+        // 1. add new entry
+        if(!restrictions.getMultiValuedRestrictionsMap().isEmpty()){
+            if (!accessControlList.addEntry(accessControlEntry.getPrincipal(), accessControlEntry.getPrivileges(), accessControlEntry.isAllow(), restrictions.getSingleValuedRestrictionsMap(), restrictions.getMultiValuedRestrictionsMap())) {
+                throw new IllegalStateException("Could not add entry, probably because it was already there!");
+            }
+        }else{
+            if (!accessControlList.addEntry(accessControlEntry.getPrincipal(), accessControlEntry.getPrivileges(), accessControlEntry.isAllow(), restrictions.getSingleValuedRestrictionsMap())) {
+                throw new IllegalStateException("Could not add entry, probably because it was already there!");
+            }
+        }
+        // we assume the entry being added is the last one
+        final AccessControlEntry newAccessControlEntry = accessControlList.getAccessControlEntries()[accessControlList.size() - 1];
+        // 2. put it to the right position now!
+        accessControlList.orderBefore(newAccessControlEntry, accessControlEntry);
+        // 3. remove old entry
+        accessControlList.removeAccessControlEntry(accessControlEntry);
     }
 }

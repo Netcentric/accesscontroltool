@@ -88,6 +88,22 @@
          
     
     - group_B:
+    
+         # old rep:glob notation
+       - path: /content
+         permission: allow
+         actions: read,  create
+         privileges: 
+         repGlob: test
+       
+       
+         # new rep:glob notation
+       - path: /content
+         permission: allow
+         actions: read,  create
+         privileges: 
+         rep:glob: test
+
 
        - path: /content
          permission: deny
@@ -114,7 +130,13 @@
          actions: read,  create
          privileges: 
          repGlob:
-        
+         
+       - path: /content/dam
+         permission: allow
+         actions: read,  create
+         privileges: 
+         repGlob: test
+         
        #valid, test for blanks between actions
        - path: /content/dam
          permission: deny
@@ -194,4 +216,23 @@
          privileges: 
          repGlob:
          assertedException: InvalidPermissionException
+         
+       #10 only   glob restrictions is supportet in test
+       - path: /content/dam
+         permission: allow
+         actions: read,  create
+         privileges: 
+         rep:glob: test
+         rep:ntNames: test
+         rep:prefixes: test
+         assertedException: InvalidRestrictionsException
+         
+       #11 wrong restriction name. correct one would be rep:glob
+       - path: /content
+         permission: allow
+         actions: read
+         rep:Glob: /cq:*
+         assertedException: InvalidRestrictionsException
+         
+      
        

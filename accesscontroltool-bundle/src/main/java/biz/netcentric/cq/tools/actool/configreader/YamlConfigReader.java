@@ -286,7 +286,10 @@ public class YamlConfigReader implements ConfigReader {
                 currentAceDefinition, ACE_CONFIG_PROPERTY_PRIVILEGES));
         tmpAclBean.setPermission(getMapValueAsString(
                 currentAceDefinition, ACE_CONFIG_PROPERTY_PERMISSION));
+        // kept for backward compatibility reasons
         tmpAclBean.setRepGlob((String) currentAceDefinition.get(ACE_CONFIG_PROPERTY_GLOB));
+        
+        tmpAclBean.setRestrictions(currentAceDefinition, tmpAclBean);
         tmpAclBean.setAssertedExceptionString(getMapValueAsString(
                 currentAceDefinition, ASSERTED_EXCEPTION));
         tmpAclBean.setActions(parseActionsString(getMapValueAsString(currentAceDefinition,
@@ -296,6 +299,8 @@ public class YamlConfigReader implements ConfigReader {
                 ACE_CONFIG_INITIAL_CONTENT);
         tmpAclBean.setInitialContent(initialContent);
     }
+    
+   
 
     private String[] parseActionsString(final String actionsStringFromConfig) {
         final String[] empty = {};

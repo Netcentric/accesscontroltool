@@ -22,13 +22,13 @@ import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
  * Wraps an {@link JackrabbitAccessControlEntry} and stores an
  * additional path information. Created and used during the reading of ACEs from a system, in order
  * to create an ACE Dump.
- * 
+ *
  * @author jochenkoschorke
  *
  */
 public class AceWrapper implements JackrabbitAccessControlEntry {
-    private JackrabbitAccessControlEntry ace;
-    private String jcrPath;
+    private final JackrabbitAccessControlEntry ace;
+    private final String jcrPath;
 
     public AceWrapper(JackrabbitAccessControlEntry ace, String jcrPath) {
         super();
@@ -49,27 +49,34 @@ public class AceWrapper implements JackrabbitAccessControlEntry {
 		return result;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		AceWrapper other = (AceWrapper) obj;
-		if (ace == null) {
-			if (other.ace != null)
-				return false;
-		} else if (!ace.equals(other.ace))
-			return false;
-		if (jcrPath == null) {
-			if (other.jcrPath != null)
-				return false;
-		} else if (!jcrPath.equals(other.jcrPath))
-			return false;
-		return true;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final AceWrapper other = (AceWrapper) obj;
+        if (ace == null) {
+            if (other.ace != null) {
+                return false;
+            }
+        } else if (!ace.equals(other.ace)) {
+            return false;
+        }
+        if (jcrPath == null) {
+            if (other.jcrPath != null) {
+                return false;
+            }
+        } else if (!jcrPath.equals(other.jcrPath)) {
+            return false;
+        }
+        return true;
+    }
 
 	@Override
 	public String toString() {
@@ -88,45 +95,45 @@ public class AceWrapper implements JackrabbitAccessControlEntry {
     }
 
     public String getPrivilegesString() {
-        Privilege[] privileges = this.ace.getPrivileges();
+        final Privilege[] privileges = ace.getPrivileges();
         String privilegesString = "";
-        for (Privilege privilege : privileges) {
+        for (final Privilege privilege : privileges) {
             privilegesString = privilegesString + privilege.getName() + ",";
         }
         privilegesString = StringUtils.chop(privilegesString);
         return privilegesString;
     }
 
-	@Override
-	public Principal getPrincipal() {
-		return ace.getPrincipal();
-	}
+    @Override
+    public Principal getPrincipal() {
+        return ace.getPrincipal();
+    }
 
-	@Override
-	public Privilege[] getPrivileges() {
-		return ace.getPrivileges();
-	}
+    @Override
+    public Privilege[] getPrivileges() {
+        return ace.getPrivileges();
+    }
 
-	@Override
-	public boolean isAllow() {
-		return ace.isAllow();
-	}
+    @Override
+    public boolean isAllow() {
+        return ace.isAllow();
+    }
 
-	@Override
-	public String[] getRestrictionNames() throws RepositoryException {
-		return ace.getRestrictionNames();
-	}
+    @Override
+    public String[] getRestrictionNames() throws RepositoryException {
+        return ace.getRestrictionNames();
+    }
 
-	@Override
-	public Value getRestriction(String restrictionName)
-			throws ValueFormatException, RepositoryException {
-		return ace.getRestriction(restrictionName);
-	}
+    @Override
+    public Value getRestriction(String restrictionName)
+            throws ValueFormatException, RepositoryException {
+        return ace.getRestriction(restrictionName);
+    }
 
-	@Override
-	public Value[] getRestrictions(String restrictionName)
-			throws RepositoryException {
-		return ace.getRestrictions(restrictionName);
-	}
+    @Override
+    public Value[] getRestrictions(String restrictionName)
+            throws RepositoryException {
+        return ace.getRestrictions(restrictionName);
+    }
 
 }
