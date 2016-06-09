@@ -43,15 +43,9 @@ import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElement;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementVisitor;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
-/**
- *
- * @author jochenkoschorke This class is used to store data of an
- *         AcessControlEntry. Objects of this class get created during the
- *         reading of the configuration file in order to set the corresponding
- *         ACEs in the system on the one hand and to store data during the
- *         reading of existing ACEs before writing the data back to a dump or
- *         configuration file again on the other hand.
- */
+/** @author jochenkoschorke This class is used to store data of an AcessControlEntry. Objects of this class get created during the reading
+ *         of the configuration file in order to set the corresponding ACEs in the system on the one hand and to store data during the
+ *         reading of existing ACEs before writing the data back to a dump or configuration file again on the other hand. */
 public class AceBean implements AcDumpElement {
     public static final Logger LOG = LoggerFactory.getLogger(AceBean.class);
 
@@ -70,28 +64,28 @@ public class AceBean implements AcDumpElement {
     public static final String RESTRICTION_NAME_GLOB = "rep:glob";
 
     public String getAssertedExceptionString() {
-        return assertedExceptionString;
+        return this.assertedExceptionString;
     }
 
     public void setAssertedExceptionString(final String assertedException) {
-        assertedExceptionString = assertedException;
+        this.assertedExceptionString = assertedException;
     }
 
     public String getPermission() {
-        return permission;
+        return this.permission;
     }
 
     public void setPermission(String permissionString) {
-        permission = permissionString;
+        this.permission = permissionString;
     }
 
     public void clearActions() {
-        actions = null;
-        actionsStringFromConfig = "";
+        this.actions = null;
+        this.actionsStringFromConfig = "";
     }
 
     public String getPrincipalName() {
-        return principal;
+        return this.principal;
     }
 
     public void setPrincipal(String principal) {
@@ -99,7 +93,7 @@ public class AceBean implements AcDumpElement {
     }
 
     public String getJcrPath() {
-        return jcrPath;
+        return this.jcrPath;
     }
 
     public void setJcrPath(String jcrPath) {
@@ -107,43 +101,43 @@ public class AceBean implements AcDumpElement {
     }
 
     public boolean isAllow() {
-        return "allow".equalsIgnoreCase(permission);
+        return "allow".equalsIgnoreCase(this.permission);
     }
 
     public String getRepGlob() {
-        return repGlob;
+        return this.repGlob;
     }
 
     public void setRepGlob(String repGlob) {
         this.repGlob = repGlob;
     }
 
-    public Map<String, List<String>> getRestrictions(){
-        return restrictionMap;
+    public Map<String, List<String>> getRestrictions() {
+        return this.restrictionMap;
     }
 
-    public void setRestrictions(final Map<String, ?> currentAceDefinition, final AceBean tmpAclBean){
-        for(final String key : currentAceDefinition.keySet()){
-            if(key.startsWith("rep:")){
-                final String value = (String)currentAceDefinition.get(key);
+    public void setRestrictions(final Map<String, ?> currentAceDefinition, final AceBean tmpAclBean) {
+        for (final String key : currentAceDefinition.keySet()) {
+            if (key.startsWith("rep:")) {
+                final String value = (String) currentAceDefinition.get(key);
                 final String[] values = value.split(",");
                 tmpAclBean.addRestriction(key, new ArrayList<String>(Arrays.asList(values)));
             }
         }
     }
 
-    public void setRestrictionsMap(Map <String, List<String>> restrictionsMap){
-        restrictionMap = restrictionsMap;
+    public void setRestrictionsMap(Map<String, List<String>> restrictionsMap) {
+        this.restrictionMap = restrictionsMap;
     }
 
-    public void addRestriction(final String restrictionName, final List<String> restrictionValue){
-        restrictionMap.put(restrictionName, restrictionValue);
+    public void addRestriction(final String restrictionName, final List<String> restrictionValue) {
+        this.restrictionMap.put(restrictionName, restrictionValue);
     }
 
     public String getActionsString() {
-        if (actions != null) {
+        if (this.actions != null) {
             final StringBuilder sb = new StringBuilder();
-            for (final String action : actions) {
+            for (final String action : this.actions) {
                 sb.append(action).append(",");
             }
             return StringUtils.chomp(sb.toString(), ",");
@@ -152,7 +146,7 @@ public class AceBean implements AcDumpElement {
     }
 
     public String getActionsStringFromConfig() {
-        return actionsStringFromConfig;
+        return this.actionsStringFromConfig;
     }
 
     public void setActions(String[] actions) {
@@ -160,20 +154,20 @@ public class AceBean implements AcDumpElement {
     }
 
     public void setActionsStringFromConfig(String actionsString) {
-        actionsStringFromConfig = actionsString;
+        this.actionsStringFromConfig = actionsString;
     }
 
     public String[] getActions() {
-        return actions;
+        return this.actions;
     }
 
     public String getPrivilegesString() {
-        return privilegesString;
+        return this.privilegesString;
     }
 
     public String[] getPrivileges() {
-        if (StringUtils.isNotBlank(privilegesString)) {
-            return privilegesString.split(",");
+        if (StringUtils.isNotBlank(this.privilegesString)) {
+            return this.privilegesString.split(",");
         }
         return null;
     }
@@ -183,7 +177,7 @@ public class AceBean implements AcDumpElement {
     }
 
     public String getInitialContent() {
-        return initialContent;
+        return this.initialContent;
     }
 
     public void setInitialContent(String initialContent) {
@@ -192,26 +186,29 @@ public class AceBean implements AcDumpElement {
 
     @Override
     public String toString() {
-        return "AceBean [jcrPath=" + jcrPath + "\n" + ", repGlob=" + repGlob + "\n" + ", actionsStringFromConfig=" + actionsStringFromConfig + "\n"
-                + ", privilegesString=" + privilegesString + "\n" + ", principal=" + principal + "\n" + ", permission=" + permission + ", actions="
-                + Arrays.toString(actions) + "\n" + ", assertedExceptionString=" + assertedExceptionString + "\n" + ", restrictionMap=" + restrictionMap + "\n"
-                + ", initialContent=" + initialContent + "]";
+        return "AceBean [jcrPath=" + this.jcrPath + "\n" + ", repGlob=" + this.repGlob + "\n" + ", actionsStringFromConfig=" + this.actionsStringFromConfig
+                + "\n"
+                + ", privilegesString=" + this.privilegesString + "\n" + ", principal=" + this.principal + "\n" + ", permission=" + this.permission
+                + ", actions="
+                + Arrays.toString(this.actions) + "\n" + ", assertedExceptionString=" + this.assertedExceptionString + "\n" + ", restrictionMap="
+                + this.restrictionMap + "\n"
+                + ", initialContent=" + this.initialContent + "]";
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + Arrays.hashCode(actions);
-        result = prime * result + ((actionsStringFromConfig == null) ? 0 : actionsStringFromConfig.hashCode());
-        result = prime * result + ((assertedExceptionString == null) ? 0 : assertedExceptionString.hashCode());
-        result = prime * result + ((initialContent == null) ? 0 : initialContent.hashCode());
-        result = prime * result + ((jcrPath == null) ? 0 : jcrPath.hashCode());
-        result = prime * result + ((permission == null) ? 0 : permission.hashCode());
-        result = prime * result + ((principal == null) ? 0 : principal.hashCode());
-        result = prime * result + ((privilegesString == null) ? 0 : privilegesString.hashCode());
-        result = prime * result + ((repGlob == null) ? 0 : repGlob.hashCode());
-        result = prime * result + ((restrictionMap == null) ? 0 : restrictionMap.hashCode());
+        result = prime * result + Arrays.hashCode(this.actions);
+        result = prime * result + ((this.actionsStringFromConfig == null) ? 0 : this.actionsStringFromConfig.hashCode());
+        result = prime * result + ((this.assertedExceptionString == null) ? 0 : this.assertedExceptionString.hashCode());
+        result = prime * result + ((this.initialContent == null) ? 0 : this.initialContent.hashCode());
+        result = prime * result + ((this.jcrPath == null) ? 0 : this.jcrPath.hashCode());
+        result = prime * result + ((this.permission == null) ? 0 : this.permission.hashCode());
+        result = prime * result + ((this.principal == null) ? 0 : this.principal.hashCode());
+        result = prime * result + ((this.privilegesString == null) ? 0 : this.privilegesString.hashCode());
+        result = prime * result + ((this.repGlob == null) ? 0 : this.repGlob.hashCode());
+        result = prime * result + ((this.restrictionMap == null) ? 0 : this.restrictionMap.hashCode());
         return result;
     }
 
@@ -227,70 +224,70 @@ public class AceBean implements AcDumpElement {
             return false;
         }
         final AceBean other = (AceBean) obj;
-        if (!Arrays.equals(actions, other.actions)) {
+        if (!Arrays.equals(this.actions, other.actions)) {
             return false;
         }
-        if (actionsStringFromConfig == null) {
+        if (this.actionsStringFromConfig == null) {
             if (other.actionsStringFromConfig != null) {
                 return false;
             }
-        } else if (!actionsStringFromConfig.equals(other.actionsStringFromConfig)) {
+        } else if (!this.actionsStringFromConfig.equals(other.actionsStringFromConfig)) {
             return false;
         }
-        if (assertedExceptionString == null) {
+        if (this.assertedExceptionString == null) {
             if (other.assertedExceptionString != null) {
                 return false;
             }
-        } else if (!assertedExceptionString.equals(other.assertedExceptionString)) {
+        } else if (!this.assertedExceptionString.equals(other.assertedExceptionString)) {
             return false;
         }
-        if (initialContent == null) {
+        if (this.initialContent == null) {
             if (other.initialContent != null) {
                 return false;
             }
-        } else if (!initialContent.equals(other.initialContent)) {
+        } else if (!this.initialContent.equals(other.initialContent)) {
             return false;
         }
-        if (jcrPath == null) {
+        if (this.jcrPath == null) {
             if (other.jcrPath != null) {
                 return false;
             }
-        } else if (!jcrPath.equals(other.jcrPath)) {
+        } else if (!this.jcrPath.equals(other.jcrPath)) {
             return false;
         }
-        if (permission == null) {
+        if (this.permission == null) {
             if (other.permission != null) {
                 return false;
             }
-        } else if (!permission.equals(other.permission)) {
+        } else if (!this.permission.equals(other.permission)) {
             return false;
         }
-        if (principal == null) {
+        if (this.principal == null) {
             if (other.principal != null) {
                 return false;
             }
-        } else if (!principal.equals(other.principal)) {
+        } else if (!this.principal.equals(other.principal)) {
             return false;
         }
-        if (privilegesString == null) {
+        if (this.privilegesString == null) {
             if (other.privilegesString != null) {
                 return false;
             }
-        } else if (!privilegesString.equals(other.privilegesString)) {
+        } else if (!this.privilegesString.equals(other.privilegesString)) {
             return false;
         }
-        if (repGlob == null) {
+        if (this.repGlob == null) {
             if (other.repGlob != null) {
                 return false;
             }
-        } else if (!repGlob.equals(other.repGlob)) {
+        } else if (!this.repGlob.equals(other.repGlob)) {
             return false;
         }
-        if (restrictionMap == null) {
+        if (this.restrictionMap == null) {
             if (other.restrictionMap != null) {
                 return false;
             }
-        } else if (!restrictionMap.equals(other.restrictionMap)) {
+        } else if (!this.restrictionMap.equals(other.restrictionMap)) {
             return false;
         }
         return true;
@@ -303,15 +300,15 @@ public class AceBean implements AcDumpElement {
 
     private void removeRedundantPrivileges(Session session) throws RepositoryException {
         final Set<String> cleanedPrivileges = removeRedundantPrivileges(session, getPrivileges(), getActions());
-        privilegesString = StringUtils.join(cleanedPrivileges, ",");
+        this.privilegesString = StringUtils.join(cleanedPrivileges, ",");
     }
 
-    /**
-     * Modifies the privileges so that privileges already covered by actions are removed.
-     * This is only a best effort operation as one action can lead to privileges on multiple nodes.
-     * @throws RepositoryException
-     */
-    private static Set<String> removeRedundantPrivileges(Session session, String[] privileges, String[] actions) throws RepositoryException {
+    /** Modifies the privileges so that privileges already covered by actions are removed. This is only a best effort operation as one
+     * action can lead to privileges on multiple nodes.
+     *
+     * @throws RepositoryException */
+    private static Set<String> removeRedundantPrivileges(Session session, String[] privileges, String[] actions)
+            throws RepositoryException {
         final CqActions cqActions = new CqActions(session);
         final Set<String> cleanedPrivileges = new HashSet<String>();
         if (privileges == null) {
@@ -323,8 +320,7 @@ public class AceBean implements AcDumpElement {
         }
         for (final String action : actions) {
             @SuppressWarnings("deprecation")
-            final
-            Set<Privilege> coveredPrivileges = cqActions.getPrivileges(action);
+            final Set<Privilege> coveredPrivileges = cqActions.getPrivileges(action);
             for (final Privilege coveredPrivilege : coveredPrivileges) {
                 cleanedPrivileges.remove(coveredPrivilege.getName());
             }
@@ -332,19 +328,19 @@ public class AceBean implements AcDumpElement {
         return cleanedPrivileges;
     }
 
-    /**
-     * Creates a restriction map being used in {@link JackrabbitAccessControlList#addEntry(Principal, Privilege[], boolean, Map)} out of the set actions on this bean.
+    /** Creates a restriction map being used in {@link JackrabbitAccessControlList#addEntry(Principal, Privilege[], boolean, Map)} out of
+     * the set actions on this bean.
      *
      * @param session the session
      * @param acl the access control list for which this restriction map should be used
      * @return RestrictionMapsHolder with restriction names as keys and restriction values as values.
      * @throws ValueFormatException
      * @throws UnsupportedRepositoryOperationException
-     * @throws RepositoryException
-     */
-    private RestrictionMapsHolder getRestrictions(Session session, JackrabbitAccessControlList acl) throws ValueFormatException, UnsupportedRepositoryOperationException, RepositoryException {
+     * @throws RepositoryException */
+    private RestrictionMapsHolder getRestrictions(Session session, JackrabbitAccessControlList acl)
+            throws ValueFormatException, UnsupportedRepositoryOperationException, RepositoryException {
         final Collection<String> supportedRestrictionNames = Arrays.asList(acl.getRestrictionNames());
-        if (!restrictionMap.isEmpty()) {
+        if (!this.restrictionMap.isEmpty()) {
             return getRestrictionMaps(session.getValueFactory(), acl, supportedRestrictionNames);
         } else {
             return RestrictionMapsHolder.emptyHolder();
@@ -354,59 +350,62 @@ public class AceBean implements AcDumpElement {
     private RestrictionMapsHolder getRestrictionMaps(final ValueFactory valueFactory, final JackrabbitAccessControlList acl,
             final Collection<String> supportedRestrictionNames)
                     throws ValueFormatException, UnsupportedRepositoryOperationException, RepositoryException {
-        for(final String resrictionName : restrictionMap.keySet()){
-            if (!supportedRestrictionNames.contains(resrictionName)) {
-                throw new IllegalStateException("The AccessControlList at " + acl.getPath() + " does not support setting " + resrictionName + " restrictions!");
+        for (final String restrictionName : this.restrictionMap.keySet()) {
+            if (!supportedRestrictionNames.contains(restrictionName)) {
+                throw new IllegalStateException(
+                        "The AccessControlList at " + acl.getPath() + " does not support setting " + restrictionName + " restrictions!");
             }
         }
         final Map<String, Value> singleValuedRestrictions = new HashMap<>();
         final Map<String, Value[]> multiValuedRestrictions = new HashMap<>();
 
-        for(final String restrictionName : restrictionMap.keySet()){
-            final int restrictionMapSize = restrictionMap.get(restrictionName).size();
-            if(restrictionMapSize > 1){
+        for (final String restrictionName : this.restrictionMap.keySet()) {
+            final int restrictionMapSize = this.restrictionMap.get(restrictionName).size();
+            if (restrictionMapSize > 1) {
                 final Value[] values = new Value[restrictionMapSize];
-                for(int i = 0; i < restrictionMapSize;i++){
-                    final Value value = valueFactory.createValue(restrictionMap.get(restrictionName).get(i), acl.getRestrictionType(restrictionName) );
+                for (int i = 0; i < restrictionMapSize; i++) {
+                    final Value value = valueFactory.createValue(this.restrictionMap.get(restrictionName).get(i),
+                            acl.getRestrictionType(restrictionName));
                     values[i] = value;
                 }
                 multiValuedRestrictions.put(restrictionName, values);
-            }else if(restrictionMap.get(restrictionName).size() == 1){
-                final Value value = valueFactory.createValue(restrictionMap.get(restrictionName).get(0), acl.getRestrictionType(restrictionName) );
+            } else if (this.restrictionMap.get(restrictionName).size() == 1) {
+                final Value value = valueFactory.createValue(this.restrictionMap.get(restrictionName).get(0),
+                        acl.getRestrictionType(restrictionName));
                 singleValuedRestrictions.put(restrictionName, value);
             }
         }
         return new RestrictionMapsHolder(singleValuedRestrictions, multiValuedRestrictions);
     }
 
-    /**
-     * Creates an action map being used in {@link CqActions#installActions(String, Principal, Map, Collection)} out of the set actions on this bean.
-     * @return a map containing actions as keys and booleans representing {@code true} for allow and {@code false} for deny.
-     */
+    /** Creates an action map being used in {@link CqActions#installActions(String, Principal, Map, Collection)} out of the set actions on
+     * this bean.
+     *
+     * @return a map containing actions as keys and booleans representing {@code true} for allow and {@code false} for deny. */
     private Map<String, Boolean> getActionMap() {
-        if (actions == null) {
+        if (this.actions == null) {
             return Collections.emptyMap();
         }
         final Map<String, Boolean> actionMap = new HashMap<String, Boolean>();
-        for (final String action : actions) {
+        for (final String action : this.actions) {
             actionMap.put(action, isAllow());
         }
         return actionMap;
     }
 
-    /**
-     * Installs the CQ actions in the repository.
+    /** Installs the CQ actions in the repository.
      *
      * @param principal
      * @param acl
      * @param session
      * @param acMgr
-     * @return either the same acl as given in the parameter {@code acl} if no actions have been installed otherwise the new AccessControlList (comprising the entres being installed for the actions).
+     * @return either the same acl as given in the parameter {@code acl} if no actions have been installed otherwise the new
+     *         AccessControlList (comprising the entres being installed for the actions).
      * @throws RepositoryException
      * @throws SecurityException
-     * @throws NoSuchMethodException
-     */
-    private JackrabbitAccessControlList installActions(Principal principal, JackrabbitAccessControlList acl, Session session, AccessControlManager acMgr, AcInstallationHistoryPojo history) throws RepositoryException, SecurityException {
+     * @throws NoSuchMethodException */
+    private JackrabbitAccessControlList installActions(Principal principal, JackrabbitAccessControlList acl, Session session,
+            AccessControlManager acMgr, AcInstallationHistoryPojo history) throws RepositoryException, SecurityException {
         final Map<String, Boolean> actionMap = getActionMap();
         if (actionMap.isEmpty()) {
             return acl;
@@ -423,7 +422,7 @@ public class AceBean implements AcDumpElement {
         final JackrabbitAccessControlList newAcl = AccessControlUtils.getAccessControlList(session, getJcrPath());
         final RestrictionMapsHolder restrictions = getRestrictions(session, acl);
 
-        if(restrictionMap.isEmpty()){
+        if (this.restrictionMap.isEmpty()) {
             return newAcl;
         }
         // additionally set restrictions on the installed actions (this is not supported by CQ Security API)
@@ -435,21 +434,23 @@ public class AceBean implements AcDumpElement {
             RestrictionMapsHolder restrictions)
                     throws RepositoryException, AccessControlException, UnsupportedRepositoryOperationException, SecurityException {
         final List<AccessControlEntry> changedAces = getModifiedAces(oldAcl, newAcl);
-        if(!changedAces.isEmpty()){
-            for(final AccessControlEntry newAce : changedAces){
+        if (!changedAces.isEmpty()) {
+            for (final AccessControlEntry newAce : changedAces) {
                 addRestrictionIfNotSet(newAcl, restrictions, newAce);
             }
-        }else{
-            // check cornercase: yaml file contains 2 ACEs with same action same principal same path but one with additional restriction (e.g. read and repGlob: '')
-            // in that case old and new acl contain the same elements (equals == true) and in both lists the last ace contains the action without restriction
+        } else {
+            // check cornercase: yaml file contains 2 ACEs with same action same principal same path but one with additional restriction
+            // (e.g. read and repGlob: '')
+            // in that case old and new acl contain the same elements (equals == true) and in both lists the last ace contains the action
+            // without restriction
             // for that group
-            final AccessControlEntry lastOldAce = oldAcl.getAccessControlEntries()[oldAcl.getAccessControlEntries().length-1];
-            final AccessControlEntry lastNewAce = newAcl.getAccessControlEntries()[newAcl.getAccessControlEntries().length-1];
+            final AccessControlEntry lastOldAce = oldAcl.getAccessControlEntries()[oldAcl.getAccessControlEntries().length - 1];
+            final AccessControlEntry lastNewAce = newAcl.getAccessControlEntries()[newAcl.getAccessControlEntries().length - 1];
 
-            if(lastOldAce.equals(lastNewAce) && lastNewAce.getPrincipal().getName().equals(this.getPrincipalName())){
+            if (lastOldAce.equals(lastNewAce) && lastNewAce.getPrincipal().getName().equals(getPrincipalName())) {
                 addRestrictionIfNotSet(newAcl, restrictions, lastNewAce);
 
-            }else{
+            } else {
                 throw new IllegalStateException("No new entries have been set for AccessControlList at " + getJcrPath());
             }
         }
@@ -459,9 +460,10 @@ public class AceBean implements AcDumpElement {
             AccessControlEntry newAce)
                     throws RepositoryException, AccessControlException, UnsupportedRepositoryOperationException, SecurityException {
         if (!(newAce instanceof JackrabbitAccessControlEntry)) {
-            throw new IllegalStateException("Can not deal with non JackrabbitAccessControlEntrys, but entry is of type " + newAce.getClass().getName());
+            throw new IllegalStateException(
+                    "Can not deal with non JackrabbitAccessControlEntrys, but entry is of type " + newAce.getClass().getName());
         }
-        final JackrabbitAccessControlEntry ace = (JackrabbitAccessControlEntry)newAce;
+        final JackrabbitAccessControlEntry ace = (JackrabbitAccessControlEntry) newAce;
         // only extend those AccessControlEntries which do not yet have a restriction
 
         if (ace.getRestrictionNames().length == 0) {
@@ -471,14 +473,16 @@ public class AceBean implements AcDumpElement {
     }
 
     @SuppressWarnings("unchecked")
-    private List<AccessControlEntry> getModifiedAces(final JackrabbitAccessControlList oldAcl, JackrabbitAccessControlList newAcl) throws RepositoryException{
+    private List<AccessControlEntry> getModifiedAces(final JackrabbitAccessControlList oldAcl, JackrabbitAccessControlList newAcl)
+            throws RepositoryException {
         final List<AccessControlEntry> oldAces = Arrays.asList(oldAcl.getAccessControlEntries());
         final List<AccessControlEntry> newAces = Arrays.asList(newAcl.getAccessControlEntries());
         return (List<AccessControlEntry>) CollectionUtils.subtract(newAces, oldAces);
 
     }
 
-    private boolean installPrivileges(Principal principal, JackrabbitAccessControlList acl, Session session, AccessControlManager acMgr) throws RepositoryException {
+    private boolean installPrivileges(Principal principal, JackrabbitAccessControlList acl, Session session, AccessControlManager acMgr)
+            throws RepositoryException {
         // then install remaining privileges
         final Set<Privilege> privileges = AccessControlUtils.getPrivilegeSet(getPrivileges(), acMgr);
         if (!privileges.isEmpty()) {
@@ -496,12 +500,10 @@ public class AceBean implements AcDumpElement {
         return false;
     }
 
-    /**
-     * Installs the AccessControlEntry being represented by this bean in the
-     * repository
+    /** Installs the AccessControlEntry being represented by this bean in the repository
+     *
      * @throws SecurityException
-     * @throws NoSuchMethodException
-     */
+     * @throws NoSuchMethodException */
     public void install(final Session session, Principal principal,
             AcInstallationHistoryPojo history) throws RepositoryException, SecurityException {
 
@@ -540,10 +542,10 @@ public class AceBean implements AcDumpElement {
     }
 
     public boolean isInitialContentOnlyConfig() {
-        return StringUtils.isNotBlank(initialContent)
-                && StringUtils.isBlank(permission)
-                && StringUtils.isBlank(privilegesString)
-                && StringUtils.isBlank(actionsStringFromConfig);
+        return StringUtils.isNotBlank(this.initialContent)
+                && StringUtils.isBlank(this.permission)
+                && StringUtils.isBlank(this.privilegesString)
+                && StringUtils.isBlank(this.actionsStringFromConfig);
     }
 
 }
