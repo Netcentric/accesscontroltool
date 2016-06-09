@@ -353,14 +353,8 @@ public class AccessControlUtils {
 
     public static void extendExistingAceWithRestrictions(JackrabbitAccessControlList accessControlList, JackrabbitAccessControlEntry accessControlEntry, RestrictionMapsHolder restrictions) throws SecurityException, UnsupportedRepositoryOperationException, RepositoryException   {
         // 1. add new entry
-        if(!restrictions.getMultiValuedRestrictionsMap().isEmpty()){
-            if (!accessControlList.addEntry(accessControlEntry.getPrincipal(), accessControlEntry.getPrivileges(), accessControlEntry.isAllow(), restrictions.getSingleValuedRestrictionsMap(), restrictions.getMultiValuedRestrictionsMap())) {
-                throw new IllegalStateException("Could not add entry, probably because it was already there!");
-            }
-        }else{
-            if (!accessControlList.addEntry(accessControlEntry.getPrincipal(), accessControlEntry.getPrivileges(), accessControlEntry.isAllow(), restrictions.getSingleValuedRestrictionsMap())) {
-                throw new IllegalStateException("Could not add entry, probably because it was already there!");
-            }
+        if (!accessControlList.addEntry(accessControlEntry.getPrincipal(), accessControlEntry.getPrivileges(), accessControlEntry.isAllow(), restrictions.getSingleValuedRestrictionsMap(), restrictions.getMultiValuedRestrictionsMap())) {
+            throw new IllegalStateException("Could not add entry, probably because it was already there!");
         }
         // we assume the entry being added is the last one
         final AccessControlEntry newAccessControlEntry = accessControlList.getAccessControlEntries()[accessControlList.size() - 1];
