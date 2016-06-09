@@ -328,12 +328,12 @@ public class AceBean implements AcDumpElement {
         return cleanedPrivileges;
     }
 
-    /** Creates a restriction map being used in {@link JackrabbitAccessControlList#addEntry(Principal, Privilege[], boolean, Map)} out of
+    /** Creates a RestrictionHolder object containing 2 restriction maps being used in {@link JackrabbitAccessControlList#addEntry(Principal, Privilege[], boolean, Map, Map)} out of
      * the set actions on this bean.
      *
      * @param session the session
      * @param acl the access control list for which this restriction map should be used
-     * @return RestrictionMapsHolder with restriction names as keys and restriction values as values.
+     * @return RestrictionMapsHolder containing 2 maps with restriction names as keys and restriction values as values (singleValuedRestrictionsMap) and values[] (multiValuedRestrictionsMap).
      * @throws ValueFormatException
      * @throws UnsupportedRepositoryOperationException
      * @throws RepositoryException */
