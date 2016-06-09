@@ -64,7 +64,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
     @Override
     public boolean validate(final AceBean aceBean, AccessControlManager aclManager)
             throws AcConfigBeanValidationException {
-        if (!enabled) {
+        if (!this.enabled) {
             return true;
         }
         this.aceBean = aceBean;
@@ -73,7 +73,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
 
     private boolean validate(AccessControlManager aclManager) throws AcConfigBeanValidationException {
 
-        if (aceBean.isInitialContentOnlyConfig()) {
+        if (this.aceBean.isInitialContentOnlyConfig()) {
             return true;
         }
 
@@ -81,30 +81,30 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
         boolean isActionDefined = false;
         boolean isPrivilegeDefined = false;
 
-        currentBeanCounter++;
-        validateAuthorizableId(groupsFromCurrentConfig, aceBean);
-        validateAcePath(aceBean);
+        this.currentBeanCounter++;
+        validateAuthorizableId(this.groupsFromCurrentConfig, this.aceBean);
+        validateAcePath(this.aceBean);
 
-        isActionDefined = validateActions(aceBean);
-        isPrivilegeDefined = validatePrivileges(aceBean, aclManager);
+        isActionDefined = validateActions(this.aceBean);
+        isPrivilegeDefined = validatePrivileges(this.aceBean, aclManager);
 
-        validatePermission(aceBean);
+        validatePermission(this.aceBean);
 
         // either action(s) or permission(s) or both have to be defined!
         final boolean isActionOrPrivilegeDefined = isActionDefined || isPrivilegeDefined;
 
-        final boolean hasInitialContent = StringUtils.isNotBlank(aceBean.getInitialContent());
+        final boolean hasInitialContent = StringUtils.isNotBlank(this.aceBean.getInitialContent());
 
         if (!isActionOrPrivilegeDefined && !hasInitialContent) {
-            final String errorMessage = getBeanDescription(currentBeanCounter,
-                    aceBean.getPrincipalName())
+            final String errorMessage = getBeanDescription(this.currentBeanCounter,
+                    this.aceBean.getPrincipalName())
                     + ", no actions or privileges defined"
                     + "! Installation aborted!";
             LOG.error(errorMessage);
             throw new NoActionOrPrivilegeDefinedException(errorMessage);
         }
 
-        validateRestrictions(aceBean, aclManager);
+        validateRestrictions(this.aceBean, aclManager);
 
         return true;
     }
@@ -113,8 +113,6 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
     public boolean validateRestrictions(final AceBean tmpAceBean, final AccessControlManager aclManager)
             throws InvalidRepGlobException, InvalidRestrictionsException {
         boolean valid = true;
-
-        final Set<String> allowedRestrictions = getSupportedRestrictions(aclManager);
         final String repGlobValue = tmpAceBean.getRepGlob(); // kept for backward compatibility
 
         final Map<String, List<String>> restrictionsMap = tmpAceBean.getRestrictions();
@@ -125,7 +123,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
         // make sure that (old) repGlob Attribute and (new) rep:glob attribute are not both set
         final String principal = tmpAceBean.getPrincipalName();
         if(StringUtils.isNotBlank(repGlobValue) && restrictionsMap.containsKey("rep:glob")){
-            final String errorMessage = getBeanDescription(currentBeanCounter,
+            final String errorMessage = getBeanDescription(this.currentBeanCounter,
                     principal)
                     + ",  doubled defined rep:glob restriction: "
                     + repGlobValue + " and: " + restrictionsMap.get("rep:glob");
@@ -133,11 +131,14 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
         }
 
         if(!restrictionsMap.isEmpty()){
+
             final Set<String> restrictionsFromAceBean = restrictionsMap.keySet();
+            final Set<String> allowedRestrictions = getSupportedRestrictions(aclManager);
+
             if(!allowedRestrictions.containsAll(restrictionsFromAceBean)){
                 restrictionsFromAceBean.removeAll(allowedRestrictions);
                 valid = false;
-                final String errorMessage = getBeanDescription(currentBeanCounter,
+                final String errorMessage = getBeanDescription(this.currentBeanCounter,
                         principal)
                         + ",  this repository doesn't support following restriction(s): "
                         + restrictionsFromAceBean;
@@ -162,7 +163,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
             final JackrabbitAccessControlList jacl = getJackrabbitAccessControlList(aclManager);
             allowedRestrictions = new HashSet<>(Arrays.asList(jacl.getRestrictionNames()));
         } catch (final RepositoryException e) {
-            throw new InvalidRepGlobException("Could not get restriction names from ACL of path: " + aceBean.getJcrPath());
+            throw new InvalidRepGlobException("Could not get restriction names from ACL of path: " + this.aceBean.getJcrPath());
         }
         return allowedRestrictions;
     }
@@ -170,8 +171,8 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
     private JackrabbitAccessControlList getJackrabbitAccessControlList(final AccessControlManager aclManager) throws RepositoryException, AccessDeniedException {
         JackrabbitAccessControlList jacl = null;
         // don't check paths containing wildcards
-        if(!aceBean.getJcrPath().contains("*")){
-            jacl = AccessControlUtils.getModifiableAcl(aclManager, aceBean.getJcrPath());
+        if(!this.aceBean.getJcrPath().contains("*")){
+            jacl = AccessControlUtils.getModifiableAcl(aclManager, this.aceBean.getJcrPath());
         }
         if(jacl == null){
             // root as fallback
@@ -187,7 +188,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
             throws InvalidPermissionException {
 
         final String permission = tmpAclBean.getPermission();
-        if (StringUtils.isNotBlank(aceBean.getInitialContent()) && StringUtils.isBlank(permission)) {
+        if (StringUtils.isNotBlank(this.aceBean.getInitialContent()) && StringUtils.isBlank(permission)) {
             return true;
         }
 
@@ -195,7 +196,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
             tmpAclBean.setPermission(permission);
         } else {
             final String principal = tmpAclBean.getPrincipalName();
-            final String errorMessage = getBeanDescription(currentBeanCounter,
+            final String errorMessage = getBeanDescription(this.currentBeanCounter,
                     principal) + ", invalid permission: '" + permission + "'";
             LOG.error(errorMessage);
             throw new InvalidPermissionException(errorMessage);
@@ -216,7 +217,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
         final String[] actions = tmpAclBean.getActionsStringFromConfig().split(",");
 
         if (actions.length > CqActions.ACTIONS.length) {
-            final String errorMessage = getBeanDescription(currentBeanCounter,
+            final String errorMessage = getBeanDescription(this.currentBeanCounter,
                     principal) + " too many actions defined!";
             LOG.error(errorMessage);
             throw new TooManyActionsException(errorMessage);
@@ -229,14 +230,14 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
 
             if (!Validators.isValidAction(actions[i])) {
                 final String errorMessage = getBeanDescription(
-                        currentBeanCounter, principal)
+                        this.currentBeanCounter, principal)
                         + ", invalid action: " + actions[i];
                 LOG.error(errorMessage);
                 throw new InvalidActionException(errorMessage);
             }
             if (!actionsSet.add(actions[i])) {
                 final String errorMessage = getBeanDescription(
-                        currentBeanCounter, principal)
+                        this.currentBeanCounter, principal)
                         + ", doubled defined action: " + actions[i];
                 LOG.error(errorMessage);
                 throw new DoubledDefinedActionException(errorMessage);
@@ -267,14 +268,14 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
 
             if (!Validators.isValidJcrPrivilege(privileges[i], aclManager)) {
                 final String errorMessage = getBeanDescription(
-                        currentBeanCounter, principal)
+                        this.currentBeanCounter, principal)
                         + ",  invalid jcr privilege: " + privileges[i];
                 LOG.error(errorMessage);
                 throw new InvalidJcrPrivilegeException(errorMessage);
             }
             if (!privilegesSet.add(privileges[i])) {
                 final String errorMessage = getBeanDescription(
-                        currentBeanCounter, principal)
+                        this.currentBeanCounter, principal)
                         + ", doubled defined jcr privilege: " + privileges[i];
                 LOG.error(errorMessage);
                 throw new DoubledDefinedJcrPrivilegeException(errorMessage);
@@ -295,7 +296,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
             tmpAclBean.setJcrPath(currentEntryValue);
             isPathDefined = true;
         } else {
-            final String errorMessage = getBeanDescription(currentBeanCounter,
+            final String errorMessage = getBeanDescription(this.currentBeanCounter,
                     principal) + ", invalid path: " + currentEntryValue;
             LOG.error(errorMessage);
             throw new InvalidPathException(errorMessage);
@@ -314,14 +315,14 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
 
             // validate if authorizable is contained in config
             if (!groupsFromCurrentConfig.contains(principal)) {
-                final String message = getBeanDescription(currentBeanCounter,
+                final String message = getBeanDescription(this.currentBeanCounter,
                         principal) + " is not defined in group configuration";
                 throw new NoGroupDefinedException(message);
             }
             tmpAclBean.setPrincipal(principal);
         } else {
             valid = false;
-            final String errorMessage = getBeanDescription(currentBeanCounter,
+            final String errorMessage = getBeanDescription(this.currentBeanCounter,
                     principal)
                     + principal
                     + ", invalid authorizable name: "
@@ -347,7 +348,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
 
     @Override
     public void setBeanCounter(final long value) {
-        currentBeanCounter = value;
+        this.currentBeanCounter = value;
     }
 
     private String getBeanDescription(final long beanCounter,
@@ -358,20 +359,20 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
 
     @Override
     public void setCurrentAuthorizableName(final String name) {
-        if (enabled) {
+        if (this.enabled) {
             LOG.debug("Start validation of ACEs for authorizable: {}", name);
-            currentBeanCounter = 0;
+            this.currentBeanCounter = 0;
         }
     }
 
     @Override
     public void enable() {
-        enabled = true;
+        this.enabled = true;
 
     }
 
     @Override
     public void disable() {
-        enabled = false;
+        this.enabled = false;
     }
 }
