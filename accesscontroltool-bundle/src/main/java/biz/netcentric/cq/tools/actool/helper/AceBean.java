@@ -47,10 +47,10 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryP
  *         of the configuration file in order to set the corresponding ACEs in the system on the one hand and to store data during the
  *         reading of existing ACEs before writing the data back to a dump or configuration file again on the other hand. */
 public class AceBean implements AcDumpElement {
+
     public static final Logger LOG = LoggerFactory.getLogger(AceBean.class);
 
     private String jcrPath;
-    private String repGlob;
     private String actionsStringFromConfig;
     private String privilegesString;
     private String principal;
@@ -104,34 +104,43 @@ public class AceBean implements AcDumpElement {
         return "allow".equalsIgnoreCase(this.permission);
     }
 
-    public String getRepGlob() {
-        return this.repGlob;
-    }
-
-    public void setRepGlob(String repGlob) {
-        this.repGlob = repGlob;
-    }
-
     public Map<String, List<String>> getRestrictions() {
         return this.restrictionMap;
     }
 
-    public void setRestrictions(final Map<String, ?> currentAceDefinition, final AceBean tmpAclBean) {
-        for (final String key : currentAceDefinition.keySet()) {
-            if (key.startsWith("rep:")) {
-                final String value = (String) currentAceDefinition.get(key);
+    public void setRestrictions(final Map<String, ?> currentAceDefinition, Object restrictions, String oldStyleRepGlob) {
+        if (restrictions != null) {
+            if (!(restrictions instanceof Map)) {
+                throw new IllegalArgumentException("If 'restrictions' is provided for an AC entry, it needs to be a map.");
+            }
+            Map<String, ?> restrictionsMap = (Map<String, ?>) restrictions;
+            for (final String key : restrictionsMap.keySet()) {
+                final String value = (String) restrictionsMap.get(key);
                 final String[] values = value.split(",");
-                tmpAclBean.addRestriction(key, new ArrayList<String>(Arrays.asList(values)));
+                addRestriction(key, new ArrayList<String>(Arrays.asList(values)));
             }
         }
+
+        if (oldStyleRepGlob != null) {
+            if (restrictionMap.containsKey(RESTRICTION_NAME_GLOB)) {
+                throw new IllegalArgumentException("Usage of restrictions -> rep:glob and repGlob on top level cannot be mixed.");
+            }
+            addRestriction(RESTRICTION_NAME_GLOB, Arrays.asList(oldStyleRepGlob));
+        }
+
     }
 
-    public void setRestrictionsMap(Map<String, List<String>> restrictionsMap) {
+    void setRestrictionsMap(Map<String, List<String>> restrictionsMap) {
         this.restrictionMap = restrictionsMap;
     }
 
-    public void addRestriction(final String restrictionName, final List<String> restrictionValue) {
+    private void addRestriction(final String restrictionName, final List<String> restrictionValue) {
         this.restrictionMap.put(restrictionName, restrictionValue);
+    }
+
+    public String getRepGlob() {
+        List<String> list = restrictionMap.get(RESTRICTION_NAME_GLOB);
+        return list != null && !list.isEmpty() ? list.get(0) : null;
     }
 
     public String getActionsString() {
@@ -186,7 +195,7 @@ public class AceBean implements AcDumpElement {
 
     @Override
     public String toString() {
-        return "AceBean [jcrPath=" + this.jcrPath + "\n" + ", repGlob=" + this.repGlob + "\n" + ", actionsStringFromConfig=" + this.actionsStringFromConfig
+        return "AceBean [jcrPath=" + this.jcrPath + "\n" + ", actionsStringFromConfig=" + this.actionsStringFromConfig
                 + "\n"
                 + ", privilegesString=" + this.privilegesString + "\n" + ", principal=" + this.principal + "\n" + ", permission=" + this.permission
                 + ", actions="
@@ -207,7 +216,6 @@ public class AceBean implements AcDumpElement {
         result = prime * result + ((this.permission == null) ? 0 : this.permission.hashCode());
         result = prime * result + ((this.principal == null) ? 0 : this.principal.hashCode());
         result = prime * result + ((this.privilegesString == null) ? 0 : this.privilegesString.hashCode());
-        result = prime * result + ((this.repGlob == null) ? 0 : this.repGlob.hashCode());
         result = prime * result + ((this.restrictionMap == null) ? 0 : this.restrictionMap.hashCode());
         return result;
     }
@@ -274,13 +282,6 @@ public class AceBean implements AcDumpElement {
                 return false;
             }
         } else if (!this.privilegesString.equals(other.privilegesString)) {
-            return false;
-        }
-        if (this.repGlob == null) {
-            if (other.repGlob != null) {
-                return false;
-            }
-        } else if (!this.repGlob.equals(other.repGlob)) {
             return false;
         }
         if (this.restrictionMap == null) {

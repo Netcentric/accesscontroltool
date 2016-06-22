@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2015 Netcentric AG.
+d * (C) Copyright 2015 Netcentric AG.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -58,7 +58,6 @@ import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.commons.osgi.PropertiesUtil;
@@ -414,11 +413,12 @@ public class DumpserviceImpl implements Dumpservice {
                 out.println("     permission: " + bean.getPermission());
                 out.println("     actions: " + bean.getActionsString());
                 out.println("     privileges: " + bean.getPrivilegesString());
-                out.print("     repGlob: ");
-                if (!bean.getRepGlob().isEmpty()) {
-                    out.println("'" + bean.getRepGlob() + "'");
-                } else {
-                    out.println();
+                if(!bean.getRestrictions().isEmpty()) {
+                    out.println("     restrictions: ");
+                    for(String restrictionKey: bean.getRestrictions().keySet()) {
+                        List<String> valueList = bean.getRestrictions().get(restrictionKey);
+                        out.println("        "+restrictionKey+": "+StringUtils.join(valueList,","));
+                    }
                 }
             }
             out.println();
@@ -552,14 +552,17 @@ public class DumpserviceImpl implements Dumpservice {
                         .println(AcHelper
                                 .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY)
                                 + "privileges: " + bean.getPrivilegesString());
-                outStream
-                        .print(AcHelper
-                                .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY)
-                                + "repGlob: ");
-                if (!bean.getRepGlob().isEmpty()) {
-                    outStream.println("'" + bean.getRepGlob() + "'");
-                } else {
-                    outStream.println();
+
+                if (!bean.getRestrictions().isEmpty()) {
+                    outStream.println(AcHelper
+                            .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY)
+                            + "restrictions: ");
+                    for (String restrictionKey : bean.getRestrictions().keySet()) {
+                        List<String> valueList = bean.getRestrictions().get(restrictionKey);
+                        outStream.println(AcHelper
+                                .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_RESTRICTIONS)
+                                + restrictionKey + ": " + StringUtils.join(valueList, ","));
+                    }
                 }
 
             }

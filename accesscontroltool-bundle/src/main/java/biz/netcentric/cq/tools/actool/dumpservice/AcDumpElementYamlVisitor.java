@@ -25,6 +25,7 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
     public static final int DUMP_INDENTATION_KEY = 4;
     public static final int DUMP_INDENTATION_FIRST_PROPERTY = 7;
     public static final int DUMP_INDENTATION_PROPERTY = 9;
+    public static final int DUMP_INDENTATION_RESTRICTIONS = 11;
 
     public static final String YAML_STRUCTURAL_ELEMENT_PREFIX = "- ";
     private final StringBuilder sb;

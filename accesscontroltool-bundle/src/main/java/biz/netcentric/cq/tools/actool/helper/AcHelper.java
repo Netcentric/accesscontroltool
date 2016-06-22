@@ -298,21 +298,5 @@ public class AcHelper {
         return pathBasedAceMap;
     }
 
-    public static boolean isEqualBean(final AceBean bean1, final AceBean bean2) {
-        final Set<String> bean1Privileges = new HashSet<String>(Arrays.asList(bean1
-                .getPrivilegesString().split(",")));
-        final Set<String> bean2Privileges = new HashSet<String>(Arrays.asList(bean2
-                .getPrivilegesString().split(",")));
 
-        if (bean1.getJcrPath().equals(bean2.getJcrPath())
-                && bean1.getPrincipalName().equals(bean2.getPrincipalName())
-                && (bean1.isAllow() == bean2.isAllow())
-                && bean1.getRepGlob().equals(bean2.getRepGlob())
-                && bean1.getPermission().equals(bean2.getPermission())
-                && bean1Privileges.containsAll(bean2Privileges)) {
-            return true;
-        }
-        return false;
-
-    }
 }

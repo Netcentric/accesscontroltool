@@ -9,7 +9,6 @@
 package biz.netcentric.cq.tools.actool.validators.impl;
 
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -113,22 +112,13 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
     public boolean validateRestrictions(final AceBean tmpAceBean, final AccessControlManager aclManager)
             throws InvalidRepGlobException, InvalidRestrictionsException {
         boolean valid = true;
-        final String repGlobValue = tmpAceBean.getRepGlob(); // kept for backward compatibility
 
         final Map<String, List<String>> restrictionsMap = tmpAceBean.getRestrictions();
-        if(restrictionsMap.isEmpty() && repGlobValue == null){
+        if (restrictionsMap.isEmpty()) {
             return true;
         }
 
-        // make sure that (old) repGlob Attribute and (new) rep:glob attribute are not both set
         final String principal = tmpAceBean.getPrincipalName();
-        if(StringUtils.isNotBlank(repGlobValue) && restrictionsMap.containsKey("rep:glob")){
-            final String errorMessage = getBeanDescription(this.currentBeanCounter,
-                    principal)
-                    + ",  doubled defined rep:glob restriction: "
-                    + repGlobValue + " and: " + restrictionsMap.get("rep:glob");
-            throw new InvalidRepGlobException(errorMessage);
-        }
 
         if(!restrictionsMap.isEmpty()){
 
@@ -145,13 +135,6 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
                 throw new InvalidRestrictionsException(errorMessage);
             }
         }
-
-        // set old repGlob property (for backwards compatibility)
-        if(repGlobValue == null){
-            return true;
-        }
-        tmpAceBean.setRepGlob(repGlobValue);
-        tmpAceBean.addRestriction("rep:glob", new ArrayList<String>(Arrays.asList(new String[]{repGlobValue})));
 
         return valid;
     }

@@ -22,17 +22,20 @@
        - path: /content
          permission: allow
          actions: read
-         rep:glob: /cq:*
+         restrictions:
+           rep:glob: /cq:*
        
        - path: /content
          permission: allow
          actions: read
-         rep:ntNames: cq:Page
+         restrictions:
+           rep:ntNames: cq:Page
          
        - path: /content
          permission: allow
          actions: read
-         rep:prefixes: cq,sling
+         restrictions:
+           rep:prefixes: cq,sling
          
          
       

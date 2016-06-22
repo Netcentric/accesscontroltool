@@ -42,9 +42,12 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
 @Service
 @Component(label = "AC Yaml Config Reader", description = "Service that installs groups & ACEs according to textual configuration files")
 public class YamlConfigReader implements ConfigReader {
+
     private static final Logger LOG = LoggerFactory.getLogger(YamlConfigReader.class);
 
     private static final String ACE_CONFIG_PROPERTY_GLOB = "repGlob";
+    private static final String ACE_CONFIG_PROPERTY_RESTRICTIONS = "restrictions";
+
     private static final String ACE_CONFIG_PROPERTY_PERMISSION = "permission";
     private static final String ACE_CONFIG_PROPERTY_PRIVILEGES = "privileges";
     private static final String ACE_CONFIG_PROPERTY_ACTIONS = "actions";
@@ -286,10 +289,9 @@ public class YamlConfigReader implements ConfigReader {
                 currentAceDefinition, ACE_CONFIG_PROPERTY_PRIVILEGES));
         tmpAclBean.setPermission(getMapValueAsString(
                 currentAceDefinition, ACE_CONFIG_PROPERTY_PERMISSION));
-        // kept for backward compatibility reasons
-        tmpAclBean.setRepGlob((String) currentAceDefinition.get(ACE_CONFIG_PROPERTY_GLOB));
         
-        tmpAclBean.setRestrictions(currentAceDefinition, tmpAclBean);
+        tmpAclBean.setRestrictions(currentAceDefinition, currentAceDefinition.get(ACE_CONFIG_PROPERTY_RESTRICTIONS),
+                (String) currentAceDefinition.get(ACE_CONFIG_PROPERTY_GLOB));
         tmpAclBean.setAssertedExceptionString(getMapValueAsString(
                 currentAceDefinition, ASSERTED_EXCEPTION));
         tmpAclBean.setActions(parseActionsString(getMapValueAsString(currentAceDefinition,
