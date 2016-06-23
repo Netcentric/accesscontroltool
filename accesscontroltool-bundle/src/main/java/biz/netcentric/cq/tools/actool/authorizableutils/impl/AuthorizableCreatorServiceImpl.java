@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.Node;
@@ -29,7 +30,10 @@ import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.version.VersionException;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Modified;
+import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
@@ -37,6 +41,7 @@ import org.apache.jackrabbit.api.security.user.AuthorizableExistsException;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
+import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,14 +56,39 @@ import biz.netcentric.cq.tools.actool.helper.ContentHelper;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 @Service
-@Component(metatype = true, label = "AuthorizableCreatorService Service", description = "Service that installs groups according to textual configuration files")
+@Component(metatype = true, label = "AC AuthorizableCreatorService", description = "Service that installs groups according to textual configuration files")
 public class AuthorizableCreatorServiceImpl implements
         AuthorizableCreatorService {
 
     private static final String PATH_HOME_GROUPS = "/home/groups";
     private static final String PATH_HOME_USERS = "/home/users";
+    static final String PROPERTY_IGNORED_MEMBERSHIPS_PATTERN = "AuthorizableCreatorServiceImpl.ignoredMembershipsPattern";
+
 
     private static final Logger LOG = LoggerFactory.getLogger(AuthorizableCreatorServiceImpl.class);
+
+    @Property(label = "Ignored memberships pattern",
+            description = "Matching memberships in groups not maintained via this tool are ignored instead of removed.",
+            name = PROPERTY_IGNORED_MEMBERSHIPS_PATTERN, value = "")
+    Pattern ignoredMembershipsPattern;
+
+    @Activate
+    public void activate(final Map<?,?> properties)
+            throws Exception {
+        LOG.debug("Activated AceService!");
+        modified(properties);
+    }
+
+    @Modified
+    public void modified(final Map<?,?> properties) {
+        LOG.debug("Modified AceService!");
+        String ignoredMembershipConfig = PropertiesUtil.toString(properties.get(PROPERTY_IGNORED_MEMBERSHIPS_PATTERN), "");
+        if(StringUtils.isBlank(ignoredMembershipConfig)) {
+            ignoredMembershipsPattern = null;
+        } else {
+            ignoredMembershipsPattern = Pattern.compile(ignoredMembershipConfig);
+        }
+    }
 
     AcInstallationHistoryPojo status;
     Map<String, LinkedHashSet<AuthorizableConfigBean>> principalMapFromConfig;
@@ -473,11 +503,7 @@ public class AuthorizableCreatorServiceImpl implements
                 principalId);
         // delete memberOf groups of that group in repo
         for (String group : membershipGroupsFromRepository) {
-            LOG.debug(
-                    "{}: delete authorizable from members of group {} in repository",
-                    principalId, group);
-            ((Group) userManager.getAuthorizable(group))
-                    .removeMember(userManager.getAuthorizable(principalId));
+            handleExternalMembership(principalId, userManager, group);
         }
     }
 
@@ -539,12 +565,7 @@ public class AuthorizableCreatorServiceImpl implements
                     // if not delete that group of membersOf-property of
                     // existing group
 
-                    LOG.debug(
-                            "delete {} from members of group {} in repository",
-                            principalId, authorizable);
-                    ((Group) userManager.getAuthorizable(authorizable))
-                            .removeMember(userManager
-                                    .getAuthorizable(principalId));
+                    handleExternalMembership(principalId, userManager, authorizable);
                 }
             }
 
@@ -579,6 +600,16 @@ public class AuthorizableCreatorServiceImpl implements
                 }
             }
 
+        }
+    }
+
+    void handleExternalMembership(String principalId, UserManager userManager, String group) throws RepositoryException {
+        if(ignoredMembershipsPattern != null && ignoredMembershipsPattern.matcher(group).find()) {
+            LOG.debug("ignored membership {} of group {} in repository", principalId, group);
+        } else {
+            LOG.debug("delete {} from members of group {} in repository", principalId, group);
+            ((Group) userManager.getAuthorizable(group)).removeMember(userManager
+                    .getAuthorizable(principalId));
         }
     }
 
