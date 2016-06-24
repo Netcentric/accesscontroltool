@@ -13,12 +13,16 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 
+import biz.netcentric.cq.tools.actool.validators.GlobalConfigurationValidator;
+
 /** Global configuration that applies to the overall access control configuration system. */
 public class GlobalConfiguration {
 
+    public static final String KEY_MIN_REQUIRED_VERSION = "minRequiredVersion";
     public static final String KEY_ALLOW_EXTERNAL_GROUP_NAMES_REGEX = "allowExternalGroupNamesRegEx";
 
     private Pattern allowExternalGroupNamesRegEx;
+    private String minRequiredVersion;
 
     public GlobalConfiguration() {
     }
@@ -26,7 +30,8 @@ public class GlobalConfiguration {
     public GlobalConfiguration(Map<String, ?> globalConfigMap) {
 
         if (globalConfigMap != null) {
-            setAllowExternalGroupNamesRegEx(String.valueOf(globalConfigMap.get(KEY_ALLOW_EXTERNAL_GROUP_NAMES_REGEX)));
+            setAllowExternalGroupNamesRegEx((String) globalConfigMap.get(KEY_ALLOW_EXTERNAL_GROUP_NAMES_REGEX));
+            setMinRequiredVersion((String) globalConfigMap.get(KEY_MIN_REQUIRED_VERSION));
         }
 
     }
@@ -41,6 +46,15 @@ public class GlobalConfiguration {
             }
         }
         
+        if (otherGlobalConfig.getMinRequiredVersion() != null) {
+            if (minRequiredVersion == null) {
+                minRequiredVersion = otherGlobalConfig.getMinRequiredVersion();
+            } else {
+                minRequiredVersion = GlobalConfigurationValidator.versionCompare(otherGlobalConfig.getMinRequiredVersion(), minRequiredVersion) > 0
+                        ? otherGlobalConfig.getMinRequiredVersion() : minRequiredVersion;
+            }
+        }
+
     }
 
     public Pattern getAllowExternalGroupNamesRegEx() {
@@ -50,6 +64,14 @@ public class GlobalConfiguration {
     public void setAllowExternalGroupNamesRegEx(String allowExternalGroupNamesRegEx) {
         this.allowExternalGroupNamesRegEx = StringUtils.isNotBlank(allowExternalGroupNamesRegEx)
                 ? Pattern.compile(allowExternalGroupNamesRegEx) : null;
+    }
+
+    public String getMinRequiredVersion() {
+        return minRequiredVersion;
+    }
+
+    public void setMinRequiredVersion(String requiredMinVersion) {
+        this.minRequiredVersion = requiredMinVersion;
     }
 
 

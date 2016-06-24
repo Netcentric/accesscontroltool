@@ -32,6 +32,7 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryP
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
 import biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator;
+import biz.netcentric.cq.tools.actool.validators.GlobalConfigurationValidator;
 import biz.netcentric.cq.tools.actool.validators.YamlConfigurationsValidator;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
@@ -149,7 +150,8 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         final AuthorizableMemberGroupsValidator membersValidator = new AuthorizableMemberGroupsValidator();
         membersValidator.validate(mergedAuthorizablesMapfromConfig);
         
-        
+        GlobalConfigurationValidator.validate(globalConfiguration);
+
         AcConfiguration acConfiguration = new AcConfiguration();
         acConfiguration.setGlobalConfiguration(globalConfiguration);
         acConfiguration.setAuthorizablesConfig(mergedAuthorizablesMapfromConfig);
