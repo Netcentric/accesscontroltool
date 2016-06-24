@@ -90,18 +90,18 @@ In a second group (fragment-project1) you can then allow to read the child node 
 
 ```
 
-## Use fragment groups for functional aspects
+## Use fragment groups for functional aspects and content access
 
 You should separate rights for functional aspects (e.g. access to DAM editor, CRX/DE or tag management) and content.
-This means there are groups just for tool access (we call them fragment-... here) but not for content. This way you can enable access to required tools easily and editors only see what they need on the welcome page.
+This means there are groups just for tool access (we call them fragment-... here) and others just for content (we call them content-.. here). This way you can enable access to required tools easily and editors only see what they need on the welcome page.
 
-The group that is effectively assigned to a user then includes a functional group for tooling access and content permissions.
+The group that is effectively assigned to a user then includes a functional group for tooling access and content groups.
 
 <img src="images/fragments.png">
 
-In this case the user is a content manager. So the group "contentmanager" provides him the content permissions + the functional group "fragment-contentmanager" to enable the right tools. The group "fragment-contentmanagers" includes functional aspects such as "fragment-dam" for access to DAM tool. It also includes the groups "fragment-restrict-for-everyone" and "fragment-basic-allow".
+In this case the user is a content manager. So the group "contentmanager" provides him the content groups + the functional group "fragment-contentmanager" to enable the right tools. The group "fragment-contentmanagers" includes functional aspects such as "fragment-dam" for access to DAM tool. It also includes the groups "fragment-restrict-for-everyone" and "fragment-basic-allow".
 
 * fragment-restrict-for-everyone: initially denies access to all tools and content, includes all deny rules
 * fragment-basic-allow: allows access to nodes that are readable for all users (e.g. /content without subnodes)
 
-Please note that the functional fragment groups do not provide any content access. Read/write access to a website is provided by the group "contentmanager" only.
+Please note that the functional fragment groups do not provide any content access. Read/write access to a website is provided by the groups "content-project1-read" and "content-project1-write".
