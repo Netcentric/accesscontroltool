@@ -97,14 +97,14 @@ public class AceServiceImpl implements AceService {
     private String configurationPath;
 
     @Activate
-    public void activate(@SuppressWarnings("rawtypes") final Map properties)
+    public void activate(final Map<?,?> properties)
             throws Exception {
         LOG.debug("Activated AceService!");
         modified(properties);
     }
 
     @Modified
-    public void modified(@SuppressWarnings("rawtypes") final Map properties) {
+    public void modified(final Map<?,?> properties) {
         LOG.debug("Modified AceService!");
         configurationPath = PropertiesUtil.toString(properties.get(PROPERTY_CONFIGURATION_PATH), "");
     }
