@@ -64,12 +64,11 @@ public interface AceService {
      * 
      * @param session
      * @param history
-     * @param newestConfigurations
+     * @param configurationFileContentsByFilename
      * @param authorizableInstallationHistorySet
      * @throws Exception */
-    public void installNewConfigurations(Session session,
-            AcInstallationHistoryPojo history,
-            Map<String, String> newestConfigurations, Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet)
-                    throws Exception;
+    public void installConfigurationFiles(Session session, AcInstallationHistoryPojo history,
+            Map<String, String> configurationFileContentsByFilename,
+            Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet) throws Exception;
 
 }

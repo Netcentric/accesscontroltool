@@ -8,8 +8,8 @@
  */
 package biz.netcentric.cq.tools.actool.authorizableutils;
 
-import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.RepositoryException;
@@ -23,7 +23,7 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryP
 public interface AuthorizableCreatorService {
 
     public void createNewAuthorizables(
-            Map<String, LinkedHashSet<AuthorizableConfigBean>> principalMapFromConfig,
+            Map<String, Set<AuthorizableConfigBean>> principalMapFromConfig,
             final Session session, AcInstallationHistoryPojo status,
             AuthorizableInstallationHistory authorizableInstallationHistory)
             throws AccessDeniedException,

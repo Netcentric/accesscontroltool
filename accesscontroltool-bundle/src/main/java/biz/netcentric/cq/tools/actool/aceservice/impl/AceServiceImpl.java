@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,6 +47,7 @@ import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
+import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetriever;
 import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
 import biz.netcentric.cq.tools.actool.configreader.ConfigurationMerger;
@@ -109,18 +109,14 @@ public class AceServiceImpl implements AceService {
         configurationPath = PropertiesUtil.toString(properties.get(PROPERTY_CONFIGURATION_PATH), "");
     }
 
-    // FIXME: Why is this called installConfigurationFromYamlList if it doesn't use YAML?
-    private void installConfigurationFromYamlList(
-            final List mergedConfigurations, AcInstallationHistoryPojo history,
+    private void installAcConfiguration(
+            AcConfiguration acConfiguration, AcInstallationHistoryPojo history,
             final Session session,
             Set<AuthorizableInstallationHistory> authorizableHistorySet,
             Map<String, Set<AceBean>> repositoryDumpAceMap) throws Exception {
 
-        // FIXME: putting different types of configuration objects in a heterogeneous list is pretty bad
-        Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig = (Map<String, LinkedHashSet<AuthorizableConfigBean>>) mergedConfigurations
-                .get(0);
-        Map<String, Set<AceBean>> aceMapFromConfig = (Map<String, Set<AceBean>>) mergedConfigurations
-                .get(1);
+        Map<String, Set<AuthorizableConfigBean>> authorizablesMapfromConfig = acConfiguration.getAuthorizablesConfig();
+        Map<String, Set<AceBean>> aceMapFromConfig = acConfiguration.getAceConfig();
 
         if (aceMapFromConfig == null) {
             String message = "ace config not found in YAML file! installation aborted!";
@@ -135,7 +131,7 @@ public class AceServiceImpl implements AceService {
         installAces(history, session, aceMapFromConfig);
     }
 
-    private Set<String> getAuthorizablesToRemoveAcesFor(Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig) {
+    private Set<String> getAuthorizablesToRemoveAcesFor(Map<String, Set<AuthorizableConfigBean>> authorizablesMapfromConfig) {
         Set<String> authorizablesToRemoveAcesFor = new HashSet<String>(authorizablesMapfromConfig.keySet());
         Set<String> authorizablesToBeMigrated = collectAuthorizablesToBeMigrated(authorizablesMapfromConfig);
         Collection<?> invalidAuthorizablesInConfig = CollectionUtils.intersection(authorizablesToRemoveAcesFor, authorizablesToBeMigrated);
@@ -149,10 +145,10 @@ public class AceServiceImpl implements AceService {
         return authorizablesToRemoveAcesFor;
     }
 
-    private Set<String> collectAuthorizablesToBeMigrated(Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig) {
+    private Set<String> collectAuthorizablesToBeMigrated(Map<String, Set<AuthorizableConfigBean>> authorizablesMapfromConfig) {
         Set<String> authorizablesToBeMigrated = new HashSet<String>();
         for (String principalStr : authorizablesMapfromConfig.keySet()) {
-            LinkedHashSet<AuthorizableConfigBean> authorizableConfigBeans = authorizablesMapfromConfig.get(principalStr);
+            Set<AuthorizableConfigBean> authorizableConfigBeans = authorizablesMapfromConfig.get(principalStr);
             for (AuthorizableConfigBean authorizableConfigBean : authorizableConfigBeans) {
                 String migrateFrom = authorizableConfigBean.getMigrateFrom();
                 if (StringUtils.isNotBlank(migrateFrom)) {
@@ -203,7 +199,7 @@ public class AceServiceImpl implements AceService {
     private void installAuthorizables(
             AcInstallationHistoryPojo history,
             Set<AuthorizableInstallationHistory> authorizableHistorySet,
-            Map<String, LinkedHashSet<AuthorizableConfigBean>> authorizablesMapfromConfig)
+            Map<String, Set<AuthorizableConfigBean>> authorizablesMapfromConfig)
                     throws RepositoryException, Exception {
         // --- installation of Authorizables from configuration ---
 
@@ -265,7 +261,7 @@ public class AceServiceImpl implements AceService {
             String rootPath = getConfigurationRootPath();
             Node rootNode = session.getNode(rootPath);
             Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(rootNode);
-            installNewConfigurations(session, history, newestConfigurations, authorizableInstallationHistorySet);
+            installConfigurationFiles(session, history, newestConfigurations, authorizableInstallationHistorySet);
         } catch (AuthorizableCreatorException e) {
             history.addError(e.toString());
             // here no rollback of authorizables necessary since session wasn't
@@ -299,7 +295,7 @@ public class AceServiceImpl implements AceService {
 
     /** Common entry point for JMX and install hook. */
     @Override
-    public void installNewConfigurations(Session session, AcInstallationHistoryPojo history, Map<String, String> currentConfiguration,
+    public void installConfigurationFiles(Session session, AcInstallationHistoryPojo history, Map<String, String> configurationFileContentsByFilename,
             Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet)
                     throws Exception {
 
@@ -313,13 +309,14 @@ public class AceServiceImpl implements AceService {
             LOG.info(message);
             history.addMessage(message);
 
-            if (currentConfiguration != null) {
+            if (configurationFileContentsByFilename != null) {
 
-                history.setConfigFileContentsByName(currentConfiguration);
+                AcConfiguration acConfiguration = configurationMerger.getMergedConfigurations(configurationFileContentsByFilename, history,
+                        configReader);
+                history.setAcConfiguration(acConfiguration);
+                history.setConfigFileContentsByName(configurationFileContentsByFilename);
 
-                List mergedConfigurations = configurationMerger.getMergedConfigurations(currentConfiguration, history, configReader);
-
-                installMergedConfigurations(history, session, authorizableInstallationHistorySet, mergedConfigurations);
+                installMergedConfigurations(history, session, authorizableInstallationHistorySet, acConfiguration);
 
                 // if everything went fine (no exceptions), save the session
                 // thus persisting the changed ACLs
@@ -352,7 +349,7 @@ public class AceServiceImpl implements AceService {
             AcInstallationHistoryPojo history,
             Session session,
             Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet,
-            List mergedConfigurations) throws ValueFormatException,
+            AcConfiguration acConfiguration) throws ValueFormatException,
             RepositoryException, Exception {
 
         String message = "Starting installation of merged configurations...";
@@ -366,9 +363,7 @@ public class AceServiceImpl implements AceService {
                 AcHelper.ACE_ORDER_NONE,
                 dumpservice.getQueryExcludePaths()).getAceDump();
 
-        installConfigurationFromYamlList(mergedConfigurations, history,
-                session, authorizableInstallationHistorySet,
-                repositoryDumpAceMap);
+        installAcConfiguration(acConfiguration, history, session, authorizableInstallationHistorySet, repositoryDumpAceMap);
 
     }
 
@@ -603,9 +598,9 @@ public class AceServiceImpl implements AceService {
         AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
         Node rootNode = session.getNode(configurationPath);
         Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(rootNode);
-        List mergedConfigurations = configurationMerger.getMergedConfigurations(
-                newestConfigurations, history, configReader);
-        return ((Map<String, Set<AceBean>>) mergedConfigurations.get(0)).keySet();
+        AcConfiguration acConfiguration = configurationMerger.getMergedConfigurations(newestConfigurations, history, configReader);
+        Set<String> allAuthorizablesFromConfig = acConfiguration.getAceConfig().keySet();
+        return allAuthorizablesFromConfig;
     }
 
 }

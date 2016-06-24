@@ -139,9 +139,15 @@ Expressions are evaluated using javax.el expression language. The following util
 
 Normally it is ensured by validation that a configuration's group system is self-contained - this means out-of-the-box groups like ```contributor``` cannot be used. For registered users in the system this approach works well since either the users are manually assigned to groups (by a user admin) or the membership relationship is maintained by LDAP or SSO extensions. For the ```anonymous``` user on publish that is not logged in by definition, there is no hook that allows to assign it to a group in the AC Tools configuration. Therefore as an exception, it is allowed to use the user ```anonymous``` in the ```members``` attribute of a group configuration.
   
-## Configure memberships to dynamic groups
+## Configure memberships to Dynamic Groups
 
-If a group configured via the ACTool is a member of a group which is not part of the configuration, this membership is removed by the installation process. This mechanism makes sense to ensure the configuration to be self-contained and prevent unwanted "injection" of permissions into the configuration. Therefore wherever possible groups and their dependent groups should be added to the ACTool configuration.
+If a group configured via the AC Tool is a member of a group which is not part of the configuration, this membership is removed by the installation process. This behaviour makes sense to ensure the configuration to be self-contained and prevent unwanted "injection" of permissions into the configuration system as described by the yaml files. Therefore wherever possible groups and their dependent groups should be added to the ACTool configuration.
 
-An exception to this might be dynamic groups created and maintained by end-users. As such groups and their memberships are not static they cannot be added easily to the configuration. For this use-case there is an OSGi configuration ```Ignored memberships pattern``` (```<server>/system/console/configMgr``` -> AC AuthorizableCreatorService).
+An exception to this might be dynamic groups created and maintained by authors or end-users. As such groups and their memberships are not static they cannot be added easily to the configuration. For this use-case the global configuration "allowExternalGroupNamesRegEx" can be set to a regular expression that matches all group names, that may keep member AC Tool groups as member:
+
+```
+- global_config:
+      allowExternalGroupNamesRegEx: external.* # the AC Tool groups can inherit from other external.* groups
+```
+
 
