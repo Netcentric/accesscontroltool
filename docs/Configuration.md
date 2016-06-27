@@ -95,6 +95,12 @@ Example:
   - editor:
     - isMemberOf: myeditors
       password: secret
+      
+  - poweruser:
+    - name: "Power User"
+      isMemberOf: powerusers
+      password: secret
+      profileContent: <jcr:root jcr:primaryType="nt:unstructured" email="poweruser@example.com"/>
 
   - system-reader:
     - name: system-reader
