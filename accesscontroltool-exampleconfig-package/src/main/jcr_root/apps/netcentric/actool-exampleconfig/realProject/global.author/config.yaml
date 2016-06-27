@@ -1,0 +1,108 @@
+# Global users and groups
+
+- group_config:
+
+    - powerusers:
+
+       - name: 
+         memberOf: fragment-poweruser
+         path: global
+
+    - contentmanagers:
+
+       - name: 
+         memberOf: fragment-contentmanager
+         path: global
+
+    - techsupport:
+
+       - name: 
+         memberOf: fragment-technicalsupport
+         path: global
+
+- ace_config:
+
+    - powerusers:
+
+       - path: /content
+         permission: allow
+         actions: read,modify,create,delete,acl_read,replicate
+         privileges: 
+
+       - path: /content/dam
+         permission: allow
+         actions: read,modify,create,delete,acl_read,replicate
+         privileges: 
+
+       - path: /etc/tags
+         permission: allow
+         actions: read,modify,create,delete,acl_read,replicate
+         privileges: 
+
+       - path: /etc/cloudservices/dynamictagmanagement
+         permission: allow
+         actions: read,modify,create,delete,acl_read,replicate
+         privileges: 
+
+       - path: /home/groups/global
+         permission: allow
+         actions: read,modify,acl_read
+         privileges: rep:userManagement
+         repGlob: 
+
+       - path: /home/groups/e/everyone
+         permission: allow
+         actions: read,modify,acl_read
+         privileges: rep:userManagement
+         repGlob: 
+
+       - path: /home/users
+         permission: allow
+         actions: 
+         privileges: jcr:all
+         repGlob: 
+
+    - contentmanagers:
+
+       - path: /content
+         permission: allow
+         actions: read,modify,create,delete,acl_read,replicate
+         privileges: 
+
+       - path: /content/dam
+         permission: allow
+         actions: read,modify,create,delete,acl_read,replicate
+         privileges: 
+
+       - path: /etc/tags
+         permission: allow
+         actions: read,modify,create,delete,acl_read,replicate
+         privileges: 
+
+       - path: /etc/cloudservices/dynamictagmanagement
+         permission: allow
+         actions: read,modify,create,delete,acl_read,replicate
+         privileges: 
+
+    - techsupport:
+
+       - path: /content
+         permission: allow
+         actions: read,acl_read
+         privileges: 
+
+       - path: /content/dam
+         permission: allow
+         actions: read,acl_read
+         privileges: 
+
+       - path: /etc/tags
+         permission: allow
+         actions: read,acl_read
+         privileges: 
+
+       - path: /etc/packages
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 

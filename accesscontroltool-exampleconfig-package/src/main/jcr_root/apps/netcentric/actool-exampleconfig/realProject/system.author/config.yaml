@@ -1,0 +1,876 @@
+# System configuration (all global fragments)
+
+- group_config:
+
+    - fragment-basic-allow:
+
+       - name: 
+         memberOf:
+         path: f
+
+    - fragment-restrict-for-everyone:
+
+       - name: 
+         memberOf:
+         path: f
+
+    - fragment-siteadmin:
+
+       - name: 
+         memberOf:
+         path: f
+
+    - fragment-dam:
+
+       - name: 
+         memberOf:
+         path: f
+
+    - fragment-tagging:
+
+       - name: 
+         memberOf:
+         path: f
+
+    - fragment-inbox:
+
+       - name: 
+         memberOf:
+         path: f
+
+    - fragment-useradmin:
+
+       - name: 
+         memberOf:
+         path: f
+
+    - fragment-tools:
+
+       - name: 
+         memberOf:
+         path: f
+
+    - fragment-workflows:
+
+       - name: 
+         memberOf:
+         path: f
+
+    - fragment-crxde:
+
+       - name: 
+         memberOf:
+         path: f
+
+    - fragment-contentmanager:
+
+       - name: 
+         memberOf: fragment-restrict-for-everyone,fragment-basic-allow,fragment-siteadmin,fragment-dam,fragment-tagging,fragment-inbox,fragment-tools,fragment-workflows
+         path: f
+
+    - fragment-poweruser:
+
+       - name: 
+         memberOf: fragment-restrict-for-everyone,fragment-basic-allow,fragment-siteadmin,fragment-dam,fragment-tagging,fragment-inbox,fragment-tools,fragment-useradmin,fragment-crxde,fragment-workflows
+         path: f
+
+    - fragment-technicalsupport:
+
+       - name: 
+         memberOf: fragment-restrict-for-everyone,fragment-basic-allow,fragment-siteadmin,fragment-dam,fragment-tagging,fragment-inbox,fragment-tools,fragment-workflows,fragment-crxde
+         path: f
+
+    - fragment-siteowner:
+
+       - name: 
+         memberOf: fragment-restrict-for-everyone,fragment-basic-allow,fragment-siteadmin,fragment-dam,fragment-tagging,fragment-inbox
+         path: f
+
+    - fragment-editor:
+
+       - name: 
+         memberOf: fragment-restrict-for-everyone,fragment-basic-allow,fragment-siteadmin,fragment-dam,fragment-tagging,fragment-inbox
+         path: f
+
+
+- ace_config:
+
+
+    - fragment-basic-allow:
+
+       - path: /
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc
+         permission: allow
+         actions: 
+         privileges: jcr:read,jcr:readAccessControl
+         repGlob: ""
+
+       - path: /etc
+         permission: allow
+         actions: 
+         privileges: jcr:read,jcr:readAccessControl
+         repGlob: /jcr:*
+
+
+    - fragment-restrict-for-everyone:
+
+       - path: /
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /content
+         permission: deny
+         actions: 
+         privileges: jcr:read,jcr:readAccessControl
+         repGlob: 
+
+       - path: /content
+         permission: allow
+         actions: 
+         privileges: jcr:read,jcr:readAccessControl
+         repGlob: ""
+
+       - path: /content
+         permission: allow
+         actions: 
+         privileges: jcr:read,jcr:readAccessControl
+         repGlob: /jcr:*
+
+       - path: /content/dam
+         permission: deny
+         actions: 
+         privileges: jcr:read,jcr:readAccessControl
+         repGlob: 
+
+       - path: /content/dam
+         permission: allow
+         actions: 
+         privileges: jcr:read,jcr:readAccessControl
+         repGlob: ""
+
+       - path: /content/dam
+         permission: allow
+         actions: 
+         privileges: jcr:read,jcr:readAccessControl
+         repGlob: /jcr:*
+
+       - path: /etc/tags
+         permission: deny
+         actions: 
+         privileges: jcr:read,jcr:readAccessControl
+         repGlob: 
+
+       - path: /etc/tags
+         permission: allow
+         actions: 
+         privileges: jcr:read,jcr:readAccessControl
+         repGlob: ""
+
+       - path: /etc/tags
+         permission: allow
+         actions: 
+         privileges: jcr:read,jcr:readAccessControl
+         repGlob: /jcr:*
+
+       - path: /libs/wcm/core/content/damadmin
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/wcm/core/content/siteadmin
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/wcm/core/content/misc
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/security/content/admin
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/workflow/content/console
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/tagging/content/tagadmin
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/mcm/content/admin
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/workflow/content/inbox
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/wcm/core/content/inbox
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/blueprints
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/commerce
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/dam
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/dashboards
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/docs
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/forms
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/importers
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/jobs
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/linkchecker
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/mobile
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/msm
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/notification
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/ocs
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/packages
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/replication
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/reports
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/scaffolding
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/security
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/social
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/tenants
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/versioning
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/virtual-repositories
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/watchwords
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/sites
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/projects
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/apps
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/publications
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/forms
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/assets
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/communities
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/commerce
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations/dashboard
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations/security
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations/security/oauth
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations/security/permissions
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations/packaging
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations/deployment
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations/cloud
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations/cloud/contexthub
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/workflow
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations/launches
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations/replication
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations/tagging
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations/configuration
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations/backup
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/assets
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/resources
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/crxdelite
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/webconsole
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/welcome/features/crxde
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/welcome/features/packages
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/welcome/features/share
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/welcome/features/backup
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/welcome/features/config
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/welcome/resources/cloudservices
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/welcome/resources/launches
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/welcome/resources/manuscriptsadmin
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/welcome/resources/publishingadmin
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/welcome/resources/replication
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/welcome/resources/reports
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/welcome/resources/taskmanager
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/welcome/resources/workflows
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/welcome/docs/dev
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/welcome/features/statusdump
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/granite/security
+         permission: deny
+         actions: read
+         privileges: 
+         repGlob: 
+
+
+    - fragment-siteadmin:
+
+       - path: /libs/wcm/core/content/siteadmin
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/sites
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/projects
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+
+    - fragment-dam:
+
+       - path: /libs/wcm/core/content/damadmin
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/assets
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+
+    - fragment-tagging:
+
+       - path: /libs/cq/tagging/content/tagadmin
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations/tagging
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+
+    - fragment-inbox:
+
+       - path: /libs/cq/workflow/content/inbox
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/wcm/core/content/inbox
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+
+    - fragment-useradmin:
+
+       - path: /libs/cq/security/content/admin
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /home
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/projects
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations/security
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/granite/security
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+
+    - fragment-tools:
+
+       - path: /libs/wcm/core/content/misc
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/blueprints
+         permission: allow
+         actions: read,modify,create,delete,acl_read,replicate
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/welcome/resources/cloudservices
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/cloudservices
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/designs
+         permission: allow
+         actions: read,modify,create,delete,acl_read,replicate
+         privileges: 
+         repGlob: 
+
+       - path: /etc/linkchecker
+         permission: allow
+         actions: read,modify,create,delete,acl_read,replicate
+         privileges: 
+         repGlob: 
+
+       - path: /etc/msm
+         permission: allow
+         actions: read,modify,create,delete,acl_read,replicate
+         privileges: 
+         repGlob: 
+
+       - path: /etc/replication
+         permission: allow
+         actions: 
+         privileges: jcr:read,jcr:readAccessControl
+         repGlob: ""
+
+       - path: /etc/replication
+         permission: allow
+         actions: 
+         privileges: jcr:read,jcr:readAccessControl
+         repGlob: /jcr:*
+
+       - path: /etc/replication/treeactivation
+         permission: allow
+         actions: read,acl_read
+         privileges: 
+         repGlob:
+
+       - path: /libs/cq/core/content/nav/tools/operations
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations/cloud
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations/dashboard
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations/replication
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+
+    - fragment-workflows:
+
+       - path: /libs/cq/workflow/content/console
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/welcome/resources/workflows
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /etc/workflow
+         permission: allow
+         actions: read,modify,create,delete,acl_read,replicate
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/operations
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/nav/tools/workflow
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+    - fragment-crxde:
+
+       - path: /libs/cq/core/content/nav/tools/crxdelite
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
+       - path: /libs/cq/core/content/welcome/features/crxde
+         permission: allow
+         actions: read
+         privileges: 
+         repGlob: 
+
