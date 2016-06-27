@@ -8,7 +8,6 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -26,11 +25,14 @@ import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
+import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
 import biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator;
+import biz.netcentric.cq.tools.actool.validators.GlobalConfigurationValidator;
 import biz.netcentric.cq.tools.actool.validators.YamlConfigurationsValidator;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
@@ -47,30 +49,28 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
     YamlMacroProcessor yamlMacroProcessor;
 
     @Override
-    public List getMergedConfigurations(
-            final Map<String, String> newestConfigurations,
+    public AcConfiguration getMergedConfigurations(
+            final Map<String, String> configFileContentByFilename,
             final AcInstallationHistoryPojo history,
             final ConfigReader configReader) throws RepositoryException,
             AcConfigBeanValidationException {
-        final List c = new ArrayList<Map>();
+
+        final GlobalConfiguration globalConfiguration = new GlobalConfiguration();
         final Map<String, Set<AuthorizableConfigBean>> mergedAuthorizablesMapfromConfig = new LinkedHashMap<String, Set<AuthorizableConfigBean>>();
         final Map<String, Set<AceBean>> mergedAceMapFromConfig = new LinkedHashMap<String, Set<AceBean>>();
-        final Set<String> authorizableIdsFromAllConfigs = new HashSet<String>(); // needed for
-        // detection
-        // of doubled
-        // defined
-        // groups in
-        // configurations
+        final Set<String> authorizableIdsFromAllConfigs = new HashSet<String>(); // needed for detection of doubled defined groups in
+                                                                                 // configurations
 
         final Yaml yaml = new Yaml();
 
         final ConfigurationsValidator configurationsValidator = new YamlConfigurationsValidator();
 
-        for (final Map.Entry<String, String> entry : newestConfigurations.entrySet()) {
+        for (final Map.Entry<String, String> entry : configFileContentByFilename.entrySet()) {
 
-            configurationsValidator.validateMandatorySectionIdentifiersExistence(entry.getValue(), entry.getKey());
+            String sourceFile = entry.getKey();
+            configurationsValidator.validateMandatorySectionIdentifiersExistence(entry.getValue(), sourceFile);
 
-            final String message = "Found configuration " + entry.getKey();
+            final String message = "Found configuration file " + sourceFile;
             LOG.info(message);
             history.addMessage(message);
 
@@ -79,7 +79,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             yamlList = yamlMacroProcessor.processMacros(yamlList, history);
             // set merged config per file to ensure it is there in case of validation errors (for success, the actual merged config is set
             // after this loop)
-            history.setMergedAndProcessedConfig("# File " + entry.getKey() + "\n" + yaml.dump(yamlList));
+            history.setMergedAndProcessedConfig("# File " + sourceFile + "\n" + yaml.dump(yamlList));
 
             final Set<String> sectionIdentifiers = new LinkedHashSet<String>();
 
@@ -89,10 +89,15 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
                 sectionIdentifiers.addAll(yamlList.get(i).keySet());
             }
             configurationsValidator.validateSectionIdentifiers(
-                    sectionIdentifiers, entry.getKey());
+                    sectionIdentifiers, sourceFile);
 
-            configurationsValidator.validateSectionContentExistence(
-                    entry.getKey(), yamlList);
+            configurationsValidator.validateSectionContentExistence(sourceFile, yamlList);
+
+            try {
+                globalConfiguration.merge(configReader.getGlobalConfiguration(yamlList));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid global configuration in " + sourceFile + ": " + e, e);
+            }
 
             // build AuthorizableConfigBeans from current configurations
             final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl();
@@ -121,7 +126,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
 
             if (authorizableIdsFromCurrentConfig != null) {
                 configurationsValidator.validateDuplicateAuthorizables(authorizableIdsFromAllConfigs, authorizableIdsFromCurrentConfig,
-                        entry.getKey());
+                        sourceFile);
                 // add IDs from authorizables from current configuration to set
                 authorizableIdsFromAllConfigs.addAll(authorizableIdsFromCurrentConfig);
             }
@@ -144,11 +149,17 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         // set member groups
         final AuthorizableMemberGroupsValidator membersValidator = new AuthorizableMemberGroupsValidator();
         membersValidator.validate(mergedAuthorizablesMapfromConfig);
-        c.add(mergedAuthorizablesMapfromConfig);
-        c.add(mergedAceMapFromConfig);
+        
+        GlobalConfigurationValidator.validate(globalConfiguration);
 
-        history.setMergedAndProcessedConfig("# Merged configuration of " + newestConfigurations.size() + " files \n" + yaml.dump(c));
+        AcConfiguration acConfiguration = new AcConfiguration();
+        acConfiguration.setGlobalConfiguration(globalConfiguration);
+        acConfiguration.setAuthorizablesConfig(mergedAuthorizablesMapfromConfig);
+        acConfiguration.setAceConfig(mergedAceMapFromConfig);
 
-        return c;
+        history.setMergedAndProcessedConfig(
+                "# Merged configuration of " + configFileContentByFilename.size() + " files \n" + yaml.dump(acConfiguration));
+
+        return acConfiguration;
     }
 }

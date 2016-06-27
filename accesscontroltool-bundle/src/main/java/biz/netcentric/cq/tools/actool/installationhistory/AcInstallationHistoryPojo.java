@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.comparators.HistoryEntryComparator;
+import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 
 public class AcInstallationHistoryPojo {
 
@@ -45,6 +46,7 @@ public class AcInstallationHistoryPojo {
     Rendition rendition;
 
     private String mergedAndProcessedConfig;
+    private AcConfiguration acConfiguration;
 
     private Map<String, String> configFileContentsByName;
 
@@ -94,6 +96,14 @@ public class AcInstallationHistoryPojo {
 
     public void setMergedAndProcessedConfig(String mergedAndProcessedConfig) {
         this.mergedAndProcessedConfig = mergedAndProcessedConfig;
+    }
+
+    public AcConfiguration getAcConfiguration() {
+        return acConfiguration;
+    }
+
+    public void setAcConfiguration(AcConfiguration acConfiguration) {
+        this.acConfiguration = acConfiguration;
     }
 
     public Map<String, String> getConfigFileContentsByName() {

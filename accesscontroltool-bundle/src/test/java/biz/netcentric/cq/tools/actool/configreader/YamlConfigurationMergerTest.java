@@ -13,7 +13,6 @@ import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,6 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
@@ -45,8 +45,8 @@ public class YamlConfigurationMergerTest {
         final ConfigReader reader = new YamlConfigReader();
         final Map<String, String> configs = new HashMap<String, String>();
         configs.put("/etc/config", config);
-        final List results = merger.getMergedConfigurations(configs, mock(AcInstallationHistoryPojo.class), reader);
-        final Map<String, Set<AuthorizableConfigBean>> groups = (Map<String, Set<AuthorizableConfigBean>>) results.get(0);
+        AcConfiguration acConfiguration = merger.getMergedConfigurations(configs, mock(AcInstallationHistoryPojo.class), reader);
+        final Map<String, Set<AuthorizableConfigBean>> groups = acConfiguration.getAuthorizablesConfig();
         final AuthorizableConfigBean groupA = groups.get("groupA").iterator().next();
         assertEquals(3, groupA.getMemberOf().length);
         final AuthorizableConfigBean groupB = groups.get("groupB").iterator().next();

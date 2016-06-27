@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
@@ -116,11 +117,21 @@ public class YamlConfigReader implements ConfigReader {
         return principalsMap;
     }
 
-    private Collection getConfigSection(final String sectionName, final Collection yamlList) {
+    @Override
+    public GlobalConfiguration getGlobalConfiguration(final Collection yamlList) {
+
+        Map globalConfigMap = (Map) getConfigSection(Constants.GLOBAL_CONFIGURATION_KEY, yamlList);
+
+        GlobalConfiguration globalConfiguration = new GlobalConfiguration(globalConfigMap);
+
+        return globalConfiguration;
+    }
+
+    private Object getConfigSection(final String sectionName, final Collection yamlList) {
         final List<LinkedHashMap<?, ?>> yamList = new ArrayList<LinkedHashMap<?, ?>>(yamlList);
         for (final LinkedHashMap<?, ?> currMap : yamList) {
             if (sectionName.equals(currMap.keySet().iterator().next())) {
-                return (List<LinkedHashMap>) currMap.get(sectionName);
+                return currMap.get(sectionName);
             }
         }
         return null;

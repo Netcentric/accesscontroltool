@@ -17,12 +17,17 @@ public class Constants {
     private Constants() {
     }
 
+    public static final String GLOBAL_CONFIGURATION_KEY = "global_config";
+
     public static final String GROUP_CONFIGURATION_KEY = "group_config";
     public static final String USER_CONFIGURATION_KEY = "user_config";
     public static final String ACE_CONFIGURATION_KEY = "ace_config";
 
-    public static final Set<String> VALID_CONFIG_SECTION_IDENTIFIERS = new HashSet<String>(
-            Arrays.asList(GROUP_CONFIGURATION_KEY, USER_CONFIGURATION_KEY,
+
+    public static final Set<String> VALID_CONFIG_SECTION_IDENTIFIERS = new HashSet<String>(Arrays.asList(
+                    GLOBAL_CONFIGURATION_KEY,
+                    GROUP_CONFIGURATION_KEY,
+                    USER_CONFIGURATION_KEY,
                     ACE_CONFIGURATION_KEY));
 
     public static final String USER_ANONYMOUS = "anonymous";
