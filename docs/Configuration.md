@@ -176,6 +176,17 @@ In case the configuration file contains ACEs for groups which are not present in
 
 All important steps performed by the service as well as all error/warning messages get written to error log and history.
 
+## Global Configuration 
+
+Certain configuration aspects are global and can be configured on top level (since v1.8.5).
+
+```
+- global_config:
+      minRequiredVersion: 1.8.5 # Checked as pre-condition of run
+      allowExternalGroupNamesRegEx: external.* # allow external groups to extend the AC Tool configuration 
+
+```
+
 ## Validation
 
 First the validation of the different configuration lines is performed and gets applied while reading the file. Further validation consists of checking paths for existence as well as for double entries, checks for conflicting ACEs (e.g. allow and deny for same actions on same node), checks whether principals are existing under /home. If an issue is detected the reading is aborted and an appropriate error message is appended to the installation history and log.
