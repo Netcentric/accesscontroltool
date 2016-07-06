@@ -9,7 +9,6 @@
 package biz.netcentric.cq.tools.actool.helper;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,8 +20,6 @@ import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
-
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 public class AcHelperTest {
 
@@ -46,7 +43,6 @@ public class AcHelperTest {
         aceBeanGroupA_1.setPermission("deny");
         aceBeanGroupA_1.setJcrPath("/content");
         aceBeanGroupA_1.setPrivilegesString("");
-        aceBeanGroupA_1.setRepGlob("");
 
         aceBeanGroupA_2 = new AceBean();
         aceBeanGroupA_2.setPrincipal("group-A");
@@ -54,7 +50,6 @@ public class AcHelperTest {
         aceBeanGroupA_2.setPermission("allow");
         aceBeanGroupA_2.setJcrPath("/content");
         aceBeanGroupA_2.setPrivilegesString("");
-        aceBeanGroupA_2.setRepGlob("");
 
         aceBeanGroupA_3 = new AceBean();
         aceBeanGroupA_3.setPrincipal("group-A");
@@ -62,7 +57,6 @@ public class AcHelperTest {
         aceBeanGroupA_3.setPermission("deny");
         aceBeanGroupA_3.setJcrPath("/content/isp");
         aceBeanGroupA_3.setPrivilegesString("");
-        aceBeanGroupA_3.setRepGlob("");
 
         aceBeanGroupB_1 = new AceBean();
         aceBeanGroupB_1.setPrincipal("group-B");
@@ -70,7 +64,6 @@ public class AcHelperTest {
         aceBeanGroupB_1.setPermission("allow");
         aceBeanGroupB_1.setJcrPath("/content");
         aceBeanGroupB_1.setPrivilegesString("");
-        aceBeanGroupB_1.setRepGlob("");
 
         aceBeanGroupB_2 = new AceBean();
         aceBeanGroupB_2.setPrincipal("group-B");
@@ -78,7 +71,6 @@ public class AcHelperTest {
         aceBeanGroupB_2.setPermission("deny");
         aceBeanGroupB_2.setJcrPath("/content");
         aceBeanGroupB_2.setPrivilegesString("");
-        aceBeanGroupB_2.setRepGlob("");
 
         aceBeanGroupB_3 = new AceBean();
         aceBeanGroupB_3.setPrincipal("group-B");
@@ -86,7 +78,6 @@ public class AcHelperTest {
         aceBeanGroupB_3.setPermission("allow");
         aceBeanGroupB_3.setJcrPath("/content/isp");
         aceBeanGroupB_3.setPrivilegesString("");
-        aceBeanGroupB_3.setRepGlob("");
 
         aceBeanGroupC_1 = new AceBean();
         aceBeanGroupC_1.setPrincipal("group-C");
@@ -94,7 +85,6 @@ public class AcHelperTest {
         aceBeanGroupC_1.setPermission("allow");
         aceBeanGroupC_1.setJcrPath("/content");
         aceBeanGroupC_1.setPrivilegesString("");
-        aceBeanGroupC_1.setRepGlob("");
 
         // ACEs from Groups not contained in config
 
@@ -104,7 +94,6 @@ public class AcHelperTest {
         aceBeanGroupD_1.setPermission("allow");
         aceBeanGroupD_1.setJcrPath("/content");
         aceBeanGroupD_1.setPrivilegesString("");
-        aceBeanGroupD_1.setRepGlob("");
 
         aceBeanGroupE_1 = new AceBean();
         aceBeanGroupE_1.setPrincipal("group-E");
@@ -112,7 +101,6 @@ public class AcHelperTest {
         aceBeanGroupE_1.setPermission("allow");
         aceBeanGroupE_1.setJcrPath("/content");
         aceBeanGroupE_1.setPrivilegesString("");
-        aceBeanGroupE_1.setRepGlob("");
     }
 
     @Test

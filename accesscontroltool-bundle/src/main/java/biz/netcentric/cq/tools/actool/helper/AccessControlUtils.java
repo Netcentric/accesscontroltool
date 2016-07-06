@@ -34,10 +34,7 @@ import org.apache.jackrabbit.api.security.JackrabbitAccessControlManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * This class provides common access control related utilities.
- * Mostly a copy of org.apache.jackrabbit.commons.AccessControlUtils.
- */
+/** This class provides common access control related utilities. Mostly a copy of org.apache.jackrabbit.commons.AccessControlUtils. */
 public class AccessControlUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(AccessControlUtils.class);
@@ -45,37 +42,24 @@ public class AccessControlUtils {
     private AccessControlUtils() {
     }
 
-
-    /**
-     * Retrieves the {@link Privilege}s from the specified privilege names.
+    /** Retrieves the {@link Privilege}s from the specified privilege names.
      *
-     * @param session
-     *            The editing session.
-     * @param privilegeNames
-     *            The privilege names.
+     * @param session The editing session.
+     * @param privilegeNames The privilege names.
      * @return An array of privileges.
-     * @throws RepositoryException
-     *             If an error occurs or if {@code privilegeNames} contains an
-     *             unknown/invalid privilege name.
-     */
+     * @throws RepositoryException If an error occurs or if {@code privilegeNames} contains an unknown/invalid privilege name. */
     public static Privilege[] privilegesFromNames(Session session,
             String... privilegeNames) throws RepositoryException {
         return privilegesFromNames(session.getAccessControlManager(),
                 privilegeNames);
     }
 
-    /**
-     * Retrieves the {@link Privilege}s from the specified privilege names.
+    /** Retrieves the {@link Privilege}s from the specified privilege names.
      *
-     * @param accessControlManager
-     *            The access control manager.
-     * @param privilegeNames
-     *            The privilege names.
+     * @param accessControlManager The access control manager.
+     * @param privilegeNames The privilege names.
      * @return An array of privileges.
-     * @throws RepositoryException
-     *             If an error occurs or if {@code privilegeNames} contains an
-     *             unknown/invalid privilege name.
-     */
+     * @throws RepositoryException If an error occurs or if {@code privilegeNames} contains an unknown/invalid privilege name. */
     public static Privilege[] privilegesFromNames(
             AccessControlManager accessControlManager, String... privilegeNames)
                     throws RepositoryException {
@@ -87,15 +71,12 @@ public class AccessControlUtils {
         return privileges.toArray(new Privilege[privileges.size()]);
     }
 
-    /**
-     * Retrieves the names of the specified privileges.
+    /** Retrieves the names of the specified privileges.
      *
-     * @param privileges
-     *            One or more privileges.
-     * @return The names of the specified privileges.
-     */
+     * @param privileges One or more privileges.
+     * @return The names of the specified privileges. */
     public static String[] namesFromPrivileges(Privilege... privileges) {
-        if (privileges == null || privileges.length == 0) {
+        if ((privileges == null) || (privileges.length == 0)) {
             return new String[0];
         } else {
             final String[] names = new String[privileges.length];
@@ -106,25 +87,16 @@ public class AccessControlUtils {
         }
     }
 
-    /**
-     * Utility that combines
-     * {@link AccessControlManager#getApplicablePolicies(String)} and
-     * {@link AccessControlManager#getPolicies(String)} to retrieve a modifiable
-     * {@code JackrabbitAccessControlList} for the given path.<br>
+    /** Utility that combines {@link AccessControlManager#getApplicablePolicies(String)} and
+     * {@link AccessControlManager#getPolicies(String)} to retrieve a modifiable {@code JackrabbitAccessControlList} for the given path.<br>
      *
-     * Note that the policy must be
-     * {@link AccessControlManager#setPolicy(String, javax.jcr.security.AccessControlPolicy)
-     * reapplied} and the changes must be saved in order to make the AC
-     * modifications take effect.
+     * Note that the policy must be {@link AccessControlManager#setPolicy(String, javax.jcr.security.AccessControlPolicy) reapplied} and the
+     * changes must be saved in order to make the AC modifications take effect.
      *
-     * @param session
-     *            The editing session.
-     * @param absPath
-     *            The absolute path of the target node.
+     * @param session The editing session.
+     * @param absPath The absolute path of the target node.
      * @return A modifiable access control list or null if there is none.
-     * @throws RepositoryException
-     *             If an error occurs.
-     */
+     * @throws RepositoryException If an error occurs. */
     public static JackrabbitAccessControlList getAccessControlList(
             Session session, String absPath) throws RepositoryException {
         final AccessControlManager acMgr = session.getAccessControlManager();
@@ -144,25 +116,16 @@ public class AccessControlUtils {
         return null;
     }
 
-    /**
-     * Utility that combines
-     * {@link AccessControlManager#getApplicablePolicies(String)} and
-     * {@link AccessControlManager#getPolicies(String)} to retrieve a modifiable
-     * {@code JackrabbitAccessControlList} for the given path.<br>
+    /** Utility that combines {@link AccessControlManager#getApplicablePolicies(String)} and
+     * {@link AccessControlManager#getPolicies(String)} to retrieve a modifiable {@code JackrabbitAccessControlList} for the given path.<br>
      *
-     * Note that the policy must be
-     * {@link AccessControlManager#setPolicy(String, javax.jcr.security.AccessControlPolicy)
-     * reapplied} and the changes must be saved in order to make the AC
-     * modifications take effect.
+     * Note that the policy must be {@link AccessControlManager#setPolicy(String, javax.jcr.security.AccessControlPolicy) reapplied} and the
+     * changes must be saved in order to make the AC modifications take effect.
      *
-     * @param accessControlManager
-     *            The {@code AccessControlManager} .
-     * @param absPath
-     *            The absolute path of the target node.
+     * @param accessControlManager The {@code AccessControlManager} .
+     * @param absPath The absolute path of the target node.
      * @return A modifiable access control list or null if there is none.
-     * @throws RepositoryException
-     *             If an error occurs.
-     */
+     * @throws RepositoryException If an error occurs. */
     public static JackrabbitAccessControlList getAccessControlList(
             AccessControlManager accessControlManager, String absPath)
                     throws RepositoryException {
@@ -189,26 +152,16 @@ public class AccessControlUtils {
         return null;
     }
 
-    /**
-     * A utility method to add a new access control entry.<br>
-     * Please note, that calling {@link javax.jcr.Session#save()} is required
-     * in order to persist the changes.
+    /** A utility method to add a new access control entry.<br>
+     * Please note, that calling {@link javax.jcr.Session#save()} is required in order to persist the changes.
      *
-     * @param session
-     *            The editing session.
-     * @param absPath
-     *            The absolute path of the target node.
-     * @param principal
-     *            The principal to grant/deny privileges to.
-     * @param privilegeNames
-     *            The names of the privileges to grant or deny.
-     * @param isAllow
-     *            {@code true} to grant; {@code false} otherwise.
-     * @return {@code true} if the node's ACL was modified and the session has
-     *         pending changes.
-     * @throws RepositoryException
-     *             If an error occurs.
-     */
+     * @param session The editing session.
+     * @param absPath The absolute path of the target node.
+     * @param principal The principal to grant/deny privileges to.
+     * @param privilegeNames The names of the privileges to grant or deny.
+     * @param isAllow {@code true} to grant; {@code false} otherwise.
+     * @return {@code true} if the node's ACL was modified and the session has pending changes.
+     * @throws RepositoryException If an error occurs. */
     public static boolean addAccessControlEntry(Session session,
             String absPath, Principal principal, String[] privilegeNames,
             boolean isAllow) throws RepositoryException {
@@ -216,26 +169,16 @@ public class AccessControlUtils {
                 privilegesFromNames(session, privilegeNames), isAllow);
     }
 
-    /**
-     * A utility method to add a new access control entry. Please note, that a
-     * call to {@link javax.jcr.Session#save()} is required in order to
-     * persist the changes.
+    /** A utility method to add a new access control entry. Please note, that a call to {@link javax.jcr.Session#save()} is required in
+     * order to persist the changes.
      *
-     * @param session
-     *            The editing session
-     * @param absPath
-     *            The absolute path of the target node.
-     * @param principal
-     *            The principal to grant/deny privileges to.
-     * @param privileges
-     *            The privileges to grant or deny
-     * @param isAllow
-     *            {@code true} to grant; {@code false} otherwise;
-     * @return {@code true} if the node's ACL was modified and the session has
-     *         pending changes.
-     * @throws RepositoryException
-     *             If an error occurs.
-     */
+     * @param session The editing session
+     * @param absPath The absolute path of the target node.
+     * @param principal The principal to grant/deny privileges to.
+     * @param privileges The privileges to grant or deny
+     * @param isAllow {@code true} to grant; {@code false} otherwise;
+     * @return {@code true} if the node's ACL was modified and the session has pending changes.
+     * @throws RepositoryException If an error occurs. */
     public static boolean addAccessControlEntry(Session session,
             String absPath, Principal principal, Privilege[] privileges,
             boolean isAllow) throws RepositoryException {
@@ -261,13 +204,12 @@ public class AccessControlUtils {
         }
     }
 
-    /**
-     * Converts the given privilege names into a set of privilege objects.
+    /** Converts the given privilege names into a set of privilege objects.
+     * 
      * @param privNames (may be {@code null}
      * @param acMgr
      * @return a set of privileges (never {@code null}, but may be empty set)
-     * @throws RepositoryException
-     */
+     * @throws RepositoryException */
     static Set<Privilege> getPrivilegeSet(String[] privNames,
             AccessControlManager acMgr) throws RepositoryException {
         if (privNames == null) {
@@ -285,16 +227,9 @@ public class AccessControlUtils {
         return privileges;
     }
 
-    /**
-     *
-     * @param session
-     *            admin session
-     * @param path
-     *            valid node path in CRX
-     * @param authorizableID
-     *            ID of authorizable to be deleted from ACL of node specified by
-     *            path
-     */
+    /** @param session admin session
+     * @param path valid node path in CRX
+     * @param authorizableID ID of authorizable to be deleted from ACL of node specified by path */
     public static void deleteAllEntriesForAuthorizableFromACL(final Session session,
             final String path, String authorizableID)
                     throws UnsupportedRepositoryOperationException, RepositoryException {
@@ -351,9 +286,11 @@ public class AccessControlUtils {
         return null;
     }
 
-    public static void extendExistingAceWithRestrictions(JackrabbitAccessControlList accessControlList, JackrabbitAccessControlEntry accessControlEntry, RestrictionMapsHolder restrictions) throws SecurityException, UnsupportedRepositoryOperationException, RepositoryException   {
-        // 1. add new entry
-        if (!accessControlList.addEntry(accessControlEntry.getPrincipal(), accessControlEntry.getPrivileges(), accessControlEntry.isAllow(), restrictions.getSingleValuedRestrictionsMap(), restrictions.getMultiValuedRestrictionsMap())) {
+    public static void extendExistingAceWithRestrictions(JackrabbitAccessControlList accessControlList,
+            JackrabbitAccessControlEntry accessControlEntry, RestrictionModel restrictions)
+                    throws SecurityException, UnsupportedRepositoryOperationException, RepositoryException { // 1. add new entry
+        if (!accessControlList.addEntry(accessControlEntry.getPrincipal(), accessControlEntry.getPrivileges(), accessControlEntry.isAllow(),
+                restrictions.getSingleValuedRestrictionsMap(), restrictions.getMultiValuedRestrictionsMap())) {
             throw new IllegalStateException("Could not add entry, probably because it was already there!");
         }
         // we assume the entry being added is the last one

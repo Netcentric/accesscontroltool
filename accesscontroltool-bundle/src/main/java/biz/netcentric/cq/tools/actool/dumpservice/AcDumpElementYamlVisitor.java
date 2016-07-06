@@ -25,6 +25,7 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
     public static final int DUMP_INDENTATION_KEY = 4;
     public static final int DUMP_INDENTATION_FIRST_PROPERTY = 7;
     public static final int DUMP_INDENTATION_PROPERTY = 9;
+    public static final int DUMP_INDENTATION_RESTRICTIONS = 11;
 
     public static final String YAML_STRUCTURAL_ELEMENT_PREFIX = "- ";
     private final StringBuilder sb;
@@ -38,21 +39,22 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
     @Override
     public void visit(final AuthorizableConfigBean authorizableConfigBean) {
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_KEY))
-        .append("- " + authorizableConfigBean.getPrincipalID() + ":")
-        .append("\n");
+                .append("- " + authorizableConfigBean.getPrincipalID() + ":")
+                .append("\n");
         sb.append("\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_FIRST_PROPERTY))
-        .append("- name: ").append("\n");
+                .append("- name: ").append("\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
-        .append("memberOf: "
-                + authorizableConfigBean.getMemberOfString())
-        .append("\n");
+                .append("memberOf: "
+                        + authorizableConfigBean.getMemberOfString())
+                .append("\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
-        .append("path: " + authorizableConfigBean.getPath())
-        .append("\n");
+                .append("path: " + authorizableConfigBean.getPath())
+                .append("\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
-        .append("isGroup: " + "'" + authorizableConfigBean.isGroup()
-        + "'").append("\n");
+                .append("isGroup: " + "'" + authorizableConfigBean.isGroup()
+                        + "'")
+                .append("\n");
         sb.append("\n");
     }
 
@@ -61,32 +63,35 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
 
         if (mapOrder == PATH_BASED_SORTING) {
             sb.append(AcHelper.getBlankString(DUMP_INDENTATION_FIRST_PROPERTY))
-            .append("- principal: " + aceBean.getPrincipalName())
-            .append("\n");
+                    .append("- principal: " + aceBean.getPrincipalName())
+                    .append("\n");
         } else if (mapOrder == PRINCIPAL_BASED_SORTING) {
             sb.append(AcHelper.getBlankString(DUMP_INDENTATION_FIRST_PROPERTY))
-            .append("- path: " + aceBean.getJcrPath()).append("\n");
+                    .append("- path: " + aceBean.getJcrPath()).append("\n");
         }
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
-        .append("permission: " + aceBean.getPermission()).append("\n");
+                .append("permission: " + aceBean.getPermission()).append("\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
-        .append("actions: " + aceBean.getActionsString()).append("\n");
+                .append("actions: " + aceBean.getActionsString()).append("\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
-        .append("privileges: " + aceBean.getPrivilegesString())
-        .append("\n");
+                .append("privileges: " + aceBean.getPrivilegesString())
+                .append("\n");
         writeRestrictions(aceBean, sb);
         sb.append("\n");
         sb.append("\n");
     }
 
-    private void writeRestrictions(final AceBean aceBean, final StringBuilder sb){
+    private void writeRestrictions(final AceBean aceBean, final StringBuilder sb) {
         final Map<String, List<String>> restrictions = aceBean.getRestrictions();
-        if(restrictions.isEmpty()){
+        if (restrictions.isEmpty()) {
             return;
         }
-        for(final String restrictionName : restrictions.keySet()){
+        sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY)).append("restrictions:");
+        sb.append("\n");
+        for (final String restrictionName : restrictions.keySet()) {
             final String restrictionsValueString = StringUtils.join(restrictions.get(restrictionName), ",");
-            sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY)).append(restrictionName).append(": ").append(restrictionsValueString);
+            sb.append(AcHelper.getBlankString(DUMP_INDENTATION_RESTRICTIONS)).append(restrictionName).append(": ")
+                    .append(restrictionsValueString);
             sb.append("\n");
         }
     }

@@ -102,7 +102,8 @@
          permission: allow
          actions: read,  create
          privileges: 
-         rep:glob: test
+         restrictions:
+           rep:glob: test
 
 
        - path: /content
@@ -222,16 +223,18 @@
          permission: allow
          actions: read,  create
          privileges: 
-         rep:glob: test
-         rep:ntNames: test
-         rep:prefixes: test
+         restrictions:
+           rep:glob: test
+           rep:ntNames: test
+           rep:prefixes: test
          assertedException: InvalidRestrictionsException
          
        #11 wrong restriction name. correct one would be rep:glob
        - path: /content
          permission: allow
          actions: read
-         rep:Glob: /cq:*
+         restrictions:
+           rep:Glob: /cq:*
          assertedException: InvalidRestrictionsException
          
       
