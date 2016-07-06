@@ -1,0 +1,77 @@
+# Service users and groups
+
+- group_config:
+
+    - system-tags:
+
+       - name: 
+         isMemberOf: 
+         members: 
+         path: s
+
+
+    - system-content:
+
+       - name: 
+         isMemberOf: 
+         members: 
+         path: s
+
+
+    - system-home:
+
+       - name: 
+         isMemberOf: 
+         members: 
+         path: s
+
+- user_config:
+
+    - system-tags:
+
+       - name: 
+         isMemberOf: system-tags
+         path: s
+         isSystemUser: true
+         
+
+    - system-content:
+
+       - name: 
+         isMemberOf: system-content
+         path: s
+         isSystemUser: true
+         
+
+    - system-home:
+
+       - name: 
+         isMemberOf: system-home
+         path: s
+         isSystemUser: true
+
+
+- ace_config:
+
+    - system-tags:
+
+       - path: /etc/tags
+         permission: allow
+         actions: read
+         privileges: 
+
+
+    - system-content:
+
+       - path: /content
+         permission: allow
+         actions: read
+         privileges: 
+
+
+    - system-home:
+
+       - path: /home
+         permission: allow
+         actions: read
+         privileges: 

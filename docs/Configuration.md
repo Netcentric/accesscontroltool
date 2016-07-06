@@ -95,6 +95,12 @@ Example:
   - editor:
     - isMemberOf: myeditors
       password: secret
+      
+  - poweruser:
+    - name: "Power User"
+      isMemberOf: powerusers
+      password: secret
+      profileContent: <jcr:root jcr:primaryType="nt:unstructured" email="poweruser@example.com"/>
 
   - system-reader:
     - name: system-reader
@@ -171,6 +177,17 @@ Example:
 In case the configuration file contains ACEs for groups which are not present in the current configuration no installation takes place and an appropriate error message gets displayed in the history log.
 
 All important steps performed by the service as well as all error/warning messages get written to error log and history.
+
+## Global Configuration 
+
+Certain configuration aspects are global and can be configured on top level (since v1.8.5).
+
+```
+- global_config:
+      minRequiredVersion: 1.8.5 # Checked as pre-condition of run
+      allowExternalGroupNamesRegEx: external.* # allow external groups to extend the AC Tool configuration 
+
+```
 
 ## Validation
 

@@ -48,7 +48,7 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
 
         Map<String, String> configs = configFilesRetriever.getConfigFileContentFromPackage(archive);
         history.setCrxPackageName(getArchiveName(archive));
-        aceService.installNewConfigurations(session, history, configs, authorizableInstallationHistorySet);
+        aceService.installConfigurationFiles(session, history, configs, authorizableInstallationHistorySet);
 
         return history;
     }

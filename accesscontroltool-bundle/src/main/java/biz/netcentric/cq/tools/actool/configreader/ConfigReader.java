@@ -15,6 +15,7 @@ import java.util.Set;
 import javax.jcr.RepositoryException;
 
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
@@ -36,4 +37,8 @@ public interface ConfigReader {
             final Collection<?> userConfigData,
             AuthorizableValidator authorizableValidator)
                     throws AcConfigBeanValidationException;
+
+    public GlobalConfiguration getGlobalConfiguration(final Collection yamlList);
+
+
 }

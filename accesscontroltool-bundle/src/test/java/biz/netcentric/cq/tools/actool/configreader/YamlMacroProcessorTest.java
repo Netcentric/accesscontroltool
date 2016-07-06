@@ -74,7 +74,7 @@ public class YamlMacroProcessorTest {
 
     @Test
     public void testNestedGroupLoop() throws IOException, AcConfigBeanValidationException, RepositoryException {
-        final YamlConfigReader yamlConfigReader = new YamlConfigReader();
+        final ConfigReader yamlConfigReader = new YamlConfigReader();
         List<LinkedHashMap> yamlList = getYamlList("test-nested-loops.yaml");
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo);
