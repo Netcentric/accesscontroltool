@@ -12,7 +12,7 @@ import java.util.Set;
 
 import javax.jcr.security.AccessControlManager;
 
-import biz.netcentric.cq.tools.actool.helper.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.DoubledDefinedActionException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.DoubledDefinedJcrPrivilegeException;

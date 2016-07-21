@@ -14,8 +14,8 @@ import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
-import biz.netcentric.cq.tools.actool.helper.AceBean;
 
 public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
 

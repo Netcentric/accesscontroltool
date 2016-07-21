@@ -26,8 +26,8 @@ import org.slf4j.LoggerFactory;
 
 import com.day.cq.security.util.CqActions;
 
+import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
-import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.Validators;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;

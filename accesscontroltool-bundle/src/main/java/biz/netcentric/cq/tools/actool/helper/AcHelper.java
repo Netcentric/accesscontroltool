@@ -10,9 +10,7 @@ package biz.netcentric.cq.tools.actool.helper;
 
 import java.security.Principal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -41,9 +39,8 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
+import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 public class AcHelper {
     public static final Logger LOG = LoggerFactory.getLogger(AcHelper.class);
@@ -92,93 +89,7 @@ public class AcHelper {
         return StringUtils.repeat(" ", nrOfBlanks);
     }
 
-    /** Method which installs all ACE contained in the configurations. if an ACL is already existing in CRX the ACEs from the config get
-     * merged into the ACL (the ones from config overwrite the ones in CRX) ACEs belonging to groups which are not contained in any
-     * configuration don't get altered
-     *
-     * @param pathBasedAceMapFromConfig map containing the ACE data from the merged configurations path based
-     * @param session the jcr session
-     * @param history history object */
-    public static void installPathBasedACEs(
-            final Map<String, Set<AceBean>> pathBasedAceMapFromConfig,
-            final Session session,
-            final AcInstallationHistoryPojo history) throws Exception {
 
-        final Set<String> paths = pathBasedAceMapFromConfig.keySet();
-
-        LOG.debug("Paths in merged config = {}", paths);
-
-        final String msg = "Found " + paths.size() + "  paths in config";
-        LOG.debug(msg);
-        history.addVerboseMessage(msg);
-
-        // loop through all nodes from config
-        for (final String path : paths) {
-
-            final Set<AceBean> aceBeanSetFromConfig = pathBasedAceMapFromConfig
-                    .get(path); // Set which holds the AceBeans of the current path in configuration
-
-            // check if the path even exists
-            final boolean pathExits = AccessControlUtils.getModifiableAcl(session.getAccessControlManager(), path) != null;
-            if (!pathExits) {
-                if (!ContentHelper.createInitialContent(session, history, path, aceBeanSetFromConfig)) {
-                    final String msgNonExistingPath = "Skipped installing privileges/actions for non existing path: " + path;
-                    LOG.debug(msgNonExistingPath);
-                    history.addMessage(msgNonExistingPath);
-                    continue;
-                }
-            }
-
-            // order entries (denies in front of allows)
-            final Set<AceBean> orderedAceBeanSetFromConfig = new TreeSet<AceBean>(
-                    new AcePermissionComparator());
-            orderedAceBeanSetFromConfig.addAll(aceBeanSetFromConfig);
-
-            // remove ACL of that path from ACLs from repo so that after the
-            // loop has ended only paths are left which are not contained in
-            // current config
-            for (final AceBean bean : orderedAceBeanSetFromConfig) {
-                AccessControlUtils.deleteAllEntriesForAuthorizableFromACL(session,
-                        path, bean.getPrincipalName());
-                final String message = "deleted all ACEs of authorizable "
-                        + bean.getPrincipalName()
-                        + " from ACL of path: " + path;
-                LOG.debug(message);
-                history.addVerboseMessage(message);
-            }
-            writeAcBeansToRepository(session, history, orderedAceBeanSetFromConfig);
-        }
-    }
-
-    private static void writeAcBeansToRepository(final Session session,
-            final AcInstallationHistoryPojo history,
-            final Set<AceBean> aceBeanSetFromConfig)
-                    throws RepositoryException, UnsupportedRepositoryOperationException, NoSuchMethodException, SecurityException {
-
-        // reset ACL in repo with permissions from merged ACL
-        for (final AceBean bean : aceBeanSetFromConfig) {
-
-            LOG.debug("Writing bean to repository {}", bean);
-
-            final Principal currentPrincipal = getPrincipal(session, bean);
-
-            if (currentPrincipal == null) {
-                final String errMessage = "Could not find definition for authorizable "
-                        + bean.getPrincipalName()
-                        + " in groups config while installing ACE for: "
-                        + bean.getJcrPath()
-                        + "! Skipped installation of ACEs for this authorizable!\n";
-                LOG.error(errMessage);
-                history.addError(errMessage);
-                continue;
-
-            } else {
-                history.addVerboseMessage("starting installation of bean: \n"
-                        + bean);
-                bean.install(session, currentPrincipal, history);
-            }
-        }
-    }
 
     /** Method that searches a group by nodename or by ldap attribute 'cn' inside the rep:principal property of a group node. Serves as a
      * fallback, in case a group can't be resolved by principal manager by its name provided in config file after ldap import
@@ -188,7 +99,7 @@ public class AcHelper {
      * @return found Principal or null
      * @throws InvalidQueryException
      * @throws RepositoryException */
-    private static Principal getPrincipal(final Session session,
+    public static Principal getPrincipal(final Session session,
             final AceBean aceBean) throws InvalidQueryException,
     RepositoryException {
         Principal principal = null;

@@ -43,18 +43,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.aceservice.AceService;
+import biz.netcentric.cq.tools.actool.acls.AceBeanInstaller;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
+import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetriever;
 import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
 import biz.netcentric.cq.tools.actool.configreader.ConfigurationMerger;
 import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
-import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.helper.AclBean;
 import biz.netcentric.cq.tools.actool.helper.PurgeHelper;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
@@ -70,6 +71,9 @@ public class AceServiceImpl implements AceService {
 
     @Reference
     AuthorizableCreatorService authorizableCreatorService;
+
+    @Reference
+    AceBeanInstaller aceBeanInstaller;
 
     @Reference
     private SlingRepository repository;
@@ -193,7 +197,7 @@ public class AceServiceImpl implements AceService {
         String msg = "*** Starting installation of "+aceMapFromConfig.size()+" ACLs in content nodes...";
         LOG.info(msg);
         history.addMessage(msg);
-        AcHelper.installPathBasedACEs(pathBasedAceMapFromConfig, session, history);
+        aceBeanInstaller.installPathBasedACEs(pathBasedAceMapFromConfig, session, history);
     }
 
     private void installAuthorizables(

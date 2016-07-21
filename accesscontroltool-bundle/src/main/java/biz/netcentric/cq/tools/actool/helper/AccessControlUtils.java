@@ -210,7 +210,7 @@ public class AccessControlUtils {
      * @param acMgr
      * @return a set of privileges (never {@code null}, but may be empty set)
      * @throws RepositoryException */
-    static Set<Privilege> getPrivilegeSet(String[] privNames,
+    public static Set<Privilege> getPrivilegeSet(String[] privNames,
             AccessControlManager acMgr) throws RepositoryException {
         if (privNames == null) {
             return Collections.emptySet();

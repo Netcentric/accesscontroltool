@@ -21,6 +21,8 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 
+import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+
 public class AcHelperTest {
 
     AceBean aceBeanGroupA_1;
