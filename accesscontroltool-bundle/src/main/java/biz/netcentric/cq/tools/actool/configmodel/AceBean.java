@@ -40,7 +40,7 @@ public class AceBean implements AcDumpElement {
     private String permission;
     private String[] actions;
     private String assertedExceptionString;
-    private Map<String, List<String>> restrictionMap = new HashMap<>();
+    private List<Restriction> restrictions = new ArrayList<Restriction>();
 
     private String initialContent;
 
@@ -87,46 +87,57 @@ public class AceBean implements AcDumpElement {
         return "allow".equalsIgnoreCase(permission);
     }
 
-    public Map<String, List<String>> getRestrictions() {
-        return restrictionMap;
+    public List<Restriction> getRestrictions() {
+        return restrictions;
     }
 
-    public void setRestrictions(final Map<String, ?> currentAceDefinition, Object restrictions, String oldStyleRepGlob) {
-        if (restrictions != null) {
-            if (!(restrictions instanceof Map)) {
+    public void setRestrictions(Object restrictionsRaw, String oldStyleRepGlob) {
+        restrictions.clear();
+        if (restrictionsRaw != null) {
+            if (!(restrictionsRaw instanceof Map)) {
                 throw new IllegalArgumentException("If 'restrictions' is provided for an AC entry, it needs to be a map.");
             }
-            Map<String, ?> restrictionsMap = (Map<String, ?>) restrictions;
+            Map<String, ?> restrictionsMap = (Map<String, ?>) restrictionsRaw;
             for (final String key : restrictionsMap.keySet()) {
                 final String value = (String) restrictionsMap.get(key);
                 if (StringUtils.isBlank(value)) {
                     continue;
                 }
                 final String[] values = value.split(",");
-                addRestriction(key, new ArrayList<String>(Arrays.asList(values)));
+
+                restrictions.add(new Restriction(key, values));
             }
         }
 
         if (oldStyleRepGlob != null) {
-            if (restrictionMap.containsKey(RESTRICTION_NAME_GLOB)) {
+            if (containsRestriction(RESTRICTION_NAME_GLOB)) {
                 throw new IllegalArgumentException("Usage of restrictions -> rep:glob and repGlob on top level cannot be mixed.");
             }
-            addRestriction(RESTRICTION_NAME_GLOB, Arrays.asList(oldStyleRepGlob));
+            restrictions.add(new Restriction(RESTRICTION_NAME_GLOB, oldStyleRepGlob));
         }
 
     }
 
-    public void setRestrictionsMap(Map<String, List<String>> restrictionsMap) {
-        restrictionMap = restrictionsMap;
+    public boolean containsRestriction(String restrictionName) {
+        for (Restriction currentRestriction : restrictions) {
+            if (StringUtils.equals(currentRestriction.getName(), restrictionName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    private void addRestriction(final String restrictionName, final List<String> restrictionValue) {
-        restrictionMap.put(restrictionName, restrictionValue);
+    public void setRestrictions(List<Restriction> restrictions) {
+        this.restrictions = restrictions;
     }
 
     public String getRepGlob() {
-        List<String> list = restrictionMap.get(RESTRICTION_NAME_GLOB);
-        return (list != null) && !list.isEmpty() ? list.get(0) : null;
+        for (Restriction currentRestriction : restrictions) {
+            if (StringUtils.equals(currentRestriction.getName(), RESTRICTION_NAME_GLOB)) {
+                return currentRestriction.getValue();
+            }
+        }
+        return null;
     }
 
     public String getActionsString() {
@@ -185,8 +196,8 @@ public class AceBean implements AcDumpElement {
                 + "\n"
                 + ", privilegesString=" + privilegesString + "\n" + ", principal=" + principal + "\n" + ", permission=" + permission
                 + ", actions="
-                + Arrays.toString(actions) + "\n" + ", assertedExceptionString=" + assertedExceptionString + "\n" + ", restrictionMap="
-                + restrictionMap + "\n"
+                + Arrays.toString(actions) + "\n" + ", assertedExceptionString=" + assertedExceptionString + "\n" + ", restrictions="
+                + restrictions + "\n"
                 + ", initialContent=" + initialContent + "]";
     }
 
@@ -202,7 +213,7 @@ public class AceBean implements AcDumpElement {
         result = (prime * result) + ((permission == null) ? 0 : permission.hashCode());
         result = (prime * result) + ((principal == null) ? 0 : principal.hashCode());
         result = (prime * result) + ((privilegesString == null) ? 0 : privilegesString.hashCode());
-        result = (prime * result) + ((restrictionMap == null) ? 0 : restrictionMap.hashCode());
+        result = (prime * result) + ((restrictions == null) ? 0 : restrictions.hashCode());
         return result;
     }
 
@@ -270,11 +281,11 @@ public class AceBean implements AcDumpElement {
         } else if (!privilegesString.equals(other.privilegesString)) {
             return false;
         }
-        if (restrictionMap == null) {
-            if (other.restrictionMap != null) {
+        if (restrictions == null) {
+            if (other.restrictions != null) {
                 return false;
             }
-        } else if (!restrictionMap.equals(other.restrictionMap)) {
+        } else if (!restrictions.equals(other.restrictions)) {
             return false;
         }
         return true;
@@ -307,5 +318,6 @@ public class AceBean implements AcDumpElement {
                 && StringUtils.isBlank(privilegesString)
                 && StringUtils.isBlank(actionsStringFromConfig);
     }
+
 
 }

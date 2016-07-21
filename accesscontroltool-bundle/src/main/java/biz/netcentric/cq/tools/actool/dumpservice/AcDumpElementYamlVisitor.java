@@ -9,12 +9,12 @@
 package biz.netcentric.cq.tools.actool.dumpservice;
 
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 
 public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
@@ -82,15 +82,15 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
     }
 
     private void writeRestrictions(final AceBean aceBean, final StringBuilder sb) {
-        final Map<String, List<String>> restrictions = aceBean.getRestrictions();
+        final List<Restriction> restrictions = aceBean.getRestrictions();
         if (restrictions.isEmpty()) {
             return;
         }
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY)).append("restrictions:");
         sb.append("\n");
-        for (final String restrictionName : restrictions.keySet()) {
-            final String restrictionsValueString = StringUtils.join(restrictions.get(restrictionName), ",");
-            sb.append(AcHelper.getBlankString(DUMP_INDENTATION_RESTRICTIONS)).append(restrictionName).append(": ")
+        for (Restriction restriction : restrictions) {
+            final String restrictionsValueString = StringUtils.join(restriction.getValues(), ",");
+            sb.append(AcHelper.getBlankString(DUMP_INDENTATION_RESTRICTIONS)).append(restriction.getName()).append(": ")
                     .append(restrictionsValueString);
             sb.append("\n");
         }

@@ -10,7 +10,6 @@ package biz.netcentric.cq.tools.actool.helper;
 
 import java.security.Principal;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
 
 public class AcHelper {
@@ -66,23 +66,23 @@ public class AcHelper {
         aceBean.setPrincipal(ace.getPrincipal().getName());
         aceBean.setPrivilegesString(ace.getPrivilegesString());
 
-        final Map<String, List<String>> restrictionsMap = buildRestrictionsMap(ace);
-        aceBean.setRestrictionsMap(restrictionsMap);
+        List<Restriction> restrictions = buildRestrictionsMap(ace);
+        aceBean.setRestrictions(restrictions);
         return aceBean;
     }
 
-    private static Map<String, List<String>> buildRestrictionsMap(final AceWrapper ace) throws RepositoryException, ValueFormatException {
+    private static List<Restriction> buildRestrictionsMap(final AceWrapper ace) throws RepositoryException, ValueFormatException {
         final String[] restrictionNames = ace.getRestrictionNames();
-        final Map<String, List<String>> restrictionsMap = new HashMap<>();
+        final List<Restriction> restrictionsList = new ArrayList<Restriction>();
         for(final String restrictionName : restrictionNames){
             final Value[] values = ace.getRestrictions(restrictionName);
-            final List<String> valuesList = new ArrayList<>();
-            for(final Value value : values){
-                valuesList.add(value.getString());
+            String[] strValues = new String[values.length];
+            for(int i=0;i<values.length;i++) {
+                strValues[i] = values[i].getString();
             }
-            restrictionsMap.put(restrictionName, valuesList);
+            restrictionsList.add(new Restriction(restrictionName, strValues));
         }
-        return restrictionsMap;
+        return restrictionsList;
     }
 
     public static String getBlankString(final int nrOfBlanks) {

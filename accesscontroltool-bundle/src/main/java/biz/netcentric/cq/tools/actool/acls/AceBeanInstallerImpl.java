@@ -9,7 +9,6 @@
 package biz.netcentric.cq.tools.actool.acls;
 
 import java.security.Principal;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -22,8 +21,6 @@ import java.util.TreeSet;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
-import javax.jcr.Value;
-import javax.jcr.ValueFactory;
 import javax.jcr.ValueFormatException;
 import javax.jcr.security.AccessControlEntry;
 import javax.jcr.security.AccessControlException;
@@ -43,11 +40,11 @@ import com.day.cq.security.util.CqActions;
 
 import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.ContentHelper;
-import biz.netcentric.cq.tools.actool.helper.Restriction;
-import biz.netcentric.cq.tools.actool.helper.RestrictionModel;
+import biz.netcentric.cq.tools.actool.helper.RestrictionsHolder;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 @Service
@@ -167,18 +164,17 @@ public class AceBeanInstallerImpl implements AceBeanInstaller {
 
         // since the aclist has been modified, retrieve it again
         final JackrabbitAccessControlList newAcl = AccessControlUtils.getAccessControlList(session, aceBean.getJcrPath());
-        final RestrictionModel restrictions = getRestrictions(aceBean, session, acl);
+        final RestrictionsHolder restrictions = getRestrictions(aceBean, session, acl);
 
-        if (aceBean.getRestrictions().isEmpty()) {
-            return newAcl;
+        if (!aceBean.getRestrictions().isEmpty()) {
+            // additionally set restrictions on the installed actions (this is not supported by CQ Security API)
+            addAdditionalRestriction(aceBean, acl, newAcl, restrictions);
         }
-        // additionally set restrictions on the installed actions (this is not supported by CQ Security API)
-        addAdditionalRestriction(aceBean, acl, newAcl, restrictions);
         return newAcl;
     }
 
     private void addAdditionalRestriction(AceBean aceBean, JackrabbitAccessControlList oldAcl, JackrabbitAccessControlList newAcl,
-            RestrictionModel restrictions)
+            RestrictionsHolder restrictions)
                     throws RepositoryException, AccessControlException, UnsupportedRepositoryOperationException, SecurityException {
         final List<AccessControlEntry> changedAces = getModifiedAces(oldAcl, newAcl);
         if (!changedAces.isEmpty()) {
@@ -203,7 +199,7 @@ public class AceBeanInstallerImpl implements AceBeanInstaller {
         }
     }
 
-    private void addRestrictionIfNotSet(JackrabbitAccessControlList newAcl, RestrictionModel restrictions,
+    private void addRestrictionIfNotSet(JackrabbitAccessControlList newAcl, RestrictionsHolder restrictions,
             AccessControlEntry newAce)
                     throws RepositoryException, AccessControlException, UnsupportedRepositoryOperationException, SecurityException {
         if (!(newAce instanceof JackrabbitAccessControlEntry)) {
@@ -215,7 +211,7 @@ public class AceBeanInstallerImpl implements AceBeanInstaller {
 
         if (ace.getRestrictionNames().length == 0) {
             // modify this AccessControlEntry by adding the restriction
-            AccessControlUtils.extendExistingAceWithRestrictions(newAcl, ace, restrictions);
+            extendExistingAceWithRestrictions(newAcl, ace, restrictions);
         }
     }
 
@@ -234,7 +230,7 @@ public class AceBeanInstallerImpl implements AceBeanInstaller {
         // then install remaining privileges
         final Set<Privilege> privileges = AccessControlUtils.getPrivilegeSet(aceBean.getPrivileges(), acMgr);
         if (!privileges.isEmpty()) {
-            final RestrictionModel restrictions = getRestrictions(aceBean, session, acl);
+            final RestrictionsHolder restrictions = getRestrictions(aceBean, session, acl);
             if (!restrictions.isEmpty()) {
                 acl.addEntry(principal, privileges
                         .toArray(new Privilege[privileges.size()]), aceBean.isAllow(),
@@ -329,46 +325,45 @@ public class AceBeanInstallerImpl implements AceBeanInstaller {
      * @throws ValueFormatException
      * @throws UnsupportedRepositoryOperationException
      * @throws RepositoryException */
-    private RestrictionModel getRestrictions(AceBean aceBean, Session session, JackrabbitAccessControlList acl)
+    private RestrictionsHolder getRestrictions(AceBean aceBean, Session session, JackrabbitAccessControlList acl)
             throws ValueFormatException, UnsupportedRepositoryOperationException, RepositoryException {
+
         final Collection<String> supportedRestrictionNames = Arrays.asList(acl.getRestrictionNames());
-        if (!aceBean.getRestrictions().isEmpty()) {
-            return getRestrictions(aceBean, session.getValueFactory(), acl, supportedRestrictionNames);
-        } else {
-            return RestrictionModel.empty();
+
+        if (aceBean.getRestrictions().isEmpty()) {
+            return RestrictionsHolder.empty();
         }
+
+        List<Restriction> restrictions = aceBean.getRestrictions();
+        for (Restriction restriction : restrictions) {
+            if (!supportedRestrictionNames.contains(restriction.getName())) {
+                throw new IllegalStateException(
+                        "The AccessControlList at " + acl.getPath() + " does not support setting " + restriction.getName()
+                                + " restrictions!");
+            }
+        }
+
+        RestrictionsHolder restrictionsHolder = new RestrictionsHolder(restrictions, session.getValueFactory(), acl);
+        return restrictionsHolder;
     }
 
-    private RestrictionModel getRestrictions(AceBean aceBean, final ValueFactory valueFactory, final JackrabbitAccessControlList acl,
-            final Collection<String> supportedRestrictionNames)
-                    throws ValueFormatException, UnsupportedRepositoryOperationException, RepositoryException {
-        Map<String, List<String>> restrictionsMap = aceBean.getRestrictions();
-        for (final String restrictionName : restrictionsMap.keySet()) {
-            if (!supportedRestrictionNames.contains(restrictionName)) {
-                throw new IllegalStateException(
-                        "The AccessControlList at " + acl.getPath() + " does not support setting " + restrictionName + " restrictions!");
-            }
-        }
 
-        List<Restriction> restrictions = new ArrayList<Restriction>();
 
-        for (final String restrictionName : restrictionsMap.keySet()) {
-            final int restrictionMapSize = restrictionsMap.get(restrictionName).size();
-            if (restrictionMapSize > 1) {
-                final Value[] values = new Value[restrictionMapSize];
-                for (int i = 0; i < restrictionMapSize; i++) {
-                    final Value value = valueFactory.createValue(restrictionsMap.get(restrictionName).get(i),
-                            acl.getRestrictionType(restrictionName));
-                    values[i] = value;
-                }
-                restrictions.add(new Restriction(restrictionName, values));
-            } else if (restrictionsMap.get(restrictionName).size() == 1) {
-                final Value value = valueFactory.createValue(restrictionsMap.get(restrictionName).get(0),
-                        acl.getRestrictionType(restrictionName));
-                restrictions.add(new Restriction(restrictionName, value));
-            }
+    private void extendExistingAceWithRestrictions(JackrabbitAccessControlList accessControlList,
+            JackrabbitAccessControlEntry accessControlEntry, RestrictionsHolder restrictions)
+                    throws SecurityException, UnsupportedRepositoryOperationException, RepositoryException {
+
+        // 1. add new entry
+        if (!accessControlList.addEntry(accessControlEntry.getPrincipal(), accessControlEntry.getPrivileges(), accessControlEntry.isAllow(),
+                restrictions.getSingleValuedRestrictionsMap(), restrictions.getMultiValuedRestrictionsMap())) {
+            throw new IllegalStateException("Could not add entry, probably because it was already there!");
         }
-        return new RestrictionModel(restrictions);
+        // we assume the entry being added is the last one
+        final AccessControlEntry newAccessControlEntry = accessControlList.getAccessControlEntries()[accessControlList.size() - 1];
+        // 2. put it to the right position now!
+        accessControlList.orderBefore(newAccessControlEntry, accessControlEntry);
+        // 3. remove old entry
+        accessControlList.removeAccessControlEntry(accessControlEntry);
     }
 
 }

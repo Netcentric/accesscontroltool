@@ -12,7 +12,6 @@ package biz.netcentric.cq.tools.actool.validators.impl;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.AccessDeniedException;
@@ -27,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import com.day.cq.security.util.CqActions;
 
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.Validators;
@@ -113,27 +113,28 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
             throws InvalidRepGlobException, InvalidRestrictionsException {
         boolean valid = true;
 
-        final Map<String, List<String>> restrictionsMap = tmpAceBean.getRestrictions();
-        if (restrictionsMap.isEmpty()) {
+        final List<Restriction> restrictions = tmpAceBean.getRestrictions();
+        if (restrictions.isEmpty()) {
             return true;
         }
 
         final String principal = tmpAceBean.getPrincipalName();
 
-        if(!restrictionsMap.isEmpty()){
+        final Set<String> restrictionNamesFromAceBean = new HashSet<String>();
+        for (Restriction restriction : restrictions) {
+            restrictionNamesFromAceBean.add(restriction.getName());
+        }
 
-            final Set<String> restrictionsFromAceBean = restrictionsMap.keySet();
-            final Set<String> allowedRestrictions = getSupportedRestrictions(aclManager);
+        final Set<String> allowedRestrictionNames = getSupportedRestrictions(aclManager);
 
-            if(!allowedRestrictions.containsAll(restrictionsFromAceBean)){
-                restrictionsFromAceBean.removeAll(allowedRestrictions);
-                valid = false;
-                final String errorMessage = getBeanDescription(this.currentBeanCounter,
-                        principal)
-                        + ",  this repository doesn't support following restriction(s): "
-                        + restrictionsFromAceBean;
-                throw new InvalidRestrictionsException(errorMessage);
-            }
+        if (!allowedRestrictionNames.containsAll(restrictionNamesFromAceBean)) {
+            restrictionNamesFromAceBean.removeAll(allowedRestrictionNames);
+            valid = false;
+            final String errorMessage = getBeanDescription(this.currentBeanCounter,
+                    principal)
+                    + ",  this repository doesn't support following restriction(s): "
+                    + restrictionNamesFromAceBean;
+            throw new InvalidRestrictionsException(errorMessage);
         }
 
         return valid;
