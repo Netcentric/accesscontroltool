@@ -31,9 +31,9 @@ import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
-import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
@@ -43,9 +43,12 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
 @Service
 @Component(label = "AC Yaml Config Reader", description = "Service that installs groups & ACEs according to textual configuration files")
 public class YamlConfigReader implements ConfigReader {
+
     private static final Logger LOG = LoggerFactory.getLogger(YamlConfigReader.class);
 
     private static final String ACE_CONFIG_PROPERTY_GLOB = "repGlob";
+    private static final String ACE_CONFIG_PROPERTY_RESTRICTIONS = "restrictions";
+
     private static final String ACE_CONFIG_PROPERTY_PERMISSION = "permission";
     private static final String ACE_CONFIG_PROPERTY_PRIVILEGES = "privileges";
     private static final String ACE_CONFIG_PROPERTY_ACTIONS = "actions";
@@ -297,7 +300,9 @@ public class YamlConfigReader implements ConfigReader {
                 currentAceDefinition, ACE_CONFIG_PROPERTY_PRIVILEGES));
         tmpAclBean.setPermission(getMapValueAsString(
                 currentAceDefinition, ACE_CONFIG_PROPERTY_PERMISSION));
-        tmpAclBean.setRepGlob((String) currentAceDefinition.get(ACE_CONFIG_PROPERTY_GLOB));
+        
+        tmpAclBean.setRestrictions(currentAceDefinition.get(ACE_CONFIG_PROPERTY_RESTRICTIONS),
+                (String) currentAceDefinition.get(ACE_CONFIG_PROPERTY_GLOB));
         tmpAclBean.setAssertedExceptionString(getMapValueAsString(
                 currentAceDefinition, ASSERTED_EXCEPTION));
         tmpAclBean.setActions(parseActionsString(getMapValueAsString(currentAceDefinition,
@@ -307,6 +312,8 @@ public class YamlConfigReader implements ConfigReader {
                 ACE_CONFIG_INITIAL_CONTENT);
         tmpAclBean.setInitialContent(initialContent);
     }
+    
+   
 
     private String[] parseActionsString(final String actionsStringFromConfig) {
         final String[] empty = {};

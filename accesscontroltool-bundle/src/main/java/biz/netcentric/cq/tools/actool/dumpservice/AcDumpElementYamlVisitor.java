@@ -8,9 +8,14 @@
  */
 package biz.netcentric.cq.tools.actool.dumpservice;
 
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+
+import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
-import biz.netcentric.cq.tools.actool.helper.AceBean;
 
 public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
 
@@ -20,6 +25,7 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
     public static final int DUMP_INDENTATION_KEY = 4;
     public static final int DUMP_INDENTATION_FIRST_PROPERTY = 7;
     public static final int DUMP_INDENTATION_PROPERTY = 9;
+    public static final int DUMP_INDENTATION_RESTRICTIONS = 11;
 
     public static final String YAML_STRUCTURAL_ELEMENT_PREFIX = "- ";
     private final StringBuilder sb;
@@ -47,7 +53,8 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
                 .append("\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
                 .append("isGroup: " + "'" + authorizableConfigBean.isGroup()
-                        + "'").append("\n");
+                        + "'")
+                .append("\n");
         sb.append("\n");
     }
 
@@ -69,13 +76,24 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
                 .append("privileges: " + aceBean.getPrivilegesString())
                 .append("\n");
-        sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY)).append(
-                "repGlob: ");
-        if ((aceBean.getRepGlob() != null)) {
-            sb.append("'" + aceBean.getRepGlob() + "'");
+        writeRestrictions(aceBean, sb);
+        sb.append("\n");
+        sb.append("\n");
+    }
+
+    private void writeRestrictions(final AceBean aceBean, final StringBuilder sb) {
+        final List<Restriction> restrictions = aceBean.getRestrictions();
+        if (restrictions.isEmpty()) {
+            return;
         }
+        sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY)).append("restrictions:");
         sb.append("\n");
-        sb.append("\n");
+        for (Restriction restriction : restrictions) {
+            final String restrictionsValueString = StringUtils.join(restriction.getValues(), ",");
+            sb.append(AcHelper.getBlankString(DUMP_INDENTATION_RESTRICTIONS)).append(restriction.getName()).append(": ")
+                    .append(restrictionsValueString);
+            sb.append("\n");
+        }
     }
 
     @Override
