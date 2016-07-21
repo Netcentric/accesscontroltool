@@ -11,8 +11,8 @@ package biz.netcentric.cq.tools.actool.dumpservice;
 import java.util.Map;
 import java.util.Set;
 
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 
 public class CompleteAcDump implements AcDumpElement {

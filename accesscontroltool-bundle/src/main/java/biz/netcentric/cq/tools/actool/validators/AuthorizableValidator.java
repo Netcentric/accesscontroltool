@@ -8,7 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.validators;
 
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidGroupNameException;
 

@@ -13,8 +13,8 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 
 public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {

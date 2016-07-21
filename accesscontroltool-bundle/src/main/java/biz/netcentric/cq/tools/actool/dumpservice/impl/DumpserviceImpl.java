@@ -64,12 +64,12 @@ import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.comparators.AcePathComparator;
 import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
 import biz.netcentric.cq.tools.actool.comparators.AuthorizableBeanIDComparator;
 import biz.netcentric.cq.tools.actool.comparators.JcrCreatedComparator;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementYamlVisitor;
 import biz.netcentric.cq.tools.actool.dumpservice.AceDumpData;
 import biz.netcentric.cq.tools.actool.dumpservice.CompleteAcDump;
