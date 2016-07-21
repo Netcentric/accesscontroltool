@@ -121,8 +121,8 @@ path | a node path. Wildcards `*` are possible. e.g. assuming we have the langua
 permission | the permission (either `allow` or `deny`) | yes
 actions | the actions (`read,modify,create,delete,acl_read,acl_edit,replicate`). Reference: <http://docs.adobe.com/docs/en/cq/current/administering/security.html#Actions> | either actions or privileges need to be present; also a mix of both is possible
 privileges | the privileges (`jcr:read, rep:write, jcr:all, crx:replicate, jcr:addChildNodes, jcr:lifecycleManagement, jcr:lockManagement, jcr:modifyAccessControl, jcr:modifyProperties, jcr:namespaceManagement, jcr:nodeTypeDefinitionManagement, jcr:nodeTypeManagement, jcr:readAccessControl, jcr:removeChildNodes, jcr:removeNode, jcr:retentionManagement, jcr:versionManagement, jcr:workspaceManagement, jcr:write, rep:privilegeManagement`). References: <http://jackrabbit.apache.org/oak/docs/security/privilege.html> <http://www.day.com/specs/jcr/2.0/16_Access_Control_Management.html#16.2.3%20Standard%20Privileges> | either actions or privileges need to be present; also a mix of both is possible
-repGlob/rep:glob |A [repGlob expression](https://jackrabbit.apache.org/api/2.8/org/apache/jackrabbit/core/security/authorization/GlobPattern.html) like "/jcr:*". Please note that repGlobs do not play well together with actions. Use privileges instead (e.g. "jcr:read" instead of read action). See [issue #48](https://github.com/Netcentric/accesscontroltool/issues/48). If the globbing expression starts with an asterisk, it has to be put between quotes. The namspace notation using a colon (rep:glob) is supported since version 1.9.0 and is the preferred notation from then on. The camelcase notation (repGlob) is kept for the time being for backward compatibility reasons | no
-rep:[restrictionName]|A valid restriction. Format: namespace 'rep' and restriction name, followed by one or several comma separated values, depending on the type of the respective restriction (single- or multivalued). Restrictions used here have to be supported by the repository on which the installation takes place. Therefore validation takes place while reading the yaml configuration. For an overview of supported restrictions in different OAK versions see: [Oak Restriction Management](http://jackrabbit.apache.org/oak/docs/security/authorization/restriction.html). Available form version 1.9.0.| no
+repGlob |A [repGlob expression](https://jackrabbit.apache.org/api/2.8/org/apache/jackrabbit/core/security/authorization/GlobPattern.html) like "/jcr:*". Please note that repGlobs do not play well together with actions. Use privileges instead (e.g. "jcr:read" instead of read action). See [issue #48](https://github.com/Netcentric/accesscontroltool/issues/48). If the globbing expression starts with an asterisk, it has to be put between quotes. Using `repGlob` is a shortcut for `rep:glob` in sub element `restrictions` | no
+restrictions|A list of arbirary restrictions as supported by oak. Format: restriction name followed by one or several comma separated values, depending on the type of the respective restriction (single- or multivalued). Restrictions used here have to be supported by the repository on which the installation takes place. Therefore validation takes place while reading the yaml configuration. For an overview of supported restrictions in different OAK versions see: [Oak Restriction Management](http://jackrabbit.apache.org/oak/docs/security/authorization/restriction.html). Available from version 1.9.0.| no
 initialContent | Allows to specify docview xml to create the path if it does not exist. The namespaces for jcr, sling and cq are added automatically if not provided to keep xml short. Initial content must only be specified exactly once per path (this is validated). If paths without permissions should be created, it is possible to provide only a path/initialContent tuple. Available form version 1.7.0. | no
 
 Every new data entry starts with a "-". 
@@ -134,10 +134,12 @@ Overall format
 [principal]
    - path: a valid node path in CRX
      permission: [allow/deny]
-     actions: actions string
-     privileges: privileges string  
-     repGlob/rep:glob: GlobPattern (optional, path restriction as globbing pattern)
-     rep:[restrictionName]: (single, or comma separated values depending on restriction)
+     actions: actions (comma separated)
+     privileges: privileges (comma separated)  
+     repGlob: GlobPattern (optional, path restriction as globbing pattern)
+     restrictions: 
+        rep:ntNames: nt:folder
+        # rep:glob: GlobPattern # either repGlob (one level higher) or rep:glob is allowed
      initialContent: <jcr:root jcr:primaryType="sling:Folder"/>   (optional)
 ```
 
