@@ -8,8 +8,8 @@
  */
 package biz.netcentric.cq.tools.actool.dumpservice;
 
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
-import biz.netcentric.cq.tools.actool.helper.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 
 public interface AcDumpElementVisitor {
 

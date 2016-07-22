@@ -10,7 +10,7 @@ package biz.netcentric.cq.tools.actool.comparators;
 
 import java.util.Comparator;
 
-import biz.netcentric.cq.tools.actool.helper.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 
 public class AcePathComparator implements Comparator<AceBean> {
 

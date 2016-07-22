@@ -11,7 +11,7 @@ package biz.netcentric.cq.tools.actool.dumpservice;
 import java.util.Map;
 import java.util.Set;
 
-import biz.netcentric.cq.tools.actool.helper.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 
 /**
  * Helper class holding maps for storing ace dump data. One for storing the

@@ -28,8 +28,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.yaml.snakeyaml.Yaml;
 
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
-import biz.netcentric.cq.tools.actool.helper.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
 

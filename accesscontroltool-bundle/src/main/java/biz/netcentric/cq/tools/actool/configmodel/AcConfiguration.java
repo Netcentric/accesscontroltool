@@ -11,9 +11,6 @@ package biz.netcentric.cq.tools.actool.configmodel;
 import java.util.Map;
 import java.util.Set;
 
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
-import biz.netcentric.cq.tools.actool.helper.AceBean;
-
 /** Root class of the configuration model as it is constructed from the multiple yaml files, it is a fully merged configuration. All loops
  * and variables have been processed. */
 public class AcConfiguration {

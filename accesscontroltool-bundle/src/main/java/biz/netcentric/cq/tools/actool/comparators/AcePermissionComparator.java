@@ -12,7 +12,7 @@ import java.util.Comparator;
 
 import org.apache.commons.lang.StringUtils;
 
-import biz.netcentric.cq.tools.actool.helper.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 
 public class AcePermissionComparator implements Comparator<AceBean> {
 

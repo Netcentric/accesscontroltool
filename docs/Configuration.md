@@ -95,6 +95,12 @@ Example:
   - editor:
     - isMemberOf: myeditors
       password: secret
+      
+  - poweruser:
+    - name: "Power User"
+      isMemberOf: powerusers
+      password: secret
+      profileContent: <jcr:root jcr:primaryType="nt:unstructured" email="poweruser@example.com"/>
 
   - system-reader:
     - name: system-reader
@@ -113,27 +119,45 @@ property | comment | required
 --- | --- | ---
 path | a node path. Wildcards `*` are possible. e.g. assuming we have the language trees de and en then `/content/*./test` would match: `/content/de/test` and `/content/en/test` (mandatory). If an asterisk is contained then the path has to be written inside single quotes (`'...'`) since this symbol is a functional character in YAML. | yes
 permission | the permission (either `allow` or `deny`) | yes
-actions | the actions (`read,modify,create,delete,acl_read,acl_edit,replicate`). Reference: <http://docs.adobe.com/docs/en/cq/current/administering/security.html#Actions> | either actions or privileges need to be present; also a mix of both is possible
-privileges | the privileges (`jcr:read, rep:write, jcr:all, crx:replicate, jcr:addChildNodes, jcr:lifecycleManagement, jcr:lockManagement, jcr:modifyAccessControl, jcr:modifyProperties, jcr:namespaceManagement, jcr:nodeTypeDefinitionManagement, jcr:nodeTypeManagement, jcr:readAccessControl, jcr:removeChildNodes, jcr:removeNode, jcr:retentionManagement, jcr:versionManagement, jcr:workspaceManagement, jcr:write, rep:privilegeManagement`). References: <http://jackrabbit.apache.org/oak/docs/security/privilege.html> <http://www.day.com/specs/jcr/2.0/16_Access_Control_Management.html#16.2.3%20Standard%20Privileges> | either actions or privileges need to be present; also a mix of both is possible
-repGlob |A repGlob expression like "/jcr:*". Please note that repGlobs do not play well together with actions. Use privileges instead (e.g. "jcr:read" instead of read action). See [issue #48](https://github.com/Netcentric/accesscontroltool/issues/48) | no
+actions | the actions (`read,modify,create,delete,acl_read,acl_edit,replicate`). Reference: [Actions](http://docs.adobe.com/docs/en/cq/current/administering/security.html#Actions) | either actions or privileges need to be present; also a mix of both is possible
+privileges | the privileges (`jcr:read, rep:write, jcr:all, crx:replicate, jcr:addChildNodes, jcr:lifecycleManagement, jcr:lockManagement, jcr:modifyAccessControl, jcr:modifyProperties, jcr:namespaceManagement, jcr:nodeTypeDefinitionManagement, jcr:nodeTypeManagement, jcr:readAccessControl, jcr:removeChildNodes, jcr:removeNode, jcr:retentionManagement, jcr:versionManagement, jcr:workspaceManagement, jcr:write, rep:privilegeManagement`). References: [Oak Privileges](http://jackrabbit.apache.org/oak/docs/security/privilege.html) [JCR Privileges](http://www.day.com/specs/jcr/2.0/16_Access_Control_Management.html#16.2.3%20Standard%20Privileges) | either actions or privileges need to be present; also a mix of both is possible
+repGlob |A [repGlob expression](https://jackrabbit.apache.org/api/2.8/org/apache/jackrabbit/core/security/authorization/GlobPattern.html) like "/jcr:*". Please note that repGlobs do not play well together with actions. Use privileges instead (e.g. "jcr:read" instead of read action). See [issue #48](https://github.com/Netcentric/accesscontroltool/issues/48). If the globbing expression starts with an asterisk, it has to be put between quotes. Using `repGlob` is a shortcut for `rep:glob` in sub element `restrictions` | no
+restrictions|An associative array of restriction entries. Each entry uses the restriction name as key (e.g. `rep:glob`) and a literal as value. Values for multi-valued restrictions (like e.g. `rep:ntNames`) are also given as YAML string literals with commas separating each value (not using YAML arrays, in line with how isMemberOf is configured). Arbitrary restrictions are supported as long as they are supported by the underlying repository on which the installation takes place (validated before installation starts). For an overview of supported restrictions in different Oak versions see: [Oak Restriction Management](http://jackrabbit.apache.org/oak/docs/security/authorization/restriction.html). Available from version 1.9.0.| no
 initialContent | Allows to specify docview xml to create the path if it does not exist. The namespaces for jcr, sling and cq are added automatically if not provided to keep xml short. Initial content must only be specified exactly once per path (this is validated). If paths without permissions should be created, it is possible to provide only a path/initialContent tuple. Available form version 1.7.0. | no
 
-Every new data entry starts with a "-". 
+Every new data entry starts with a "-".
+The rules are sorted so that deny rules are always on top of allow rules. ACEs that are not part of the config file will not be reordered and stay on very top. This way allow rules are evaluated first, then deny rules and finally any system rules. 
 
 
 Overall format
 
 ```
-[principal]
+- [principal]
    - path: a valid node path in CRX
      permission: [allow/deny]
-     actions: actions string
-     privileges: privileges string  
-     repGlob: regex    (optional, path restriction as regular expression)
-     initialContent: <jcr:root jcr:primaryType="sling:Folder"/>   (optional)
+     actions: actions (optional, comma separated)
+     privileges: privileges (optional, comma separated)  
+     repGlob: GlobPattern (optional, path restriction as globbing pattern, shortcut for using rep:glob in restrictions)
+     restrictions: Associative Array (optional, see below)
 ```
 
-Only ACEs for groups which are defined in the same configuration file can be installed! This ensures a consistency between the groups and their ACE definitions per configuration file.
+Entry with restrictions
+
+```
+- [principal]
+   - path: a valid node path in CRX
+     permission: [allow/deny]
+     actions: actions (comma separated)
+     privileges: privileges (comma separated)  
+     restrictions: 
+        rep:ntNames: nt:folder # rep:ntNames supports multiple values, but it's fine to supply only one value
+        rep:itemNames: nodeName1,nodeName2,nodeName3 # multivalued
+        rep:glob: GlobPattern # only one value may be supplied for this single-valued restriction
+        # any supported restriction can be listed here
+        # please note that if multiple restrictions are given, they are combined with "AND" (usually, only one is used per path entry)
+```
+
+Only ACEs for groups which are defined in the same configuration file can be installed. This ensures a consistency between the groups and their ACE definitions per configuration file.
 
 Cq actions and jcr: privileges can be mixed. If jcr: privileges are already covered by cq actions within an ACE definition they get ignored. Also aggregated privileges like jcr:all or rep:write can be used.
 
@@ -176,10 +200,16 @@ Certain configuration aspects are global and can be configured on top level (sin
 
 ```
 - global_config:
-      minRequiredVersion: 1.8.5 # Checked as pre-condition of run
-      allowExternalGroupNamesRegEx: external.* # allow external groups to extend the AC Tool configuration 
+      minRequiredVersion: 1.8.5
+      allowExternalGroupNamesRegEx: external.*
 
 ```
+
+Property | Description
+--- | ---
+minRequiredVersion | This configuration requires at least the given version of ACL tool. If an older version is found the configuration file is not processed.
+allowExternalGroupNamesRegEx | By default group memberships are set to what is specified in configuration file. There are cases where you have groups managed outside of AC tool (e.g. managed by a workflow). Using this option you can assign your external group to a group that is defined in AC Tool configuration. E.g. your AC Tool group "admin" could be member of "external-myworkflow". This setting is a regular expression.
+
 
 ## Validation
 

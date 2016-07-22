@@ -5,7 +5,6 @@ The Access Control Tool for Adobe Experience Manager (ACTool) simplifies the spe
 Instead of [existing solutions](docs/Comparison.md) that build e.g. a content package with actual ACL nodes you can write simple configuration files and deploy them with your content packages.
 
 Features:
-* compatible with AEM 6.x and CQ 5.6.1
 * easy-to-read Yaml configuration file format
 * run mode support
 * automatic installation with install hook
@@ -17,7 +16,7 @@ Features:
 
 # Requirements
 
-The ACTool requires Java 7 and AEM 6.0 - 6.2 or CQ 5.6.1 (min. SP2).
+The ACTool requires Java 7 and AEM 6.0 - 6.2 (use v1.8.5 for CQ 5.6.1)
 
 # Installation
 

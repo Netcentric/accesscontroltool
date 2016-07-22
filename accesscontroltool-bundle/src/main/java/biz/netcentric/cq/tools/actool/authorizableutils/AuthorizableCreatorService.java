@@ -18,6 +18,7 @@ import javax.jcr.UnsupportedRepositoryOperationException;
 
 import org.apache.sling.jcr.api.SlingRepository;
 
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 public interface AuthorizableCreatorService {

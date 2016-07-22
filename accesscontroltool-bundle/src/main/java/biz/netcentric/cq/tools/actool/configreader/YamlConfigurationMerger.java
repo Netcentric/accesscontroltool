@@ -24,10 +24,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
+import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
-import biz.netcentric.cq.tools.actool.helper.AceBean;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
