@@ -122,7 +122,7 @@ permission | the permission (either `allow` or `deny`) | yes
 actions | the actions (`read,modify,create,delete,acl_read,acl_edit,replicate`). Reference: <http://docs.adobe.com/docs/en/cq/current/administering/security.html#Actions> | either actions or privileges need to be present; also a mix of both is possible
 privileges | the privileges (`jcr:read, rep:write, jcr:all, crx:replicate, jcr:addChildNodes, jcr:lifecycleManagement, jcr:lockManagement, jcr:modifyAccessControl, jcr:modifyProperties, jcr:namespaceManagement, jcr:nodeTypeDefinitionManagement, jcr:nodeTypeManagement, jcr:readAccessControl, jcr:removeChildNodes, jcr:removeNode, jcr:retentionManagement, jcr:versionManagement, jcr:workspaceManagement, jcr:write, rep:privilegeManagement`). References: <http://jackrabbit.apache.org/oak/docs/security/privilege.html> <http://www.day.com/specs/jcr/2.0/16_Access_Control_Management.html#16.2.3%20Standard%20Privileges> | either actions or privileges need to be present; also a mix of both is possible
 repGlob |A [repGlob expression](https://jackrabbit.apache.org/api/2.8/org/apache/jackrabbit/core/security/authorization/GlobPattern.html) like "/jcr:*". Please note that repGlobs do not play well together with actions. Use privileges instead (e.g. "jcr:read" instead of read action). See [issue #48](https://github.com/Netcentric/accesscontroltool/issues/48). If the globbing expression starts with an asterisk, it has to be put between quotes. Using `repGlob` is a shortcut for `rep:glob` in sub element `restrictions` | no
-restrictions|A list of arbirary restrictions as supported by oak. Format: restriction name followed by one or several comma separated values, depending on the type of the respective restriction (single- or multivalued). Restrictions used here have to be supported by the repository on which the installation takes place. Therefore validation takes place while reading the yaml configuration. For an overview of supported restrictions in different OAK versions see: [Oak Restriction Management](http://jackrabbit.apache.org/oak/docs/security/authorization/restriction.html). Available from version 1.9.0.| no
+restrictions|An associative array of restriction entries. Each entry uses the restriction name as key (e.g. `rep:glob`) and a literal as value. Values for multi-valued restrictions (like e.g. `rep:ntNames`) are also given as YAML string literals with commas separating each value (not using YAML arrays, in line with how isMemberOf is configured). Arbitrary restrictions are supported as long as they are supported by the underlying repository on which the installation takes place (validated before installation starts). For an overview of supported restrictions in different OAK versions see: [Oak Restriction Management](http://jackrabbit.apache.org/oak/docs/security/authorization/restriction.html). Available from version 1.9.0.| no
 initialContent | Allows to specify docview xml to create the path if it does not exist. The namespaces for jcr, sling and cq are added automatically if not provided to keep xml short. Initial content must only be specified exactly once per path (this is validated). If paths without permissions should be created, it is possible to provide only a path/initialContent tuple. Available form version 1.7.0. | no
 
 Every new data entry starts with a "-". 
@@ -131,19 +131,32 @@ Every new data entry starts with a "-".
 Overall format
 
 ```
-[principal]
+- [principal]
+   - path: a valid node path in CRX
+     permission: [allow/deny]
+     actions: actions (optional, comma separated)
+     privileges: privileges (optional, comma separated)  
+     repGlob: GlobPattern (optional, path restriction as globbing pattern, shortcut for using rep:glob in restrictions)
+     restrictions: Associative Array (optional, see below)
+```
+
+Entry with restrictions
+
+```
+- [principal]
    - path: a valid node path in CRX
      permission: [allow/deny]
      actions: actions (comma separated)
      privileges: privileges (comma separated)  
-     repGlob: GlobPattern (optional, path restriction as globbing pattern)
      restrictions: 
-        rep:ntNames: nt:folder
-        # rep:glob: GlobPattern # either repGlob (one level higher) or rep:glob is allowed
-     initialContent: <jcr:root jcr:primaryType="sling:Folder"/>   (optional)
+        rep:ntNames: nt:folder # rep:ntNames supports multiple values, but it's fine to supply only one value
+        rep:itemNames: nodeName1,nodeName2,nodeName3 # multivalued
+        rep:glob: GlobPattern # only one value may be supplied for this single-valued restriction
+        # any supported restriction can be listed here
+        # please note that if multiple restrictions are given, they are combined with "AND" (usually, only one is used per path entry)
 ```
 
-Only ACEs for groups which are defined in the same configuration file can be installed! This ensures a consistency between the groups and their ACE definitions per configuration file.
+Only ACEs for groups which are defined in the same configuration file can be installed. This ensures a consistency between the groups and their ACE definitions per configuration file.
 
 Cq actions and jcr: privileges can be mixed. If jcr: privileges are already covered by cq actions within an ACE definition they get ignored. Also aggregated privileges like jcr:all or rep:write can be used.
 
