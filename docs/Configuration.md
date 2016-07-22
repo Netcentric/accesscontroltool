@@ -191,6 +191,12 @@ Certain configuration aspects are global and can be configured on top level (sin
 
 ```
 
+Property | Description
+--- | ---
+minRequiredVersion | This configuration requires at least the given version of ACL tool. If an older version is found the configuration file is not processed.
+allowExternalGroupNamesRegEx | By default group memberships are set to what is specified in configuration file. There are cases where you have groups managed outside of AC tool (e.g. managed by a workflow). Using this option you can assign your external group to a group that is defined in AC Tool configuration. E.g. your AC Tool group "admin" could be member of "external-myworkflow".
+
+
 ## Validation
 
 First the validation of the different configuration lines is performed and gets applied while reading the file. Further validation consists of checking paths for existence as well as for double entries, checks for conflicting ACEs (e.g. allow and deny for same actions on same node), checks whether principals are existing under /home. If an issue is detected the reading is aborted and an appropriate error message is appended to the installation history and log.
