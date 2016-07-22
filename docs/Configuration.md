@@ -186,15 +186,15 @@ Certain configuration aspects are global and can be configured on top level (sin
 
 ```
 - global_config:
-      minRequiredVersion: 1.8.5 # Checked as pre-condition of run
-      allowExternalGroupNamesRegEx: external.* # allow external groups to extend the AC Tool configuration 
+      minRequiredVersion: 1.8.5
+      allowExternalGroupNamesRegEx: external.*
 
 ```
 
 Property | Description
 --- | ---
 minRequiredVersion | This configuration requires at least the given version of ACL tool. If an older version is found the configuration file is not processed.
-allowExternalGroupNamesRegEx | By default group memberships are set to what is specified in configuration file. There are cases where you have groups managed outside of AC tool (e.g. managed by a workflow). Using this option you can assign your external group to a group that is defined in AC Tool configuration. E.g. your AC Tool group "admin" could be member of "external-myworkflow".
+allowExternalGroupNamesRegEx | By default group memberships are set to what is specified in configuration file. There are cases where you have groups managed outside of AC tool (e.g. managed by a workflow). Using this option you can assign your external group to a group that is defined in AC Tool configuration. E.g. your AC Tool group "admin" could be member of "external-myworkflow". This setting is a regular expression.
 
 
 ## Validation
