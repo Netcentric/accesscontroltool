@@ -8,16 +8,15 @@
  */
 package biz.netcentric.cq.tools.actool.installhook;
 
+import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
+import org.apache.jackrabbit.vault.fs.io.ImportOptions;
+import org.apache.jackrabbit.vault.packaging.InstallHook;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.day.jcr.vault.fs.api.ProgressTrackerListener;
-import com.day.jcr.vault.fs.io.ImportOptions;
-import com.day.jcr.vault.packaging.InstallHook;
 
 public abstract class OsgiAwareInstallHook implements InstallHook {
 
