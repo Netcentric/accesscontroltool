@@ -39,6 +39,10 @@ You can get the ZIP file via [Maven](https://repo1.maven.org/maven2/biz/netcentr
     <artifactId>accesscontroltool-oakindex-package</artifactId>
 ```
 
+# Migration to AC Tool
+
+You can easily migrate to AC Tool following [four simple steps](docs/Migration.md).
+
 # Configuration of ACL entries
 
 You need to setup [Yaml configuration files](docs/Configuration.md) to specify your users, groups and ACL entries. See also the [best practices](docs/BestPractices.md) for hints on structuring.
