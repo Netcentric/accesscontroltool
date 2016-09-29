@@ -17,8 +17,8 @@ Add the config file to your [content package](Configuration.md) and use the [ins
 
 ## 4. Install the package
 
-Install your package on a clean instance and verify your rules. Take a look at the output of the package installation if there occured any problems.
+Install your package on a clean instance and verify your rules. Take a look at the output of the package installation if there occurred any problems.
 
 ## Next steps
 
-Now that your rules are working you can take a look at our [best practices](BestPractices.md) to restructure the rules using multiplefiles and folders.
+Now that your rules are working you can take a look at our [best practices](BestPractices.md) to restructure the rules using multiple files and folders.
