@@ -1,8 +1,11 @@
 # Migration to AC Tool
 
+Migration to AC Tool is quite easy as it allows to export the AC entries on your existing server. So you can simply install it on an instance that already has the rights that you want. This will work regardless if you managed the entries manually or used some other tool/content package before.
+
 ## Install AC Tool
 
-Install the AC Tool packages on your existing server that should be used as source for the AC Tool rules. 
+Install the AC Tool packages on your existing server that should be used as source for the AC Tool rules.
+Please note that for CQ 5.6 you will need version 1.8.5 of the tool.
 
 ## Export rules
 
