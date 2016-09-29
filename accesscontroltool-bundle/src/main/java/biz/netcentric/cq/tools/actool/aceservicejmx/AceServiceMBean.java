@@ -39,7 +39,7 @@ public interface AceServiceMBean {
     @Description("provides status and links to the saved history logs")
     String[] getSavedLogs() throws RepositoryException;
 
-    @Description("shows execution status of the ac tool")
+    @Description("shows execution status of the AC Tool")
     public boolean isExecuting();
 
     @Description("returns a configuration dump containing all groups and all ACLs ordered by path")

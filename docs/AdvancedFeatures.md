@@ -141,7 +141,7 @@ Normally it is ensured by validation that a configuration's group system is self
   
 ## Configure memberships to Dynamic Groups
 
-If a group configured via the AC Tool is a member of a group which is not part of the configuration, this membership is removed by the installation process. This behaviour makes sense to ensure the configuration to be self-contained and prevent unwanted "injection" of permissions into the configuration system as described by the yaml files. Therefore wherever possible groups and their dependent groups should be added to the ACTool configuration.
+If a group configured via the AC Tool is a member of a group which is not part of the configuration, this membership is removed by the installation process. This behaviour makes sense to ensure the configuration to be self-contained and prevent unwanted "injection" of permissions into the configuration system as described by the yaml files. Therefore wherever possible groups and their dependent groups should be added to the AC Tool configuration.
 
 An exception to this might be dynamic groups created and maintained by authors or end-users. As such groups and their memberships are not static they cannot be added easily to the configuration. For this use-case the global configuration "allowExternalGroupNamesRegEx" can be set to a regular expression that matches all group names, that may keep member AC Tool groups as member:
 

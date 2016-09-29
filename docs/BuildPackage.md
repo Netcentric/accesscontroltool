@@ -1,13 +1,13 @@
 # Building the packages from source
 ## Requirements
 
-Building the ACTool requires Java 7 and Maven 3.2.
+Building the AC Tool requires Java 7 and Maven 3.2.
 
 From version 1.9.0 on Jackrabbit API 2.8 is required
 
 ## Build package
 
-A full build of ACTool can be executed by running:
+A full build of AC Tool can be executed by running:
 
 ```
 mvn clean install
