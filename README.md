@@ -14,6 +14,8 @@ Features:
 * ensured order of ACLs
 * built-in expression language to reduce rule duplication
 
+See also our talk at [AdaptTo 2016](https://adapt.to/2016/en/schedule/ac-tool.html)
+
 # Requirements
 
 The ACTool requires Java 7 and AEM 6.0 - 6.2 (use v1.8.5 for CQ 5.6.1)
