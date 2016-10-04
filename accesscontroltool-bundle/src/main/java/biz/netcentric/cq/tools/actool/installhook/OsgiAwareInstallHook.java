@@ -18,6 +18,15 @@ import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A <a href="http://jackrabbit.apache.org/filevault">Jackrabbit FileVault</a> install hook 
+ * which supports retrieving OSGi services and the bundle context as well as some logging capabilities.
+ * 
+ * <p>The new {@link org.apache.jackrabbit.vault.packaging.InstallHook} interface is only supported since bundle {@code com.day.jcr.vault} 
+ * in version 2.5.12 (AEM 6.0 SP3 and AEM 6.1).
+ * Previous versions of that bundle (and more specifically the {@code com.day.jcr.vault.packaging.impl.JrVltInstallHookProcessor$Hook#loadMainClass(...)} 
+ * only support the old interface at {@code com.day.jcr.vault.packaging.InstallHook}</p>
+ */
 public abstract class OsgiAwareInstallHook implements InstallHook {
 
 	private final BundleContext bundleContext;
