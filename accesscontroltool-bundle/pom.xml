@@ -126,8 +126,9 @@
             <artifactId>org.apache.sling.settings</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.day.jcr.vault</groupId>
-            <artifactId>com.day.jcr.vault</artifactId>
+            <groupId>org.apache.jackrabbit.vault</groupId>
+            <artifactId>org.apache.jackrabbit.vault</artifactId>
+            <version>3.1.18</version>
         </dependency>
         
         

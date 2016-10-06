@@ -8,12 +8,11 @@
  */
 package biz.netcentric.cq.tools.actool.installhook;
 
+import org.apache.jackrabbit.vault.packaging.InstallContext;
+import org.apache.jackrabbit.vault.packaging.PackageException;
 import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.day.jcr.vault.packaging.InstallContext;
-import com.day.jcr.vault.packaging.PackageException;
 
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 import biz.netcentric.cq.tools.actool.installationhistory.HistoryEntry;
