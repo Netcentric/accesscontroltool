@@ -12,7 +12,7 @@ Create multiple folders for e.g. service users, generic role definitions and act
 
 ## Use one package for all environments
 
-There is no need to setup multiple content packages to install the ACTool config files in multiple environments. You can use run modes in case there are differences between environments.
+There is no need to setup multiple content packages to install the AC Tool config files in multiple environments. You can use run modes in case there are differences between environments.
 
 ## Create demo users with test content
 
