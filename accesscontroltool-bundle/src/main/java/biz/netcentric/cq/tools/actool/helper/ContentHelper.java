@@ -51,8 +51,10 @@ public class ContentHelper {
                 history.addMessage("Created initial content for path " + path);
                 return true;
             } catch (Exception e) {
-                history.addWarning("Failed creating initial content for path: " + e);
-                LOG.warn("Failed creating initial content for path: " + path + " e=" + e, e);
+                String msg = "Failed creating initial content for path " + path + ": " + e;
+                history.addWarning(msg);
+                LOG.warn(msg);
+                LOG.debug("Exception: " + e, e); // log stack trace only debug
                 return false;
             }
 
