@@ -113,11 +113,11 @@ When looping over content structures, entries can be applied conditionally using
          isMemberOf: 
          path: /home/groups/${site.name}
 
-    IF ${endsWith(site.name,'-master')}:
-        - content-reader-master-${site.name}:
-           - name: Master Content Reader ${site.title}
-             isMemberOf: 
-             path: /home/groups/global
+    - IF ${endsWith(site.name,'-master')}:
+       - content-reader-master-${site.name}:
+          - name: Master Content Reader ${site.title}
+            isMemberOf: 
+            path: /home/groups/global
 ```
 
 Expressions are evaluated using javax.el expression language. The following utility functions are made available to any EL expression used in yaml:
