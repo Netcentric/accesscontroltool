@@ -79,11 +79,11 @@ public class AcHelper {
 
             for (int i = 0; i < values.length; i++) {
                 String value = values[i].getString();
-                // if (StringUtils.equals(value, "")) {
-                // strValues[i] = "''";
-                // } else {
-                strValues[i] = value;
-                // }
+                if (StringUtils.equals(value, "")) {
+                    strValues[i] = "''";
+                } else {
+                    strValues[i] = value;
+                }
             }
             restrictionsList.add(new Restriction(restrictionName, strValues));
         }
