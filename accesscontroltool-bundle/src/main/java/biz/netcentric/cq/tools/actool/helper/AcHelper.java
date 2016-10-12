@@ -48,7 +48,6 @@ public class AcHelper {
     private AcHelper() {
     }
 
-
     public static int ACE_ORDER_DENY_ALLOW = 1;
     public static int ACE_ORDER_NONE = 2;
     public static int ACE_ORDER_ALPHABETICAL = 3;
@@ -74,11 +73,17 @@ public class AcHelper {
     private static List<Restriction> buildRestrictionsMap(final AceWrapper ace) throws RepositoryException, ValueFormatException {
         final String[] restrictionNames = ace.getRestrictionNames();
         final List<Restriction> restrictionsList = new ArrayList<Restriction>();
-        for(final String restrictionName : restrictionNames){
+        for (final String restrictionName : restrictionNames) {
             final Value[] values = ace.getRestrictions(restrictionName);
             String[] strValues = new String[values.length];
-            for(int i=0;i<values.length;i++) {
-                strValues[i] = values[i].getString();
+
+            for (int i = 0; i < values.length; i++) {
+                String value = values[i].getString();
+                if (StringUtils.equals(value, "")) {
+                    strValues[i] = "''";
+                } else {
+                    strValues[i] = value;
+                }
             }
             restrictionsList.add(new Restriction(restrictionName, strValues));
         }
@@ -88,8 +93,6 @@ public class AcHelper {
     public static String getBlankString(final int nrOfBlanks) {
         return StringUtils.repeat(" ", nrOfBlanks);
     }
-
-
 
     /** Method that searches a group by nodename or by ldap attribute 'cn' inside the rep:principal property of a group node. Serves as a
      * fallback, in case a group can't be resolved by principal manager by its name provided in config file after ldap import
@@ -101,7 +104,7 @@ public class AcHelper {
      * @throws RepositoryException */
     public static Principal getPrincipal(final Session session,
             final AceBean aceBean) throws InvalidQueryException,
-    RepositoryException {
+                    RepositoryException {
         Principal principal = null;
         final String principalName = aceBean.getPrincipalName();
 
@@ -120,7 +123,7 @@ public class AcHelper {
     }
 
     private static Principal getPrincipalForName(final Session session, String principalName) throws AccessDeniedException,
-    UnsupportedRepositoryOperationException, RepositoryException {
+            UnsupportedRepositoryOperationException, RepositoryException {
         Principal principal = null;
         // AEM 6.1 has potentially a delayed visibility of just created groups when using PrincipalManager, therefore using UserManager
         // Also see https://issues.apache.org/jira/browse/OAK-3228
@@ -132,7 +135,7 @@ public class AcHelper {
     }
 
     private static Principal getPrincipalByQuery(final String queryStringGroups, final Session session) throws InvalidQueryException,
-    RepositoryException {
+            RepositoryException {
 
         final Query queryGroups = session.getWorkspace().getQueryManager().createQuery(queryStringGroups, Query.XPATH);
         final QueryResult queryResultGroups = queryGroups.execute();
@@ -158,7 +161,7 @@ public class AcHelper {
             final SlingHttpServletRequest request, final int keyOrdering,
             final int aclOrdering, final String[] excludePaths,
             Dumpservice dumpservice) throws ValueFormatException,
-    IllegalStateException, RepositoryException {
+                    IllegalStateException, RepositoryException {
         final Session session = request.getResourceResolver().adaptTo(Session.class);
         return dumpservice.createAclDumpMap(session, keyOrdering,
                 aclOrdering, excludePaths).getAceDump();
@@ -208,6 +211,5 @@ public class AcHelper {
         }
         return pathBasedAceMap;
     }
-
 
 }

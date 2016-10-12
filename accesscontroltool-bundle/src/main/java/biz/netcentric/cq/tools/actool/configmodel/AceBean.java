@@ -100,7 +100,8 @@ public class AceBean implements AcDumpElement {
             Map<String, ?> restrictionsMap = (Map<String, ?>) restrictionsRaw;
             for (final String key : restrictionsMap.keySet()) {
                 final String value = (String) restrictionsMap.get(key);
-                if (StringUtils.isBlank(value)) {
+                if (value == null) {
+                    LOG.debug("Could not get value from restriction map using key: {}", key);
                     continue;
                 }
                 final String[] values = value.split(",");
@@ -296,7 +297,6 @@ public class AceBean implements AcDumpElement {
         acDumpElementVisitor.visit(this);
     }
 
-
     /** Creates an action map being used in {@link CqActions#installActions(String, Principal, Map, Collection)} out of the set actions on
      * this bean.
      *
@@ -318,6 +318,5 @@ public class AceBean implements AcDumpElement {
                 && StringUtils.isBlank(privilegesString)
                 && StringUtils.isBlank(actionsStringFromConfig);
     }
-
 
 }
