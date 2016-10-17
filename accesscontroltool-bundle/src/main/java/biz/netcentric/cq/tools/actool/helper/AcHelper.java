@@ -81,8 +81,10 @@ public class AcHelper {
                 String value = values[i].getString();
                 if (StringUtils.equals(value, "")) {
                     strValues[i] = "''";
-                } else {
+                } else if (value != null && value.matches("[A-Za-z0-9,/]+")) {
                     strValues[i] = value;
+                } else {
+                    strValues[i] = "'" + value + "'";
                 }
             }
             restrictionsList.add(new Restriction(restrictionName, strValues));
