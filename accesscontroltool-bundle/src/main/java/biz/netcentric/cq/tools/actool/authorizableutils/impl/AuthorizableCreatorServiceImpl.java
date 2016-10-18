@@ -529,12 +529,12 @@ public class AuthorizableCreatorServiceImpl implements
 
         String profileContent = principalConfigBean.getProfileContent();
         if (StringUtils.isNotBlank(profileContent)) {
-            ContentHelper.importContent(session, authorizable.getPath() + "/profile", profileContent, true);
+            ContentHelper.importContent(session, authorizable.getPath() + "/profile", profileContent);
         }
 
         String preferencesContent = principalConfigBean.getPreferencesContent();
         if (StringUtils.isNotBlank(preferencesContent)) {
-            ContentHelper.importContent(session, authorizable.getPath() + "/preferences", preferencesContent, true);
+            ContentHelper.importContent(session, authorizable.getPath() + "/preferences", preferencesContent);
         }
 
         String name = principalConfigBean.getPrincipalName();

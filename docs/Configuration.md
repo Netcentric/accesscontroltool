@@ -36,15 +36,14 @@ Every configuration file comprises a group section where groups and their member
 
 Groups are specified in the **group_config** A group record in the configuration file starts with the principal id followed by some indented data records containing properties like name/description and group membership:
 
-```
-[Groupd Id]
-     - name: group name (optional, if empty group id is taken)
-     - isMemberOf: comma separated list of other groups (optional)
-     - members: comma separated list of groups that are member of this group
-     - description: (optional, description)
-     - path: (optional, path of the group in JCR)
-     - migrateFrom: (optional, a group name assigned member users are taken over from, since v1.7)     
-```
+property | comment | required
+--- | --- | ---
+name | Name of the group as shown in UI | optional, if empty group id is taken
+description | Description of the group | optional
+path | Path of the group either relative or absolute | optional
+isMemberOf | comma separated list of groups this groups is a member of | optional
+members | comma separated list of groups that are member of this group (allows to specify the relationshipo from the other side, however prefer `isMemberOf` over members if possible) | optional
+migrateFrom | a group name assigned member users are taken over from, since v1.7 | optional
 
 Example:
 
@@ -58,12 +57,9 @@ Example:
   - system-read:
     - isMemberOf: 
       description: system users with read access
+      path: fragments/system # if relative, /home/groups is automatically prefixed
       members: system-reader
 ```
-
-If the isMemberOf property of a group contains a group which is not yet installed in the repository, this group gets created and its rep:members property gets filled accordingly. If another configuration gets installed having a actual definition for that group the data gets merged into the already existing one.
-
-The members property contains a list of groups where this group is added as isMemberOf.
 
 ### Group migration
 
@@ -75,17 +71,13 @@ In general it is best practice to not generate regular users by the AC Tool but 
 
 Users can be configured in the same way as groups in the **user_config** section.
 
-```
-[User Id]
-     - name: user name (optional, if empty user id is taken)
-     - isMemberOf: comma separated list of groups (optional)
-     - description: (optional, description)
-     - path: (optional, path of the group in JCR)
-     - isSystemUser: the created user is a system user (AEM 6.1 and later) (default: false, optional)
-     - password: can be used to preset passwords (not allowed for system users) (optional)
-     - profileContent: allows to provide docview xml that will reset the profile to the given structure after each run (optional, since v1.8.2)
-     - preferencesContent: allows to provide docview xml that will reset the preferences node to the given structure after each run (optional, since v1.8.2)
-```
+property | comment | required
+--- | --- | ---
+name, description, path, isMemberOf | Work exactly as for groups | optional
+password | The PW for the user. Obviously this is stored in plain text and should only be used for test users | Required for non-system users, otherwise must not be set
+isSystemUser | Create users as system user (AEM 6.1 and later) | optional
+profileContent | Allows to provide [enhanced docview xml](https://jackrabbit.apache.org/filevault/apidocs/org/apache/jackrabbit/vault/util/DocViewProperty.html) that will reset the profile to the given structure after each run (since v1.8.2, enhanced docview since v1.9.1) | optional
+preferencesContent | Allows to provide [enhanced docview xml](https://jackrabbit.apache.org/filevault/apidocs/org/apache/jackrabbit/vault/util/DocViewProperty.html) that will reset the preferences node to the given structure after each run (since v1.8.2, enhanced docview since v1.9.1) | optional
 
 Example:
 
@@ -100,16 +92,18 @@ Example:
     - name: "Power User"
       isMemberOf: powerusers
       password: secret
+      path: myprojusers
       profileContent: <jcr:root jcr:primaryType="nt:unstructured" email="poweruser@example.com"/>
 
   - system-reader:
     - name: system-reader
       isMemberOf: system-read
-      path: s
+      path: system
       isSystemUser: true
 ```
 
 Group memberships can be set on user entry or group entry or both.
+
 
 ## Configuration of ACEs
 
@@ -123,7 +117,7 @@ actions | the actions (`read,modify,create,delete,acl_read,acl_edit,replicate`).
 privileges | the privileges (`jcr:read, rep:write, jcr:all, crx:replicate, jcr:addChildNodes, jcr:lifecycleManagement, jcr:lockManagement, jcr:modifyAccessControl, jcr:modifyProperties, jcr:namespaceManagement, jcr:nodeTypeDefinitionManagement, jcr:nodeTypeManagement, jcr:readAccessControl, jcr:removeChildNodes, jcr:removeNode, jcr:retentionManagement, jcr:versionManagement, jcr:workspaceManagement, jcr:write, rep:privilegeManagement`). References: [Oak Privileges](http://jackrabbit.apache.org/oak/docs/security/privilege.html) [JCR Privileges](http://www.day.com/specs/jcr/2.0/16_Access_Control_Management.html#16.2.3%20Standard%20Privileges) | either actions or privileges need to be present; also a mix of both is possible
 repGlob |A [repGlob expression](https://jackrabbit.apache.org/api/2.8/org/apache/jackrabbit/core/security/authorization/GlobPattern.html) like "/jcr:*". Please note that repGlobs do not play well together with actions. Use privileges instead (e.g. "jcr:read" instead of read action). See [issue #48](https://github.com/Netcentric/accesscontroltool/issues/48). If the globbing expression starts with an asterisk, it has to be put between quotes. Using `repGlob` is a shortcut for `rep:glob` in sub element `restrictions` | no
 restrictions|An associative array of restriction entries. Each entry uses the restriction name as key (e.g. `rep:glob`) and a literal as value. Values for multi-valued restrictions (like e.g. `rep:ntNames`) are also given as YAML string literals with commas separating each value (not using YAML arrays, in line with how isMemberOf is configured). Arbitrary restrictions are supported as long as they are supported by the underlying repository on which the installation takes place (validated before installation starts). For an overview of supported restrictions in different Oak versions see: [Oak Restriction Management](http://jackrabbit.apache.org/oak/docs/security/authorization/restriction.html). Available from version 1.9.0.| no
-initialContent | Allows to specify docview xml to create the path if it does not exist. The namespaces for jcr, sling and cq are added automatically if not provided to keep xml short. Initial content must only be specified exactly once per path (this is validated). If paths without permissions should be created, it is possible to provide only a path/initialContent tuple. Available form version 1.7.0. | no
+initialContent | Allows to specify [enhanced docview xml](https://jackrabbit.apache.org/filevault/apidocs/org/apache/jackrabbit/vault/util/DocViewProperty.html) to create the path if it does not exist. The namespaces for jcr, sling and cq are added automatically if not provided to keep xml short. Initial content must only be specified exactly once per path (this is validated). If paths without permissions should be created, it is possible to provide only a path/initialContent tuple. (since version v1.7.0, enhanced docview since v1.9.1) | no
 
 Every new data entry starts with a "-".
 The rules are sorted so that deny rules are always on top of allow rules. ACEs that are not part of the config file will not be reordered and stay on very top. This way allow rules are evaluated first, then deny rules and finally any system rules. 
