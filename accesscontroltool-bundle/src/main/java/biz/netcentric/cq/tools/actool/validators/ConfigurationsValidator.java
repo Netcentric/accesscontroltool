@@ -8,7 +8,6 @@
  */
 package biz.netcentric.cq.tools.actool.validators;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,26 +32,6 @@ public interface ConfigurationsValidator {
     public abstract void validateDuplicateAuthorizables(Set<String> authorizablesFromAllConfig,
             Set<String> authorizablesFromCurrentConfig, String configPath)
             throws IllegalArgumentException;
-
-    /**
-     * Method that checks if both configuration sections (group and ACE) have
-     * content
-     * 
-     * @param configPath
-     *            repository path of current config
-     * @param configurations
-     *            list holding the group and ACE configuration as LinkedHashMap
-     *            (as returned by YAML parser)
-     */
-    public abstract void validateSectionContentExistence(String configPath,
-            Collection<?> configurations) throws IllegalArgumentException;
-
-    /**
-     * Method that checks if mandatory configuration section identifiers (group
-     * and ACE) exist in the current configuration file
-     */
-    public abstract void validateMandatorySectionIdentifiersExistence(
-            String configuration, String filePath);
 
     /**
      * Method that checks if only valid configuration section identifiers (group
