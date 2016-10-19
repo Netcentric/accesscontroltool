@@ -42,6 +42,8 @@ public class AceBean implements AcDumpElement {
     private String assertedExceptionString;
     private List<Restriction> restrictions = new ArrayList<Restriction>();
 
+    private boolean keepOrder = false; // default is to reorder denies before allows
+
     private String initialContent;
 
     public static final String RESTRICTION_NAME_GLOB = "rep:glob";
@@ -189,6 +191,14 @@ public class AceBean implements AcDumpElement {
 
     public void setInitialContent(String initialContent) {
         this.initialContent = initialContent;
+    }
+
+    public boolean isKeepOrder() {
+        return keepOrder;
+    }
+
+    public void setKeepOrder(boolean keepOrder) {
+        this.keepOrder = keepOrder;
     }
 
     @Override

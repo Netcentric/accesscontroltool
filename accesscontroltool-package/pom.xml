@@ -32,7 +32,7 @@
             <artifactId>accesscontroltool-bundle</artifactId>
             <version>${project.version}</version>
             <type>bundle</type>
-        </dependency>
+        </dependency>      
     </dependencies>
     <build>
         <resources>

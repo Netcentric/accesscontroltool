@@ -44,6 +44,7 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
 @Component(label = "AC Yaml Config Reader", description = "Service that installs groups & ACEs according to textual configuration files")
 public class YamlConfigReader implements ConfigReader {
 
+
     private static final Logger LOG = LoggerFactory.getLogger(YamlConfigReader.class);
 
     private static final String ACE_CONFIG_PROPERTY_GLOB = "repGlob";
@@ -53,6 +54,7 @@ public class YamlConfigReader implements ConfigReader {
     private static final String ACE_CONFIG_PROPERTY_PRIVILEGES = "privileges";
     private static final String ACE_CONFIG_PROPERTY_ACTIONS = "actions";
     private static final String ACE_CONFIG_PROPERTY_PATH = "path";
+    private static final String ACE_CONFIG_PROPERTY_KEEP_ORDER = "keepOrder";
     private static final String ACE_CONFIG_INITIAL_CONTENT = "initialContent";
 
     private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF = "isMemberOf";
@@ -307,6 +309,9 @@ public class YamlConfigReader implements ConfigReader {
                 currentAceDefinition, ASSERTED_EXCEPTION));
         tmpAclBean.setActions(parseActionsString(getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_PROPERTY_ACTIONS)));
+
+        tmpAclBean.setKeepOrder(Boolean.valueOf(getMapValueAsString(currentAceDefinition,
+                ACE_CONFIG_PROPERTY_KEEP_ORDER)));
 
         String initialContent = getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_INITIAL_CONTENT);

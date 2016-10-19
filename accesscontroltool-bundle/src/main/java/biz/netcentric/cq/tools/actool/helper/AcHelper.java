@@ -38,6 +38,7 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
@@ -199,8 +200,7 @@ public class AcHelper {
                     if (sorting == AcHelper.ACE_ORDER_NONE) {
                         aceSet = new LinkedHashSet<AceBean>();
                     } else if (sorting == AcHelper.ACE_ORDER_DENY_ALLOW) {
-                        aceSet = new TreeSet<AceBean>(
-                                new biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator());
+                        aceSet = new TreeSet<AceBean>(new AcePermissionComparator());
                     }
 
                     aceSet.add(bean);

@@ -8,6 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.helper;
 
+import static biz.netcentric.cq.tools.actool.helper.AcHelper.ACE_ORDER_NONE;
 import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
@@ -136,7 +137,7 @@ public class AcHelperTest {
         pathBasedAceMap.get("/content/isp").add(aceBeanGroupB_3);
 
         assertEquals(pathBasedAceMap,
-                AcHelper.getPathBasedAceMap(groupBasedAceMap, 2)); // 1:
+                AcHelper.getPathBasedAceMap(groupBasedAceMap, ACE_ORDER_NONE)); // 1:
                                                                    // TreeSet,
                                                                    // 2: HashSet
 
