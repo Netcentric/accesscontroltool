@@ -62,6 +62,7 @@ public class AuthorizableCreatorServiceImpl implements
 
     private static final String PATH_HOME_GROUPS = "/home/groups";
     private static final String PATH_HOME_USERS = "/home/users";
+    private static final String PATH_SEGMENT_SYSTEMUSERS = "system";
 
     private static final String PRINCIPAL_EVERYONE = "everyone";
 
@@ -244,9 +245,11 @@ public class AuthorizableCreatorServiceImpl implements
                 .substring(0, existingAuthorizable.getPath().lastIndexOf("/"));
         // Relative paths need to be prefixed with /home/groups (issue #10)
         String authorizablePathFromBean = principalConfigBean.getPath();
-        if (authorizablePathFromBean.charAt(0) != '/') {
-            authorizablePathFromBean = (principalConfigBean.isGroup() ? PATH_HOME_GROUPS : PATH_HOME_USERS) + "/"
-                    + authorizablePathFromBean;
+        if (StringUtils.isNotEmpty(authorizablePathFromBean) && authorizablePathFromBean.charAt(0) != '/') {
+            authorizablePathFromBean = (principalConfigBean.isGroup() ? PATH_HOME_GROUPS : PATH_HOME_USERS)
+                    + (principalConfigBean.isSystemUser() && !authorizablePathFromBean.startsWith(PATH_SEGMENT_SYSTEMUSERS)
+                            ? "/" + PATH_SEGMENT_SYSTEMUSERS : "")
+                    + "/" + authorizablePathFromBean;
         }
         if (!StringUtils.equals(intermediatedPathOfExistingAuthorizable, authorizablePathFromBean)) {
             StringBuilder message = new StringBuilder();
