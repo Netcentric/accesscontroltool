@@ -1,0 +1,4 @@
+- obsolete_authorizables:
+    - group-to-delete-1
+    - group-to-delete-2
+    - group-to-delete-3

@@ -31,6 +31,7 @@ import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlManager;
+import org.apache.jackrabbit.api.security.user.UserManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -257,6 +258,13 @@ public class AccessControlUtils {
         }
     }
 
+    /** Retrieves JackrabbitAccessControlList for path.
+     * 
+     * @param acMgr
+     * @param path
+     * @return
+     * @throws RepositoryException
+     * @throws AccessDeniedException */
     public static JackrabbitAccessControlList getModifiableAcl(
             AccessControlManager acMgr, String path)
                     throws RepositoryException, AccessDeniedException {
@@ -286,5 +294,33 @@ public class AccessControlUtils {
         return null;
     }
 
+    /** Returns user manager for session disabling autoSave if applicable.
+     * 
+     * @param session
+     * @return
+     * @throws AccessDeniedException
+     * @throws UnsupportedRepositoryOperationException
+     * @throws RepositoryException */
+    public static UserManager getUserManagerAutoSaveDisabled(Session session)
+            throws AccessDeniedException, UnsupportedRepositoryOperationException, RepositoryException {
 
+        JackrabbitSession js = (JackrabbitSession) session;
+        UserManager userManager = js.getUserManager();
+        // Since the persistence of the installation should only take place if
+        // no error occured and certain test were successful
+        // the autosave gets disabled. Therefore an explicit session.save() is
+        // necessary to persist the changes.
+
+        // Try do disable the autosave only in case if changes are automatically persisted
+        if (userManager.isAutoSave()) {
+            try {
+                userManager.autoSave(false);
+            } catch (UnsupportedRepositoryOperationException e) {
+                // check added for AEM 6.0
+                LOG.warn("disabling autoSave not possible with this user manager!");
+            }
+        }
+
+        return userManager;
+    }
 }

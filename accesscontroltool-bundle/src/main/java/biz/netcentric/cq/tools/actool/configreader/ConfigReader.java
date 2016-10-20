@@ -40,5 +40,6 @@ public interface ConfigReader {
 
     public GlobalConfiguration getGlobalConfiguration(final Collection yamlList);
 
+    public Set<String> getObsoluteAuthorizables(Collection yamlList);
 
 }
