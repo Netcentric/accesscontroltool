@@ -271,18 +271,13 @@ public class YamlConfigReader implements ConfigReader {
         for (final Node node : result) {
             // ignore rep:policy nodes
             if (!node.getPath().contains("/rep:policy")) {
-                final AceBean replacementBean = new AceBean();
+                final AceBean replacementBean = tmpAclBean.clone();
                 replacementBean.setJcrPath(node.getPath());
-                replacementBean.setActions(tmpAclBean.getActions());
-                replacementBean.setPermission(tmpAclBean.getPermission());
-                replacementBean.setPrincipal(tmpAclBean.getPrincipalName());
-                replacementBean.setPrivilegesString(tmpAclBean
-                        .getPrivilegesString());
 
                 if (!aceMap.get(principal).add(replacementBean)) {
                     LOG.warn("wildcard replacement: replacing bean: "
                             + tmpAclBean + ", with bean " + replacementBean
-                            + " failed!");
+                            + " failed as the new bean already exists in ACE list");
                 } else {
                     LOG.info("wildcard replacement: replaced bean: "
                             + tmpAclBean + ", with bean " + replacementBean);

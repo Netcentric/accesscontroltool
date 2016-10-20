@@ -48,6 +48,24 @@ public class AceBean implements AcDumpElement {
 
     public static final String RESTRICTION_NAME_GLOB = "rep:glob";
 
+    public AceBean clone() {
+
+        AceBean clone = new AceBean();
+        clone.setJcrPath(jcrPath);
+        clone.setActionsStringFromConfig(actionsStringFromConfig);
+        clone.setPrivilegesString(privilegesString);
+        clone.setPrincipal(principal);
+        clone.setPermission(permission);
+        clone.setActions(actions);
+        clone.setAssertedExceptionString(assertedExceptionString);
+        clone.setRestrictions(restrictions);
+        clone.setInitialContent(initialContent);
+        clone.setKeepOrder(keepOrder);
+
+        return clone;
+
+    }
+
     public String getAssertedExceptionString() {
         return assertedExceptionString;
     }
