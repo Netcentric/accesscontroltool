@@ -150,15 +150,16 @@ An exception to this might be dynamic groups created and maintained by authors o
       allowExternalGroupNamesRegEx: external.* # the AC Tool groups can inherit from other external.* groups
 ```
 
-## Automatically purge obsolete groups
-The root element `obsolete_authorizables` can be used to automatically purge authorizables, that are not in use anymore:
+## Automatically purge obsolete groups and users (since 1.9.1)
+The root element `obsolete_authorizables` can be used to automatically purge authorizables that are not in use anymore:
 
 ```
 - obsolete_authorizables:
-      - groupToDelete1
-      - groupToDelete2
-      - groupToDelete3
-      - groupToDelete4 
+      - group-to-delete-1
+      - group-to-delete-2
+      - group-to-delete-3
+      - user-to-delete-1 
+      - user-to-delete-2 
 ```
 
 The `FOR` and `IF` syntax can be used within `obsolete_authorizables`.
