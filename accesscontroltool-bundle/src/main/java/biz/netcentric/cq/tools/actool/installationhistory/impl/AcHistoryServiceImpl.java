@@ -160,7 +160,9 @@ public class AcHistoryServiceImpl implements AcHistoryService {
             for (String fullConfigFilePath : configFileContentsByName.keySet()) {
                 File targetPathFile = new File(
                         INSTALLED_CONFIGS_NODE_NAME + "/" + StringUtils.substringAfter(fullConfigFilePath, commonPrefix));
-                Node configFolder = JcrUtils.getOrCreateByPath(historyNode, targetPathFile.getParentFile().getPath(), false,
+                File targetPathParentDir = targetPathFile.getParentFile();
+                Node configFolder = JcrUtils.getOrCreateByPath(historyNode,
+                        targetPathParentDir != null ? targetPathParentDir.getPath() : targetPathFile.getPath(), false,
                         JcrConstants.NT_FOLDER, JcrConstants.NT_FOLDER, false);
                 ByteArrayInputStream configFileInputStream = new ByteArrayInputStream( configFileContentsByName.get(fullConfigFilePath).getBytes() );
                 JcrUtils.putFile(configFolder, targetPathFile.getName(), "text/yaml", configFileInputStream);

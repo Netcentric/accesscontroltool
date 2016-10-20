@@ -25,6 +25,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
+import biz.netcentric.cq.tools.actool.validators.impl.ObsoleteAuthorizablesValidatorImpl;
 
 /** Tests the YamlConfigurationMerger
  * 
@@ -37,6 +38,7 @@ public class YamlConfigurationMergerTest {
     public void setup() {
         merger = new YamlConfigurationMerger();
         merger.yamlMacroProcessor = new YamlMacroProcessorImpl();
+        merger.obsoleteAuthorizablesValidator = new ObsoleteAuthorizablesValidatorImpl();
     }
 
     @Test

@@ -130,6 +130,27 @@ public class YamlConfigReader implements ConfigReader {
         return globalConfiguration;
     }
 
+    @Override
+    public Set<String> getObsoluteAuthorizables(final Collection yamlList) {
+
+        List obsoleteAuthorizablesList = (List) getConfigSection(Constants.OBSOLETE_AUTHORIZABLES_KEY, yamlList);
+
+        Set<String> obsoleteAuthorizables = new HashSet<String>();
+        if (obsoleteAuthorizablesList != null) {
+            for (Object obsoleteAuthorizable : obsoleteAuthorizablesList) {
+                if (obsoleteAuthorizable instanceof String) {
+                    obsoleteAuthorizables.add((String) obsoleteAuthorizable);
+                } else if (obsoleteAuthorizable instanceof Map) {
+                    // besides plain string also allow map
+                    // (that way it is possible to copy sections one-to-one from group_config to obsolete_authorizables)
+                    Map map = (Map) obsoleteAuthorizable;
+                    obsoleteAuthorizables.add((String) map.keySet().iterator().next());
+                }
+            }
+        }
+        return obsoleteAuthorizables;
+    }
+
     private Object getConfigSection(final String sectionName, final Collection yamlList) {
         final List<LinkedHashMap<?, ?>> yamList = new ArrayList<LinkedHashMap<?, ?>>(yamlList);
         for (final LinkedHashMap<?, ?> currMap : yamList) {

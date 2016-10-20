@@ -8,9 +8,6 @@
  */
 package biz.netcentric.cq.tools.actool.validators;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -51,40 +48,6 @@ public class YamlConfigurationsValidator implements ConfigurationsValidator {
             }
             throw new IllegalArgumentException(errorMessage);
         }
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator# validateSectionContentExistence(java.lang.String,
-     * java.util.Collection)
-     */
-    @Override
-    public void validateSectionContentExistence(final String configPath,
-            final Collection configurations) throws IllegalArgumentException {
-        new ArrayList<LinkedHashMap>(
-                configurations);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator#
-     * validateMandatorySectionIdentifiersExistence(java.lang.String, java.lang.String)
-     */
-    @Override
-    public void validateMandatorySectionIdentifiersExistence(
-            final String configuration, final String filePath) {
-        // check if mandatory section identifiers are there
-        // It is now possible to have separate configs for ACEs and groups, so this validation is not needed anymore
-
-        /*
-         * if (!configuration.contains(Constants.GROUP_CONFIGURATION_KEY) && !configuration.contains(Constants.USER_CONFIGURATION_KEY)) {
-         * throw new IllegalArgumentException( Constants.GROUP_CONFIGURATION_KEY + " section identifier ('" +
-         * Constants.GROUP_CONFIGURATION_KEY + "') missing in configuration file: " + filePath); } if
-         * (!configuration.contains(Constants.ACE_CONFIGURATION_KEY)) { throw new IllegalArgumentException(Constants.ACE_CONFIGURATION_KEY +
-         * "section identifier ('" + Constants.ACE_CONFIGURATION_KEY + "') missing in configuration file: " + filePath); }
-         */
     }
 
     /*
