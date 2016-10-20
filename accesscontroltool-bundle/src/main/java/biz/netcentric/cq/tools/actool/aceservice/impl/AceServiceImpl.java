@@ -364,10 +364,11 @@ public class AceServiceImpl implements AceService {
 
             if (configurationFileContentsByFilename != null) {
 
+                history.setConfigFileContentsByName(configurationFileContentsByFilename);
+
                 AcConfiguration acConfiguration = configurationMerger.getMergedConfigurations(configurationFileContentsByFilename, history,
                         configReader);
                 history.setAcConfiguration(acConfiguration);
-                history.setConfigFileContentsByName(configurationFileContentsByFilename);
 
                 installMergedConfigurations(history, session, authorizableInstallationHistorySet, acConfiguration);
 

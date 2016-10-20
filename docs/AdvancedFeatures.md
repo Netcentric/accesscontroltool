@@ -152,6 +152,7 @@ An exception to this might be dynamic groups created and maintained by authors o
 
 ## Automatically purge obsolete groups and users (since 1.9.1)
 The root element `obsolete_authorizables` can be used to automatically purge authorizables that are not in use anymore:
+>>>>>>> refs/heads/develop
 
 ```
 - obsolete_authorizables:
@@ -163,3 +164,8 @@ The root element `obsolete_authorizables` can be used to automatically purge aut
 ```
 
 The `FOR` and `IF` syntax can be used within `obsolete_authorizables`.
+
+## Health Check (since 1.9.1)
+
+The AC Tool comes with a Sling Health Check to returns WARN if the last run of the AC Tool was not successful. The health check can be triggered via `/system/console/healthcheck?tags=actool`. Additional tags can be configured using PID `biz.netcentric.cq.tools.actool.healthcheck.LastRunSuccessHealthCheck` and property `hc.tags`. Also see [Sling Health Check Tools Documentation](https://sling.apache.org/documentation/bundles/sling-health-check-tool.html).
+
