@@ -193,10 +193,19 @@ public class AceServiceImpl implements AceService {
         Map<String, Set<AceBean>> pathBasedAceMapFromConfig = AcHelper
                 .getPathBasedAceMap(aceMapFromConfig, AcHelper.ACE_ORDER_DENY_ALLOW);
 
-        String msg = "*** Starting installation of "+aceMapFromConfig.size()+" ACLs in content nodes...";
+        String msg = "*** Starting installation of " + collectAceCount(aceMapFromConfig) + " ACLs for " + aceMapFromConfig.size()
+                + " authorizables in content nodes...";
         LOG.info(msg);
         history.addMessage(msg);
         aceBeanInstaller.installPathBasedACEs(pathBasedAceMapFromConfig, session, history);
+    }
+
+    private int collectAceCount(Map<String, Set<AceBean>> aceMapFromConfig) {
+        int count = 0;
+        for (Set<AceBean> acesForGroup : aceMapFromConfig.values()) {
+            count += acesForGroup.size();
+        }
+        return count;
     }
 
     private void installAuthorizables(
