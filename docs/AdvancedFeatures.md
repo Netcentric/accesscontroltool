@@ -152,7 +152,6 @@ An exception to this might be dynamic groups created and maintained by authors o
 
 ## Automatically purge obsolete groups and users (since 1.9.1)
 The root element `obsolete_authorizables` can be used to automatically purge authorizables that are not in use anymore:
->>>>>>> refs/heads/develop
 
 ```
 - obsolete_authorizables:
