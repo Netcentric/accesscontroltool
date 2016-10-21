@@ -8,196 +8,261 @@
  */
 package biz.netcentric.cq.tools.actool.helper;
 
+import static biz.netcentric.cq.tools.actool.helper.AcHelper.ACE_ORDER_DENY_ALLOW;
 import static biz.netcentric.cq.tools.actool.helper.AcHelper.ACE_ORDER_NONE;
+import static org.apache.commons.lang.StringUtils.rightPad;
 import static org.junit.Assert.assertEquals;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 
-public class AcHelperTest {
 
-    AceBean aceBeanGroupA_1;
-    AceBean aceBeanGroupA_2;
-    AceBean aceBeanGroupA_3;
-    AceBean aceBeanGroupB_1;
-    AceBean aceBeanGroupB_2;
-    AceBean aceBeanGroupB_3;
-    AceBean aceBeanGroupC_1;
-    AceBean aceBeanGroupD_1;
-    AceBean aceBeanGroupE_1;
+public class AcHelperTest {
+    public static final Logger LOG = LoggerFactory.getLogger(AcHelperTest.class);
+
+
+    AceBean aceBeanGroupA_1_content_deny;
+    AceBean aceBeanGroupA_2_content_allow;
+    AceBean aceBeanGroupA_3_contentisp_deny;
+    AceBean aceBeanGroupB_1_content_allow;
+    AceBean aceBeanGroupB_2_content_deny;
+    AceBean aceBeanGroupB_3_contentisp_allow;
+    AceBean aceBeanGroupC_1_content_allow;
+    AceBean aceBeanGroupC_2_content_deny_keepOrder;
+    AceBean aceBeanGroupC_3_content_deny;
 
     @Before
     public void setup() {
         // ACEs from groups contained in config
 
-        aceBeanGroupA_1 = new AceBean();
-        aceBeanGroupA_1.setPrincipal("group-A");
-        aceBeanGroupA_1.setActions(new String[] { "allow", "replicate" });
-        aceBeanGroupA_1.setPermission("deny");
-        aceBeanGroupA_1.setJcrPath("/content");
-        aceBeanGroupA_1.setPrivilegesString("");
+        aceBeanGroupA_1_content_deny = new AceBean();
+        aceBeanGroupA_1_content_deny.setPrincipal("group-A");
+        aceBeanGroupA_1_content_deny.setActions(new String[] { "read", "replicate" });
+        aceBeanGroupA_1_content_deny.setPermission("deny");
+        aceBeanGroupA_1_content_deny.setJcrPath("/content");
+        aceBeanGroupA_1_content_deny.setPrivilegesString("");
 
-        aceBeanGroupA_2 = new AceBean();
-        aceBeanGroupA_2.setPrincipal("group-A");
-        aceBeanGroupA_2.setActions(new String[] { "allow,modify" });
-        aceBeanGroupA_2.setPermission("allow");
-        aceBeanGroupA_2.setJcrPath("/content");
-        aceBeanGroupA_2.setPrivilegesString("");
+        aceBeanGroupA_2_content_allow = new AceBean();
+        aceBeanGroupA_2_content_allow.setPrincipal("group-A");
+        aceBeanGroupA_2_content_allow.setActions(new String[] { "read,modify" });
+        aceBeanGroupA_2_content_allow.setPermission("allow");
+        aceBeanGroupA_2_content_allow.setJcrPath("/content");
+        aceBeanGroupA_2_content_allow.setPrivilegesString("");
 
-        aceBeanGroupA_3 = new AceBean();
-        aceBeanGroupA_3.setPrincipal("group-A");
-        aceBeanGroupA_3.setActions(new String[] { "allow,modify" });
-        aceBeanGroupA_3.setPermission("deny");
-        aceBeanGroupA_3.setJcrPath("/content/isp");
-        aceBeanGroupA_3.setPrivilegesString("");
+        aceBeanGroupA_3_contentisp_deny = new AceBean();
+        aceBeanGroupA_3_contentisp_deny.setPrincipal("group-A");
+        aceBeanGroupA_3_contentisp_deny.setActions(new String[] { "read,modify" });
+        aceBeanGroupA_3_contentisp_deny.setPermission("deny");
+        aceBeanGroupA_3_contentisp_deny.setJcrPath("/content/isp");
+        aceBeanGroupA_3_contentisp_deny.setPrivilegesString("");
 
-        aceBeanGroupB_1 = new AceBean();
-        aceBeanGroupB_1.setPrincipal("group-B");
-        aceBeanGroupB_1.setActions(new String[] { "allow" });
-        aceBeanGroupB_1.setPermission("allow");
-        aceBeanGroupB_1.setJcrPath("/content");
-        aceBeanGroupB_1.setPrivilegesString("");
+        aceBeanGroupB_1_content_allow = new AceBean();
+        aceBeanGroupB_1_content_allow.setPrincipal("group-B");
+        aceBeanGroupB_1_content_allow.setActions(new String[] { "read" });
+        aceBeanGroupB_1_content_allow.setPermission("allow");
+        aceBeanGroupB_1_content_allow.setJcrPath("/content");
+        aceBeanGroupB_1_content_allow.setPrivilegesString("");
 
-        aceBeanGroupB_2 = new AceBean();
-        aceBeanGroupB_2.setPrincipal("group-B");
-        aceBeanGroupB_2.setActions(new String[] { "allow,delete" });
-        aceBeanGroupB_2.setPermission("deny");
-        aceBeanGroupB_2.setJcrPath("/content");
-        aceBeanGroupB_2.setPrivilegesString("");
+        aceBeanGroupB_2_content_deny = new AceBean();
+        aceBeanGroupB_2_content_deny.setPrincipal("group-B");
+        aceBeanGroupB_2_content_deny.setActions(new String[] { "read,delete" });
+        aceBeanGroupB_2_content_deny.setPermission("deny");
+        aceBeanGroupB_2_content_deny.setJcrPath("/content");
+        aceBeanGroupB_2_content_deny.setPrivilegesString("");
 
-        aceBeanGroupB_3 = new AceBean();
-        aceBeanGroupB_3.setPrincipal("group-B");
-        aceBeanGroupB_3.setActions(new String[] { "allow,delete" });
-        aceBeanGroupB_3.setPermission("allow");
-        aceBeanGroupB_3.setJcrPath("/content/isp");
-        aceBeanGroupB_3.setPrivilegesString("");
+        aceBeanGroupB_3_contentisp_allow = new AceBean();
+        aceBeanGroupB_3_contentisp_allow.setPrincipal("group-B");
+        aceBeanGroupB_3_contentisp_allow.setActions(new String[] { "read,delete" });
+        aceBeanGroupB_3_contentisp_allow.setPermission("allow");
+        aceBeanGroupB_3_contentisp_allow.setJcrPath("/content/isp");
+        aceBeanGroupB_3_contentisp_allow.setPrivilegesString("");
 
-        aceBeanGroupC_1 = new AceBean();
-        aceBeanGroupC_1.setPrincipal("group-C");
-        aceBeanGroupC_1.setActions(new String[] { "allow" });
-        aceBeanGroupC_1.setPermission("allow");
-        aceBeanGroupC_1.setJcrPath("/content");
-        aceBeanGroupC_1.setPrivilegesString("");
+        aceBeanGroupC_1_content_allow = new AceBean();
+        aceBeanGroupC_1_content_allow.setPrincipal("group-C");
+        aceBeanGroupC_1_content_allow.setActions(new String[] { "read" });
+        aceBeanGroupC_1_content_allow.setPermission("allow");
+        aceBeanGroupC_1_content_allow.setJcrPath("/content");
+        aceBeanGroupC_1_content_allow.setPrivilegesString("");
 
-        // ACEs from Groups not contained in config
+        aceBeanGroupC_2_content_deny_keepOrder = new AceBean();
+        aceBeanGroupC_2_content_deny_keepOrder.setPrincipal("group-C");
+        aceBeanGroupC_2_content_deny_keepOrder.setActions(new String[] { "read" });
+        aceBeanGroupC_2_content_deny_keepOrder.setPermission("deny");
+        aceBeanGroupC_2_content_deny_keepOrder.setJcrPath("/content");
+        aceBeanGroupC_2_content_deny_keepOrder.setPrivilegesString("");
+        aceBeanGroupC_2_content_deny_keepOrder.setKeepOrder(true);
 
-        aceBeanGroupD_1 = new AceBean();
-        aceBeanGroupD_1.setPrincipal("group-D");
-        aceBeanGroupD_1.setActions(new String[] { "allow" });
-        aceBeanGroupD_1.setPermission("allow");
-        aceBeanGroupD_1.setJcrPath("/content");
-        aceBeanGroupD_1.setPrivilegesString("");
+        aceBeanGroupC_3_content_deny = new AceBean();
+        aceBeanGroupC_3_content_deny.setPrincipal("group-C");
+        aceBeanGroupC_3_content_deny.setActions(new String[] { "modify" });
+        aceBeanGroupC_3_content_deny.setPermission("deny");
+        aceBeanGroupC_3_content_deny.setJcrPath("/content");
+        aceBeanGroupC_3_content_deny.setPrivilegesString("");
+        aceBeanGroupC_3_content_deny.setKeepOrder(false);
 
-        aceBeanGroupE_1 = new AceBean();
-        aceBeanGroupE_1.setPrincipal("group-E");
-        aceBeanGroupE_1.setActions(new String[] { "allow" });
-        aceBeanGroupE_1.setPermission("allow");
-        aceBeanGroupE_1.setJcrPath("/content");
-        aceBeanGroupE_1.setPrivilegesString("");
     }
 
     @Test
-    public void getPathBasedAceMapTest() {
+    public void getPathBasedAceMapUsingNaturalOrderedSetTest() {
 
-        Map<String, Set<AceBean>> groupBasedAceMap = new HashMap<String, Set<AceBean>>();
-        Map<String, Set<AceBean>> pathBasedAceMap = new HashMap<String, Set<AceBean>>();
+        // case 1: natural ordered Set
 
-        // case1: no ordered Set
+        Map<String, Set<AceBean>> groupBasedAceMap = new LinkedHashMap<String, Set<AceBean>>();
+        Map<String, Set<AceBean>> expectedPathBasedAceMap = new LinkedHashMap<String, Set<AceBean>>();
 
         // group based map
+        groupBasedAceMap.put("group-A", new LinkedHashSet<AceBean>());
+        groupBasedAceMap.get("group-A").add(aceBeanGroupA_1_content_deny);
+        groupBasedAceMap.get("group-A").add(aceBeanGroupA_2_content_allow);
+        groupBasedAceMap.get("group-A").add(aceBeanGroupA_3_contentisp_deny);
 
-        groupBasedAceMap.put("group-A", new HashSet<AceBean>());
-        groupBasedAceMap.get("group-A").add(aceBeanGroupA_1);
-        groupBasedAceMap.get("group-A").add(aceBeanGroupA_3);
+        groupBasedAceMap.put("group-B", new LinkedHashSet<AceBean>());
+        groupBasedAceMap.get("group-B").add(aceBeanGroupB_1_content_allow);
+        groupBasedAceMap.get("group-B").add(aceBeanGroupB_2_content_deny);
+        groupBasedAceMap.get("group-B").add(aceBeanGroupB_3_contentisp_allow);
 
-        groupBasedAceMap.put("group-B", new HashSet<AceBean>());
-        groupBasedAceMap.get("group-B").add(aceBeanGroupB_1);
-        groupBasedAceMap.get("group-B").add(aceBeanGroupB_3);
+        groupBasedAceMap.put("group-C", new LinkedHashSet<AceBean>());
+        groupBasedAceMap.get("group-C").add(aceBeanGroupC_1_content_allow);
 
         // expected result map (unordered)
+        expectedPathBasedAceMap.put("/content", new LinkedHashSet<AceBean>());
 
-        pathBasedAceMap.put("/content", new HashSet<AceBean>());
+        expectedPathBasedAceMap.get("/content").add(aceBeanGroupA_1_content_deny);
+        expectedPathBasedAceMap.get("/content").add(aceBeanGroupA_2_content_allow);
+        expectedPathBasedAceMap.get("/content").add(aceBeanGroupB_1_content_allow);
+        expectedPathBasedAceMap.get("/content").add(aceBeanGroupB_2_content_deny);
+        expectedPathBasedAceMap.get("/content").add(aceBeanGroupC_1_content_allow);
 
-        pathBasedAceMap.get("/content").add(aceBeanGroupA_1);
-        pathBasedAceMap.get("/content").add(aceBeanGroupB_1);
+        expectedPathBasedAceMap.put("/content/isp", new LinkedHashSet<AceBean>());
+        expectedPathBasedAceMap.get("/content/isp").add(aceBeanGroupA_3_contentisp_deny);
+        expectedPathBasedAceMap.get("/content/isp").add(aceBeanGroupB_3_contentisp_allow);
 
-        pathBasedAceMap.put("/content/isp", new HashSet<AceBean>());
+        Map<String, Set<AceBean>> actualResult = AcHelper.getPathBasedAceMap(groupBasedAceMap, ACE_ORDER_NONE);
 
-        pathBasedAceMap.get("/content/isp").add(aceBeanGroupA_3);
-        pathBasedAceMap.get("/content/isp").add(aceBeanGroupB_3);
+        assertEqualStructures(expectedPathBasedAceMap, actualResult);
 
-        assertEquals(pathBasedAceMap,
-                AcHelper.getPathBasedAceMap(groupBasedAceMap, ACE_ORDER_NONE)); // 1:
-                                                                   // TreeSet,
-                                                                   // 2: HashSet
+    }
+
+    @Test
+    public void getPathBasedAceMapUsingOrderedSetTest() {
 
         // case 2: ordered Set (deny-ACEs before allow ACEs)
 
-        groupBasedAceMap = new HashMap<String, Set<AceBean>>();
-        pathBasedAceMap = new HashMap<String, Set<AceBean>>();
+        Map<String, Set<AceBean>> groupBasedAceMap = new LinkedHashMap<String, Set<AceBean>>();
+        Map<String, Set<AceBean>> expectedPathBasedAceMap = new LinkedHashMap<String, Set<AceBean>>();
 
         groupBasedAceMap.put("group-A", new LinkedHashSet<AceBean>());
-        groupBasedAceMap.get("group-A").add(aceBeanGroupA_1); // deny, /content
-        groupBasedAceMap.get("group-A").add(aceBeanGroupA_2); // true, /content
-        groupBasedAceMap.get("group-A").add(aceBeanGroupA_3); // deny,
-                                                              // /content/isp
+        groupBasedAceMap.get("group-A").add(aceBeanGroupA_1_content_deny);
+        groupBasedAceMap.get("group-A").add(aceBeanGroupA_2_content_allow);
+        groupBasedAceMap.get("group-A").add(aceBeanGroupA_3_contentisp_deny);
 
         groupBasedAceMap.put("group-B", new LinkedHashSet<AceBean>());
-        groupBasedAceMap.get("group-B").add(aceBeanGroupB_1); // allow, /content
-        groupBasedAceMap.get("group-B").add(aceBeanGroupB_3); // allow,
-                                                              // /content/isp
-        groupBasedAceMap.get("group-B").add(aceBeanGroupB_2); // deny, /content
+        groupBasedAceMap.get("group-B").add(aceBeanGroupB_1_content_allow);
+        groupBasedAceMap.get("group-B").add(aceBeanGroupB_3_contentisp_allow);
+        groupBasedAceMap.get("group-B").add(aceBeanGroupB_2_content_deny);
 
-        pathBasedAceMap.put("/content", new LinkedHashSet<AceBean>());
+        groupBasedAceMap.put("group-C", new LinkedHashSet<AceBean>());
+        groupBasedAceMap.get("group-C").add(aceBeanGroupC_1_content_allow);
 
-        pathBasedAceMap.get("/content").add(aceBeanGroupB_2); // deny, /content
-        pathBasedAceMap.get("/content").add(aceBeanGroupA_1); // deny, /content
-        pathBasedAceMap.get("/content").add(aceBeanGroupB_1); // allow, /content
-        pathBasedAceMap.get("/content").add(aceBeanGroupA_2); // allow, /content
+        expectedPathBasedAceMap.put("/content", new LinkedHashSet<AceBean>());
+        expectedPathBasedAceMap.get("/content").add(aceBeanGroupA_1_content_deny);
+        expectedPathBasedAceMap.get("/content").add(aceBeanGroupB_2_content_deny);
+        expectedPathBasedAceMap.get("/content").add(aceBeanGroupA_2_content_allow);
+        expectedPathBasedAceMap.get("/content").add(aceBeanGroupB_1_content_allow);
+        expectedPathBasedAceMap.get("/content").add(aceBeanGroupC_1_content_allow);
 
-        pathBasedAceMap.put("/content/isp", new LinkedHashSet<AceBean>());
+        expectedPathBasedAceMap.put("/content/isp", new LinkedHashSet<AceBean>());
+        expectedPathBasedAceMap.get("/content/isp").add(aceBeanGroupA_3_contentisp_deny);
+        expectedPathBasedAceMap.get("/content/isp").add(aceBeanGroupB_3_contentisp_allow);
 
-        pathBasedAceMap.get("/content/isp").add(aceBeanGroupA_3); // deny,
-                                                                  // /content/isp
-        pathBasedAceMap.get("/content/isp").add(aceBeanGroupB_3); // allow,
-                                                                  // /content/isp
+        Map<String, Set<AceBean>> actualResult = AcHelper.getPathBasedAceMap(
+                groupBasedAceMap, ACE_ORDER_DENY_ALLOW);
 
-        // Map.equals() compares the sizes of the entry sets, and then does
-        // set1.containsAll(set2) which is insufficient for testing a special
-        // order of the set elements
+        assertEqualStructures(expectedPathBasedAceMap, actualResult);
 
-        Map<String, Set<AceBean>> resultMap = AcHelper.getPathBasedAceMap(
-                groupBasedAceMap, 1);
+    }
 
-        Collection<AceBean> listBeansexpected = new ArrayList<AceBean>();
-        Collection<AceBean> listBeansResult = new ArrayList<AceBean>();
+    @Test
+    public void getPathBasedAceMapUsingOrderedSetWithKeepOrderEntryTest() {
 
-        // loop through each map save the beans in a list and then compare the
-        // single elements
+        // case 3: ordered Set (deny-ACEs before allow ACEs, but one deny with keep order)
 
-        for (Map.Entry<String, Set<AceBean>> aceSet : pathBasedAceMap
-                .entrySet()) {
-            for (AceBean bean : aceSet.getValue()) {
-                listBeansexpected.add(bean);
+        Map<String, Set<AceBean>> groupBasedAceMap = new LinkedHashMap<String, Set<AceBean>>();
+        Map<String, Set<AceBean>> expectedPathBasedAceMap = new LinkedHashMap<String, Set<AceBean>>();
+
+        groupBasedAceMap.put("group-A", new LinkedHashSet<AceBean>());
+        groupBasedAceMap.get("group-A").add(aceBeanGroupA_1_content_deny);
+        groupBasedAceMap.get("group-A").add(aceBeanGroupA_2_content_allow);
+        groupBasedAceMap.get("group-A").add(aceBeanGroupA_3_contentisp_deny);
+
+        groupBasedAceMap.put("group-B", new LinkedHashSet<AceBean>());
+        groupBasedAceMap.get("group-B").add(aceBeanGroupB_1_content_allow);
+        groupBasedAceMap.get("group-B").add(aceBeanGroupB_3_contentisp_allow);
+        groupBasedAceMap.get("group-B").add(aceBeanGroupB_2_content_deny);
+
+        groupBasedAceMap.put("group-C", new LinkedHashSet<AceBean>());
+        groupBasedAceMap.get("group-C").add(aceBeanGroupC_1_content_allow);
+        groupBasedAceMap.get("group-C").add(aceBeanGroupC_2_content_deny_keepOrder);
+        groupBasedAceMap.get("group-C").add(aceBeanGroupC_3_content_deny);
+
+        expectedPathBasedAceMap.put("/content", new LinkedHashSet<AceBean>());
+        expectedPathBasedAceMap.get("/content").add(aceBeanGroupA_1_content_deny);
+        expectedPathBasedAceMap.get("/content").add(aceBeanGroupB_2_content_deny);
+        expectedPathBasedAceMap.get("/content").add(aceBeanGroupC_3_content_deny);
+        expectedPathBasedAceMap.get("/content").add(aceBeanGroupA_2_content_allow);
+        expectedPathBasedAceMap.get("/content").add(aceBeanGroupB_1_content_allow);
+        expectedPathBasedAceMap.get("/content").add(aceBeanGroupC_1_content_allow);
+        // this entry stays at natural position as listed in source file
+        expectedPathBasedAceMap.get("/content").add(aceBeanGroupC_2_content_deny_keepOrder);
+
+        expectedPathBasedAceMap.put("/content/isp", new LinkedHashSet<AceBean>());
+        expectedPathBasedAceMap.get("/content/isp").add(aceBeanGroupA_3_contentisp_deny);
+        expectedPathBasedAceMap.get("/content/isp").add(aceBeanGroupB_3_contentisp_allow);
+
+        Map<String, Set<AceBean>> actualResult = AcHelper.getPathBasedAceMap(
+                groupBasedAceMap, ACE_ORDER_DENY_ALLOW);
+
+        assertEqualStructures(expectedPathBasedAceMap, actualResult);
+
+    }
+
+    private void assertEqualStructures(Map<String, Set<AceBean>> expectedPathBasedAceMap, Map<String, Set<AceBean>> actualResult) {
+        try {
+            assertEquals(
+                    structureToComparableString(expectedPathBasedAceMap),
+                    structureToComparableString(actualResult));
+        } catch (AssertionError e) {
+            // ensure readable log in case of assertion error
+            printStructure("Expected Result", expectedPathBasedAceMap);
+            printStructure("Actual Result", actualResult);
+            throw e;
+        }
+    }
+
+    private void printStructure(String description, Map<String, Set<AceBean>> structure) {
+        LOG.info(description + "\n" + structureToComparableString(structure));
+    }
+
+    private String structureToComparableString(Map<String, Set<AceBean>> structure) {
+        StringBuilder sb = new StringBuilder();
+        for (String key : structure.keySet()) {
+            Set<AceBean> set = structure.get(key);
+            for (AceBean aceBean : set) {
+                sb.append(rightPad(key + ":", 15) + " ( " + rightPad(aceBean.getJcrPath(), 15)
+                        + " " + rightPad(aceBean.getPrincipalName(), 10)
+                        + " " + rightPad(aceBean.getPermission(), 5) +
+                        "  " + Integer.toHexString(aceBean.hashCode()) + ")\n");
             }
         }
-
-        for (Map.Entry<String, Set<AceBean>> aceSet : resultMap.entrySet()) {
-            for (AceBean bean : aceSet.getValue()) {
-                listBeansResult.add(bean);
-            }
-        }
-
-        assertEquals(listBeansexpected, listBeansResult);
+        return sb.toString();
     }
 }
