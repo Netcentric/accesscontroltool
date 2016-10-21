@@ -49,6 +49,7 @@ import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorExcep
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.ContentHelper;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
@@ -62,6 +63,7 @@ public class AuthorizableCreatorServiceImpl implements
 
     private static final String PATH_HOME_GROUPS = "/home/groups";
     private static final String PATH_HOME_USERS = "/home/users";
+    private static final String PATH_SEGMENT_SYSTEMUSERS = "system";
 
     private static final String PRINCIPAL_EVERYONE = "everyone";
 
@@ -117,7 +119,7 @@ public class AuthorizableCreatorServiceImpl implements
         String principalId = authorizableConfigBean.getPrincipalID();
         LOG.debug("- start installation of authorizable: {}", principalId);
 
-        UserManager userManager = getUsermanager(session);
+        UserManager userManager = AccessControlUtils.getUserManagerAutoSaveDisabled(session);
         ValueFactory vf = session.getValueFactory();
 
         // if current authorizable from config doesn't exist yet
@@ -206,28 +208,7 @@ public class AuthorizableCreatorServiceImpl implements
 
     }
 
-    private UserManager getUsermanager(Session session)
-            throws AccessDeniedException,
-            UnsupportedRepositoryOperationException, RepositoryException {
-        JackrabbitSession js = (JackrabbitSession) session;
-        UserManager userManager = js.getUserManager();
-        // Since the persistence of the installation should only take place if
-        // no error occured and certain test were successful
-        // the autosave gets disabled. Therefore an explicit session.save() is
-        // necessary to persist the changes.
 
-        // Try do disable the autosave only in case if changes are automatically persisted
-        if (userManager.isAutoSave()) {
-            try {
-                userManager.autoSave(false);
-            } catch (UnsupportedRepositoryOperationException e) {
-                // check added for AEM 6.0
-                LOG.warn("disabling autoSave not possible with this user manager!");
-            }
-        }
-
-        return userManager;
-    }
 
     private void handleIntermediatePath(final Session session,
             AuthorizableConfigBean principalConfigBean,
@@ -244,9 +225,11 @@ public class AuthorizableCreatorServiceImpl implements
                 .substring(0, existingAuthorizable.getPath().lastIndexOf("/"));
         // Relative paths need to be prefixed with /home/groups (issue #10)
         String authorizablePathFromBean = principalConfigBean.getPath();
-        if (authorizablePathFromBean.charAt(0) != '/') {
-            authorizablePathFromBean = (principalConfigBean.isGroup() ? PATH_HOME_GROUPS : PATH_HOME_USERS) + "/"
-                    + authorizablePathFromBean;
+        if (StringUtils.isNotEmpty(authorizablePathFromBean) && authorizablePathFromBean.charAt(0) != '/') {
+            authorizablePathFromBean = (principalConfigBean.isGroup() ? PATH_HOME_GROUPS : PATH_HOME_USERS)
+                    + (principalConfigBean.isSystemUser() && !authorizablePathFromBean.startsWith(PATH_SEGMENT_SYSTEMUSERS)
+                            ? "/" + PATH_SEGMENT_SYSTEMUSERS : "")
+                    + "/" + authorizablePathFromBean;
         }
         if (!StringUtils.equals(intermediatedPathOfExistingAuthorizable, authorizablePathFromBean)) {
             StringBuilder message = new StringBuilder();

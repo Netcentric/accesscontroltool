@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -254,6 +255,54 @@ public class AceServiceImpl implements AceService {
         LOG.info(message);
     }
 
+    private void removeObsoleteAuthorizables(AcInstallationHistoryPojo history, Session session, Set<String> obsoleteAuthorizables) {
+
+        try {
+            if (obsoleteAuthorizables.isEmpty()) {
+                history.addVerboseMessage("No obsolete authorizables configured");
+                return;
+            }
+            
+            UserManager userManager = AccessControlUtils.getUserManagerAutoSaveDisabled(session);
+
+            Set<String> obsoleteAuthorizablesAlreadyPurged = new HashSet<String>();
+
+            Iterator<String> obsoleteAuthorizablesIt = obsoleteAuthorizables.iterator();
+            while (obsoleteAuthorizablesIt.hasNext()) {
+                String obsoleteAuthorizableId = obsoleteAuthorizablesIt.next();
+                Authorizable obsoleteAuthorizable = userManager.getAuthorizable(obsoleteAuthorizableId);
+                if (obsoleteAuthorizable == null) {
+                    obsoleteAuthorizablesAlreadyPurged.add(obsoleteAuthorizableId);
+                    obsoleteAuthorizablesIt.remove();
+                }
+            }
+
+            if (obsoleteAuthorizables.isEmpty()) {
+                history.addMessage(
+                        "All configured " + obsoleteAuthorizablesAlreadyPurged.size()
+                                + " obsolete authorizables have already been purged.");
+                return;
+            }
+
+            String msg = "*** Purging " + obsoleteAuthorizables.size() + " obsolete authorizables...  ";
+            LOG.info(msg);
+            history.addMessage(msg);
+            if (!obsoleteAuthorizablesAlreadyPurged.isEmpty()) {
+                history.addMessage("(" + obsoleteAuthorizablesAlreadyPurged.size() + " have been purged already)");
+            }
+
+            String purgeAuthorizablesResultMsg = purgeAuthorizables(obsoleteAuthorizables, session);
+            LOG.info(purgeAuthorizablesResultMsg);
+            history.addVerboseMessage(purgeAuthorizablesResultMsg); // this message is too long for regular log
+            history.addMessage("Successfully purged " + obsoleteAuthorizables);
+        } catch (Exception e) {
+            String excMsg = "Could not purge obsolete authorizables " + obsoleteAuthorizables + ": " + e;
+            history.addError(excMsg);
+            LOG.error(excMsg, e);
+        }
+
+    }
+
     /** Executes the installation of the existing configurations - entry point for JMX execute() method. */
     @Override
     public AcInstallationHistoryPojo execute() {
@@ -323,10 +372,11 @@ public class AceServiceImpl implements AceService {
 
             if (configurationFileContentsByFilename != null) {
 
+                history.setConfigFileContentsByName(configurationFileContentsByFilename);
+
                 AcConfiguration acConfiguration = configurationMerger.getMergedConfigurations(configurationFileContentsByFilename, history,
                         configReader);
                 history.setAcConfiguration(acConfiguration);
-                history.setConfigFileContentsByName(configurationFileContentsByFilename);
 
                 installMergedConfigurations(history, session, authorizableInstallationHistorySet, acConfiguration);
 
@@ -336,6 +386,10 @@ public class AceServiceImpl implements AceService {
                         "Finished (transient) installation of access control configuration without errors, saving now...");
                 session.save();
                 history.addMessage("Persisted changes of ACLs");
+
+                // this runs as "own transaction" after session.save() of ACLs
+                removeObsoleteAuthorizables(history, session, acConfiguration.getObsoleteAuthorizables());
+
             }
             sw.stop();
             long executionTime = sw.getTime();
@@ -516,20 +570,8 @@ public class AceServiceImpl implements AceService {
         StringBuilder message = new StringBuilder();
         String message2 = "";
         try {
-            JackrabbitSession js = (JackrabbitSession) session;
-            UserManager userManager = js.getUserManager();
-
-            // Try do disable the autosave only in case if changes are automatically persisted
-            if (userManager.isAutoSave()) {
-                try {
-                    userManager.autoSave(false);
-                } catch (final UnsupportedRepositoryOperationException e) {
-                    // check added for AEM 6.0
-                    LOG.warn("disabling autoSave not possible with this user manager!");
-                }
-            }
-
-            PrincipalManager principalManager = js.getPrincipalManager();
+            UserManager userManager = AccessControlUtils.getUserManagerAutoSaveDisabled(session);
+            PrincipalManager principalManager = ((JackrabbitSession) session).getPrincipalManager();
 
             for (String authorizableId : authorizableIds) {
                 message.append(deleteAuthorizableFromHome(authorizableId,

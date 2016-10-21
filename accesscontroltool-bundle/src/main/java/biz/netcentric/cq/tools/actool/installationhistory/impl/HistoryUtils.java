@@ -9,6 +9,7 @@
 package biz.netcentric.cq.tools.actool.installationhistory.impl;
 
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -38,11 +39,12 @@ public class HistoryUtils {
     public static final String ACHISTORY_ROOT_NODE = "achistory";
     public static final String STATISTICS_ROOT_NODE = "var/statistics";
 
-    private static final String PROPERTY_TIMESTAMP = "timestamp";
+    public static final String PROPERTY_TIMESTAMP = "timestamp";
     private static final String PROPERTY_MESSAGES = "messages";
     private static final String PROPERTY_EXECUTION_TIME = "executionTime";
-    private static final String PROPERTY_SUCCESS = "success";
+    public static final String PROPERTY_SUCCESS = "success";
     private static final String PROPERTY_INSTALLATION_DATE = "installationDate";
+    public static final String PROPERTY_INSTALLED_FROM = "installedFrom";
 
 
     public static Node getAcHistoryRootNode(final Session session)
@@ -123,6 +125,15 @@ public class HistoryUtils {
                 .getInstallationDate().getTime());
         historyNode.setProperty(PROPERTY_SLING_RESOURCE_TYPE,
                 "/apps/netcentric/actool/components/historyRenderer");
+
+        Map<String, String> configFileContentsByName = history.getConfigFileContentsByName();
+        if (configFileContentsByName != null) {
+            String commonPrefix = StringUtils
+                    .getCommonPrefix(configFileContentsByName.keySet().toArray(new String[configFileContentsByName.size()]));
+            String crxPackageName = history.getCrxPackageName(); // for install hook case
+            historyNode.setProperty(PROPERTY_INSTALLED_FROM, StringUtils.defaultString(crxPackageName) + commonPrefix);
+        }
+
     }
 
     /**
