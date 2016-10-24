@@ -47,9 +47,17 @@ public class AcHelper {
     private AcHelper() {
     }
 
-    public static int ACE_ORDER_ACTOOL_BEST_PRACTICE = 1; // by default denies are sorted up to the top of the list, if "keepOrder" is set
-                                                          // to true, the natural order remains
+    /** By default ACEs with denies are sorted up to the top of the list, this follows the best practice to order denies always before
+     * allows and to use denies sparsely in general.
+     * 
+     * For some special cases (e.g. when working with restrictions that limit a preceding allow) it is possible to specify "keepOrder=true",
+     * for those cases the natural order from the config file is kept when {@link #ACE_ORDER_ACTOOL_BEST_PRACTICE} is used. */
+    public static int ACE_ORDER_ACTOOL_BEST_PRACTICE = 1;
+
+    /** Retains order of ACEs in ACLs. */
     public static int ACE_ORDER_NONE = 2;
+
+    /** Sorts ACEs in ACLs alphabetical. */
     public static int ACE_ORDER_ALPHABETICAL = 3;
 
     public static int PRINCIPAL_BASED_ORDER = 1;
