@@ -48,7 +48,10 @@ public class AcHelper {
     }
 
     /** By default ACEs with denies are sorted up to the top of the list, this follows the best practice to order denies always before
-     * allows and to use denies sparsely in general.
+     * allows - this makes by default allows always take precedence over denies.
+     * 
+     * Denies should be used sparsely: Normally there is exactly one group that includes all deny-ACEs for to-be-secured content and many
+     * groups with allow-ACEs, that selectively allow what has been denied by the "global deny" group.
      * 
      * For some special cases (e.g. when working with restrictions that limit a preceding allow) it is possible to specify "keepOrder=true",
      * for those cases the natural order from the config file is kept when {@link #ACE_ORDER_ACTOOL_BEST_PRACTICE} is used. */
