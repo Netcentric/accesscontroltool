@@ -164,7 +164,7 @@ public class DumpserviceImpl implements Dumpservice {
 
     @Override
     public String getCompletePrincipalBasedDumpsAsString() {
-        String dump = getCompleteDump(AcHelper.PRINCIPAL_BASED_ORDER, AcHelper.ACE_ORDER_DENY_ALLOW);
+        String dump = getCompleteDump(AcHelper.PRINCIPAL_BASED_ORDER, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE);
         persistDump(dump);
         return dump;
     }
@@ -255,7 +255,7 @@ public class DumpserviceImpl implements Dumpservice {
         try {
             session = repository.loginAdministrative(null);
             AceDumpData aceDumpData = createAclDumpMap(session,
-                    keyOrder, AcHelper.ACE_ORDER_DENY_ALLOW, // this ORDER is important to keep the ORDER of denies with "keepOrder"
+                    keyOrder, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE, // this ORDER is important to keep the ORDER of denies with "keepOrder"
                                                              // attribute that is automatically added if needed
                     queryExcludePaths);
             Map<String, Set<AceBean>> aclDumpMap = aceDumpData.getAceDump();
@@ -664,7 +664,7 @@ public class DumpserviceImpl implements Dumpservice {
 
         if (aclOrdering == AcHelper.ACE_ORDER_NONE) {
             aceSet = new LinkedHashSet<AceBean>();
-        } else if (aclOrdering == AcHelper.ACE_ORDER_DENY_ALLOW) {
+        } else if (aclOrdering == AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE) {
             aceSet = new TreeSet<AceBean>(new AcePermissionComparator());
         } else if (aclOrdering == AcHelper.ACE_ORDER_ALPHABETICAL) {
             aceSet = new TreeSet<AceBean>(new AcePathComparator());

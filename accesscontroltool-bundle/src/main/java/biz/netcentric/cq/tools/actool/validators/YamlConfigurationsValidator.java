@@ -86,7 +86,7 @@ public class YamlConfigurationsValidator implements ConfigurationsValidator {
             throws IllegalArgumentException {
 
         Map<String, Set<AceBean>> pathBasedAceMapFromConfig = AcHelper
-                .getPathBasedAceMap(mergedAceMapFromConfig, AcHelper.ACE_ORDER_DENY_ALLOW);
+                .getPathBasedAceMap(mergedAceMapFromConfig, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE);
 
         for (String path : pathBasedAceMapFromConfig.keySet()) {
             Set<AceBean> aceBeanSet = pathBasedAceMapFromConfig.get(path);

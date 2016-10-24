@@ -47,7 +47,8 @@ public class AcHelper {
     private AcHelper() {
     }
 
-    public static int ACE_ORDER_DENY_ALLOW = 1;
+    public static int ACE_ORDER_ACTOOL_BEST_PRACTICE = 1; // by default denies are sorted up to the top of the list, if "keepOrder" is set
+                                                          // to true, the natural order remains
     public static int ACE_ORDER_NONE = 2;
     public static int ACE_ORDER_ALPHABETICAL = 3;
 
@@ -179,7 +180,7 @@ public class AcHelper {
                     Set<AceBean> aceSet = null;
                     if (sorting == AcHelper.ACE_ORDER_NONE) {
                         aceSet = new LinkedHashSet<AceBean>();
-                    } else if (sorting == AcHelper.ACE_ORDER_DENY_ALLOW) {
+                    } else if (sorting == AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE) {
                         aceSet = new TreeSet<AceBean>(new AcePermissionComparator());
                     }
 

@@ -192,7 +192,7 @@ public class AceServiceImpl implements AceService {
             Map<String, Set<AceBean>> aceMapFromConfig) throws Exception {
         // --- installation of ACEs from configuration ---
         Map<String, Set<AceBean>> pathBasedAceMapFromConfig = AcHelper
-                .getPathBasedAceMap(aceMapFromConfig, AcHelper.ACE_ORDER_DENY_ALLOW);
+                .getPathBasedAceMap(aceMapFromConfig, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE);
 
         String msg = "*** Starting installation of " + collectAceCount(aceMapFromConfig) + " ACLs for " + aceMapFromConfig.size()
                 + " authorizables in content nodes...";

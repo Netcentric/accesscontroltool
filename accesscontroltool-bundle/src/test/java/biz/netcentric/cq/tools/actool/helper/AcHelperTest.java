@@ -8,7 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.helper;
 
-import static biz.netcentric.cq.tools.actool.helper.AcHelper.ACE_ORDER_DENY_ALLOW;
+import static biz.netcentric.cq.tools.actool.helper.AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE;
 import static biz.netcentric.cq.tools.actool.helper.AcHelper.ACE_ORDER_NONE;
 import static org.apache.commons.lang.StringUtils.rightPad;
 import static org.junit.Assert.assertEquals;
@@ -185,7 +185,7 @@ public class AcHelperTest {
         expectedPathBasedAceMap.get("/content/isp").add(aceBeanGroupB_3_contentisp_allow);
 
         Map<String, Set<AceBean>> actualResult = AcHelper.getPathBasedAceMap(
-                groupBasedAceMap, ACE_ORDER_DENY_ALLOW);
+                groupBasedAceMap, ACE_ORDER_ACTOOL_BEST_PRACTICE);
 
         assertEqualStructures(expectedPathBasedAceMap, actualResult);
 
@@ -229,7 +229,7 @@ public class AcHelperTest {
         expectedPathBasedAceMap.get("/content/isp").add(aceBeanGroupB_3_contentisp_allow);
 
         Map<String, Set<AceBean>> actualResult = AcHelper.getPathBasedAceMap(
-                groupBasedAceMap, ACE_ORDER_DENY_ALLOW);
+                groupBasedAceMap, ACE_ORDER_ACTOOL_BEST_PRACTICE);
 
         assertEqualStructures(expectedPathBasedAceMap, actualResult);
 

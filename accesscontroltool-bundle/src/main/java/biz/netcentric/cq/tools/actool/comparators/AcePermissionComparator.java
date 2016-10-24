@@ -14,6 +14,10 @@ import org.apache.commons.lang.StringUtils;
 
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 
+/** Implements the AC Tool best practice ordering {@code biz.netcentric.cq.tools.actool.helper.AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE}:
+ * Denies are used as little as possible and ordered to top of ACL list, allows follow underneath. For some special cases (e.g. when working
+ * with restrictions that limit a preceding allow) it is possible to specify "keepOrder=true", for those cases the natural order from the
+ * config file is kept. */
 public class AcePermissionComparator implements Comparator<AceBean> {
 
     @Override
