@@ -8,6 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.validators;
 
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -101,5 +102,33 @@ public class YamlConfigurationsValidator implements ConfigurationsValidator {
                 }
             }
         }
+    }
+
+    @Override
+    public void validateKeepOrder(Map<String, Set<AceBean>> aceMapFromAllConfigs, Map<String, Set<AceBean>> aceMapFromCurrentConfig,
+            String sourceFile) {
+
+        Set<String> pathsWithKeepOrderSet = new LinkedHashSet<String>();
+        for (Set<AceBean> aceBeans : aceMapFromAllConfigs.values()) {
+            for (AceBean aceBean : aceBeans) {
+                if (aceBean.isKeepOrder()) {
+                    pathsWithKeepOrderSet.add(aceBean.getJcrPath());
+                }
+            }
+        }
+
+        if (aceMapFromCurrentConfig != null) {
+            for (Set<AceBean> aceBeans : aceMapFromCurrentConfig.values()) {
+                for (AceBean aceBean : aceBeans) {
+                    if (aceBean.isKeepOrder() && pathsWithKeepOrderSet.contains(aceBean.getJcrPath())) {
+                        throw new IllegalArgumentException(
+                                "If keepOrder=true is used, the ACE definitions for one particular path must only be defined in one source file (ACE for "
+                                        + aceBean.getJcrPath() + " and group " + aceBean.getPrincipalName() + " as defined in " + sourceFile
+                                        + " was defined before) ");
+                    }
+                }
+            }
+        }
+
     }
 }

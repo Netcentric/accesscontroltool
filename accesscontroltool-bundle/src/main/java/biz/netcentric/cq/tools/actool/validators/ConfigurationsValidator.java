@@ -47,4 +47,10 @@ public interface ConfigurationsValidator {
     public abstract void validateInitialContentForNoDuplicates(
             Map<String, Set<AceBean>> mergedAceMapFromConfig) throws IllegalArgumentException;
 
+    /** Checks that keepOrder=true must be specified in one file for one given path (to ensure the natural order for an ACL can not span
+     * multiple files, include order of multiple files may vary) */
+    public abstract void validateKeepOrder(Map<String, Set<AceBean>> aceMapFromAllConfigs,
+            Map<String, Set<AceBean>> aceMapFromCurrentConfig,
+            String sourceFile);
+
 }
