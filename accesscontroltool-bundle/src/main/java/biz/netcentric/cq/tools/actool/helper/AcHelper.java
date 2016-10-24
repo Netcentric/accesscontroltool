@@ -34,14 +34,12 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.UserManager;
-import org.apache.sling.api.SlingHttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
-import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
 
 public class AcHelper {
     public static final Logger LOG = LoggerFactory.getLogger(AcHelper.class);
@@ -77,16 +75,8 @@ public class AcHelper {
         for (final String restrictionName : restrictionNames) {
             final Value[] values = ace.getRestrictions(restrictionName);
             String[] strValues = new String[values.length];
-
-            for (int i = 0; i < values.length; i++) {
-                String value = values[i].getString();
-                if (StringUtils.equals(value, "")) {
-                    strValues[i] = "''";
-                } else if (value != null && value.matches("[A-Za-z0-9,/]+")) {
-                    strValues[i] = value;
-                } else {
-                    strValues[i] = "'" + value + "'";
-                }
+            for (int i = 0; i < strValues.length; i++) {
+                strValues[i] = values[i].getString();
             }
             restrictionsList.add(new Restriction(restrictionName, strValues));
         }
@@ -158,16 +148,6 @@ public class AcHelper {
         LOG.debug("Group '{}' did not have a rep:principalName property", node.getPath());
 
         return null;
-    }
-
-    public static Map<String, Set<AceBean>> createAceMap(
-            final SlingHttpServletRequest request, final int keyOrdering,
-            final int aclOrdering, final String[] excludePaths,
-            Dumpservice dumpservice) throws ValueFormatException,
-                    IllegalStateException, RepositoryException {
-        final Session session = request.getResourceResolver().adaptTo(Session.class);
-        return dumpservice.createAclDumpMap(session, keyOrdering,
-                aclOrdering, excludePaths).getAceDump();
     }
 
     /** changes a group based ACE map into a path based ACE map
