@@ -4,7 +4,7 @@ import java.util.Map;
 
 import javax.jcr.Node;
 
-import com.day.jcr.vault.fs.io.Archive;
+import org.apache.jackrabbit.vault.fs.io.Archive;
 
 /** Retrieves the contents of a AC tool yaml config file from either a package directly (used by install hook) or from the JCR node structure
  * (used by JMX). Both methods return a map with filename-&gt;yaml-config-content entries.

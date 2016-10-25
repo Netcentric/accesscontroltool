@@ -49,7 +49,7 @@ Internal dumps which get created and used everytime an new AC installation takes
 
 ### Purge ACLs/Authorizables
 
-Beside the options to install access control configurations and to create dumps the ACTool also offers different possibilities to purge ACLs/authorizables from the system.
+Beside the options to install access control configurations and to create dumps the AC Tool also offers different possibilities to purge ACLs/authorizables from the system.
 
 Method | Action
 --- | ---

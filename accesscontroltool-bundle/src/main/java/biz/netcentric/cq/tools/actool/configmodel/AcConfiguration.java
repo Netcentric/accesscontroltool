@@ -8,6 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.configmodel;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,6 +23,8 @@ public class AcConfiguration {
 
     // to be changed from map to PojoClass in future versions
     private Map<String, Set<AceBean>> aceMap;
+
+    private Set<String> obsoleteAuthorizables = new HashSet<String>();
 
     public GlobalConfiguration getGlobalConfiguration() {
         return globalConfiguration;
@@ -45,6 +48,14 @@ public class AcConfiguration {
 
     public void setAceConfig(Map<String, Set<AceBean>> aceMap) {
         this.aceMap = aceMap;
+    }
+
+    public Set<String> getObsoleteAuthorizables() {
+        return obsoleteAuthorizables;
+    }
+
+    public void setObsoleteAuthorizables(Set<String> obsoleteAuthorizables) {
+        this.obsoleteAuthorizables = obsoleteAuthorizables;
     }
 
 }

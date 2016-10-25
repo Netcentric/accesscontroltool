@@ -15,7 +15,7 @@
     <parent>
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
         <artifactId>accesscontroltool</artifactId>
-        <version>1.9.0</version>
+        <version>1.9.1</version>
     </parent>
 
     <!-- ====================================================================== -->
@@ -32,7 +32,7 @@
             <artifactId>accesscontroltool-bundle</artifactId>
             <version>${project.version}</version>
             <type>bundle</type>
-        </dependency>
+        </dependency>      
     </dependencies>
     <build>
         <resources>

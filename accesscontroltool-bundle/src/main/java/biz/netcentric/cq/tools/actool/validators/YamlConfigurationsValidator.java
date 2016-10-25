@@ -8,9 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.validators;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -56,40 +54,6 @@ public class YamlConfigurationsValidator implements ConfigurationsValidator {
     /*
      * (non-Javadoc)
      * 
-     * @see biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator# validateSectionContentExistence(java.lang.String,
-     * java.util.Collection)
-     */
-    @Override
-    public void validateSectionContentExistence(final String configPath,
-            final Collection configurations) throws IllegalArgumentException {
-        new ArrayList<LinkedHashMap>(
-                configurations);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator#
-     * validateMandatorySectionIdentifiersExistence(java.lang.String, java.lang.String)
-     */
-    @Override
-    public void validateMandatorySectionIdentifiersExistence(
-            final String configuration, final String filePath) {
-        // check if mandatory section identifiers are there
-        // It is now possible to have separate configs for ACEs and groups, so this validation is not needed anymore
-
-        /*
-         * if (!configuration.contains(Constants.GROUP_CONFIGURATION_KEY) && !configuration.contains(Constants.USER_CONFIGURATION_KEY)) {
-         * throw new IllegalArgumentException( Constants.GROUP_CONFIGURATION_KEY + " section identifier ('" +
-         * Constants.GROUP_CONFIGURATION_KEY + "') missing in configuration file: " + filePath); } if
-         * (!configuration.contains(Constants.ACE_CONFIGURATION_KEY)) { throw new IllegalArgumentException(Constants.ACE_CONFIGURATION_KEY +
-         * "section identifier ('" + Constants.ACE_CONFIGURATION_KEY + "') missing in configuration file: " + filePath); }
-         */
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
      * @see biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator# validateSectionIdentifiers(java.util.Set, java.lang.String)
      */
     @Override
@@ -123,7 +87,7 @@ public class YamlConfigurationsValidator implements ConfigurationsValidator {
             throws IllegalArgumentException {
 
         Map<String, Set<AceBean>> pathBasedAceMapFromConfig = AcHelper
-                .getPathBasedAceMap(mergedAceMapFromConfig, AcHelper.ACE_ORDER_DENY_ALLOW);
+                .getPathBasedAceMap(mergedAceMapFromConfig, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE);
 
         for (String path : pathBasedAceMapFromConfig.keySet()) {
             Set<AceBean> aceBeanSet = pathBasedAceMapFromConfig.get(path);
@@ -138,5 +102,33 @@ public class YamlConfigurationsValidator implements ConfigurationsValidator {
                 }
             }
         }
+    }
+
+    @Override
+    public void validateKeepOrder(Map<String, Set<AceBean>> aceMapFromAllConfigs, Map<String, Set<AceBean>> aceMapFromCurrentConfig,
+            String sourceFile) {
+
+        Set<String> pathsWithKeepOrderSet = new LinkedHashSet<String>();
+        for (Set<AceBean> aceBeans : aceMapFromAllConfigs.values()) {
+            for (AceBean aceBean : aceBeans) {
+                if (aceBean.isKeepOrder()) {
+                    pathsWithKeepOrderSet.add(aceBean.getJcrPath());
+                }
+            }
+        }
+
+        if (aceMapFromCurrentConfig != null) {
+            for (Set<AceBean> aceBeans : aceMapFromCurrentConfig.values()) {
+                for (AceBean aceBean : aceBeans) {
+                    if (aceBean.isKeepOrder() && pathsWithKeepOrderSet.contains(aceBean.getJcrPath())) {
+                        throw new IllegalArgumentException(
+                                "If keepOrder=true is used, the ACE definitions for one particular path must only be defined in one source file (ACE for "
+                                        + aceBean.getJcrPath() + " and group " + aceBean.getPrincipalName() + " as defined in " + sourceFile
+                                        + " was defined before) ");
+                    }
+                }
+            }
+        }
+
     }
 }

@@ -10,7 +10,7 @@ package biz.netcentric.cq.tools.actool.installhook;
 
 import javax.jcr.Session;
 
-import com.day.jcr.vault.fs.io.Archive;
+import org.apache.jackrabbit.vault.fs.io.Archive;
 
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
