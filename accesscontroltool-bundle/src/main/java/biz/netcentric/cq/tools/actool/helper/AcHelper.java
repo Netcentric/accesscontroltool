@@ -34,13 +34,12 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.UserManager;
-import org.apache.sling.api.SlingHttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
-import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
 
 public class AcHelper {
     public static final Logger LOG = LoggerFactory.getLogger(AcHelper.class);
@@ -48,8 +47,20 @@ public class AcHelper {
     private AcHelper() {
     }
 
-    public static int ACE_ORDER_DENY_ALLOW = 1;
+    /** By default ACEs with denies are sorted up to the top of the list, this follows the best practice to order denies always before
+     * allows - this makes by default allows always take precedence over denies.
+     * 
+     * Denies should be used sparsely: Normally there is exactly one group that includes all deny-ACEs for to-be-secured content and many
+     * groups with allow-ACEs, that selectively allow what has been denied by the "global deny" group.
+     * 
+     * For some special cases (e.g. when working with restrictions that limit a preceding allow) it is possible to specify "keepOrder=true",
+     * for those cases the natural order from the config file is kept when {@link #ACE_ORDER_ACTOOL_BEST_PRACTICE} is used. */
+    public static int ACE_ORDER_ACTOOL_BEST_PRACTICE = 1;
+
+    /** Retains order of ACEs in ACLs. */
     public static int ACE_ORDER_NONE = 2;
+
+    /** Sorts ACEs in ACLs alphabetical. */
     public static int ACE_ORDER_ALPHABETICAL = 3;
 
     public static int PRINCIPAL_BASED_ORDER = 1;
@@ -76,16 +87,8 @@ public class AcHelper {
         for (final String restrictionName : restrictionNames) {
             final Value[] values = ace.getRestrictions(restrictionName);
             String[] strValues = new String[values.length];
-
-            for (int i = 0; i < values.length; i++) {
-                String value = values[i].getString();
-                if (StringUtils.equals(value, "")) {
-                    strValues[i] = "''";
-                } else if (value != null && value.matches("[A-Za-z0-9,/]+")) {
-                    strValues[i] = value;
-                } else {
-                    strValues[i] = "'" + value + "'";
-                }
+            for (int i = 0; i < strValues.length; i++) {
+                strValues[i] = values[i].getString();
             }
             restrictionsList.add(new Restriction(restrictionName, strValues));
         }
@@ -159,16 +162,6 @@ public class AcHelper {
         return null;
     }
 
-    public static Map<String, Set<AceBean>> createAceMap(
-            final SlingHttpServletRequest request, final int keyOrdering,
-            final int aclOrdering, final String[] excludePaths,
-            Dumpservice dumpservice) throws ValueFormatException,
-                    IllegalStateException, RepositoryException {
-        final Session session = request.getResourceResolver().adaptTo(Session.class);
-        return dumpservice.createAclDumpMap(session, keyOrdering,
-                aclOrdering, excludePaths).getAceDump();
-    }
-
     /** changes a group based ACE map into a path based ACE map
      *
      * @param groupBasedAceMap the group based ace map
@@ -198,9 +191,8 @@ public class AcHelper {
                     Set<AceBean> aceSet = null;
                     if (sorting == AcHelper.ACE_ORDER_NONE) {
                         aceSet = new LinkedHashSet<AceBean>();
-                    } else if (sorting == AcHelper.ACE_ORDER_DENY_ALLOW) {
-                        aceSet = new TreeSet<AceBean>(
-                                new biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator());
+                    } else if (sorting == AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE) {
+                        aceSet = new TreeSet<AceBean>(new AcePermissionComparator());
                     }
 
                     aceSet.add(bean);

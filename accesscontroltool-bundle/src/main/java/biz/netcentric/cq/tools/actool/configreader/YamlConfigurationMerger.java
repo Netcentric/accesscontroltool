@@ -139,8 +139,9 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
                     authorizableIdsFromAllConfigs,
                     aceBeanValidator);
 
-            // add AceBeans built from current configuration to set containing
-            // AceBeans from all configurations
+            configurationsValidator.validateKeepOrder(mergedAceMapFromConfig, aceMapFromConfig, sourceFile);
+
+            // add AceBeans built from current configuration to set containing AceBeans from all configurations
             if (aceMapFromConfig != null) {
                 mergedAceMapFromConfig.putAll(aceMapFromConfig);
             }
