@@ -24,38 +24,38 @@ public interface AceServiceMBean {
 
     boolean isReadyToStart();
 
-    @Description("executes the installation of the ACE configuration(s)")
+    @Description("Executes the installation of the ACE configuration(s)")
     String execute();
 
-    @Description("purges the AccessControlList of the given path, if existing")
+    @Description("Purges the AccessControlList of the given path, if existing")
     String purgeACL(@Name("path") final String path);
 
-    @Description("purges all AccessControlLists under the given path and its subpaths, if existing")
+    @Description("Purges all AccessControlLists under the given path and its subpaths, if existing")
     String purgeACLs(@Name("path") final String path);
 
-    @Description("purges all authorizables contained in configuration files and all their ACEs from the system")
+    @Description("Purges all authorizables contained in configuration files and all their ACEs from the system")
     public String purgeAllAuthorizablesFromConfigurations();
 
-    @Description("provides status and links to the saved history logs")
+    @Description("Provides status and links to the saved history logs")
     String[] getSavedLogs() throws RepositoryException;
 
-    @Description("shows execution status of the AC Tool")
+    @Description("Shows execution status of the AC Tool")
     public boolean isExecuting();
 
-    @Description("returns a configuration dump containing all groups and all ACLs ordered by path")
+    @Description("Returns a configuration dump containing all groups and all ACLs ordered by path")
     public String pathBasedDump();
 
-    @Description("returns a configuration dump containing all groups and all ACEs ordered by groups")
+    @Description("Returns a configuration dump containing all groups and all ACEs ordered by groups (can be used as template for AC Tool configuration file)")
     public String groupBasedDump();
 
-    @Description("returns links to the existing configuration files in CRX")
+    @Description("Returns links to the existing configuration files in CRX")
     public String[] getConfigurationFiles();
 
-    @Description("returns history log which matches the provided number")
+    @Description("Returns history log which matches the provided number")
     public String showHistoryLog(
             @Name("historyLogNumber") @Description("number of history log") final String historyLogNumber);
 
-    @Description("purges authorizable(s) and respective ACEs from the system. Several authorizable ids have to be comma separated.")
+    @Description("Purges authorizable(s) and respective ACEs from the system. Several authorizable ids have to be comma separated.")
     public String purgeAuthorizables(
             @Name("authorizableIds") String authorizableIds);
 }
