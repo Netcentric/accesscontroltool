@@ -79,7 +79,8 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
                 LOG.error(message);
                 throw new InvalidIntermediatePathException(message);
             }
-            if (intermediatePath.equals(groupsPath) || intermediatePath.equals(usersPath)) {
+            if (intermediatePath.equals(groupsPath) || intermediatePath.equals(usersPath) || intermediatePath.equals(groupsPath + "/")
+                    || intermediatePath.equals(usersPath + "/")) {
                 String message = basicErrorMessage
                         + " - the intermediate path must not be equal to the authorizable root but has to specify a subfolder of it!";
                 LOG.error(message);

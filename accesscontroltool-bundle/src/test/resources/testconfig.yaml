@@ -77,8 +77,14 @@
          path: /home/users/m
          assertedException: InvalidIntermediatePathException
          
-    # invalid isMemberOf-name name
     - group_N:
+
+       - isMemberOf:
+         path: /home/groups/
+         assertedException: InvalidIntermediatePathException
+         
+    # invalid isMemberOf-name name
+    - group_O:
 
        - isMemberOf: group_Ö
          path: /home/groups/g
@@ -119,6 +125,12 @@
         - isMemberOf:
           path: /home/users/u
           assertedException: InvalidAuthorizableException
+          
+    - user_F:  
+       
+         - isMemberOf:
+           path: /home/users/
+           assertedException: InvalidAuthorizableException
     
          
 - ace_config:
