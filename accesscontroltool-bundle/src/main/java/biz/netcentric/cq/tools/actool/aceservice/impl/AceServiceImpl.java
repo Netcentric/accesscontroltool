@@ -330,8 +330,9 @@ public class AceServiceImpl implements AceService {
             // in case an installation of an ACE configuration
             // threw an exception, logout from this session
             // otherwise changes made on the ACLs would get persisted
-
-            session.logout();
+            if (session != null) {
+                session.logout();
+            }
 
             LOG.error("Exception in AceServiceImpl: {}", e);
             history.addError(e.toString());
@@ -348,7 +349,9 @@ public class AceServiceImpl implements AceService {
                 }
             }
         } finally {
-            session.logout();
+            if (session != null) {
+                session.logout();
+            }
         }
         return history;
     }
