@@ -18,11 +18,8 @@ import java.util.Set;
 
 import javax.jcr.RepositoryException;
 
-import org.apache.jackrabbit.oak.spi.security.ConfigurationParameters;
-import org.apache.jackrabbit.oak.spi.security.user.UserConfiguration;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
@@ -42,16 +39,6 @@ public class YamlConfigurationMergerTest {
         merger = new YamlConfigurationMerger();
         merger.yamlMacroProcessor = new YamlMacroProcessorImpl();
         merger.obsoleteAuthorizablesValidator = new ObsoleteAuthorizablesValidatorImpl();
-
-        UserConfiguration userConfiguration = Mockito.mock(UserConfiguration.class);
-
-        Map<String, String> map = new HashMap<>();
-        map.put("groupsPath", "/home/groups");
-        map.put("usersPath", "/home/users");
-        ConfigurationParameters configurationParameters = ConfigurationParameters.of(map);
-
-        Mockito.when(userConfiguration.getParameters()).thenReturn(configurationParameters);
-        merger.userConfiguration = userConfiguration;
     }
 
     @Test
@@ -66,8 +53,8 @@ public class YamlConfigurationMergerTest {
         assertEquals(3, groupA.getMemberOf().length);
         final AuthorizableConfigBean groupB = groups.get("groupB").iterator().next();
         assertEquals(2, groupB.getMemberOf().length);
-        final AuthorizableConfigBean groupC = groups.get("groupC").iterator().next();
-        final AuthorizableConfigBean groupD = groups.get("groupD").iterator().next();
+        groups.get("groupC").iterator().next();
+        groups.get("groupD").iterator().next();
     }
 
 }
