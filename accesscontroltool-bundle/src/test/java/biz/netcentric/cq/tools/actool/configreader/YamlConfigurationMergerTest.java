@@ -18,8 +18,11 @@ import java.util.Set;
 
 import javax.jcr.RepositoryException;
 
+import org.apache.jackrabbit.oak.spi.security.ConfigurationParameters;
+import org.apache.jackrabbit.oak.spi.security.user.UserConfiguration;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
@@ -28,7 +31,7 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
 import biz.netcentric.cq.tools.actool.validators.impl.ObsoleteAuthorizablesValidatorImpl;
 
 /** Tests the YamlConfigurationMerger
- * 
+ *
  * @author Roland Gruber */
 public class YamlConfigurationMergerTest {
 
@@ -39,6 +42,16 @@ public class YamlConfigurationMergerTest {
         merger = new YamlConfigurationMerger();
         merger.yamlMacroProcessor = new YamlMacroProcessorImpl();
         merger.obsoleteAuthorizablesValidator = new ObsoleteAuthorizablesValidatorImpl();
+
+        UserConfiguration userConfiguration = Mockito.mock(UserConfiguration.class);
+
+        Map<String, String> map = new HashMap<>();
+        map.put("groupsPath", "/home/groups");
+        map.put("usersPath", "/home/users");
+        ConfigurationParameters configurationParameters = ConfigurationParameters.of(map);
+
+        Mockito.when(userConfiguration.getParameters()).thenReturn(configurationParameters);
+        merger.userConfiguration = userConfiguration;
     }
 
     @Test

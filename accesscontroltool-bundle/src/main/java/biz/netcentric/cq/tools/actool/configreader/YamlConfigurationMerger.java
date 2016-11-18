@@ -20,6 +20,7 @@ import javax.jcr.RepositoryException;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
+import org.apache.jackrabbit.oak.spi.security.user.UserConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
@@ -52,12 +53,15 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
     @Reference
     ObsoleteAuthorizablesValidator obsoleteAuthorizablesValidator;
 
+    @Reference
+    UserConfiguration userConfiguration;
+
     @Override
     public AcConfiguration getMergedConfigurations(
             final Map<String, String> configFileContentByFilename,
             final AcInstallationHistoryPojo history,
             final ConfigReader configReader) throws RepositoryException,
-            AcConfigBeanValidationException {
+                    AcConfigBeanValidationException {
 
         final GlobalConfiguration globalConfiguration = new GlobalConfiguration();
         final Map<String, Set<AuthorizableConfigBean>> mergedAuthorizablesMapfromConfig = new LinkedHashMap<String, Set<AuthorizableConfigBean>>();
@@ -102,7 +106,9 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             // --- authorizables config section
 
             // build AuthorizableConfigBeans from current configurations
-            final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl();
+            String groupsPath = (String) userConfiguration.getParameters().get("groupsPath");
+            String usersPath = (String) userConfiguration.getParameters().get("usersPath");
+            final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl(groupsPath, usersPath);
             final Map<String, Set<AuthorizableConfigBean>> groupAuthorizablesMapFromConfig = configReader.getGroupConfigurationBeans(
                     yamlRootList, authorizableValidator);
             // add AuthorizableConfigBeans built from current configuration to set containing AuthorizableConfigBeans from all
@@ -156,7 +162,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         // set member groups
         final AuthorizableMemberGroupsValidator membersValidator = new AuthorizableMemberGroupsValidator();
         membersValidator.validate(mergedAuthorizablesMapfromConfig);
-        
+
         GlobalConfigurationValidator.validate(globalConfiguration);
 
         AcConfiguration acConfiguration = new AcConfiguration();

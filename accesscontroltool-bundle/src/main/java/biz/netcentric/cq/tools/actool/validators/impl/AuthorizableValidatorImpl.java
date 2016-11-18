@@ -18,6 +18,7 @@ import biz.netcentric.cq.tools.actool.validators.Validators;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidAuthorizableException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidGroupNameException;
+import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidIntermediatePathException;
 
 public class AuthorizableValidatorImpl implements AuthorizableValidator {
 
@@ -25,10 +26,15 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
             .getLogger(AuthorizableValidatorImpl.class);
     private boolean enabled = true;
     AuthorizableConfigBean authorizableConfigBean;
+    final String groupsPath;
+    final String usersPath;
 
-    public AuthorizableValidatorImpl() {
+    public AuthorizableValidatorImpl(final String groupsPath, final String usersPath) {
+        this.groupsPath = groupsPath;
+        this.usersPath = usersPath;
     }
 
+    @Override
     public void validate(final AuthorizableConfigBean authorizableConfigBean)
             throws AcConfigBeanValidationException {
         this.authorizableConfigBean = authorizableConfigBean;
@@ -37,10 +43,48 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
 
     private boolean validate() throws AcConfigBeanValidationException {
         if (enabled) {
-            return validateAuthorizableProperties(this.authorizableConfigBean)
-                    && validateMemberOf(this.authorizableConfigBean)
-                    && validateMembers(this.authorizableConfigBean)
-                    && validateAuthorizableId(this.authorizableConfigBean);
+            return validateAuthorizableProperties(authorizableConfigBean)
+                    && validateMemberOf(authorizableConfigBean)
+                    && validateMembers(authorizableConfigBean)
+                    && validateAuthorizableId(authorizableConfigBean)
+                    && validateIntermediatePath(authorizableConfigBean);
+        }
+        return true;
+    }
+
+    public boolean validateIntermediatePath(
+            final AuthorizableConfigBean tmpPrincipalConfigBean)
+                    throws InvalidAuthorizableException, InvalidIntermediatePathException {
+        boolean isGroup = tmpPrincipalConfigBean.isGroup();
+        String intermediatePath = tmpPrincipalConfigBean.getPath();
+        String currentPrincipalID = tmpPrincipalConfigBean.getPrincipalID();
+        final String basicErrorMessage = "Validation error while validating intermediate path of authorizable: "
+                + currentPrincipalID;
+        // we only care about paths starting with a slash. if there is none, the path is assumed to be relative
+        // also empty string should be possible
+        if (intermediatePath.startsWith("/")) {
+            if (!intermediatePath.startsWith(groupsPath) && !intermediatePath.startsWith(usersPath)) {
+                String message = basicErrorMessage
+                        + " - the intermediate path either has to be relative (not starting with '/') or has to start with the authorizable root!";
+                LOG.error(message);
+                throw new InvalidIntermediatePathException(message);
+            }
+            if (!isGroup && intermediatePath.startsWith(groupsPath)) {
+                String message = basicErrorMessage + " - the intermediate path for the user must not be the groups path: " + groupsPath;
+                LOG.error(message);
+                throw new InvalidIntermediatePathException(message);
+            }
+            if (isGroup && intermediatePath.startsWith(usersPath)) {
+                String message = basicErrorMessage + " - the intermediate path for the group must not be the users path: " + usersPath;
+                LOG.error(message);
+                throw new InvalidIntermediatePathException(message);
+            }
+            if (intermediatePath.equals(groupsPath) || intermediatePath.equals(usersPath)) {
+                String message = basicErrorMessage
+                        + " - the intermediate path must not be equal to the authorizable root but has to specify a subfolder of it!";
+                LOG.error(message);
+                throw new InvalidIntermediatePathException(message);
+            }
         }
         return true;
     }
@@ -80,12 +124,10 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
             }
 
         }
-
-
-
         return true;
     }
 
+    @Override
     public boolean validateMemberOf(
             final AuthorizableConfigBean tmpPrincipalConfigBean)
                     throws InvalidGroupNameException {
@@ -122,7 +164,7 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
 
     public boolean validateMembers(
             final AuthorizableConfigBean tmpPrincipalConfigBean)
-            throws InvalidGroupNameException {
+                    throws InvalidGroupNameException {
         final String currentPrincipal = tmpPrincipalConfigBean.getPrincipalID();
         final String currentEntryValue = tmpPrincipalConfigBean
                 .getMembersStringFromConfig();
@@ -154,16 +196,17 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
         return true;
     }
 
+    @Override
     public boolean validateAuthorizableId(
             final AuthorizableConfigBean tmpPrincipalConfigBean)
-            throws InvalidGroupNameException {
+                    throws InvalidGroupNameException {
         final String currentPrincipal = tmpPrincipalConfigBean.getPrincipalID();
 
-        if (Validators.isValidAuthorizableId((String) currentPrincipal)) {
-            tmpPrincipalConfigBean.setPrincipalID((String) currentPrincipal);
+        if (Validators.isValidAuthorizableId(currentPrincipal)) {
+            tmpPrincipalConfigBean.setPrincipalID(currentPrincipal);
         } else {
             final String message = "Validation error while reading group data: invalid group name: "
-                    + (String) currentPrincipal;
+                    + currentPrincipal;
             LOG.error(message);
             throw new InvalidGroupNameException(message);
 
@@ -178,7 +221,7 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
 
     @Override
     public void disable() {
-        this.enabled = false;
+        enabled = false;
 
     }
 
