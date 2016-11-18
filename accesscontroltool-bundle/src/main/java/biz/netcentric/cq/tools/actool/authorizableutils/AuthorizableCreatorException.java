@@ -9,7 +9,11 @@
 package biz.netcentric.cq.tools.actool.authorizableutils;
 
 public class AuthorizableCreatorException extends Exception {
-    public AuthorizableCreatorException(String message) {
+    public AuthorizableCreatorException(final String message) {
         super(message);
+    }
+
+    public AuthorizableCreatorException(final Throwable e) {
+        super(e);
     }
 }
