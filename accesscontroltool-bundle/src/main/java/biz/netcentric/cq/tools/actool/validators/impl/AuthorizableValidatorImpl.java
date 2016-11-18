@@ -61,7 +61,6 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
         final String basicErrorMessage = "Validation error while validating intermediate path of authorizable: "
                 + currentPrincipalID;
         // we only care about paths starting with a slash. if there is none, the path is assumed to be relative
-        // also empty string should be possible
         if (intermediatePath.startsWith("/")) {
             if (!intermediatePath.startsWith(groupsPath) && !intermediatePath.startsWith(usersPath)) {
                 String message = basicErrorMessage
@@ -69,6 +68,7 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
                 LOG.error(message);
                 throw new InvalidIntermediatePathException(message);
             }
+
             if (!isGroup && intermediatePath.startsWith(groupsPath)) {
                 String message = basicErrorMessage + " - the intermediate path for the user must not be the groups path: " + groupsPath;
                 LOG.error(message);
