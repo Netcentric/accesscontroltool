@@ -32,21 +32,106 @@
          
     - group_D:
 
-       - isMemberOf:
-         
-         
-    - group_C:
-
        - isMemberOf: group_B
          path: /home/groups/g
          
+    - group_E:
+
+       - isMemberOf:
+         path: relativePath
+         
+         
+    - group_F:
+
+       - isMemberOf:
+        
+         
+    - group_G:
+
+       - isMemberOf:
+         path: /home/groups
+         assertedException: InvalidIntermediatePathException
+         
+         
+    - group_I:
+
+       - isMemberOf:
+         path: /home/group
+         assertedException: InvalidIntermediatePathException
+         
+    - group_K:
+
+       - isMemberOf:
+         path: /home
+         assertedException: InvalidIntermediatePathException
+         
+    - group_L:
+
+       - isMemberOf:
+         path: /
+         assertedException: InvalidIntermediatePathException
+         
+    - group_M:
+
+       - isMemberOf:
+         path: /home/users/m
+         assertedException: InvalidIntermediatePathException
+         
+    - group_N:
+
+       - isMemberOf:
+         path: /home/groups/
+         assertedException: InvalidIntermediatePathException
          
     # invalid isMemberOf-name name
-    - group_F:
+    - group_O:
 
        - isMemberOf: group_Ö
          path: /home/groups/g
          assertedException: InvalidGroupNameException
+         
+- user_config:  
+       
+    - user_A:
+
+       - isMemberOf:
+         path: /home/groups
+         password: secret
+         assertedException: InvalidIntermediatePathException
+         
+    - user_B:  
+       
+        - isMemberOf:
+          path: /home/users
+          password: secret
+          assertedException: InvalidIntermediatePathException
+          
+    - user_C:  
+       
+        - isMemberOf:
+          path: /home/user
+          password: secret
+          assertedException: InvalidIntermediatePathException
+          
+    - user_D:  
+       
+        - isMemberOf:
+          path: /home/groups/u
+          password: secret
+          assertedException: InvalidIntermediatePathException
+          
+    - user_E:  
+       
+        - isMemberOf:
+          path: /home/users/u
+          assertedException: InvalidAuthorizableException
+          
+    - user_F:  
+       
+         - isMemberOf:
+           path: /home/users/
+           assertedException: InvalidAuthorizableException
+    
          
 - ace_config:
 

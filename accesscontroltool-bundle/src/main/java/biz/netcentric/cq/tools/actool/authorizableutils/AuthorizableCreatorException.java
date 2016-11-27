@@ -12,4 +12,8 @@ public class AuthorizableCreatorException extends Exception {
     public AuthorizableCreatorException(String message) {
         super(message);
     }
+
+    public AuthorizableCreatorException(Throwable e) {
+        super(e);
+    }
 }

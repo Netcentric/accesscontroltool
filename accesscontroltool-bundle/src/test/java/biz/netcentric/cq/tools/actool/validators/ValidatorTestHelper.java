@@ -21,26 +21,34 @@ import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
 import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
-/**
- * Helper class containing static methods used in validator-related unit tests based on test yaml files
- * @author jochenkoschorkej
+
+/** Helper class containing static methods used in validator-related unit tests based on test yaml files
  *
- */
+ * @author jochenkoschorkej */
 public class ValidatorTestHelper {
 
-    private ValidatorTestHelper(){}
+    private ValidatorTestHelper() {
+    }
 
-    static void createAuthorizableTestBeans(final List<LinkedHashMap> yamlList, ConfigReader yamlConfigReader, List<AuthorizableConfigBean> authorizableBeanList)
-            throws AcConfigBeanValidationException {
-        final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl();
+    static void createAuthorizableTestBeans(final List<LinkedHashMap> yamlList, ConfigReader yamlConfigReader,
+            List<AuthorizableConfigBean> authorizableBeanList)
+                    throws AcConfigBeanValidationException {
+        final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl("/home/groups", "/home/users");
         authorizableValidator.disable();
-        final Map<String, Set<AuthorizableConfigBean>> authorizablesMap = yamlConfigReader
+        final Map<String, Set<AuthorizableConfigBean>> groupsMap = yamlConfigReader
                 .getGroupConfigurationBeans(yamlList, authorizableValidator);
-        for (final Entry<String, Set<AuthorizableConfigBean>> authorizableEntrySet : authorizablesMap
+        final Map<String, Set<AuthorizableConfigBean>> usersMap = yamlConfigReader
+                .getUserConfigurationBeans(yamlList, authorizableValidator);
+        for (final Entry<String, Set<AuthorizableConfigBean>> authorizableEntrySet : groupsMap
+                .entrySet()) {
+            authorizableBeanList.addAll(authorizableEntrySet.getValue());
+        }
+        for (final Entry<String, Set<AuthorizableConfigBean>> authorizableEntrySet : usersMap
                 .entrySet()) {
             authorizableBeanList.addAll(authorizableEntrySet.getValue());
         }
     }
+
     static String getTestConfigAsString(final String resourceName)
             throws IOException {
         final ClassLoader classloader = Thread.currentThread()
@@ -52,8 +60,9 @@ public class ValidatorTestHelper {
         return stringWriter.toString();
     }
 
-    static void createAceTestBeans(final List<LinkedHashMap> yamlList, ConfigReader yamlConfigReader, Set<String> groupsFromConfig, List<AceBean> aceBeanList)
-            throws RepositoryException, AcConfigBeanValidationException {
+    static void createAceTestBeans(final List<LinkedHashMap> yamlList, ConfigReader yamlConfigReader, Set<String> groupsFromConfig,
+            List<AceBean> aceBeanList)
+                    throws RepositoryException, AcConfigBeanValidationException {
 
         final AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(
                 groupsFromConfig);

@@ -33,11 +33,10 @@ import biz.netcentric.cq.tools.actool.configreader.YamlConfigReader;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
 import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
-/**
- * Contains unit tests checking support of different restrictions
- * @author jochenkoschorkej
- *
- */
+
+/** Contains unit tests checking support of different restrictions
+ * 
+ * @author jochenkoschorkej */
 public class RestrictionValidationTest {
 
     @Mock
@@ -62,7 +61,7 @@ public class RestrictionValidationTest {
 
     @Before
     public void setup() throws IOException, RepositoryException,
-    AcConfigBeanValidationException {
+            AcConfigBeanValidationException {
 
         initMocks(this);
         doReturn(session).when(repository).loginAdministrative(null);
@@ -71,7 +70,7 @@ public class RestrictionValidationTest {
                 withSettings().extraInterfaces(JackrabbitAccessControlList.class));
 
         doReturn(accessControlManager).when(session).getAccessControlManager();
-        doReturn(new AccessControlPolicy[]{accessControlPolicy}).when(accessControlManager).getPolicies("/");
+        doReturn(new AccessControlPolicy[] { accessControlPolicy }).when(accessControlManager).getPolicies("/");
 
         doThrow(new RepositoryException("invalid permission")).when(accessControlManager).privilegeFromName("read");
         doThrow(new RepositoryException("invalid permission")).when(accessControlManager).privilegeFromName("jcr_all");
@@ -79,7 +78,7 @@ public class RestrictionValidationTest {
 
     private void setupBeansFromTestYaml(final String path) throws IOException, AcConfigBeanValidationException, RepositoryException {
         final List<LinkedHashMap> yamlList = ValidatorTestHelper.getYamlList(path);
-        final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl();
+        final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl("/home/groups", "/home/users");
         authorizableValidator.disable();
         groupsFromConfig = yamlConfigReader.getGroupConfigurationBeans(
                 yamlList, authorizableValidator).keySet();
@@ -89,7 +88,7 @@ public class RestrictionValidationTest {
 
     @Test
     public void testAceBeansOnlyRepGlobRestrictionSupported() throws IOException, AcConfigBeanValidationException, RepositoryException {
-        doReturn(new String[]{"rep:glob"}).when((JackrabbitAccessControlList)accessControlPolicy).getRestrictionNames();
+        doReturn(new String[] { "rep:glob" }).when((JackrabbitAccessControlList) accessControlPolicy).getRestrictionNames();
         setupBeansFromTestYaml("testRestrictionsConfigs/test-restrictions1.yaml");
         testExceptions();
     }
@@ -97,14 +96,15 @@ public class RestrictionValidationTest {
     @Test
     public void testAceBeansOnlyNtNamesRestrictionSupported() throws IOException, AcConfigBeanValidationException, RepositoryException {
         setupBeansFromTestYaml("testRestrictionsConfigs/test-restrictions2.yaml");
-        doReturn(new String[]{"rep:ntNames"}).when((JackrabbitAccessControlList)accessControlPolicy).getRestrictionNames();
+        doReturn(new String[] { "rep:ntNames" }).when((JackrabbitAccessControlList) accessControlPolicy).getRestrictionNames();
         testExceptions();
     }
 
     @Test
     public void testAceBeansAllRestrictionsSupported() throws IOException, AcConfigBeanValidationException, RepositoryException {
         setupBeansFromTestYaml("testRestrictionsConfigs/test-restrictions3.yaml");
-        doReturn(new String[]{"rep:ntNames", "rep:glob", "rep:prefixes"}).when((JackrabbitAccessControlList)accessControlPolicy).getRestrictionNames();
+        doReturn(new String[] { "rep:ntNames", "rep:glob", "rep:prefixes" }).when((JackrabbitAccessControlList) accessControlPolicy)
+                .getRestrictionNames();
         testExceptions();
     }
 
