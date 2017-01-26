@@ -44,11 +44,11 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryP
 
 })
 public class AcHistoryServiceImpl implements AcHistoryService {
-    private static final String INSTALLED_CONFIGS_NODE_NAME = "installedConfigs";
+    private static final Logger LOG = LoggerFactory.getLogger(AcHistoryServiceImpl.class);
+
+    public static final String INSTALLED_CONFIGS_NODE_NAME = "installedConfigs";
     private static final int NR_OF_HISTORIES_TO_SAVE_DEFAULT = 5;
-    private static final Logger LOG = LoggerFactory
-            .getLogger(AcHistoryServiceImpl.class);
-    private final static String PURGE_HISTORY_NODE_NAME_PREFIX = "purgeACL";
+
     private int nrOfSavedHistories;
 
     @Reference
@@ -154,13 +154,13 @@ public class AcHistoryServiceImpl implements AcHistoryService {
             }
             
             String commonPrefix = StringUtils.getCommonPrefix(configFileContentsByName.keySet().toArray(new String[configFileContentsByName.size()]));
-            String crxPackageName = history.getCrxPackageName(); // for install hook case
-            historyNode.setProperty("installedFrom", StringUtils.defaultString(crxPackageName) + commonPrefix);
             
             for (String fullConfigFilePath : configFileContentsByName.keySet()) {
                 File targetPathFile = new File(
                         INSTALLED_CONFIGS_NODE_NAME + "/" + StringUtils.substringAfter(fullConfigFilePath, commonPrefix));
-                Node configFolder = JcrUtils.getOrCreateByPath(historyNode, targetPathFile.getParentFile().getPath(), false,
+                File targetPathParentDir = targetPathFile.getParentFile();
+                Node configFolder = JcrUtils.getOrCreateByPath(historyNode,
+                        targetPathParentDir != null ? targetPathParentDir.getPath() : targetPathFile.getPath(), false,
                         JcrConstants.NT_FOLDER, JcrConstants.NT_FOLDER, false);
                 ByteArrayInputStream configFileInputStream = new ByteArrayInputStream( configFileContentsByName.get(fullConfigFilePath).getBytes() );
                 JcrUtils.putFile(configFolder, targetPathFile.getName(), "text/yaml", configFileInputStream);

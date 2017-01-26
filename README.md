@@ -18,7 +18,7 @@ See also our talk at [AdaptTo 2016](https://adapt.to/2016/en/schedule/ac-tool.ht
 
 # Requirements
 
-The AC Tool requires Java 7 and AEM 6.0 - 6.2 (use v1.8.5 for CQ 5.6.1)
+The AC Tool requires Java 7 and AEM 6.0 SP3 or above (use v1.8.5 for CQ 5.6.1)
 
 # Installation
 

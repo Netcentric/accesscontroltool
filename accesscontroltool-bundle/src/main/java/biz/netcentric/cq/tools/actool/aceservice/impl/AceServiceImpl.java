@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -95,20 +96,18 @@ public class AceServiceImpl implements AceService {
 
     private boolean isExecuting = false;
 
-    @Property(label = "Configuration storage path",
-            description = "enter CRX path where ACE configuration gets stored",
-            name = AceServiceImpl.PROPERTY_CONFIGURATION_PATH, value = "")
+    @Property(label = "Configuration storage path", description = "enter CRX path where ACE configuration gets stored", name = AceServiceImpl.PROPERTY_CONFIGURATION_PATH, value = "")
     private String configurationPath;
 
     @Activate
-    public void activate(final Map<?,?> properties)
+    public void activate(final Map<?, ?> properties)
             throws Exception {
         LOG.debug("Activated AceService!");
         modified(properties);
     }
 
     @Modified
-    public void modified(final Map<?,?> properties) {
+    public void modified(final Map<?, ?> properties) {
         LOG.debug("Modified AceService!");
         configurationPath = PropertiesUtil.toString(properties.get(PROPERTY_CONFIGURATION_PATH), "");
     }
@@ -191,13 +190,21 @@ public class AceServiceImpl implements AceService {
             Map<String, Set<AceBean>> aceMapFromConfig) throws Exception {
         // --- installation of ACEs from configuration ---
         Map<String, Set<AceBean>> pathBasedAceMapFromConfig = AcHelper
-                .getPathBasedAceMap(aceMapFromConfig,
-                        AcHelper.ACE_ORDER_DENY_ALLOW);
+                .getPathBasedAceMap(aceMapFromConfig, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE);
 
-        String msg = "*** Starting installation of "+aceMapFromConfig.size()+" ACLs in content nodes...";
+        String msg = "*** Starting installation of " + collectAceCount(aceMapFromConfig) + " ACLs for " + aceMapFromConfig.size()
+                + " authorizables in content nodes...";
         LOG.info(msg);
         history.addMessage(msg);
         aceBeanInstaller.installPathBasedACEs(pathBasedAceMapFromConfig, session, history);
+    }
+
+    private int collectAceCount(Map<String, Set<AceBean>> aceMapFromConfig) {
+        int count = 0;
+        for (Set<AceBean> acesForGroup : aceMapFromConfig.values()) {
+            count += acesForGroup.size();
+        }
+        return count;
     }
 
     private void installAuthorizables(
@@ -207,7 +214,7 @@ public class AceServiceImpl implements AceService {
                     throws RepositoryException, Exception {
         // --- installation of Authorizables from configuration ---
 
-        String msg = "*** Starting installation of "+authorizablesMapfromConfig.size()+" authorizables...";
+        String msg = "*** Starting installation of " + authorizablesMapfromConfig.size() + " authorizables...";
         LOG.info(msg);
         history.addMessage(msg);
 
@@ -234,7 +241,7 @@ public class AceServiceImpl implements AceService {
                     authorizableInstallationHistory);
             authorizableInstallationSession.save();
         } catch (Exception e) {
-            throw e;
+            throw new AuthorizableCreatorException(e);
         } finally {
             if (authorizableInstallationSession != null) {
                 authorizableInstallationSession.logout();
@@ -244,6 +251,54 @@ public class AceServiceImpl implements AceService {
         String message = "Finished installation of authorizables without errors";
         history.addMessage(message);
         LOG.info(message);
+    }
+
+    private void removeObsoleteAuthorizables(AcInstallationHistoryPojo history, Session session, Set<String> obsoleteAuthorizables) {
+
+        try {
+            if (obsoleteAuthorizables.isEmpty()) {
+                history.addVerboseMessage("No obsolete authorizables configured");
+                return;
+            }
+
+            UserManager userManager = AccessControlUtils.getUserManagerAutoSaveDisabled(session);
+
+            Set<String> obsoleteAuthorizablesAlreadyPurged = new HashSet<String>();
+
+            Iterator<String> obsoleteAuthorizablesIt = obsoleteAuthorizables.iterator();
+            while (obsoleteAuthorizablesIt.hasNext()) {
+                String obsoleteAuthorizableId = obsoleteAuthorizablesIt.next();
+                Authorizable obsoleteAuthorizable = userManager.getAuthorizable(obsoleteAuthorizableId);
+                if (obsoleteAuthorizable == null) {
+                    obsoleteAuthorizablesAlreadyPurged.add(obsoleteAuthorizableId);
+                    obsoleteAuthorizablesIt.remove();
+                }
+            }
+
+            if (obsoleteAuthorizables.isEmpty()) {
+                history.addMessage(
+                        "All configured " + obsoleteAuthorizablesAlreadyPurged.size()
+                                + " obsolete authorizables have already been purged.");
+                return;
+            }
+
+            String msg = "*** Purging " + obsoleteAuthorizables.size() + " obsolete authorizables...  ";
+            LOG.info(msg);
+            history.addMessage(msg);
+            if (!obsoleteAuthorizablesAlreadyPurged.isEmpty()) {
+                history.addMessage("(" + obsoleteAuthorizablesAlreadyPurged.size() + " have been purged already)");
+            }
+
+            String purgeAuthorizablesResultMsg = purgeAuthorizables(obsoleteAuthorizables, session);
+            LOG.info(purgeAuthorizablesResultMsg);
+            history.addVerboseMessage(purgeAuthorizablesResultMsg); // this message is too long for regular log
+            history.addMessage("Successfully purged " + obsoleteAuthorizables);
+        } catch (Exception e) {
+            String excMsg = "Could not purge obsolete authorizables " + obsoleteAuthorizables + ": " + e;
+            history.addError(excMsg);
+            LOG.error(excMsg, e);
+        }
+
     }
 
     /** Executes the installation of the existing configurations - entry point for JMX execute() method. */
@@ -268,14 +323,16 @@ public class AceServiceImpl implements AceService {
             installConfigurationFiles(session, history, newestConfigurations, authorizableInstallationHistorySet);
         } catch (AuthorizableCreatorException e) {
             history.addError(e.toString());
+            LOG.error("An exception occured while installing the authorizables from configuration: {}", e);
             // here no rollback of authorizables necessary since session wasn't
             // saved
         } catch (Exception e) {
             // in case an installation of an ACE configuration
             // threw an exception, logout from this session
             // otherwise changes made on the ACLs would get persisted
-
-            session.logout();
+            if (session != null) {
+                session.logout();
+            }
 
             LOG.error("Exception in AceServiceImpl: {}", e);
             history.addError(e.toString());
@@ -292,14 +349,17 @@ public class AceServiceImpl implements AceService {
                 }
             }
         } finally {
-            session.logout();
+            if (session != null) {
+                session.logout();
+            }
         }
         return history;
     }
 
     /** Common entry point for JMX and install hook. */
     @Override
-    public void installConfigurationFiles(Session session, AcInstallationHistoryPojo history, Map<String, String> configurationFileContentsByFilename,
+    public void installConfigurationFiles(Session session, AcInstallationHistoryPojo history,
+            Map<String, String> configurationFileContentsByFilename,
             Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet)
                     throws Exception {
 
@@ -315,10 +375,11 @@ public class AceServiceImpl implements AceService {
 
             if (configurationFileContentsByFilename != null) {
 
+                history.setConfigFileContentsByName(configurationFileContentsByFilename);
+
                 AcConfiguration acConfiguration = configurationMerger.getMergedConfigurations(configurationFileContentsByFilename, history,
                         configReader);
                 history.setAcConfiguration(acConfiguration);
-                history.setConfigFileContentsByName(configurationFileContentsByFilename);
 
                 installMergedConfigurations(history, session, authorizableInstallationHistorySet, acConfiguration);
 
@@ -328,10 +389,14 @@ public class AceServiceImpl implements AceService {
                         "Finished (transient) installation of access control configuration without errors, saving now...");
                 session.save();
                 history.addMessage("Persisted changes of ACLs");
+
+                // this runs as "own transaction" after session.save() of ACLs
+                removeObsoleteAuthorizables(history, session, acConfiguration.getObsoleteAuthorizables());
+
             }
             sw.stop();
             long executionTime = sw.getTime();
-            LOG.info("Successfully applied AC Tool configuration in "+ msHumanReadable(executionTime));
+            LOG.info("Successfully applied AC Tool configuration in " + msHumanReadable(executionTime));
             history.setExecutionTime(executionTime);
         } catch (Exception e) {
             history.addError(e.toString()); // ensure exception is added to history before it's persisted in log in finally clause
@@ -342,7 +407,7 @@ public class AceServiceImpl implements AceService {
             } catch (Exception e) {
                 LOG.warn("Could not persist history, e=" + e, e);
             }
-            
+
             Thread.currentThread().setName(origThreadName);
             isExecuting = false;
         }
@@ -354,7 +419,7 @@ public class AceServiceImpl implements AceService {
             Session session,
             Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet,
             AcConfiguration acConfiguration) throws ValueFormatException,
-            RepositoryException, Exception {
+                    RepositoryException, Exception {
 
         String message = "Starting installation of merged configurations...";
         LOG.debug(message);
@@ -508,20 +573,8 @@ public class AceServiceImpl implements AceService {
         StringBuilder message = new StringBuilder();
         String message2 = "";
         try {
-            JackrabbitSession js = (JackrabbitSession) session;
-            UserManager userManager = js.getUserManager();
-
-            // Try do disable the autosave only in case if changes are automatically persisted
-            if (userManager.isAutoSave()) {
-                try {
-                    userManager.autoSave(false);
-                } catch (final UnsupportedRepositoryOperationException e) {
-                    // check added for AEM 6.0
-                    LOG.warn("disabling autoSave not possible with this user manager!");
-                }
-            }
-
-            PrincipalManager principalManager = js.getPrincipalManager();
+            UserManager userManager = AccessControlUtils.getUserManagerAutoSaveDisabled(session);
+            PrincipalManager principalManager = ((JackrabbitSession) session).getPrincipalManager();
 
             for (String authorizableId : authorizableIds) {
                 message.append(deleteAuthorizableFromHome(authorizableId,

@@ -28,11 +28,13 @@ import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
+import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
 import biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator;
 import biz.netcentric.cq.tools.actool.validators.GlobalConfigurationValidator;
+import biz.netcentric.cq.tools.actool.validators.ObsoleteAuthorizablesValidator;
 import biz.netcentric.cq.tools.actool.validators.YamlConfigurationsValidator;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
@@ -48,61 +50,61 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
     @Reference
     YamlMacroProcessor yamlMacroProcessor;
 
+    @Reference
+    ObsoleteAuthorizablesValidator obsoleteAuthorizablesValidator;
+
     @Override
     public AcConfiguration getMergedConfigurations(
             final Map<String, String> configFileContentByFilename,
             final AcInstallationHistoryPojo history,
             final ConfigReader configReader) throws RepositoryException,
-            AcConfigBeanValidationException {
+                    AcConfigBeanValidationException {
 
         final GlobalConfiguration globalConfiguration = new GlobalConfiguration();
         final Map<String, Set<AuthorizableConfigBean>> mergedAuthorizablesMapfromConfig = new LinkedHashMap<String, Set<AuthorizableConfigBean>>();
         final Map<String, Set<AceBean>> mergedAceMapFromConfig = new LinkedHashMap<String, Set<AceBean>>();
         final Set<String> authorizableIdsFromAllConfigs = new HashSet<String>(); // needed for detection of doubled defined groups in
                                                                                  // configurations
+        final Set<String> obsoleteAuthorizables = new HashSet<String>();
 
-        final Yaml yaml = new Yaml();
+        final Yaml yamlParser = new Yaml();
 
         final ConfigurationsValidator configurationsValidator = new YamlConfigurationsValidator();
 
         for (final Map.Entry<String, String> entry : configFileContentByFilename.entrySet()) {
 
             String sourceFile = entry.getKey();
-            configurationsValidator.validateMandatorySectionIdentifiersExistence(entry.getValue(), sourceFile);
-
             final String message = "Found configuration file " + sourceFile;
             LOG.info(message);
             history.addMessage(message);
 
-            List<LinkedHashMap> yamlList = (List<LinkedHashMap>) yaml.load(entry.getValue());
+            List<LinkedHashMap> yamlRootList = (List<LinkedHashMap>) yamlParser.load(entry.getValue());
 
-            yamlList = yamlMacroProcessor.processMacros(yamlList, history);
+            yamlRootList = yamlMacroProcessor.processMacros(yamlRootList, history);
             // set merged config per file to ensure it is there in case of validation errors (for success, the actual merged config is set
             // after this loop)
-            history.setMergedAndProcessedConfig("# File " + sourceFile + "\n" + yaml.dump(yamlList));
+            history.setMergedAndProcessedConfig("# File " + sourceFile + "\n" + yamlParser.dump(yamlRootList));
 
             final Set<String> sectionIdentifiers = new LinkedHashSet<String>();
 
-            // FIXME: Why doesn't this use YamlConfigReader?
             // put all section identifiers of current configuration into a set
-            for (int i = 0; i < yamlList.size(); i++) {
-                sectionIdentifiers.addAll(yamlList.get(i).keySet());
+            for (int i = 0; i < yamlRootList.size(); i++) {
+                sectionIdentifiers.addAll(yamlRootList.get(i).keySet());
             }
-            configurationsValidator.validateSectionIdentifiers(
-                    sectionIdentifiers, sourceFile);
+            configurationsValidator.validateSectionIdentifiers(sectionIdentifiers, sourceFile);
 
-            configurationsValidator.validateSectionContentExistence(sourceFile, yamlList);
-
+            // --- global configuration section
             try {
-                globalConfiguration.merge(configReader.getGlobalConfiguration(yamlList));
+                globalConfiguration.merge(configReader.getGlobalConfiguration(yamlRootList));
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Invalid global configuration in " + sourceFile + ": " + e, e);
             }
 
-            // build AuthorizableConfigBeans from current configurations
-            final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl();
+            // --- authorizables config section
+
+            final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl(Constants.GROUPS_ROOT, Constants.USERS_ROOT);
             final Map<String, Set<AuthorizableConfigBean>> groupAuthorizablesMapFromConfig = configReader.getGroupConfigurationBeans(
-                    yamlList, authorizableValidator);
+                    yamlRootList, authorizableValidator);
             // add AuthorizableConfigBeans built from current configuration to set containing AuthorizableConfigBeans from all
             // configurations
             if (groupAuthorizablesMapFromConfig != null) {
@@ -110,16 +112,16 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             }
 
             final Map<String, Set<AuthorizableConfigBean>> userAuthorizablesMapFromConfig = configReader.getUserConfigurationBeans(
-                    yamlList, authorizableValidator);
+                    yamlRootList, authorizableValidator);
             if (userAuthorizablesMapFromConfig != null) {
                 mergedAuthorizablesMapfromConfig.putAll(userAuthorizablesMapFromConfig);
             }
 
+            // validate duplicate authorizables
             final Set<String> authorizableIdsFromCurrentConfig = new HashSet<String>();
             if (groupAuthorizablesMapFromConfig != null) {
                 authorizableIdsFromCurrentConfig.addAll(groupAuthorizablesMapFromConfig.keySet());
             }
-
             if (userAuthorizablesMapFromConfig != null) {
                 authorizableIdsFromCurrentConfig.addAll(userAuthorizablesMapFromConfig.keySet());
             }
@@ -131,34 +133,40 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
                 authorizableIdsFromAllConfigs.addAll(authorizableIdsFromCurrentConfig);
             }
 
-            // build AceBeans from current configuration
+            // --- authorizables config section
             final AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(authorizableIdsFromAllConfigs);
-            final Map<String, Set<AceBean>> aceMapFromConfig = configReader.getAceConfigurationBeans(yamlList,
+            final Map<String, Set<AceBean>> aceMapFromConfig = configReader.getAceConfigurationBeans(yamlRootList,
                     authorizableIdsFromAllConfigs,
                     aceBeanValidator);
 
-            // add AceBeans built from current configuration to set containing
-            // AceBeans from all configurations
+            configurationsValidator.validateKeepOrder(mergedAceMapFromConfig, aceMapFromConfig, sourceFile);
+
+            // add AceBeans built from current configuration to set containing AceBeans from all configurations
             if (aceMapFromConfig != null) {
                 mergedAceMapFromConfig.putAll(aceMapFromConfig);
             }
 
             configurationsValidator.validateInitialContentForNoDuplicates(mergedAceMapFromConfig);
 
+            // --- obsolete authorizables config section
+            obsoleteAuthorizables.addAll(configReader.getObsoluteAuthorizables(yamlRootList));
+            obsoleteAuthorizablesValidator.validate(obsoleteAuthorizables, authorizableIdsFromAllConfigs, sourceFile);
         }
+
         // set member groups
         final AuthorizableMemberGroupsValidator membersValidator = new AuthorizableMemberGroupsValidator();
         membersValidator.validate(mergedAuthorizablesMapfromConfig);
-        
+
         GlobalConfigurationValidator.validate(globalConfiguration);
 
         AcConfiguration acConfiguration = new AcConfiguration();
         acConfiguration.setGlobalConfiguration(globalConfiguration);
         acConfiguration.setAuthorizablesConfig(mergedAuthorizablesMapfromConfig);
         acConfiguration.setAceConfig(mergedAceMapFromConfig);
+        acConfiguration.setObsoleteAuthorizables(obsoleteAuthorizables);
 
         history.setMergedAndProcessedConfig(
-                "# Merged configuration of " + configFileContentByFilename.size() + " files \n" + yaml.dump(acConfiguration));
+                "# Merged configuration of " + configFileContentByFilename.size() + " files \n" + yamlParser.dump(acConfiguration));
 
         return acConfiguration;
     }

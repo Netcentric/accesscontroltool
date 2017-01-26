@@ -76,6 +76,12 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
                 .append("privileges: " + aceBean.getPrivilegesString())
                 .append("\n");
+
+        if (aceBean.isKeepOrder()) {
+            sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
+                    .append("keepOrder: true").append("\n");
+        }
+
         writeRestrictions(aceBean, sb);
         sb.append("\n");
         sb.append("\n");
@@ -89,9 +95,20 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY)).append("restrictions:");
         sb.append("\n");
         for (Restriction restriction : restrictions) {
-            final String restrictionsValueString = StringUtils.join(restriction.getValues(), ",");
+            String restrictionsValueString = StringUtils.join(restriction.getValues(), ",");
+
+            String restrictionsValEscaped;
+            if (StringUtils.equals(restrictionsValueString, "")) {
+                restrictionsValEscaped = "''";
+            } else if (restrictionsValueString != null && restrictionsValueString.matches("[A-Za-z0-9,/]+")) {
+                restrictionsValEscaped = restrictionsValueString;
+            } else {
+                restrictionsValEscaped = "'" + restrictionsValueString + "'";
+            }
+
             sb.append(AcHelper.getBlankString(DUMP_INDENTATION_RESTRICTIONS)).append(restriction.getName()).append(": ")
-                    .append(restrictionsValueString);
+                    .append(restrictionsValEscaped);
+
             sb.append("\n");
         }
     }

@@ -56,7 +56,6 @@ import org.apache.jackrabbit.api.security.user.QueryBuilder.Direction;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
@@ -88,8 +87,6 @@ import biz.netcentric.cq.tools.actool.installationhistory.impl.HistoryUtils;
 
         @Property(label = "Number of dumps to save", name = DumpserviceImpl.DUMP_SERVICE_NR_OF_SAVED_DUMPS, value = "5", description = "number of last dumps which get saved in CRX under /var/statistics/achistory"),
         @Property(label = "Include user ACEs in dumps", name = DumpserviceImpl.DUMP_INCLUDE_USERS, boolValue = false, description = "if selected, also user based ACEs (and their respective users) get added to dumps"),
-        @Property(label = "filtered dump", name = DumpserviceImpl.DUMP_IS_FILTERED, boolValue = true, description = "if selected, ACEs of cq actions modify, create and delete containing a repGlob get also added to dumps in section: "
-                + Constants.USER_CONFIGURATION_KEY),
         @Property(label = "AC query exclude paths", name = DumpserviceImpl.DUMP_SERVICE_EXCLUDE_PATHS_PATH, value = {
                 "/home", "/jcr:system",
                 "/tmp" }, description = "direct children of jcr:root which get excluded from all dumps (also from internal dumps)") })
@@ -111,22 +108,17 @@ public class DumpserviceImpl implements Dumpservice {
     static final String DUMP_SERVICE_EXCLUDE_PATHS_PATH = "DumpService.queryExcludePaths";
     static final String DUMP_SERVICE_NR_OF_SAVED_DUMPS = "DumpService.nrOfSavedDumps";
     static final String DUMP_INCLUDE_USERS = "DumpService.includeUsers";
-    static final String DUMP_IS_FILTERED = "DumpService.isFiltered";
-    static final String DUMP_IS_SHOW_LEGACY_ACES = "DumpService.isShowLegacyAces";
 
     private String[] queryExcludePaths;
     private int nrOfSavedDumps;
     private boolean includeUsersInDumps = false;
-    private boolean isFilteredDump = false;
-    private boolean isShowLegacyAces = false;
+
 
     @Reference
     private SlingRepository repository;
 
     @Reference
     private ResourceResolverFactory resourceResolverFactory;
-
-    private String bundleDescription;
 
     @Activate
     public void activate(@SuppressWarnings("rawtypes") final Map properties,
@@ -149,17 +141,9 @@ public class DumpserviceImpl implements Dumpservice {
                 NR_OF_DUMPS_TO_SAVE_DEFAULT);
         includeUsersInDumps = PropertiesUtil.toBoolean(
                 properties.get(DUMP_INCLUDE_USERS), false);
-        isFilteredDump = PropertiesUtil.toBoolean(
-                properties.get(DUMP_IS_FILTERED), true);
-        isShowLegacyAces = PropertiesUtil.toBoolean(
-                properties.get(DUMP_IS_SHOW_LEGACY_ACES), true);
-        bundleDescription = (String) context.getBundleContext().getBundle()
-                .getHeaders().get("Bundle-Description");
+
     }
 
-    public String getBundleDescription() {
-        return bundleDescription;
-    }
 
     @Override
     public boolean isIncludeUsers() {
@@ -173,14 +157,14 @@ public class DumpserviceImpl implements Dumpservice {
 
     @Override
     public String getCompletePathBasedDumpsAsString() {
-        String dump = getCompleteDump(2, 2);
+        String dump = getCompleteDump(AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE);
         persistDump(dump);
         return dump;
     }
 
     @Override
     public String getCompletePrincipalBasedDumpsAsString() {
-        String dump = getCompleteDump(1, 1);
+        String dump = getCompleteDump(AcHelper.PRINCIPAL_BASED_ORDER, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE);
         persistDump(dump);
         return dump;
     }
@@ -258,40 +242,33 @@ public class DumpserviceImpl implements Dumpservice {
         return dumpNode;
     }
 
-    private Node getNewestDumpNode(Set<Node> dumpNodes) {
-        Iterator it = dumpNodes.iterator();
-        Node node = null;
-        while (it.hasNext()) {
-            node = (Node) it.next();
-        }
-        return node;
-    }
-
     /** returns the complete AC dump (groups&ACEs) as String in YAML format
      *
-     * @param keyOrder either principals (AceHelper.PRINCIPAL_BASED_ORDERING) or node paths (AceHelper.PATH_BASED_ORDERING) as keys
-     * @param aclOrdering specifies whether the allow and deny ACEs within an ACL should be divided in separate blocks (first deny then
-     *            allow)
+     * @param keyOrder either principals (AcHelper.PRINCIPAL_BASED_ORDER) or node paths (AcHelper.PATH_BASED_ORDER) as keys
+     * @param aclOrderInMap specifies whether the allow and deny ACEs within an ACL should be divided in separate blocks (first deny then allow)
      * @return String containing complete AC dump */
-    private String getCompleteDump(int aclMapKeyOrder, int mapOrder) {
+    private String getCompleteDump(int keyOrder, int aclOrderInMap) {
         Session session = null;
-        ResourceResolver resourceResolver = null;
 
+        LOG.info("Starting to create dump for "
+                + (keyOrder == AcHelper.PRINCIPAL_BASED_ORDER ? "PRINCIPAL_BASED_ORDER" : "PATH_BASED_ORDER"));
         try {
             session = repository.loginAdministrative(null);
             AceDumpData aceDumpData = createAclDumpMap(session,
-                    aclMapKeyOrder, AcHelper.ACE_ORDER_ALPHABETICAL,
+                    keyOrder, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE, // this ORDER is important to keep the ORDER of denies with "keepOrder"
+                                                             // attribute that is automatically added if needed
                     queryExcludePaths);
             Map<String, Set<AceBean>> aclDumpMap = aceDumpData.getAceDump();
+
             // Map<String, Set<AceBean>> legacyAclDumpMap =
             // aceDumpData.getLegacyAceDump();
             Set<AuthorizableConfigBean> groupBeans = getGroupBeans(session);
-            Set<User> usersFromACEs = getUsersFromAces(mapOrder, session,
-                    aclDumpMap);
+            Set<User> usersFromACEs = getUsersFromAces(keyOrder, session, aclDumpMap);
             Set<AuthorizableConfigBean> userBeans = getUserBeans(usersFromACEs);
 
-            return getConfigurationDumpAsString(aceDumpData, groupBeans,
-                    userBeans, mapOrder);
+            String configurationDumpAsString = getConfigurationDumpAsString(aceDumpData, groupBeans,
+                    userBeans, aclOrderInMap);
+            return configurationDumpAsString;
         } catch (ValueFormatException e) {
             LOG.error("ValueFormatException in AceServiceImpl: {}", e);
         } catch (IllegalStateException e) {
@@ -363,8 +340,7 @@ public class DumpserviceImpl implements Dumpservice {
         StringBuilder sb = new StringBuilder(20000);
 
         // add creation date as first line
-        String dumpComment = bundleDescription + "\n# Dump created: "
-                + new Date();
+        String dumpComment = "Dump created: " + new Date();
 
         new CompleteAcDump(aceDumpData, groupSet, userSet, mapOrder,
                 dumpComment, this).accept(new AcDumpElementYamlVisitor(
@@ -466,6 +442,7 @@ public class DumpserviceImpl implements Dumpservice {
                 continue;
             }
 
+            boolean allowExistsInListEarlier = false;
             for (AccessControlEntry ace : aclBean.getAcl()
                     .getAccessControlEntries()) {
                 if (!(ace instanceof JackrabbitAccessControlEntry)) {
@@ -473,6 +450,15 @@ public class DumpserviceImpl implements Dumpservice {
                 }
                 AceWrapper tmpBean = new AceWrapper((JackrabbitAccessControlEntry) ace, aclBean.getJcrPath());
                 AceBean tmpAceBean = AcHelper.getAceBean(tmpBean);
+
+                // sets keepOrder true if ACE deny entries are found that are not at top of list
+                if (tmpAceBean.isAllow()) {
+                    allowExistsInListEarlier = true;
+                } else {
+                    if (allowExistsInListEarlier && !tmpAceBean.isAllow()) {
+                        tmpAceBean.setKeepOrder(true);
+                    }
+                }
 
                 Authorizable authorizable = um.getAuthorizable(tmpAceBean
                         .getPrincipalName());
@@ -488,8 +474,10 @@ public class DumpserviceImpl implements Dumpservice {
                     addBeanToMap(keyOrder, aclOrdering, legacyAceMap,
                             tmpAceBean);
                 }
+
             }
         }
+
         aceDumpData.setAceDump(aceMap);
         aceDumpData.setLegacyAceDump(legacyAceMap);
 
@@ -676,7 +664,7 @@ public class DumpserviceImpl implements Dumpservice {
 
         if (aclOrdering == AcHelper.ACE_ORDER_NONE) {
             aceSet = new LinkedHashSet<AceBean>();
-        } else if (aclOrdering == AcHelper.ACE_ORDER_DENY_ALLOW) {
+        } else if (aclOrdering == AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE) {
             aceSet = new TreeSet<AceBean>(new AcePermissionComparator());
         } else if (aclOrdering == AcHelper.ACE_ORDER_ALPHABETICAL) {
             aceSet = new TreeSet<AceBean>(new AcePathComparator());

@@ -29,10 +29,10 @@ The path of the config files is configured in OSGi - AC Installation Service.
 
 <img src="images/installation-service.png">
 
-### pathBasedDump() and groupBasedDump()
+###  groupBasedDump() and pathBasedDump()
 
-* path based dumps: here all ACEs in the dump are grouped by path thus representing a complete ACL. This kind of dump gets triggered by the method: pathBasedDump().
-* group based dumps: here all ACEs in the dump are grouped by their respective principal (group or user). This kind of dump gets triggered by the method: groupBasedDump().
+* Group based dump: here all ACEs in the dump are grouped by their respective principal (group or user). This kind of dump gets triggered by the method: groupBasedDump(). The result is in AC Tool config file format and can be used as template to create a configuration file.
+* Path based dump: here all ACEs in the dump are grouped by path thus representing a complete ACL. This kind of dump gets triggered by the method: pathBasedDump().
 
 The created dump can be watched directly in JMX and also gets saved in CRX under /var/statistics/achistory/dump_[Timestamp]. The number of dumps to be saved in CRX can be configured in the OSGi configuration of the dump service in the field: "Number of dumps to save" (see screenshot).
 

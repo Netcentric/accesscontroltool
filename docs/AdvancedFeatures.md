@@ -150,4 +150,45 @@ An exception to this might be dynamic groups created and maintained by authors o
       allowExternalGroupNamesRegEx: external.* # the AC Tool groups can inherit from other external.* groups
 ```
 
+## Automatically purge obsolete groups and users (since 1.9.1)
+The root element `obsolete_authorizables` can be used to automatically purge authorizables that are not in use anymore:
 
+```
+- obsolete_authorizables:
+      - group-to-delete-1
+      - group-to-delete-2
+      - group-to-delete-3
+      - user-to-delete-1 
+      - user-to-delete-2 
+```
+
+The `FOR` and `IF` syntax can be used within `obsolete_authorizables`.
+
+## Health Check (since 1.9.1)
+
+The AC Tool comes with a Sling Health Check to returns WARN if the last run of the AC Tool was not successful. The health check can be triggered via `/system/console/healthcheck?tags=actool`. Additional tags can be configured using PID `biz.netcentric.cq.tools.actool.healthcheck.LastRunSuccessHealthCheck` and property `hc.tags`. Also see [Sling Health Check Tools Documentation](https://sling.apache.org/documentation/bundles/sling-health-check-tool.html).
+
+## Use Manual ACL Ordering (since 1.9.1)
+
+By default ACEs with denies are sorted up to the top of the list, this follows the best practice to order denies always before allows - this makes by default allows always take precedence over denies. This is because denies should be used sparsely: Normally there is exactly one group that includes all deny-ACEs for to-be-secured content and many groups with allow-ACEs, that selectively allow what has been denied by the "global deny" group.
+
+For some special cases (e.g. when working with restrictions that limit a preceding allow as introduced with [Sling Oak Restrictions](https://sling.apache.org/documentation/bundles/sling-oak-restrictions.html)) it is possible to specify `keepOrder: true` for an ACE entry. For those cases the order from the config file is kept when is used.
+
+The following examples shows a legitimate example of using `keepOrder: true`:
+
+```
+- myproj-editor:
+
+       - path: /content/myproj
+         permission: allow
+         actions: read,acl_read,create,modify
+         privileges:
+
+       - path: /content/myproj
+         permission: deny
+         privileges: rep:write
+         keepOrder: true # this ensures that the rule is NOT ordered to top 
+         restrictions:
+                  sling:resourceTypes:  myproj/iframe
+```
+This example gives the group `myproj-editor` edit rights for all content in folder `myproj`, except for the iframe component.

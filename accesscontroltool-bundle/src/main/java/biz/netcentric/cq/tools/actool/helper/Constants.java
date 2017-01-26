@@ -23,13 +23,18 @@ public class Constants {
     public static final String USER_CONFIGURATION_KEY = "user_config";
     public static final String ACE_CONFIGURATION_KEY = "ace_config";
 
+    public static final String OBSOLETE_AUTHORIZABLES_KEY = "obsolete_authorizables";
 
     public static final Set<String> VALID_CONFIG_SECTION_IDENTIFIERS = new HashSet<String>(Arrays.asList(
-                    GLOBAL_CONFIGURATION_KEY,
-                    GROUP_CONFIGURATION_KEY,
-                    USER_CONFIGURATION_KEY,
-                    ACE_CONFIGURATION_KEY));
+            GLOBAL_CONFIGURATION_KEY,
+            GROUP_CONFIGURATION_KEY,
+            USER_CONFIGURATION_KEY,
+            ACE_CONFIGURATION_KEY,
+            OBSOLETE_AUTHORIZABLES_KEY));
 
     public static final String USER_ANONYMOUS = "anonymous";
+
+    public static final String GROUPS_ROOT = "/home/groups";
+    public static final String USERS_ROOT = "/home/users";
 
 }

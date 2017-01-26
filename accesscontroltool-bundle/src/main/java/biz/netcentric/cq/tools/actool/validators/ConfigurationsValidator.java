@@ -8,7 +8,6 @@
  */
 package biz.netcentric.cq.tools.actool.validators;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,26 +34,6 @@ public interface ConfigurationsValidator {
             throws IllegalArgumentException;
 
     /**
-     * Method that checks if both configuration sections (group and ACE) have
-     * content
-     * 
-     * @param configPath
-     *            repository path of current config
-     * @param configurations
-     *            list holding the group and ACE configuration as LinkedHashMap
-     *            (as returned by YAML parser)
-     */
-    public abstract void validateSectionContentExistence(String configPath,
-            Collection<?> configurations) throws IllegalArgumentException;
-
-    /**
-     * Method that checks if mandatory configuration section identifiers (group
-     * and ACE) exist in the current configuration file
-     */
-    public abstract void validateMandatorySectionIdentifiersExistence(
-            String configuration, String filePath);
-
-    /**
      * Method that checks if only valid configuration section identifiers (group
      * (and optional users) and ACE) exist in the current configuration file
      */
@@ -67,5 +46,11 @@ public interface ConfigurationsValidator {
      * @param history */
     public abstract void validateInitialContentForNoDuplicates(
             Map<String, Set<AceBean>> mergedAceMapFromConfig) throws IllegalArgumentException;
+
+    /** Checks that keepOrder=true must be specified in one file for one given path (to ensure the natural order for an ACL can not span
+     * multiple files, include order of multiple files may vary) */
+    public abstract void validateKeepOrder(Map<String, Set<AceBean>> aceMapFromAllConfigs,
+            Map<String, Set<AceBean>> aceMapFromCurrentConfig,
+            String sourceFile);
 
 }
