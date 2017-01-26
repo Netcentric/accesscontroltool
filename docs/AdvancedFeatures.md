@@ -137,7 +137,7 @@ Expressions are evaluated using javax.el expression language. The following util
 
 ## Configure permissions for anonymous (since 1.8.2)
 
-Normally it is ensured by validation that a configuration's group system is self-contained - this means out-of-the-box groups like ```contributor``` cannot be used. For registered users in the system this approach works well since either the users are manually assigned to groups (by a user admin) or the membership relationship is maintained by LDAP or SSO extensions. For the ```anonymous``` user on publish that is not logged in by definition, there is no hook that allows to assign it to a group in the AC Tools configuration. Therefore as an exception, it is allowed to use the user ```anonymous``` in the ```members``` attribute of a group configuration.
+Normally it is ensured by validation that a configuration's group system is self-contained - this means out-of-the-box groups like `contributor` cannot be used. For registered users in the system this approach works well since either the users are manually assigned to groups (by a user admin) or the membership relationship is maintained by LDAP or SSO extensions. For the `anonymous` user on publish that is not logged in by definition, there is no hook that allows to assign it to a group in the AC Tools configuration. Therefore as an exception, it is allowed to use the user `anonymous` in the `members` attribute of a group configuration.
   
 ## Configure memberships to Dynamic Groups
 
