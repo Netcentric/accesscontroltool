@@ -13,6 +13,7 @@ public class AceServiceImplTest {
 
         String[] restrictedToPaths = new String[] { "/content/site1", "/content/site3" };
         assertTrue(aceServiceImpl.isRelevantPath("/content/site1", restrictedToPaths));
+        assertFalse(aceServiceImpl.isRelevantPath("/content/site1ButNotSameRoot", restrictedToPaths));
         assertTrue(aceServiceImpl.isRelevantPath("/content/site1/page", restrictedToPaths));
 
         assertFalse(aceServiceImpl.isRelevantPath("/content/site2", restrictedToPaths));

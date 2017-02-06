@@ -333,7 +333,7 @@ public class AceServiceImpl implements AceService {
         }
         boolean isRelevant = false;
         for (String restrictedToPath : restrictedToPaths) {
-            if (path.startsWith(restrictedToPath)) {
+            if (path.matches("^" + restrictedToPath + "(/.*|$)")) {
                 isRelevant = true;
             }
         }
