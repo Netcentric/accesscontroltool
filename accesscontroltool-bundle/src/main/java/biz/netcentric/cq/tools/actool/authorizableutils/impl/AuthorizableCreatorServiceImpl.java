@@ -84,9 +84,9 @@ public class AuthorizableCreatorServiceImpl implements
         this.principalMapFromConfig = principalMapFromConfig;
         this.authorizableInstallationHistory = authorizableInstallationHistory;
 
-        Set<String> groupsFromConfigurations = principalMapFromConfig.keySet();
+        Set<String> authorizableFromConfigurations = principalMapFromConfig.keySet();
 
-        for (String principalId : groupsFromConfigurations) {
+        for (String principalId : authorizableFromConfigurations) {
 
             Set<AuthorizableConfigBean> currentPrincipalData = principalMapFromConfig
                     .get(principalId);

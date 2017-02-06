@@ -58,7 +58,7 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
 				AcInstallationHistoryPojo history;
 				try {
 					history = acService.installYamlFilesFromPackage(context
-							.getPackage().getArchive(), context.getSession());
+                            .getPackage().getArchive());
 
 				} catch (Exception e) {
 					log("Exception while installing configurations: " + e,

@@ -27,6 +27,10 @@ public interface AceServiceMBean {
     @Description("executes the installation of the ACE configuration(s)")
     String execute();
 
+    @Description("executes the installation of the ACE configuration(s), but restricted to given paths")
+    String execute(
+            @Name("paths") @Description("comma separated list of paths to apply the configuration to, other paths will be skipped") String restrictedToPaths);
+
     @Description("purges the AccessControlList of the given path, if existing")
     String purgeACL(@Name("path") final String path);
 
