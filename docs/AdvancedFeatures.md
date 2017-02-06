@@ -137,7 +137,7 @@ Expressions are evaluated using javax.el expression language. The following util
 
 ## Configure permissions for anonymous (since 1.8.2)
 
-Normally it is ensured by validation that a configuration's group system is self-contained - this means out-of-the-box groups like ```contributor``` cannot be used. For registered users in the system this approach works well since either the users are manually assigned to groups (by a user admin) or the membership relationship is maintained by LDAP or SSO extensions. For the ```anonymous``` user on publish that is not logged in by definition, there is no hook that allows to assign it to a group in the AC Tools configuration. Therefore as an exception, it is allowed to use the user ```anonymous``` in the ```members``` attribute of a group configuration.
+Normally it is ensured by validation that a configuration's group system is self-contained - this means out-of-the-box groups like `contributor` cannot be used. For registered users in the system this approach works well since either the users are manually assigned to groups (by a user admin) or the membership relationship is maintained by LDAP or SSO extensions. For the `anonymous` user on publish that is not logged in by definition, there is no hook that allows to assign it to a group in the AC Tools configuration. Therefore as an exception, it is allowed to use the user `anonymous` in the `members` attribute of a group configuration.
   
 ## Configure memberships to Dynamic Groups
 
@@ -192,3 +192,10 @@ The following examples shows a legitimate example of using `keepOrder: true`:
                   sling:resourceTypes:  myproj/iframe
 ```
 This example gives the group `myproj-editor` edit rights for all content in folder `myproj`, except for the iframe component.
+
+## Intermediate save() calls during ACL installation
+
+For large installations (> 1000 groups) that use MongoDB, the system possibly may get into an invalid state as older versions of OAK (AEM 6.1/6.2 ootb) do not always correctly fire the post commit hook for very large change sets (OAK-5557). To circumvent this issue it is possible since v1.9.2 to configure the OSGi property `intermediateSaves=true` of PID `biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl`. 
+
+NOTE: This is never necessary when using TarMK and also it should only be used for MongoMK for large installations that do not contain a fix for OAK-5557 yet as the rollback functionality is lost when enabling intermediate saves.
+

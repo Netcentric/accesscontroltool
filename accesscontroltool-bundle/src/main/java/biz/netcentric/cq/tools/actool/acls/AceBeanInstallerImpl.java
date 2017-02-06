@@ -58,15 +58,22 @@ public class AceBeanInstallerImpl implements AceBeanInstaller {
     public void installPathBasedACEs(
             final Map<String, Set<AceBean>> pathBasedAceMapFromConfig,
             final Session session,
-            final AcInstallationHistoryPojo history) throws Exception {
+            final AcInstallationHistoryPojo history, Set<String> authorizablesToRemoveAcesFor,
+            boolean intermediateSaves) throws Exception {
 
         final Set<String> paths = pathBasedAceMapFromConfig.keySet();
 
-        LOG.debug("Paths in merged config = {}", paths);
 
         final String msg = "Found " + paths.size() + "  paths in config";
         LOG.debug(msg);
         history.addVerboseMessage(msg);
+        LOG.trace("Paths with ACEs: {}", paths);
+
+        if (intermediateSaves) {
+            final String messageSave = "Will save ACL for each path to session due to configuration option intermediateSaves=true - rollback functionality is disabled.";
+            LOG.info(messageSave);
+            history.addMessage(messageSave);
+        }
 
         // loop through all nodes from config
         for (final String path : paths) {
@@ -90,19 +97,21 @@ public class AceBeanInstallerImpl implements AceBeanInstaller {
                     new AcePermissionComparator());
             orderedAceBeanSetFromConfig.addAll(aceBeanSetFromConfig);
 
-            // remove ACL of that path from ACLs from repo so that after the
-            // loop has ended only paths are left which are not contained in
-            // current config
-            for (final AceBean bean : orderedAceBeanSetFromConfig) {
-                AccessControlUtils.deleteAllEntriesForAuthorizableFromACL(session,
-                        path, bean.getPrincipalName());
-                final String message = "deleted all ACEs of authorizable "
-                        + bean.getPrincipalName()
-                        + " from ACL of path: " + path;
-                LOG.debug(message);
-                history.addVerboseMessage(message);
-            }
+            // Remove all config contained auhtorizables from ACL of this path
+            int countRemoved = AccessControlUtils.deleteAllEntriesForAuthorizableFromACL(session,
+                    path, authorizablesToRemoveAcesFor.toArray(new String[authorizablesToRemoveAcesFor.size()]));
+            final String message = "Deleted " + countRemoved + " ACEs for configured authorizables from path " + path;
+            LOG.debug(message);
+            history.addVerboseMessage(message);
+
             writeAcBeansToRepository(session, history, orderedAceBeanSetFromConfig);
+
+            if (intermediateSaves) {
+                final String messageSave = "Saved session for path " + path;
+                LOG.debug(messageSave);
+                history.addVerboseMessage(messageSave);
+                session.save();
+            }
         }
     }
 

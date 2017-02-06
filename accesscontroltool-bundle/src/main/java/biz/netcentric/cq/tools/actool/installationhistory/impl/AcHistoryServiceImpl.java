@@ -65,6 +65,14 @@ public class AcHistoryServiceImpl implements AcHistoryService {
 
     @Override
     public void persistHistory(AcInstallationHistoryPojo history) {
+
+    	if (nrOfSavedHistories == 0) {
+        	String message = "History hasn't been persisted, configured number of histories is " + nrOfSavedHistories;
+            history.addVerboseMessage(message);
+            LOG.info(message);
+            return;
+        }
+        
         Session session = null;
         try {
 

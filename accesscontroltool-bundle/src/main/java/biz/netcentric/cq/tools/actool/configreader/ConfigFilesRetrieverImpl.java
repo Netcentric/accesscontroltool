@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.Node;
+import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
 import org.apache.commons.io.IOUtils;
@@ -22,6 +23,7 @@ import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.commons.JcrUtils;
 import org.apache.jackrabbit.vault.fs.io.Archive;
 import org.apache.jackrabbit.vault.fs.io.Archive.Entry;
+import org.apache.sling.jcr.api.SlingRepository;
 import org.apache.sling.settings.SlingSettingsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,13 +37,30 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
     @Reference
     private SlingSettingsService slingSettingsService;
 
+
+    @Reference
+    private SlingRepository repository;
+
     @Override
-    public Map<String, String> getConfigFileContentFromNode(Node rootNode) throws Exception {
-        if (rootNode == null) {
-            throw new IllegalArgumentException("No configuration path configured! please check the configuration of AcService!");
+    public Map<String, String> getConfigFileContentFromNode(String rootPath) throws Exception {
+
+        Session session = null;
+        try {
+            session = repository.loginAdministrative(null);
+
+            Node rootNode = session.getNode(rootPath);
+
+            if (rootNode == null) {
+                throw new IllegalArgumentException("No configuration path configured! please check the configuration of AcService!");
+            }
+            Map<String, String> configurations = getConfigurations(new NodeInJcr(rootNode));
+            return configurations;
+        } finally {
+            if (session != null) {
+                session.logout();
+            }
         }
-        Map<String, String> configurations = getConfigurations(new NodeInJcr(rootNode));
-        return configurations;
+
     }
 
     @Override

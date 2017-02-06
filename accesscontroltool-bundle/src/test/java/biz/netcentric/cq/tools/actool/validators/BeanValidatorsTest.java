@@ -42,7 +42,6 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
 import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
 
-
 public class BeanValidatorsTest {
 
     @Mock
@@ -60,7 +59,6 @@ public class BeanValidatorsTest {
     @InjectMocks
     ConfigReader yamlConfigReader = new YamlConfigReader();
 
-
     List<LinkedHashMap> aclList;
     Set<String> groupsFromConfig;
     List<AceBean> aceBeanList = new ArrayList<AceBean>();
@@ -68,32 +66,33 @@ public class BeanValidatorsTest {
 
     @Before
     public void setup() throws IOException, RepositoryException,
-    AcConfigBeanValidationException {
+            AcConfigBeanValidationException {
 
         initMocks(this);
         doReturn(session).when(repository).loginAdministrative(null);
 
         accessControlPolicy = mock(AccessControlList.class,
                 withSettings().extraInterfaces(JackrabbitAccessControlList.class));
-        doReturn(new String[]{"rep:glob"}).when((JackrabbitAccessControlList)accessControlPolicy).getRestrictionNames();
+        doReturn(new String[] { "rep:glob" }).when((JackrabbitAccessControlList) accessControlPolicy).getRestrictionNames();
         doReturn(accessControlManager).when(session).getAccessControlManager();
-        doReturn(new AccessControlPolicy[]{accessControlPolicy}).when(accessControlManager).getPolicies("/");
+        doReturn(new AccessControlPolicy[] { accessControlPolicy }).when(accessControlManager).getPolicies("/");
 
         doThrow(new RepositoryException("invalid permission")).when(accessControlManager).privilegeFromName("read");
         doThrow(new RepositoryException("invalid permission")).when(accessControlManager).privilegeFromName("jcr_all");
 
         final List<LinkedHashMap> yamlList = ValidatorTestHelper.getYamlList("testconfig.yaml");
-        final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl();
+        final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl("/home/groups", "/home/users");
         authorizableValidator.disable();
         groupsFromConfig = yamlConfigReader.getGroupConfigurationBeans(
                 yamlList, authorizableValidator).keySet();
+
         ValidatorTestHelper.createAuthorizableTestBeans(yamlList, yamlConfigReader, authorizableBeanList);
         ValidatorTestHelper.createAceTestBeans(yamlList, yamlConfigReader, groupsFromConfig, aceBeanList);
     }
 
     @Test
     public void testAuthorizableBeans() {
-        final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl();
+        final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl("/home/groups", "/home/users");
         for (final AuthorizableConfigBean authorizableBean : authorizableBeanList) {
             assertEquals(
                     ValidatorTestHelper.getSimpleValidationException(authorizableBean,

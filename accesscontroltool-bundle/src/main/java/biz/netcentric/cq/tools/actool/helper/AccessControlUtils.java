@@ -26,7 +26,7 @@ import javax.jcr.security.AccessControlPolicy;
 import javax.jcr.security.AccessControlPolicyIterator;
 import javax.jcr.security.Privilege;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
@@ -230,9 +230,10 @@ public class AccessControlUtils {
 
     /** @param session admin session
      * @param path valid node path in CRX
-     * @param authorizableID ID of authorizable to be deleted from ACL of node specified by path */
-    public static void deleteAllEntriesForAuthorizableFromACL(final Session session,
-            final String path, String authorizableID)
+     * @param authorizableIds ids of authorizables to be deleted from ACL of node specified by path
+     * @return count ACEs that were removed */
+    public static int deleteAllEntriesForAuthorizableFromACL(final Session session,
+            final String path, String[] authorizableIds)
                     throws UnsupportedRepositoryOperationException, RepositoryException {
         final AccessControlManager accessControlManager = session
                 .getAccessControlManager();
@@ -241,21 +242,24 @@ public class AccessControlUtils {
                 accessControlManager, path);
         if (acl == null) {
             // do nothing, if there is no content node at the given path
-            return;
+            return 0;
         }
         // get ACEs of the node
         final AccessControlEntry[] aces = acl.getAccessControlEntries();
 
+        int countRemoved = 0;
         // loop thorough ACEs and find the one of the given principal
         for (final AccessControlEntry ace : aces) {
             final JackrabbitAccessControlEntry jace = (JackrabbitAccessControlEntry) ace;
-            if (StringUtils.equals(jace.getPrincipal().getName(),
-                    authorizableID)) {
+
+            if (ArrayUtils.contains(authorizableIds, jace.getPrincipal().getName())) {
                 acl.removeAccessControlEntry(jace);
                 // bind new policy
                 accessControlManager.setPolicy(path, acl);
+                countRemoved++;
             }
         }
+        return countRemoved;
     }
 
     /** Retrieves JackrabbitAccessControlList for path.

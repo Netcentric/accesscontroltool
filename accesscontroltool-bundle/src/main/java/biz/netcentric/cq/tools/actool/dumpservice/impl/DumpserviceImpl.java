@@ -253,15 +253,14 @@ public class DumpserviceImpl implements Dumpservice {
         LOG.info("Starting to create dump for "
                 + (keyOrder == AcHelper.PRINCIPAL_BASED_ORDER ? "PRINCIPAL_BASED_ORDER" : "PATH_BASED_ORDER"));
         try {
-            session = repository.loginAdministrative(null);
-            AceDumpData aceDumpData = createAclDumpMap(session,
+
+            AceDumpData aceDumpData = createAclDumpMap(
                     keyOrder, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE, // this ORDER is important to keep the ORDER of denies with "keepOrder"
                                                              // attribute that is automatically added if needed
                     queryExcludePaths);
             Map<String, Set<AceBean>> aclDumpMap = aceDumpData.getAceDump();
 
-            // Map<String, Set<AceBean>> legacyAclDumpMap =
-            // aceDumpData.getLegacyAceDump();
+            session = repository.loginAdministrative(null);
             Set<AuthorizableConfigBean> groupBeans = getGroupBeans(session);
             Set<User> usersFromACEs = getUsersFromAces(keyOrder, session, aclDumpMap);
             Set<AuthorizableConfigBean> userBeans = getUserBeans(usersFromACEs);
@@ -269,10 +268,9 @@ public class DumpserviceImpl implements Dumpservice {
             String configurationDumpAsString = getConfigurationDumpAsString(aceDumpData, groupBeans,
                     userBeans, aclOrderInMap);
             return configurationDumpAsString;
-        } catch (ValueFormatException e) {
-            LOG.error("ValueFormatException in AceServiceImpl: {}", e);
+
         } catch (IllegalStateException e) {
-            LOG.error("IllegalStateException in AceServiceImpl: {}", e);
+            LOG.error("IllegalStateException in DumpServiceImpl: {}", e);
         } catch (IOException e) {
             LOG.error("IOException in AceServiceImpl: {}", e);
         } catch (RepositoryException e) {
@@ -395,13 +393,11 @@ public class DumpserviceImpl implements Dumpservice {
         return accessControBeanSet;
     }
 
-    @Override
-    public AceDumpData createAclDumpMap(final Session session,
-            final int keyOrder, final int aclOrdering,
+    public AceDumpData createAclDumpMap(final int keyOrder, final int aclOrdering,
             final String[] excludePaths) throws ValueFormatException,
                     IllegalArgumentException, IllegalStateException,
                     RepositoryException {
-        return createAclDumpMap(session, keyOrder, aclOrdering, excludePaths, includeUsersInDumps);
+        return createAclDumpMap(keyOrder, aclOrdering, excludePaths, includeUsersInDumps);
     }
 
     /** returns a Map with holds either principal or path based ACE data
@@ -413,75 +409,82 @@ public class DumpserviceImpl implements Dumpservice {
      * @param isFilterACEs
      * @param isIncludeUsers
      * @return
-     * @throws ValueFormatException
-     * @throws IllegalStateException
      * @throws RepositoryException */
-    private AceDumpData createAclDumpMap(final Session session,
-            final int keyOrder, final int aclOrdering,
+    @Override
+    public AceDumpData createAclDumpMap(final int keyOrder, final int aclOrdering,
             final String[] excludePaths,
-            final boolean isIncludeUsers) throws ValueFormatException,
-                    IllegalArgumentException, IllegalStateException,
-                    RepositoryException {
-        AceDumpData aceDumpData = new AceDumpData();
-        UserManager um = ((JackrabbitSession) session).getUserManager();
-        Map<String, Set<AceBean>> aceMap = null;
-        Map<String, Set<AceBean>> legacyAceMap = new TreeMap<String, Set<AceBean>>();
+            final boolean isIncludeUsers) throws RepositoryException {
+        Session session = null;
+        try {
+            session = repository.loginAdministrative(null);
 
-        if (keyOrder == AcHelper.PRINCIPAL_BASED_ORDER) { // principal based
-            aceMap = new TreeMap<String, Set<AceBean>>();
-        } else if (keyOrder == AcHelper.PATH_BASED_ORDER) { // path based
-            aceMap = new TreeMap<String, Set<AceBean>>();
-        }
+            AceDumpData aceDumpData = new AceDumpData();
+            UserManager um = ((JackrabbitSession) session).getUserManager();
+            Map<String, Set<AceBean>> aceMap = null;
+            Map<String, Set<AceBean>> legacyAceMap = new TreeMap<String, Set<AceBean>>();
 
-        Set<AclBean> aclBeanSet = getACLDumpBeans(session);
-
-        // build a set containing all ACE found in the original order
-        for (AclBean aclBean : aclBeanSet) {
-
-            if (aclBean.getAcl() == null) {
-                continue;
+            if (keyOrder == AcHelper.PRINCIPAL_BASED_ORDER) { // principal based
+                aceMap = new TreeMap<String, Set<AceBean>>();
+            } else if (keyOrder == AcHelper.PATH_BASED_ORDER) { // path based
+                aceMap = new TreeMap<String, Set<AceBean>>();
             }
 
-            boolean allowExistsInListEarlier = false;
-            for (AccessControlEntry ace : aclBean.getAcl()
-                    .getAccessControlEntries()) {
-                if (!(ace instanceof JackrabbitAccessControlEntry)) {
-                    throw new IllegalStateException("AC entry is not a JackrabbitAccessControlEntry: " + ace);
-                }
-                AceWrapper tmpBean = new AceWrapper((JackrabbitAccessControlEntry) ace, aclBean.getJcrPath());
-                AceBean tmpAceBean = AcHelper.getAceBean(tmpBean);
+            Set<AclBean> aclBeanSet = getACLDumpBeans(session);
 
-                // sets keepOrder true if ACE deny entries are found that are not at top of list
-                if (tmpAceBean.isAllow()) {
-                    allowExistsInListEarlier = true;
-                } else {
-                    if (allowExistsInListEarlier && !tmpAceBean.isAllow()) {
-                        tmpAceBean.setKeepOrder(true);
+            // build a set containing all ACE found in the original order
+            for (AclBean aclBean : aclBeanSet) {
+
+                if (aclBean.getAcl() == null) {
+                    continue;
+                }
+
+                boolean allowExistsInListEarlier = false;
+                for (AccessControlEntry ace : aclBean.getAcl()
+                        .getAccessControlEntries()) {
+                    if (!(ace instanceof JackrabbitAccessControlEntry)) {
+                        throw new IllegalStateException("AC entry is not a JackrabbitAccessControlEntry: " + ace);
                     }
-                }
+                    AceWrapper tmpBean = new AceWrapper((JackrabbitAccessControlEntry) ace, aclBean.getJcrPath());
+                    AceBean tmpAceBean = AcHelper.getAceBean(tmpBean);
 
-                Authorizable authorizable = um.getAuthorizable(tmpAceBean
-                        .getPrincipalName());
-
-                // if this group exists under home
-                if (authorizable != null) {
-                    if (authorizable.isGroup() || isIncludeUsers) {
-                        addBeanToMap(keyOrder, aclOrdering, aceMap, tmpAceBean);
+                    // sets keepOrder true if ACE deny entries are found that are not at top of list
+                    if (tmpAceBean.isAllow()) {
+                        allowExistsInListEarlier = true;
+                    } else {
+                        if (allowExistsInListEarlier && !tmpAceBean.isAllow()) {
+                            tmpAceBean.setKeepOrder(true);
+                        }
                     }
-                }
-                // otherwise put in map holding legacy ACEs
-                else {
-                    addBeanToMap(keyOrder, aclOrdering, legacyAceMap,
-                            tmpAceBean);
-                }
 
+                    Authorizable authorizable = um.getAuthorizable(tmpAceBean
+                            .getPrincipalName());
+
+                    // if this group exists under home
+                    if (authorizable != null) {
+                        if (authorizable.isGroup() || isIncludeUsers) {
+                            addBeanToMap(keyOrder, aclOrdering, aceMap, tmpAceBean);
+                        }
+                    }
+                    // otherwise put in map holding legacy ACEs
+                    else {
+                        addBeanToMap(keyOrder, aclOrdering, legacyAceMap,
+                                tmpAceBean);
+                    }
+
+                }
+            }
+
+            aceDumpData.setAceDump(aceMap);
+            aceDumpData.setLegacyAceDump(legacyAceMap);
+
+            return aceDumpData;
+
+        } finally {
+            if (session != null) {
+                session.logout();
             }
         }
 
-        aceDumpData.setAceDump(aceMap);
-        aceDumpData.setLegacyAceDump(legacyAceMap);
-
-        return aceDumpData;
     }
 
     private void addBeanToMap(final int keyOrder, final int aclOrdering,

@@ -28,7 +28,7 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
 import biz.netcentric.cq.tools.actool.validators.impl.ObsoleteAuthorizablesValidatorImpl;
 
 /** Tests the YamlConfigurationMerger
- * 
+ *
  * @author Roland Gruber */
 public class YamlConfigurationMergerTest {
 
@@ -53,8 +53,8 @@ public class YamlConfigurationMergerTest {
         assertEquals(3, groupA.getMemberOf().length);
         final AuthorizableConfigBean groupB = groups.get("groupB").iterator().next();
         assertEquals(2, groupB.getMemberOf().length);
-        final AuthorizableConfigBean groupC = groups.get("groupC").iterator().next();
-        final AuthorizableConfigBean groupD = groups.get("groupD").iterator().next();
+        groups.get("groupC").iterator().next();
+        groups.get("groupD").iterator().next();
     }
 
 }
