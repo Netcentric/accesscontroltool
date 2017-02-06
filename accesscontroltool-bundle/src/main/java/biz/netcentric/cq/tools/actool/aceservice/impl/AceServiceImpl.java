@@ -97,23 +97,21 @@ public class AceServiceImpl implements AceService {
 
     private boolean isExecuting = false;
 
-    @Property(label = "Configuration storage path",
-            description = "enter CRX path where ACE configuration gets stored",
-            name = AceServiceImpl.PROPERTY_CONFIGURATION_PATH, value = "")
+    @Property(label = "Configuration storage path", description = "enter CRX path where ACE configuration gets stored", name = AceServiceImpl.PROPERTY_CONFIGURATION_PATH, value = "")
     private String configurationPath;
 
     @Property(label = "Use intermedate saves", description = "Saves ACLs for each path individually - this can be used to avoid problems with large changesets and MongoDB (OAK-5557), however the rollback is disabled then.", name = AceServiceImpl.PROPERTY_INTERMEDIATE_SAVES, value = "")
     private boolean intermediateSaves;
 
     @Activate
-    public void activate(final Map<?,?> properties)
+    public void activate(final Map<?, ?> properties)
             throws Exception {
         LOG.debug("Activated AceService!");
         modified(properties);
     }
 
     @Modified
-    public void modified(final Map<?,?> properties) {
+    public void modified(final Map<?, ?> properties) {
         LOG.debug("Modified AceService!");
         configurationPath = PropertiesUtil.toString(properties.get(PROPERTY_CONFIGURATION_PATH), "");
         LOG.info("Conifg " + PROPERTY_CONFIGURATION_PATH + "=" + configurationPath);
@@ -440,7 +438,7 @@ public class AceServiceImpl implements AceService {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
 
-        String msg = "*** Starting installation of "+authorizablesMapfromConfig.size()+" authorizables...";
+        String msg = "*** Starting installation of " + authorizablesMapfromConfig.size() + " authorizables...";
         LOG.info(msg);
         history.addMessage(msg);
 
@@ -467,7 +465,7 @@ public class AceServiceImpl implements AceService {
                     authorizableInstallationHistory);
             authorizableInstallationSession.save();
         } catch (Exception e) {
-            throw e;
+            throw new AuthorizableCreatorException(e);
         } finally {
             if (authorizableInstallationSession != null) {
                 authorizableInstallationSession.logout();
@@ -490,7 +488,7 @@ public class AceServiceImpl implements AceService {
                 history.addVerboseMessage("No obsolete authorizables configured");
                 return;
             }
-            
+
             UserManager userManager = AccessControlUtils.getUserManagerAutoSaveDisabled(session);
 
             Set<String> obsoleteAuthorizablesAlreadyPurged = new HashSet<String>();
@@ -528,10 +526,13 @@ public class AceServiceImpl implements AceService {
             String excMsg = "Could not purge obsolete authorizables " + obsoleteAuthorizables + ": " + e;
             history.addError(excMsg);
             LOG.error(excMsg, e);
+
         } finally {
             if (session != null) {
                 session.logout();
+
             }
+
         }
 
     }
@@ -541,6 +542,7 @@ public class AceServiceImpl implements AceService {
             Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet,
             AcConfiguration acConfiguration, String[] restrictedToPaths) throws ValueFormatException,
             RepositoryException, Exception {
+
 
         String message = "Starting installation of merged configurations...";
         LOG.debug(message);

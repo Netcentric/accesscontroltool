@@ -28,6 +28,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
+import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
@@ -57,7 +58,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             final Map<String, String> configFileContentByFilename,
             final AcInstallationHistoryPojo history,
             final ConfigReader configReader) throws RepositoryException,
-            AcConfigBeanValidationException {
+                    AcConfigBeanValidationException {
 
         final GlobalConfiguration globalConfiguration = new GlobalConfiguration();
         final Map<String, Set<AuthorizableConfigBean>> mergedAuthorizablesMapfromConfig = new LinkedHashMap<String, Set<AuthorizableConfigBean>>();
@@ -101,8 +102,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
 
             // --- authorizables config section
 
-            // build AuthorizableConfigBeans from current configurations
-            final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl();
+            final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl(Constants.GROUPS_ROOT, Constants.USERS_ROOT);
             final Map<String, Set<AuthorizableConfigBean>> groupAuthorizablesMapFromConfig = configReader.getGroupConfigurationBeans(
                     yamlRootList, authorizableValidator);
             // add AuthorizableConfigBeans built from current configuration to set containing AuthorizableConfigBeans from all
@@ -156,7 +156,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         // set member groups
         final AuthorizableMemberGroupsValidator membersValidator = new AuthorizableMemberGroupsValidator();
         membersValidator.validate(mergedAuthorizablesMapfromConfig);
-        
+
         GlobalConfigurationValidator.validate(globalConfiguration);
 
         AcConfiguration acConfiguration = new AcConfiguration();

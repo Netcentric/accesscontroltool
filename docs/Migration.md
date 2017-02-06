@@ -9,7 +9,7 @@ Please note that for CQ 5.6 you will need version 1.8.5 of the tool.
 
 ## 2. Export rules
 
-Do an export using groupBasedDump() on [JMX interface](Jmx.md). The dump will provide you a Yaml export with all AC entries in your system. Save it to a file and remove all entries that should not be managed by AC Tool. E.g. you do not want to manage the system groups such as "everyone" and "administrators". 
+Do an export using **groupBasedDump()** on [JMX interface](Jmx.md). The dump will provide you a Yaml export with all AC entries in your system. Save it to a file and remove all entries that should not be managed by AC Tool. E.g. you do not want to manage the system groups such as "everyone" and "administrators". 
 
 ## 3. Add rules to your content package
 
