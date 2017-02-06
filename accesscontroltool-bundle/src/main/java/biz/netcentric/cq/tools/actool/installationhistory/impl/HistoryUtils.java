@@ -78,7 +78,7 @@ public class HistoryUtils {
         if (StringUtils.isNotBlank(history.getCrxPackageName())) {
             name += "_via_" + history.getCrxPackageName();
         } else {
-            name += "_via_jmx";
+            name += "_via_api";
         }
 
         Node newHistoryNode = safeGetNode(acHistoryRootNode, name, NODETYPE_NT_UNSTRUCTURED);
@@ -119,8 +119,15 @@ public class HistoryUtils {
         historyNode.setProperty(PROPERTY_SUCCESS, history.isSuccess());
         historyNode.setProperty(PROPERTY_EXECUTION_TIME,
                 history.getExecutionTime());
-        historyNode.setProperty(PROPERTY_MESSAGES,
-                history.getVerboseMessageHistory());
+
+        String messageHistory = history.getVerboseMessageHistory();
+
+        // 16777216 bytes = ~ 16MB was the error in #145, assuming chars*2, hence 16777216 / 2 = 8MB, using 7MB to consider the BSON
+        // overhead
+        if (messageHistory.length() > (7 * 1024 * 1024)) {
+            messageHistory = history.getMessageHistory(); // just use non-verbose history for this case
+        }
+        historyNode.setProperty(PROPERTY_MESSAGES, messageHistory);
         historyNode.setProperty(PROPERTY_TIMESTAMP, history
                 .getInstallationDate().getTime());
         historyNode.setProperty(PROPERTY_SLING_RESOURCE_TYPE,
