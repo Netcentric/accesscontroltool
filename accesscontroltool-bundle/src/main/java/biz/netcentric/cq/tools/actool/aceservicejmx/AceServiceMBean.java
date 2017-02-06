@@ -27,7 +27,12 @@ public interface AceServiceMBean {
     @Description("Executes the installation of the ACE configuration(s)")
     String execute();
 
+    @Description("Executes the installation of the ACE configuration(s), but restricted to given paths")
+    String execute(
+            @Name("paths") @Description("comma separated list of paths to apply the configuration to, other paths will be skipped") String restrictedToPaths);
+
     @Description("Purges the AccessControlList of the given path, if existing")
+
     String purgeACL(@Name("path") final String path);
 
     @Description("Purges all AccessControlLists under the given path and its subpaths, if existing")
@@ -55,7 +60,7 @@ public interface AceServiceMBean {
     public String showHistoryLog(
             @Name("historyLogNumber") @Description("number of history log") final String historyLogNumber);
 
-    @Description("Purges authorizable(s) and respective ACEs from the system. Several authorizable ids have to be comma separated.")
+    @Description("Purges authorizable(s) and respective ACEs from the system.")
     public String purgeAuthorizables(
-            @Name("authorizableIds") String authorizableIds);
+            @Name("authorizableIds") @Description("Authorizable IDs to be purged. Several authorizable ids have to be comma separated.") String authorizableIds);
 }

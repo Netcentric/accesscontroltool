@@ -82,9 +82,9 @@ public class AuthorizableCreatorServiceImpl implements
         this.principalMapFromConfig = principalMapFromConfig;
         this.authorizableInstallationHistory = authorizableInstallationHistory;
 
-        Set<String> groupsFromConfigurations = principalMapFromConfig.keySet();
+        Set<String> authorizableFromConfigurations = principalMapFromConfig.keySet();
 
-        for (String principalId : groupsFromConfigurations) {
+        for (String principalId : authorizableFromConfigurations) {
 
             Set<AuthorizableConfigBean> currentPrincipalData = principalMapFromConfig
                     .get(principalId);
@@ -227,7 +227,8 @@ public class AuthorizableCreatorServiceImpl implements
                             ? "/" + PATH_SEGMENT_SYSTEMUSERS : "")
                     + "/" + authorizablePathFromBean;
         }
-        if (!StringUtils.equals(intermediatedPathOfExistingAuthorizable, authorizablePathFromBean)) {
+        if (!StringUtils.equals(intermediatedPathOfExistingAuthorizable, authorizablePathFromBean)
+                && StringUtils.isNotBlank(principalConfigBean.getPath())) {
             StringBuilder message = new StringBuilder();
             message.append("found change of intermediate path:\n"
                     + "existing authorizable: " + existingAuthorizable.getID() + " has intermediate path: "
@@ -490,8 +491,13 @@ public class AuthorizableCreatorServiceImpl implements
         // create new Group
         Group newGroup = null;
         try {
-            newGroup = userManager.createGroup(new PrincipalImpl(groupID),
-                    intermediatePath);
+            PrincipalImpl principalForNewGroup = new PrincipalImpl(groupID);
+            if (StringUtils.isNotBlank(intermediatePath)) {
+                newGroup = userManager.createGroup(principalForNewGroup, intermediatePath);
+            } else {
+                newGroup = userManager.createGroup(principalForNewGroup);
+            }
+
         } catch (AuthorizableExistsException e) {
             LOG.warn("Group {} already exists in system!", groupID);
             newGroup = (Group) userManager.getAuthorizable(groupID);

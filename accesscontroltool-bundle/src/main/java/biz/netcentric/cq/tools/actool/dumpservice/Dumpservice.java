@@ -15,7 +15,6 @@ import javax.jcr.AccessDeniedException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
-import javax.jcr.ValueFormatException;
 
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.helper.AclBean;
@@ -28,7 +27,7 @@ public interface Dumpservice {
 
     public boolean isIncludeUsers();
 
-    /** returns the paths under jcr:root witch are excluded from search for rep:policy nodes in OSGi configuration
+    /** returns the paths under jcr:root which are excluded from search for rep:policy nodes in OSGi configuration
      *
      * @return String array containing the paths */
     public String[] getQueryExcludePaths();
@@ -42,16 +41,14 @@ public interface Dumpservice {
 
     /** returns a Map with holds either principal or path based ACE data
      *
-     * @param session the jcr session
      * @param keyOrder either principals (AceHelper.PRINCIPAL_BASED_ORDERING) or node paths (AceHelper.PATH_BASED_ORDERING) as keys
      * @param aclOrdering specifies whether the allow and deny ACEs within an ACL should be divided in separate blocks (first deny then
      *            allow)
+     * @param isIncludeUsers
      * @return AceDumpData */
-    public AceDumpData createAclDumpMap(final Session session,
-            final int keyOrder, final int aclOrdering,
-            final String[] excludePaths) throws ValueFormatException,
-                    IllegalArgumentException, IllegalStateException,
-                    RepositoryException;
+    public AceDumpData createAclDumpMap( final int keyOrder, final int aclOrdering,
+            final String[] excludePaths,
+            final boolean isIncludeUsers) throws RepositoryException;
 
     /** method that return a dump comprising of all groups and all aces in path based view
      *

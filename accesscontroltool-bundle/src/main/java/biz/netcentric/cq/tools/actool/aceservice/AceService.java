@@ -11,14 +11,22 @@ package biz.netcentric.cq.tools.actool.aceservice;
 import java.util.Map;
 import java.util.Set;
 
-import javax.jcr.Session;
-
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 public interface AceService {
 
+    /** Applies the full configuration as stored at the path configured at PID biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl
+     * to the repository.
+     * 
+     * @return the history */
     public AcInstallationHistoryPojo execute();
+
+    /** Applies parts of the history
+     * 
+     * @param restrictedToPaths only apply ACLs to root paths as given
+     * @return the history */
+    public AcInstallationHistoryPojo execute(String[] restrictedToPaths);
 
     /** method that indicates whether the service is ready for installation (if at least one configurations was found in repository)
      *
@@ -62,13 +70,13 @@ public interface AceService {
 
     /** Common entry point for JMX and install hook.
      * 
-     * @param session
      * @param history
      * @param configurationFileContentsByFilename
      * @param authorizableInstallationHistorySet
+     * @param restrictedToPaths only apply ACLs to root paths as given
      * @throws Exception */
-    public void installConfigurationFiles(Session session, AcInstallationHistoryPojo history,
+    public void installConfigurationFiles(AcInstallationHistoryPojo history,
             Map<String, String> configurationFileContentsByFilename,
-            Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet) throws Exception;
+            Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet, String[] restrictedToPaths) throws Exception;
 
 }

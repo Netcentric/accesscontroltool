@@ -12,6 +12,7 @@ import java.util.Set;
 
 import javax.management.NotCompliantMBeanException;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Properties;
@@ -21,12 +22,12 @@ import org.apache.felix.scr.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adobe.granite.jmx.annotation.AnnotatedStandardMBean;
+
 import biz.netcentric.cq.tools.actool.aceservice.AceService;
 import biz.netcentric.cq.tools.actool.aceservicejmx.AceServiceMBean;
 import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
-
-import com.adobe.granite.jmx.annotation.AnnotatedStandardMBean;
 
 @Service
 @Component(immediate = true)
@@ -55,6 +56,15 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements
     @Override
     public String execute() {
         return aceService.execute().toString();
+    }
+
+    @Override
+    public String execute(String paths) {
+        String[] restrictedToPaths = null;
+        if (StringUtils.isNotBlank(paths)) {
+            restrictedToPaths = paths.split(",");
+        }
+        return aceService.execute(restrictedToPaths).toString();
     }
 
     @Override
