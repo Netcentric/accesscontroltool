@@ -192,3 +192,10 @@ The following examples shows a legitimate example of using `keepOrder: true`:
                   sling:resourceTypes:  myproj/iframe
 ```
 This example gives the group `myproj-editor` edit rights for all content in folder `myproj`, except for the iframe component.
+
+## Intermediate save() calls during ACL installation
+
+For large installations (> 1000 groups) that use MongoDB, the system possibly may get into an invalid state as OAK does not correctly fire the post commit hook for very large change sets (OAK-5557). To circumvent this issue it is possible since v1.9.2 to configure the OSGi property "intermediateSaves=true" of PID biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl. 
+
+NOTE: This is never necessary when using TarMK and also it should only be used for MongoMK for large installations that do not contain a fix for OAK-5557 yet as the rollback functionality is lost when enabling intermediate saves.
+
