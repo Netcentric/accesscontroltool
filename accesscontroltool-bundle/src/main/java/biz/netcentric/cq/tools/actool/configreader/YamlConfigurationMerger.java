@@ -8,12 +8,15 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javax.jcr.RepositoryException;
 
@@ -66,7 +69,8 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         final Set<String> authorizableIdsFromAllConfigs = new HashSet<String>(); // needed for detection of doubled defined groups in
                                                                                  // configurations
         final Set<String> obsoleteAuthorizables = new HashSet<String>();
-
+        final Map<String, SortedSet<String>> honorPrivilegePaths = new HashMap<String, SortedSet<String>>();
+        
         final Yaml yamlParser = new Yaml();
 
         final ConfigurationsValidator configurationsValidator = new YamlConfigurationsValidator();
@@ -92,7 +96,20 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
                 sectionIdentifiers.addAll(yamlRootList.get(i).keySet());
             }
             configurationsValidator.validateSectionIdentifiers(sectionIdentifiers, sourceFile);
-
+            
+            // --- Honor privilege section
+            
+            Map<String, SortedSet<String>> honoredPathsByGroup = configReader.getHonorPaths(yamlRootList);
+            for (String group : honoredPathsByGroup.keySet()) {
+            	if (honorPrivilegePaths.containsKey(group)) {
+            		honorPrivilegePaths.get(group).addAll(honoredPathsByGroup.get(group));
+            	} else {
+            		SortedSet paths = new TreeSet<String>();
+            		paths.addAll(honoredPathsByGroup.get(group));
+            		honorPrivilegePaths.put(group, paths);
+            	}
+            }
+            
             // --- global configuration section
             try {
                 globalConfiguration.merge(configReader.getGlobalConfiguration(yamlRootList));
@@ -164,6 +181,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         acConfiguration.setAuthorizablesConfig(mergedAuthorizablesMapfromConfig);
         acConfiguration.setAceConfig(mergedAceMapFromConfig);
         acConfiguration.setObsoleteAuthorizables(obsoleteAuthorizables);
+        acConfiguration.setHonorPrivilegePaths(honorPrivilegePaths);
 
         history.setMergedAndProcessedConfig(
                 "# Merged configuration of " + configFileContentByFilename.size() + " files \n" + yamlParser.dump(acConfiguration));

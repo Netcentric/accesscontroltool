@@ -9,8 +9,11 @@
 package biz.netcentric.cq.tools.actool.configreader;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 import javax.jcr.RepositoryException;
 
@@ -23,23 +26,25 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
 
 public interface ConfigReader {
 
-    public Map<String, Set<AceBean>> getAceConfigurationBeans(
+    Map<String, Set<AceBean>> getAceConfigurationBeans(
             final Collection<?> aceConfigData, Set<String> groupsFromConfig,
             AceBeanValidator aceBeanValidator) throws RepositoryException,
             AcConfigBeanValidationException;
 
-    public Map<String, Set<AuthorizableConfigBean>> getGroupConfigurationBeans(
+    Map<String, Set<AuthorizableConfigBean>> getGroupConfigurationBeans(
             final Collection<?> groupConfigData,
             AuthorizableValidator authorizableValidator)
                     throws AcConfigBeanValidationException;
 
-    public Map<String, Set<AuthorizableConfigBean>> getUserConfigurationBeans(
+    Map<String, Set<AuthorizableConfigBean>> getUserConfigurationBeans(
             final Collection<?> userConfigData,
             AuthorizableValidator authorizableValidator)
                     throws AcConfigBeanValidationException;
 
-    public GlobalConfiguration getGlobalConfiguration(final Collection yamlList);
+    Map<String, SortedSet<String>> getHonorPaths(final Collection yamlList);    
+    
+    GlobalConfiguration getGlobalConfiguration(final Collection yamlList);
 
-    public Set<String> getObsoluteAuthorizables(Collection yamlList);
+    Set<String> getObsoluteAuthorizables(Collection yamlList);
 
 }

@@ -103,6 +103,21 @@ public class AccessControlUtils {
         final AccessControlManager acMgr = session.getAccessControlManager();
         return getAccessControlList(acMgr, absPath);
     }
+    
+    
+    /**
+     * Applies the ACL policy to the given path. Note that save must be called on the session for the changes to take effect.
+     * 
+     * @param session the editing session
+     * @param absPath the path to apply the policies
+     * @param acl the policies
+     * @throws RepositoryException in case of error
+     */
+    public static void applyAccessControlList(Session session, String absPath, JackrabbitAccessControlList acl) throws RepositoryException {
+        final JackrabbitAccessControlManager acMgr = (JackrabbitAccessControlManager) session
+                .getAccessControlManager();
+        acMgr.setPolicy(absPath, acl);
+    }
 
     public static JackrabbitAccessControlList getAccessControlPolicies(
             Session session, Principal principal)
@@ -116,6 +131,9 @@ public class AccessControlUtils {
         }
         return null;
     }
+    
+    
+    
 
     /** Utility that combines {@link AccessControlManager#getApplicablePolicies(String)} and
      * {@link AccessControlManager#getPolicies(String)} to retrieve a modifiable {@code JackrabbitAccessControlList} for the given path.<br>

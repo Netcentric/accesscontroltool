@@ -9,13 +9,17 @@
 package biz.netcentric.cq.tools.actool.configmodel;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 /** Root class of the configuration model as it is constructed from the multiple yaml files, it is a fully merged configuration. All loops
  * and variables have been processed. */
 public class AcConfiguration {
 
+	private Map<String, SortedSet<String>> honorPrivilegePaths;
+	
     private GlobalConfiguration globalConfiguration;
 
     // to be changed from map to PojoClass in future versions
@@ -24,7 +28,15 @@ public class AcConfiguration {
     // to be changed from map to PojoClass in future versions
     private Map<String, Set<AceBean>> aceMap;
 
-    private Set<String> obsoleteAuthorizables = new HashSet<String>();
+	private Set<String> obsoleteAuthorizables = new HashSet<String>();    
+    
+    public Map<String, SortedSet<String>> getHonorPrivilegePaths() {
+		return honorPrivilegePaths;
+	}
+
+	public void setHonorPrivilegePaths(Map<String, SortedSet<String>> honorPrivilegePaths) {
+		this.honorPrivilegePaths = honorPrivilegePaths;
+	}
 
     public GlobalConfiguration getGlobalConfiguration() {
         return globalConfiguration;
