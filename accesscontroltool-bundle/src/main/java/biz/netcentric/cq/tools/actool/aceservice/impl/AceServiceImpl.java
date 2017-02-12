@@ -45,7 +45,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.aceservice.AceService;
-import biz.netcentric.cq.tools.actool.aceservice.impl.model.PathACL;
 import biz.netcentric.cq.tools.actool.acls.AceBeanInstaller;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
@@ -62,6 +61,8 @@ import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.AclBean;
 import biz.netcentric.cq.tools.actool.helper.PurgeHelper;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
+import biz.netcentric.cq.tools.actool.honor.HonorPrivilegeService;
+import biz.netcentric.cq.tools.actool.honor.PathACL;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
@@ -74,7 +75,7 @@ public class AceServiceImpl implements AceService {
 	static final String PROPERTY_INTERMEDIATE_SAVES = "intermediateSaves";
 
 	@Reference
-	PrivilegeFacade privilegeFacade;
+	HonorPrivilegeService honorFacade;
 	
 	@Reference
 	AuthorizableCreatorService authorizableCreatorService;
@@ -204,7 +205,7 @@ public class AceServiceImpl implements AceService {
 				history.setAcConfiguration(acConfiguration);
 
 				// Save current privileges for the paths marked as honor_privilege
-				Map<String, SortedSet<PathACL>> honoredPathACLs = this.privilegeFacade
+				Set<PathACL> honoredPathACLs = this.honorFacade
 					.getHonoredACL(acConfiguration.getHonorPrivilegePaths(), history);
 
 				installMergedConfigurations(history, authorizableInstallationHistorySet, acConfiguration,
@@ -212,7 +213,7 @@ public class AceServiceImpl implements AceService {
 				
 
 				// Re-apply the saved ACLs from the honoured paths
-				this.privilegeFacade.installHonoredPrivileges(honoredPathACLs);
+				this.honorFacade.installHonoredPrivileges(honoredPathACLs);
 
 				// this runs as "own transaction" after session.save() of ACLs
 				removeObsoleteAuthorizables(history, acConfiguration.getObsoleteAuthorizables());

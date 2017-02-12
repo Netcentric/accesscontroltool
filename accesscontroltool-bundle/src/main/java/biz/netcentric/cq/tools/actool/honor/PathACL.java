@@ -1,4 +1,4 @@
-package biz.netcentric.cq.tools.actool.aceservice.impl.model;
+package biz.netcentric.cq.tools.actool.honor;
 
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 
