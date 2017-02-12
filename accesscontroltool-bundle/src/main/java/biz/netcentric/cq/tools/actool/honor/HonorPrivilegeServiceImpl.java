@@ -40,7 +40,7 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 	private SlingRepository repository;
 
 	@Override
-	public Set<PathACL> takePrivelegeSnapshot(Map<String, SortedSet<String>> pathsByGroup, 
+	public Set<PathACL> takePrivilegeSnapshot(Map<String, SortedSet<String>> pathsByGroup, 
 			AcInstallationHistoryPojo history) throws RepositoryException {
 
 		Set<PathACL> result = new HashSet<>();

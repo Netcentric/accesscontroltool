@@ -29,7 +29,7 @@ public interface HonorPrivilegeService {
 	 * @return An installable snapshot of the privileges on a series of paths for the association of groups and paths
 	 * @throws RepositoryException in case of an error in the repository
 	 */
-	Set<PathACL> takePrivelegeSnapshot(Map<String, SortedSet<String>> pathsByGroup, AcInstallationHistoryPojo history)
+	Set<PathACL> takePrivilegeSnapshot(Map<String, SortedSet<String>> pathsByGroup, AcInstallationHistoryPojo history)
 			throws RepositoryException; 
 	
 	/**

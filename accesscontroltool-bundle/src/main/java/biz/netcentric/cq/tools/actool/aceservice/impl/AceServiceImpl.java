@@ -206,7 +206,7 @@ public class AceServiceImpl implements AceService {
 
 				// Save current privileges for the paths marked as honor_privilege
 				Set<PathACL> honoredPathACLs = this.honorFacade
-					.takePrivelegeSnapshot(acConfiguration.getHonorPrivilegePaths(), history);
+					.takePrivilegeSnapshot(acConfiguration.getHonorPrivilegePaths(), history);
 
 				installMergedConfigurations(history, authorizableInstallationHistorySet, acConfiguration,
 						restrictedToPaths);
