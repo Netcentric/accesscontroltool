@@ -8,7 +8,7 @@ import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
  * @author jon.entwistle
  *
  */
-public class PathACL implements Comparable<PathACL> {
+public class PathACL {
 	private String path;
 	private JackrabbitAccessControlList acl;
 	
@@ -43,12 +43,6 @@ public class PathACL implements Comparable<PathACL> {
 		return acl;
 	}
 
-	@Override
-	public int compareTo(PathACL other) {
-		
-		return this.path.compareTo(other.path);
-	}
-	
 	
 	
 	/* (non-Javadoc)
