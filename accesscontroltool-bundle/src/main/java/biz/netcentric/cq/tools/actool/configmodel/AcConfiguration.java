@@ -30,6 +30,11 @@ public class AcConfiguration {
 
 	private Set<String> obsoleteAuthorizables = new HashSet<String>();    
     
+	/**
+	 * Returns a Map of principals/groups and the honored paths of each principle. 
+	 * 
+	 * @return Map of honored paths
+	 */
     public Map<String, SortedSet<String>> getHonorPrivilegePaths() {
 		return honorPrivilegePaths;
 	}

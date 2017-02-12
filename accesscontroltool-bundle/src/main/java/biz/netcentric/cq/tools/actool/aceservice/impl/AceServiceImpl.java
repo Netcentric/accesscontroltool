@@ -21,12 +21,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
-import javax.jcr.security.AccessControlEntry;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -38,17 +36,16 @@ import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.api.JackrabbitSession;
-import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.jackrabbit.api.security.principal.PrincipalManager;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.UserManager;
-import org.apache.jackrabbit.commons.JcrUtils;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.aceservice.AceService;
+import biz.netcentric.cq.tools.actool.aceservice.impl.model.PathACL;
 import biz.netcentric.cq.tools.actool.acls.AceBeanInstaller;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
@@ -76,6 +73,9 @@ public class AceServiceImpl implements AceService {
 	static final String PROPERTY_CONFIGURATION_PATH = "AceService.configurationPath";
 	static final String PROPERTY_INTERMEDIATE_SAVES = "intermediateSaves";
 
+	@Reference
+	PrivilegeFacade privilegeFacade;
+	
 	@Reference
 	AuthorizableCreatorService authorizableCreatorService;
 
@@ -143,6 +143,7 @@ public class AceServiceImpl implements AceService {
 			Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(rootPath);
 			installConfigurationFiles(history, newestConfigurations, authorizableInstallationHistorySet,
 					restrictedToPaths);
+			
 		} catch (AuthorizableCreatorException e) {
 			history.addError(e.toString());
 			// here no rollback of authorizables necessary since session wasn't
@@ -202,14 +203,16 @@ public class AceServiceImpl implements AceService {
 						.getMergedConfigurations(configurationFileContentsByFilename, history, configReader);
 				history.setAcConfiguration(acConfiguration);
 
-				Map<String, JackrabbitAccessControlList> honoredACL = this
-					.getHonoredACL(acConfiguration.getHonorPrivilegePaths());
+				// Save current privileges for the paths marked as honor_privilege
+				Map<String, SortedSet<PathACL>> honoredPathACLs = this.privilegeFacade
+					.getHonoredACL(acConfiguration.getHonorPrivilegePaths(), history);
 
 				installMergedConfigurations(history, authorizableInstallationHistorySet, acConfiguration,
 						restrictedToPaths);
+				
 
 				// Re-apply the saved ACLs from the honoured paths
-				this.installHonoredPrivileges(honoredACL);
+				this.privilegeFacade.installHonoredPrivileges(honoredPathACLs);
 
 				// this runs as "own transaction" after session.save() of ACLs
 				removeObsoleteAuthorizables(history, acConfiguration.getObsoleteAuthorizables());
@@ -238,77 +241,7 @@ public class AceServiceImpl implements AceService {
 
 	}
 
-	private void installHonoredPrivileges(Map<String, JackrabbitAccessControlList> honoredACL)
-			throws RepositoryException {
-		Session session = null;
-		try {
-			session = repository.loginAdministrative(null);
-			for (String path : honoredACL.keySet()) {
-				AccessControlUtils.applyAccessControlList(session, path, honoredACL.get(path));
-			}
-			session.save();
-		} finally {
-			if (session != null) {
-				session.logout();
-			}
-		}
-	}
 
-	/**
-	 * Returns the ACLs for each path and group in honoredPrivileges, including subpaths.
-	 * 
-	 * @param pathsByGroup the paths to retain permisions, per group
-	 * @return the ACLs for each path and group in honoredPrivileges, including subpaths
-	 * @throws RepositoryException in case of error
-	 */
-	private Map<String, JackrabbitAccessControlList> getHonoredACL(Map<String, SortedSet<String>> pathsByGroup) throws RepositoryException {
-		
-		HashMap<String, JackrabbitAccessControlList> result = new HashMap<String, JackrabbitAccessControlList>();
-		Session session = repository.loginAdministrative(null);
-	
-		for (String group : pathsByGroup.keySet()) {
-			for (String path : pathsByGroup.get(group)) {
-				if (path.equals('/')) { // The root node ACLs provoke an error on re-applying the permissions  
-					result.putAll(this.findRecursiveACLs(session, group, path));
-				}
-			}
-		}
-
-		return result;
-	}
-
-	
-	private Map<String, JackrabbitAccessControlList> findRecursiveACLs(Session session, String group, String path)
-		throws RepositoryException {
-		Map<String, JackrabbitAccessControlList> result = new HashMap<String, JackrabbitAccessControlList>();
-		
-		Set<String> paths = new HashSet<String>();
-		paths.add(path);
-		
-		for (Node node: JcrUtils.getChildNodes(session.getNode(path))) {
-			String nodePath = node.getPath();
-			// Ensure that node is not a special node, such as rep:policy
-			if (nodePath.indexOf(':') < 0) {
-				paths.add(node.getPath());
-			}
-		}
-		
-		for (String absPath : paths) {
-			result.put(absPath, this.filterPoliciesByGroup(AccessControlUtils.getAccessControlList(session, absPath), group));
-		}
-		
-		return result;
-	}
-	
-	private JackrabbitAccessControlList filterPoliciesByGroup(JackrabbitAccessControlList acl, String group) throws RepositoryException {
-		for(AccessControlEntry entry : acl.getAccessControlEntries()) {
-			if (!entry.getPrincipal().getName().equals(group)) {
-				acl.removeAccessControlEntry(entry);
-			}
-		}
-		
-		return acl;
-	}
 
 	private void installAcConfiguration(AcConfiguration acConfiguration, AcInstallationHistoryPojo history,
 			Set<AuthorizableInstallationHistory> authorizableHistorySet, Map<String, Set<AceBean>> repositoryDumpAceMap,
