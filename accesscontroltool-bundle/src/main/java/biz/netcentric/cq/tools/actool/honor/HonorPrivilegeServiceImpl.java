@@ -58,8 +58,6 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 				} else {
 					acls.addAll(this.findRecursiveACLs(session, entry.getKey(), path));
 				}
-				
-				acls.addAll(this.findRecursiveACLs(session, entry.getKey(), path));
 			}
 			result.addAll(acls);
 		}
