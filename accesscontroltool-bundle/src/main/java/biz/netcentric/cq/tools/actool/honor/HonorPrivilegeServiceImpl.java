@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
-import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 
@@ -36,10 +35,7 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryP
 public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 
 	private static final Logger LOG = LoggerFactory.getLogger(AceServiceImpl.class);
-	
-	@Reference
-	AcHistoryService acHistoryService;
-	
+
 	@Reference
 	private SlingRepository repository;
 
