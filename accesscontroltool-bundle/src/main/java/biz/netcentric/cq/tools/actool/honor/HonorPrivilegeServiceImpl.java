@@ -53,6 +53,8 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 		for (Map.Entry<String, SortedSet<String>> entry : pathsByGroup.entrySet()) {
 			Set<PathACL> acls = new HashSet<>();
 			for (String path : entry.getValue()) {
+				// Attempting to serialise the root node permissions provokes the following error:
+				// OakVersion0001: Cannot change property jcr:mixinTypes on checked in node
 				if (("/").equals(path)) { 
 					String message = "Honor privilege on root folder ignored.";
 					LOG.warn(message);
