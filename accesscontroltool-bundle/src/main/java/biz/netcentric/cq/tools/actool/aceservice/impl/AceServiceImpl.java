@@ -213,7 +213,7 @@ public class AceServiceImpl implements AceService {
 				
 
 				// Re-apply the saved ACLs from the honoured paths
-				this.honorFacade.restorePrivilegeSnapshot(honoredPathACLs);
+				this.honorFacade.restorePrivilegeSnapshot(honoredPathACLs, history);
 
 				// this runs as "own transaction" after session.save() of ACLs
 				removeObsoleteAuthorizables(history, acConfiguration.getObsoleteAuthorizables());

@@ -36,7 +36,7 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 	@Reference
 	private SlingRepository repository;
 
-
+	@Override
 	public Set<PathACL> takePrivelegeSnapshot(Map<String, SortedSet<String>> pathsByGroup, AcInstallationHistoryPojo history)
 			throws RepositoryException {
 
@@ -59,8 +59,8 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 		return result;
 	}	
 	
-	
-	public void restorePrivilegeSnapshot(Set<PathACL> snapshotACL) 
+	@Override
+	public void restorePrivilegeSnapshot(Set<PathACL> snapshotACL,  AcInstallationHistoryPojo history) 
 			throws RepositoryException {
 		Session session = null;
 		
@@ -70,6 +70,7 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 				AccessControlUtils.applyAccessControlList(session, pathACL.getPath(), pathACL.getAcl());
 			}
 			session.save();
+			history.addMessage("Honour privileges successfuly restored on " + snapshotACL.size() + " resources.");
 			
 		} finally {
 			if (session != null) {
