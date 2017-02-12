@@ -36,37 +36,8 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 	@Reference
 	private SlingRepository repository;
 
-	public void installHonoredPrivileges(Set<PathACL> honoredACL) 
-			throws RepositoryException {
-		Session session = null;
-		
-		 try {
-			session = repository.loginAdministrative(null);		
-			for (PathACL pathACL : honoredACL) {
-				AccessControlUtils.applyAccessControlList(session, pathACL.getPath(), pathACL.getAcl());
-			}
-			session.save();
-			
-		} finally {
-			if (session != null) {
-				session.logout();
-			}
-		}
-	}
 
-
-	/**
-	 * Returns the ACLs for each path and group in honoredPrivileges, including
-	 * subpaths.
-	 * 
-	 * @param pathsByGroup
-	 *            the paths to retain permisions, per group
-	 * @return the ACLs for each path and group in honoredPrivileges, including
-	 *         subpaths
-	 * @throws RepositoryException
-	 *             in case of error
-	 */
-	public Set<PathACL> getHonoredACL(Map<String, SortedSet<String>> pathsByGroup, AcInstallationHistoryPojo history)
+	public Set<PathACL> takePrivelegeSnapshot(Map<String, SortedSet<String>> pathsByGroup, AcInstallationHistoryPojo history)
 			throws RepositoryException {
 
 		Set<PathACL> result = new HashSet<>();
@@ -85,47 +56,53 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 			}
 			result.addAll(acls);
 		}
-
 		return result;
+	}	
+	
+	
+	public void restorePrivilegeSnapshot(Set<PathACL> snapshotACL) 
+			throws RepositoryException {
+		Session session = null;
+		
+		 try {
+			session = repository.loginAdministrative(null);		
+			for (PathACL pathACL : snapshotACL) {
+				AccessControlUtils.applyAccessControlList(session, pathACL.getPath(), pathACL.getAcl());
+			}
+			session.save();
+			
+		} finally {
+			if (session != null) {
+				session.logout();
+			}
+		}
 	}
 
-	/**
-	 * For the given group and path, a map is returned relating that path and
-	 * all subpaths to the ACLs holding the permissions for that group.
-	 * 
-	 * @param session
-	 * @param group
-	 * @param path
-	 * @return
-	 * @throws RepositoryException
-	 */
 	private Set<PathACL> findRecursiveACLs(Session session, String group, String path)
 			throws RepositoryException {
 		Set<PathACL> result = new HashSet<>();
 
-		Set<String> paths = this.findAllSubPaths(session.getNode(path));
+		Set<String> paths = this.findSubPaths(session.getNode(path));
 
 		for (String absPath : paths) {
-			// Note: acl contains the permissions for ALL users. This needs to
-			// be restricted to our group.
+			// Restricted to given group.
 			JackrabbitAccessControlList acl = AccessControlUtils.getAccessControlList(session, absPath);
 			result.add(new PathACL(absPath, this.filterPoliciesByGroup(acl, group)));
-			LOG.debug("Path: " + absPath + " ACL: " + acl);
+			LOG.debug("Found ACL for group " + group + " on path " + absPath + ": " + acl);
 		}
 
 		return result;
 	}
 	
-	private Set<String> findAllSubPaths(Node node) throws RepositoryException {
+	private Set<String> findSubPaths(Node node) throws RepositoryException {
 		Set<String> result = new HashSet<>();
 		for (Node subNode : JcrUtils.getChildNodes(node)) {
-			result.addAll(this.findAllSubPaths(subNode));
+			result.addAll(this.findSubPaths(subNode));
 		}
-		// Ensure that node is not meta-data, such as rep:policy
+		// Ensure that node is not meta-data
 		if (node.getPath().indexOf(':') < 0) {
 			result.add(node.getPath());
 		}
-		
 		return result;
 	}
 	
@@ -137,7 +114,6 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 				acl.removeAccessControlEntry(entry);
 			}
 		}
-
 		return acl;
 	}
 }

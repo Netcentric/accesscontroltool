@@ -11,9 +11,9 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryP
 public interface HonorPrivilegeService {
 
 
-	void installHonoredPrivileges(Set<PathACL> honoredACL) 
+	void restorePrivilegeSnapshot(Set<PathACL> snapshotACL) 
 			throws RepositoryException;
 	
-	Set<PathACL> getHonoredACL(Map<String, SortedSet<String>> pathsByGroup, AcInstallationHistoryPojo history)
+	Set<PathACL> takePrivelegeSnapshot(Map<String, SortedSet<String>> pathsByGroup, AcInstallationHistoryPojo history)
 			throws RepositoryException; 
 }

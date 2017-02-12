@@ -206,14 +206,14 @@ public class AceServiceImpl implements AceService {
 
 				// Save current privileges for the paths marked as honor_privilege
 				Set<PathACL> honoredPathACLs = this.honorFacade
-					.getHonoredACL(acConfiguration.getHonorPrivilegePaths(), history);
+					.takePrivelegeSnapshot(acConfiguration.getHonorPrivilegePaths(), history);
 
 				installMergedConfigurations(history, authorizableInstallationHistorySet, acConfiguration,
 						restrictedToPaths);
 				
 
 				// Re-apply the saved ACLs from the honoured paths
-				this.honorFacade.installHonoredPrivileges(honoredPathACLs);
+				this.honorFacade.restorePrivilegeSnapshot(honoredPathACLs);
 
 				// this runs as "own transaction" after session.save() of ACLs
 				removeObsoleteAuthorizables(history, acConfiguration.getObsoleteAuthorizables());
