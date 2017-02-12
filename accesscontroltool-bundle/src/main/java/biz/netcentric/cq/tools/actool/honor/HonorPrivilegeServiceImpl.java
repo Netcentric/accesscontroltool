@@ -24,6 +24,13 @@ import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
+
+/**
+ * Implementation of HonorPrivilegeService.
+ * 
+ * @author jon.entwistle
+ *
+ */
 @Service
 @Component
 public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
@@ -37,8 +44,8 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 	private SlingRepository repository;
 
 	@Override
-	public Set<PathACL> takePrivelegeSnapshot(Map<String, SortedSet<String>> pathsByGroup, AcInstallationHistoryPojo history)
-			throws RepositoryException {
+	public Set<PathACL> takePrivelegeSnapshot(Map<String, SortedSet<String>> pathsByGroup, 
+			AcInstallationHistoryPojo history) throws RepositoryException {
 
 		Set<PathACL> result = new HashSet<>();
 		Session session = repository.loginAdministrative(null);
@@ -53,6 +60,8 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 				} else {
 					acls.addAll(this.findRecursiveACLs(session, entry.getKey(), path));
 				}
+				
+				acls.addAll(this.findRecursiveACLs(session, entry.getKey(), path));
 			}
 			result.addAll(acls);
 		}
@@ -101,7 +110,7 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 			result.addAll(this.findSubPaths(subNode));
 		}
 		// Ensure that node is not meta-data
-		if (node.getPath().indexOf(':') < 0) {
+		if (node.getName().indexOf(':') < 0 && node.getPath().indexOf(':') < 0) {
 			result.add(node.getPath());
 		}
 		return result;

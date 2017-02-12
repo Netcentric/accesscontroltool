@@ -2,6 +2,12 @@ package biz.netcentric.cq.tools.actool.honor;
 
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 
+/**
+ * Encapsulates the a series of ACLs and their related path.
+ * 
+ * @author jon.entwistle
+ *
+ */
 public class PathACL implements Comparable<PathACL> {
 	private String path;
 	private JackrabbitAccessControlList acl;
