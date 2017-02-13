@@ -56,7 +56,8 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 					LOG.warn(message);
 					history.addMessage(message);
 				} else {
-					acls.addAll(this.findRecursiveACLs(session, entry.getKey(), path));
+					String group = entry.getKey();
+					acls.addAll(this.findRecursiveACLs(session, group, path, history));
 				}
 			}
 			result.addAll(acls);
@@ -64,8 +65,11 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 		return result;
 	}	
 	
+	/**
+	 * 
+	 */
 	@Override
-	public void restorePrivilegeSnapshot(Set<PathACL> snapshotACL,  AcInstallationHistoryPojo history) 
+	void restorePrivilegeSnapshot(Set<PathACL> snapshotACL,  AcInstallationHistoryPojo history) 
 			throws RepositoryException {
 		Session session = null;
 		
@@ -74,7 +78,7 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 			for (PathACL pathACL : snapshotACL) {
 				AccessControlUtils.applyAccessControlList(session, pathACL.getPath(), pathACL.getAcl());
 			}
-			session.save();
+			//session.save();
 			history.addMessage("Honour privileges successfuly restored on " + snapshotACL.size() + " resources.");
 			
 		} finally {
@@ -84,8 +88,8 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 		}
 	}
 
-	private Set<PathACL> findRecursiveACLs(Session session, String group, String path)
-			throws RepositoryException {
+	private Set<PathACL> findRecursiveACLs(Session session, String group, String path, 
+			AcInstallationHistoryPojo history) throws RepositoryException {
 		Set<PathACL> result = new HashSet<>();
 
 		Set<String> paths = this.findSubPaths(session.getNode(path));
@@ -93,8 +97,17 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 		for (String absPath : paths) {
 			// Restricted to given group.
 			JackrabbitAccessControlList acl = AccessControlUtils.getAccessControlList(session, absPath);
-			result.add(new PathACL(absPath, this.filterPoliciesByGroup(acl, group)));
-			LOG.debug("Found ACL for group " + group + " on path " + absPath + ": " + acl);
+			
+			acl = this.filterPoliciesByGroup(acl, group);
+			// Ignore ACLs with access rules
+			if (acl.getAccessControlEntries().length > 0) {
+				result.add(new PathACL(absPath, this.filterPoliciesByGroup(acl, group)));
+				LOG.debug("Found ACL for group " + group + " on path " + absPath + ": " + acl);
+			}			
+		}
+		
+		if (result.isEmpty()) {
+			history.addWarning("No ACL found for group " + group + ", is group name spelt correctly?");
 		}
 
 		return result;
