@@ -65,11 +65,13 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 		return result;
 	}	
 	
+	
 	/**
-	 * 
+	 * Note that this implementation DOES NOT SAVE CHANGES. Clients must call session.save() to persist the 
+	 * snapshot.
 	 */
 	@Override
-	void restorePrivilegeSnapshot(Set<PathACL> snapshotACL,  AcInstallationHistoryPojo history) 
+	public void restorePrivilegeSnapshot(Set<PathACL> snapshotACL,  AcInstallationHistoryPojo history) 
 			throws RepositoryException {
 		Session session = null;
 		
@@ -78,7 +80,6 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 			for (PathACL pathACL : snapshotACL) {
 				AccessControlUtils.applyAccessControlList(session, pathACL.getPath(), pathACL.getAcl());
 			}
-			//session.save();
 			history.addMessage("Honour privileges successfuly restored on " + snapshotACL.size() + " resources.");
 			
 		} finally {
