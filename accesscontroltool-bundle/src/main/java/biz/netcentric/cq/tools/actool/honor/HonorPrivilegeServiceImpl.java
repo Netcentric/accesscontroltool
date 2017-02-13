@@ -1,15 +1,8 @@
 package biz.netcentric.cq.tools.actool.honor;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.security.AccessControlEntry;
-
+import biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl;
+import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
+import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
@@ -19,9 +12,15 @@ import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl;
-import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.security.AccessControlEntry;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
 
 
 /**
@@ -60,7 +59,11 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 					acls.addAll(this.findRecursiveACLs(session, group, path, history));
 				}
 			}
-			result.addAll(acls);
+            if (acls.isEmpty()) {
+                history.addWarning("No ACLs found for group " + entry.getKey() + ", is group spelt correctly?");
+            }
+
+            result.addAll(acls);
 		}
 		return result;
 	}	
@@ -80,8 +83,9 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 			for (PathACL pathACL : snapshotACL) {
 				AccessControlUtils.applyAccessControlList(session, pathACL.getPath(), pathACL.getAcl());
 			}
-			history.addMessage("Honour privileges successfuly restored on " + snapshotACL.size() + " resources.");
-			
+			if (!snapshotACL.isEmpty()) {
+                history.addMessage("Honour privileges successfully restored.");
+            }
 		} finally {
 			if (session != null) {
 				session.logout();
@@ -93,24 +97,25 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 			AcInstallationHistoryPojo history) throws RepositoryException {
 		Set<PathACL> result = new HashSet<>();
 
-		Set<String> paths = this.findSubPaths(session.getNode(path));
 
-		for (String absPath : paths) {
-			// Restricted to given group.
-			JackrabbitAccessControlList acl = AccessControlUtils.getAccessControlList(session, absPath);
-			
-			acl = this.filterPoliciesByGroup(acl, group);
-			// Ignore ACLs with access rules
-			if (acl.getAccessControlEntries().length > 0) {
-				result.add(new PathACL(absPath, this.filterPoliciesByGroup(acl, group)));
-				LOG.debug("Found ACL for group " + group + " on path " + absPath + ": " + acl);
-			}			
+		try {
+			Set<String> paths = this.findSubPaths(session.getNode(path));
+
+			for (String absPath : paths) {
+				// Restricted to given group.
+				JackrabbitAccessControlList acl = AccessControlUtils.getAccessControlList(session, absPath);
+
+				acl = this.filterPoliciesByGroup(acl, group);
+				// Ignore ACLs with access rules
+				if (acl.getAccessControlEntries().length > 0) {
+					result.add(new PathACL(absPath, this.filterPoliciesByGroup(acl, group)));
+					LOG.debug("Found ACL for group " + group + " on path " + absPath + ": " + acl);
+				}
+			}
+		} catch (PathNotFoundException e) {
+			history.addWarning("Honour path " + path + " not found: ignoring.");
 		}
 		
-		if (result.isEmpty()) {
-			history.addWarning("No ACL found for group " + group + ", is group name spelt correctly?");
-		}
-
 		return result;
 	}
 	
