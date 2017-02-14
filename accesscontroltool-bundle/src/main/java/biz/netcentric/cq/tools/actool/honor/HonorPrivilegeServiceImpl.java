@@ -114,7 +114,9 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 				}
 			}
 		} catch (PathNotFoundException e) {
-			history.addWarning("Honour path " + path + " not found: ignoring.");
+			String msg = "Honour path " + path + " not found: ignoring.";
+			LOG.warn(msg);
+			history.addWarning(msg);
 		}
 		
 		return result;
