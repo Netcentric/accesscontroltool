@@ -60,7 +60,7 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 				}
 			}
             if (acls.isEmpty()) {
-                history.addWarning("No ACLs found for group " + entry.getKey() + ", is group spelt correctly?");
+                history.addWarning("No custom ACLs found for group " + entry.getKey());
             }
 
             result.addAll(acls);
@@ -84,6 +84,7 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 				AccessControlUtils.applyAccessControlList(session, pathACL.getPath(), pathACL.getAcl());
 			}
 			if (!snapshotACL.isEmpty()) {
+				session.save();
                 history.addMessage("Honour privileges successfully restored.");
             }
 		} finally {
