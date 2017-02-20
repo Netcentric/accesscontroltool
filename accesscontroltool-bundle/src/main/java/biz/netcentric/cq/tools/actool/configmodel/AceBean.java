@@ -39,7 +39,6 @@ public class AceBean implements AcDumpElement {
     private String principal;
     private String permission;
     private String[] actions;
-    private String assertedExceptionString;
     private List<Restriction> restrictions = new ArrayList<Restriction>();
 
     private boolean keepOrder = false; // default is to reorder denies before allows
@@ -48,6 +47,7 @@ public class AceBean implements AcDumpElement {
 
     public static final String RESTRICTION_NAME_GLOB = "rep:glob";
 
+    @Override
     public AceBean clone() {
 
         AceBean clone = new AceBean();
@@ -57,21 +57,12 @@ public class AceBean implements AcDumpElement {
         clone.setPrincipal(principal);
         clone.setPermission(permission);
         clone.setActions(actions);
-        clone.setAssertedExceptionString(assertedExceptionString);
         clone.setRestrictions(restrictions);
         clone.setInitialContent(initialContent);
         clone.setKeepOrder(keepOrder);
 
         return clone;
 
-    }
-
-    public String getAssertedExceptionString() {
-        return assertedExceptionString;
-    }
-
-    public void setAssertedExceptionString(final String assertedException) {
-        assertedExceptionString = assertedException;
     }
 
     public String getPermission() {
@@ -225,7 +216,7 @@ public class AceBean implements AcDumpElement {
                 + "\n"
                 + ", privilegesString=" + privilegesString + "\n" + ", principal=" + principal + "\n" + ", permission=" + permission
                 + ", actions="
-                + Arrays.toString(actions) + "\n" + ", assertedExceptionString=" + assertedExceptionString + "\n" + ", restrictions="
+                + Arrays.toString(actions) + "\n" + "\n" + ", restrictions="
                 + restrictions + "\n"
                 + ", initialContent=" + initialContent + "]";
     }
@@ -236,7 +227,6 @@ public class AceBean implements AcDumpElement {
         int result = 1;
         result = (prime * result) + Arrays.hashCode(actions);
         result = (prime * result) + ((actionsStringFromConfig == null) ? 0 : actionsStringFromConfig.hashCode());
-        result = (prime * result) + ((assertedExceptionString == null) ? 0 : assertedExceptionString.hashCode());
         result = (prime * result) + ((initialContent == null) ? 0 : initialContent.hashCode());
         result = (prime * result) + ((jcrPath == null) ? 0 : jcrPath.hashCode());
         result = (prime * result) + ((permission == null) ? 0 : permission.hashCode());
@@ -266,13 +256,6 @@ public class AceBean implements AcDumpElement {
                 return false;
             }
         } else if (!actionsStringFromConfig.equals(other.actionsStringFromConfig)) {
-            return false;
-        }
-        if (assertedExceptionString == null) {
-            if (other.assertedExceptionString != null) {
-                return false;
-            }
-        } else if (!assertedExceptionString.equals(other.assertedExceptionString)) {
             return false;
         }
         if (initialContent == null) {

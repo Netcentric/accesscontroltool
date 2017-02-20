@@ -44,18 +44,17 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
 @Component(label = "AC Yaml Config Reader", description = "Service that installs groups & ACEs according to textual configuration files")
 public class YamlConfigReader implements ConfigReader {
 
-
     private static final Logger LOG = LoggerFactory.getLogger(YamlConfigReader.class);
 
-    private static final String ACE_CONFIG_PROPERTY_GLOB = "repGlob";
-    private static final String ACE_CONFIG_PROPERTY_RESTRICTIONS = "restrictions";
+    protected static final String ACE_CONFIG_PROPERTY_GLOB = "repGlob";
+    protected static final String ACE_CONFIG_PROPERTY_RESTRICTIONS = "restrictions";
 
-    private static final String ACE_CONFIG_PROPERTY_PERMISSION = "permission";
-    private static final String ACE_CONFIG_PROPERTY_PRIVILEGES = "privileges";
-    private static final String ACE_CONFIG_PROPERTY_ACTIONS = "actions";
-    private static final String ACE_CONFIG_PROPERTY_PATH = "path";
-    private static final String ACE_CONFIG_PROPERTY_KEEP_ORDER = "keepOrder";
-    private static final String ACE_CONFIG_INITIAL_CONTENT = "initialContent";
+    protected static final String ACE_CONFIG_PROPERTY_PERMISSION = "permission";
+    protected static final String ACE_CONFIG_PROPERTY_PRIVILEGES = "privileges";
+    protected static final String ACE_CONFIG_PROPERTY_ACTIONS = "actions";
+    protected static final String ACE_CONFIG_PROPERTY_PATH = "path";
+    protected static final String ACE_CONFIG_PROPERTY_KEEP_ORDER = "keepOrder";
+    protected static final String ACE_CONFIG_INITIAL_CONTENT = "initialContent";
 
     private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF = "isMemberOf";
     private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY = "memberOf";
@@ -75,7 +74,7 @@ public class YamlConfigReader implements ConfigReader {
     @Reference
     private SlingRepository repository;
 
-    private final String ASSERTED_EXCEPTION = "assertedException";
+    protected final String ASSERTED_EXCEPTION = "assertedException";
 
     private final Pattern forLoopPattern = Pattern.compile("for (\\w+) in \\[([,/\\s\\w\\-]+)\\]", Pattern.CASE_INSENSITIVE);
 
@@ -165,7 +164,7 @@ public class YamlConfigReader implements ConfigReader {
 
     private Map<String, Set<AuthorizableConfigBean>> getAuthorizablesMap(
             List<LinkedHashMap> yamlMap, final AuthorizableValidator authorizableValidator, boolean isGroupSection)
-            throws AcConfigBeanValidationException {
+                    throws AcConfigBeanValidationException {
         final Set<String> alreadyProcessedGroups = new HashSet<String>();
         final Map<String, Set<AuthorizableConfigBean>> principalMap = new LinkedHashMap<String, Set<AuthorizableConfigBean>>();
 
@@ -208,7 +207,7 @@ public class YamlConfigReader implements ConfigReader {
             List<LinkedHashMap> aceYamlList,
             final Set<String> groupsFromCurrentConfig,
             final AceBeanValidator aceBeanValidator) throws RepositoryException,
-            AcConfigBeanValidationException {
+                    AcConfigBeanValidationException {
 
         final Map<String, Set<AceBean>> aceMap = new LinkedHashMap<String, Set<AceBean>>();
 
@@ -250,8 +249,8 @@ public class YamlConfigReader implements ConfigReader {
                 }
 
                 for (final Map<String, ?> currentAceDefinition : aceDefinitions) {
-                    final AceBean newAceBean = new AceBean();
-                    setupAceBean(principalName, currentAceDefinition,
+                    AceBean newAceBean = new AceBean();
+                    newAceBean = setupAceBean(principalName, currentAceDefinition,
                             newAceBean);
                     if (aceBeanValidator != null) {
                         aceBeanValidator.validate(newAceBean, session.getAccessControlManager());
@@ -278,10 +277,10 @@ public class YamlConfigReader implements ConfigReader {
         }
     }
 
-    private void handleWildcards(final Session session,
+    protected void handleWildcards(final Session session,
             final Map<String, Set<AceBean>> aceMap, final String principal,
             final AceBean tmpAclBean) throws InvalidQueryException,
-            RepositoryException {
+                    RepositoryException {
         // perform query using the path containing wildcards
         final String query = "/jcr:root" + tmpAclBean.getJcrPath();
         final Set<Node> result = QueryHelper.getNodes(session, query);
@@ -307,7 +306,7 @@ public class YamlConfigReader implements ConfigReader {
         }
     }
 
-    private void setupAceBean(final String principal,
+    protected AceBean setupAceBean(final String principal,
             final Map<String, ?> currentAceDefinition, final AceBean tmpAclBean) {
         tmpAclBean.setPrincipal(principal);
         tmpAclBean.setJcrPath(getMapValueAsString(currentAceDefinition,
@@ -318,11 +317,9 @@ public class YamlConfigReader implements ConfigReader {
                 currentAceDefinition, ACE_CONFIG_PROPERTY_PRIVILEGES));
         tmpAclBean.setPermission(getMapValueAsString(
                 currentAceDefinition, ACE_CONFIG_PROPERTY_PERMISSION));
-        
+
         tmpAclBean.setRestrictions(currentAceDefinition.get(ACE_CONFIG_PROPERTY_RESTRICTIONS),
                 (String) currentAceDefinition.get(ACE_CONFIG_PROPERTY_GLOB));
-        tmpAclBean.setAssertedExceptionString(getMapValueAsString(
-                currentAceDefinition, ASSERTED_EXCEPTION));
         tmpAclBean.setActions(parseActionsString(getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_PROPERTY_ACTIONS)));
 
@@ -332,11 +329,10 @@ public class YamlConfigReader implements ConfigReader {
         String initialContent = getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_INITIAL_CONTENT);
         tmpAclBean.setInitialContent(initialContent);
+        return tmpAclBean;
     }
-    
-   
 
-    private String[] parseActionsString(final String actionsStringFromConfig) {
+    protected String[] parseActionsString(final String actionsStringFromConfig) {
         final String[] empty = {};
         return StringUtils.isNotBlank(actionsStringFromConfig) ? actionsStringFromConfig.split(",") : empty;
     }
@@ -384,7 +380,7 @@ public class YamlConfigReader implements ConfigReader {
 
     }
 
-    private String getMapValueAsString(
+    protected String getMapValueAsString(
             final Map<String, ?> currentAceDefinition,
             final String propertyName) {
         if (currentAceDefinition.get(propertyName) != null) {
