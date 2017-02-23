@@ -249,9 +249,7 @@ public class YamlConfigReader implements ConfigReader {
                 }
 
                 for (final Map<String, ?> currentAceDefinition : aceDefinitions) {
-                    AceBean newAceBean = new AceBean();
-                    newAceBean = setupAceBean(principalName, currentAceDefinition,
-                            newAceBean);
+                    AceBean newAceBean = setupAceBean(principalName, currentAceDefinition);
                     if (aceBeanValidator != null) {
                         aceBeanValidator.validate(newAceBean, session.getAccessControlManager());
                     }
@@ -307,7 +305,8 @@ public class YamlConfigReader implements ConfigReader {
     }
 
     protected AceBean setupAceBean(final String principal,
-            final Map<String, ?> currentAceDefinition, final AceBean tmpAclBean) {
+            final Map<String, ?> currentAceDefinition) {
+        final AceBean tmpAclBean = new AceBean();
         tmpAclBean.setPrincipal(principal);
         tmpAclBean.setJcrPath(getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_PROPERTY_PATH));
