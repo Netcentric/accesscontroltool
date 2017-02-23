@@ -4,36 +4,40 @@ import java.util.Map;
 
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 
+/** Subclass of YamlConfigReader only used for unit tests. Creates a TestAceBean in order to set the assertedExceptionString set in test
+ * yaml files for later evaluation in unit tests.
+ *
+ * @author jochenkoschorke */
 public class TestYamlConfigReader extends YamlConfigReader {
 
     @Override
     protected AceBean setupAceBean(final String principal,
-            final Map<String, ?> currentAceDefinition, AceBean tmpAclBean) {
-        tmpAclBean = new TestAceBean();
-        tmpAclBean.setPrincipal(principal);
-        tmpAclBean.setJcrPath(getMapValueAsString(currentAceDefinition,
+            final Map<String, ?> currentAceDefinition) {
+        AceBean testAclBean = new TestAceBean();
+        testAclBean.setPrincipal(principal);
+        testAclBean.setJcrPath(getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_PROPERTY_PATH));
-        tmpAclBean.setActionsStringFromConfig(getMapValueAsString(
+        testAclBean.setActionsStringFromConfig(getMapValueAsString(
                 currentAceDefinition, ACE_CONFIG_PROPERTY_ACTIONS));
-        tmpAclBean.setPrivilegesString(getMapValueAsString(
+        testAclBean.setPrivilegesString(getMapValueAsString(
                 currentAceDefinition, ACE_CONFIG_PROPERTY_PRIVILEGES));
-        tmpAclBean.setPermission(getMapValueAsString(
+        testAclBean.setPermission(getMapValueAsString(
                 currentAceDefinition, ACE_CONFIG_PROPERTY_PERMISSION));
 
-        tmpAclBean.setRestrictions(currentAceDefinition.get(ACE_CONFIG_PROPERTY_RESTRICTIONS),
+        testAclBean.setRestrictions(currentAceDefinition.get(ACE_CONFIG_PROPERTY_RESTRICTIONS),
                 (String) currentAceDefinition.get(ACE_CONFIG_PROPERTY_GLOB));
-        ((TestAceBean) tmpAclBean).setAssertedExceptionString(getMapValueAsString(
+        ((TestAceBean) testAclBean).setAssertedExceptionString(getMapValueAsString(
                 currentAceDefinition, ASSERTED_EXCEPTION));
-        tmpAclBean.setActions(parseActionsString(getMapValueAsString(currentAceDefinition,
+        testAclBean.setActions(parseActionsString(getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_PROPERTY_ACTIONS)));
 
-        tmpAclBean.setKeepOrder(Boolean.valueOf(getMapValueAsString(currentAceDefinition,
+        testAclBean.setKeepOrder(Boolean.valueOf(getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_PROPERTY_KEEP_ORDER)));
 
         String initialContent = getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_INITIAL_CONTENT);
-        tmpAclBean.setInitialContent(initialContent);
-        return tmpAclBean;
+        testAclBean.setInitialContent(initialContent);
+        return testAclBean;
     }
 
 }
