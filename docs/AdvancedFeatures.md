@@ -127,6 +127,7 @@ Expressions are evaluated using javax.el expression language. The following util
 - subarray(array,startIndexInclusive,endIndexExclusive)
 - upperCase(str) 
 - lowerCase(str) 
+- replace(text,searchString,replacement) 
 - substringAfter(str,separator) 
 - substringBefore(str,separator) 
 - substringAfterLast(str,separator) 
@@ -134,6 +135,27 @@ Expressions are evaluated using javax.el expression language. The following util
 - contains(str,fragmentStr) 
 - endsWith(str,fragmentStr) 
 - startsWith(str,fragmentStr) 
+
+### Variables (since 1.9.3)
+
+Sometimes it can be useful to declare variables to reuse values or to give certain strings an expressive name:
+
+```
+- DEF groupPrefix="xyz"
+
+- FOR site IN CHILDREN OF /content/myPrj:
+
+    - DEF groupToken="${groupPrefix}-${site.name}"
+
+    - cr-${groupToken}:
+           
+       - name: Content Reader ${site.title}
+         isMemberOf: 
+         path: /home/groups/${groupToken}
+
+```
+
+DEF entries can be used inside and outside of loops and conditional entries.
 
 ## Configure permissions for anonymous (since 1.8.2)
 

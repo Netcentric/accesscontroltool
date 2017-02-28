@@ -21,8 +21,10 @@ import biz.netcentric.cq.tools.actool.helper.Constants;
 
 public class AuthorizableConfigBean implements AcDumpElement {
 
-    private String principalID;
+    private String principalID; // this should really be called authorizableId (as it is in repo)
     private String principalName;
+
+    private String name; // (non-technical) name as used in profile
     private String description;
 
     private String[] memberOf;
@@ -34,6 +36,8 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private String path;
     private String password;
 
+    private String externalId;
+
     private String profileContent;
     private String preferencesContent;
     
@@ -41,6 +45,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     private boolean isGroup = true;
     private boolean isSystemUser = false;
+
 
     public String getPrincipalID() {
         return principalID;
@@ -58,6 +63,13 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.principalName = principalName;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public String getPath() {
         return path;
@@ -83,6 +95,14 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.password = password;
     }
     
+    public String getExternalId() {
+        return externalId;
+    }
+
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
+    }
+
     public String getProfileContent() {
         return profileContent;
     }

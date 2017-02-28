@@ -140,6 +140,7 @@ public class AceServiceImpl implements AceService {
             installConfigurationFiles(history, newestConfigurations, authorizableInstallationHistorySet, restrictedToPaths);
         } catch (AuthorizableCreatorException e) {
             history.addError(e.toString());
+            LOG.warn("Exception during installation of authorizables (no rollback), e=" + e, e);
             // here no rollback of authorizables necessary since session wasn't
             // saved
         } catch (Exception e) {
@@ -240,34 +241,19 @@ public class AceServiceImpl implements AceService {
     }
 
 
-
-    private Set<String> collectAuthorizablesToBeMigrated(Map<String, Set<AuthorizableConfigBean>> authorizablesMapfromConfig) {
-        Set<String> authorizablesToBeMigrated = new HashSet<String>();
-        for (String principalStr : authorizablesMapfromConfig.keySet()) {
-            Set<AuthorizableConfigBean> authorizableConfigBeans = authorizablesMapfromConfig.get(principalStr);
-            for (AuthorizableConfigBean authorizableConfigBean : authorizableConfigBeans) {
-                String migrateFrom = authorizableConfigBean.getMigrateFrom();
-                if (StringUtils.isNotBlank(migrateFrom)) {
-                    authorizablesToBeMigrated.add(migrateFrom);
-                }
-            }
-        }
-        return authorizablesToBeMigrated;
-    }
-
-    private void removeAcesForPathsNotInConfig(AcInstallationHistoryPojo history, Session session, Set<String> authorizablesInConfig,
+    private void removeAcesForPathsNotInConfig(AcInstallationHistoryPojo history, Session session, Set<String> principalsInConfig,
             Map<String, Set<AceBean>> repositoryDumpAceMap, Set<String> acePathsFromConfig)
             throws UnsupportedRepositoryOperationException, RepositoryException {
 
         int countAcesCleaned = 0;
         int countPathsCleaned = 0;
-        Set<String> relevantPathsForCleanup = getRelevantPathsForAceCleanup(authorizablesInConfig, repositoryDumpAceMap,
+        Set<String> relevantPathsForCleanup = getRelevantPathsForAceCleanup(principalsInConfig, repositoryDumpAceMap,
                 acePathsFromConfig);
         
         for (String relevantPath: relevantPathsForCleanup) {
-            // delete ACE if authorizable *is* in config, but the path *is not* in config
-            int countRemoved = AccessControlUtils.deleteAllEntriesForAuthorizableFromACL(session,
-                    relevantPath, authorizablesInConfig.toArray(new String[authorizablesInConfig.size()]));
+            // delete ACE if principal *is* in config, but the path *is not* in config
+            int countRemoved = AccessControlUtils.deleteAllEntriesForPrincipalsFromACL(session,
+                    relevantPath, principalsInConfig.toArray(new String[principalsInConfig.size()]));
             String message = "Cleaned (deleted) " + countRemoved + " ACEs of path " + relevantPath
                     + " from all ACEs for configured authorizables";
             LOG.info(message);
@@ -296,6 +282,7 @@ public class AceServiceImpl implements AceService {
             Set<AceBean> existingAcl = entry.getValue();
             for (AceBean existingAceFromDump : existingAcl) {
                 String jcrPath = existingAceFromDump.getJcrPath();
+                String principalName = existingAceFromDump.getPrincipalName();
 
                 if (acePathsFromConfig.contains(jcrPath)) {
                     LOG.debug("Path {} is explicitly listed in config and hence that ACL is handled later, "
@@ -303,9 +290,9 @@ public class AceServiceImpl implements AceService {
                     continue;
                 }
 
-                if (!authorizablesInConfig.contains(existingAceFromDump.getPrincipalName())) {
-                    LOG.debug("Authorizable {} is not contained in config, hence not cleaning its ACE from non-config-contained "
-                            + "path {}", existingAceFromDump.getPrincipalName(), jcrPath);
+                if (!authorizablesInConfig.contains(principalName)) {
+                    LOG.debug("Principal {} is not contained in config, hence not cleaning its ACE from non-config-contained "
+                            + "path {}", principalName, jcrPath);
                     continue;
                 }
                 relevantPathsForCleanup.add(jcrPath);
@@ -338,18 +325,43 @@ public class AceServiceImpl implements AceService {
         return isRelevant;
     }
 
-    private Set<String> getAuthorizablesToRemoveAcesFor(Map<String, Set<AuthorizableConfigBean>> authorizablesMapfromConfig) {
-        Set<String> authorizablesToRemoveAcesFor = new HashSet<String>(authorizablesMapfromConfig.keySet());
-        Set<String> authorizablesToBeMigrated = collectAuthorizablesToBeMigrated(authorizablesMapfromConfig);
-        Collection<?> invalidAuthorizablesInConfig = CollectionUtils.intersection(authorizablesToRemoveAcesFor, authorizablesToBeMigrated);
-        if (!invalidAuthorizablesInConfig.isEmpty()) {
+    private Set<String> getPrincipalNamesToRemoveAcesFor(Map<String, Set<AuthorizableConfigBean>> authorizablesMapfromConfig) {
+        Set<String> principalsToRemoveAcesFor = collectPrincipals(authorizablesMapfromConfig);
+        Set<String> principalsToBeMigrated = collectPrincipalsToBeMigrated(authorizablesMapfromConfig);
+        Collection<?> invalidPrincipalsInConfig = CollectionUtils.intersection(principalsToRemoveAcesFor, principalsToBeMigrated);
+        if (!invalidPrincipalsInConfig.isEmpty()) {
             String message = "If migrateFrom feature is used, groups that shall be migrated from must not be present in regular configuration (offending groups: "
-                    + invalidAuthorizablesInConfig + ")";
+                    + invalidPrincipalsInConfig + ")";
             LOG.error(message);
             throw new IllegalArgumentException(message);
         }
-        authorizablesToRemoveAcesFor.addAll(authorizablesToBeMigrated);
-        return authorizablesToRemoveAcesFor;
+        principalsToRemoveAcesFor.addAll(principalsToBeMigrated);
+        return principalsToRemoveAcesFor;
+    }
+
+    private Set<String> collectPrincipalsToBeMigrated(Map<String, Set<AuthorizableConfigBean>> authorizablesMapfromConfig) {
+        Set<String> principalsToBeMigrated = new HashSet<String>();
+        for (String principalStr : authorizablesMapfromConfig.keySet()) {
+            Set<AuthorizableConfigBean> authorizableConfigBeans = authorizablesMapfromConfig.get(principalStr);
+            for (AuthorizableConfigBean authorizableConfigBean : authorizableConfigBeans) {
+                String migrateFrom = authorizableConfigBean.getMigrateFrom();
+                if (StringUtils.isNotBlank(migrateFrom)) {
+                    principalsToBeMigrated.add(migrateFrom);
+                }
+            }
+        }
+        return principalsToBeMigrated;
+    }
+
+    private Set<String> collectPrincipals(Map<String, Set<AuthorizableConfigBean>> authorizablesMapfromConfig) {
+        Set<String> principals = new HashSet<String>();
+        for (String authorizableId : authorizablesMapfromConfig.keySet()) {
+            Set<AuthorizableConfigBean> authorizableConfigBeans = authorizablesMapfromConfig.get(authorizableId);
+            for (AuthorizableConfigBean authorizableConfigBean : authorizableConfigBeans) {
+                principals.add(authorizableConfigBean.getPrincipalName());
+            }
+        }
+        return principals;
     }
 
     private void installAces(AcInstallationHistoryPojo history,
@@ -366,8 +378,8 @@ public class AceServiceImpl implements AceService {
         try {
             session = repository.loginAdministrative(null);
 
-            Set<String> authorizablesToRemoveAcesFor = getAuthorizablesToRemoveAcesFor(acConfiguration.getAuthorizablesConfig());
-            removeAcesForPathsNotInConfig(history, session, authorizablesToRemoveAcesFor, repositoryDumpAceMap,
+            Set<String> principalsToRemoveAcesFor = getPrincipalNamesToRemoveAcesFor(acConfiguration.getAuthorizablesConfig());
+            removeAcesForPathsNotInConfig(history, session, principalsToRemoveAcesFor, repositoryDumpAceMap,
                     collectJcrPaths(aceMapFromConfig));
 
             Map<String, Set<AceBean>> filteredPathBasedAceMapFromConfig = filterForRestrictedPaths(pathBasedAceMapFromConfig,
@@ -378,7 +390,7 @@ public class AceServiceImpl implements AceService {
                     + " paths in content nodes...";
             LOG.info(msg);
             history.addMessage(msg);
-            aceBeanInstaller.installPathBasedACEs(filteredPathBasedAceMapFromConfig, session, history, authorizablesToRemoveAcesFor,
+            aceBeanInstaller.installPathBasedACEs(filteredPathBasedAceMapFromConfig, session, history, principalsToRemoveAcesFor,
                     intermediateSaves);
 
             // if everything went fine (no exceptions), save the session

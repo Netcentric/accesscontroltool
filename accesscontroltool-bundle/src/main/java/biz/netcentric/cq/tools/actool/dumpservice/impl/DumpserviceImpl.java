@@ -48,6 +48,7 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
+import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.Query;
@@ -63,6 +64,8 @@ import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.authorizableutils.impl.AuthorizableCreatorServiceImpl;
+import biz.netcentric.cq.tools.actool.authorizableutils.impl.PrincipalImpl;
 import biz.netcentric.cq.tools.actool.comparators.AcePathComparator;
 import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
 import biz.netcentric.cq.tools.actool.comparators.AuthorizableBeanIDComparator;
@@ -306,7 +309,7 @@ public class DumpserviceImpl implements Dumpservice {
             userIds = aclDumpMap.keySet();
 
             for (String id : userIds) {
-                Authorizable authorizable = um.getAuthorizable(id);
+                Authorizable authorizable = um.getAuthorizable(new PrincipalImpl(id));
                 if (!authorizable.isGroup()) {
                     User user = (User) authorizable;
                     usersFromACEs.add(user);
@@ -378,10 +381,10 @@ public class DumpserviceImpl implements Dumpservice {
         // paths of jcr:root node
         for (Node node : resultNodeSet) {
             try {
-                accessControBeanSet.add(new AclBean(AccessControlUtils
-                        .getAccessControlList(session, node.getParent()
-                                .getPath()),
-                        node.getParent().getPath()));
+                JackrabbitAccessControlList jackrabbitAcl = AccessControlUtils
+                        .getAccessControlList(session, node.getParent().getPath());
+                AclBean aclBean = new AclBean(jackrabbitAcl, node.getParent().getPath());
+                accessControBeanSet.add(aclBean);
             } catch (AccessDeniedException e) {
                 LOG.error("AccessDeniedException: {}", e);
             } catch (ItemNotFoundException e) {
@@ -456,8 +459,7 @@ public class DumpserviceImpl implements Dumpservice {
                         }
                     }
 
-                    Authorizable authorizable = um.getAuthorizable(tmpAceBean
-                            .getPrincipalName());
+                    Authorizable authorizable = um.getAuthorizable(new PrincipalImpl(tmpAceBean.getPrincipalName()));
 
                     // if this group exists under home
                     if (authorizable != null) {
@@ -510,19 +512,13 @@ public class DumpserviceImpl implements Dumpservice {
         }
     }
 
-    /** removes the name of the group node itself (groupID) from the intermediate path
+    /** Returns the parent of the group path.
      *
      * @param intermediatePath
-     * @param groupID
-     * @return corrected path if groupID was found at the end of the intermediatePath, otherwise original path */
-    private String getIntermediatePath(String intermediatePath,
-            final String groupID) {
-        int index = StringUtils.lastIndexOf(intermediatePath, "/" + groupID);
-        if (index != -1) {
-            intermediatePath = intermediatePath.replace(
-                    intermediatePath.substring(index), "");
-        }
-        return intermediatePath;
+     * @return corrected path */
+    private String getIntermediatePath(String intermediatePath) {
+        String result = StringUtils.substringBeforeLast(intermediatePath, "/");
+        return result;
     }
 
     public void returnAuthorizableDumpAsFile(
@@ -598,8 +594,16 @@ public class DumpserviceImpl implements Dumpservice {
             for (User user : usersFromACEs) {
                 AuthorizableConfigBean newBean = new AuthorizableConfigBean();
                 newBean.setPrincipalID(user.getID());
-                String intermediatePath = getIntermediatePath(user.getPath(),
-                        user.getID());
+
+                String userProfileName = AcHelper.valuesToString(user.getProperty("profile/givenName"))
+                        + " " + AcHelper.valuesToString(user.getProperty("profile/familyName"));
+                if (StringUtils.isBlank(userProfileName)) {
+                    userProfileName = user.getID();
+                }
+
+                newBean.setName(userProfileName);
+
+                String intermediatePath = getIntermediatePath(user.getPath());
                 newBean.setPath(intermediatePath);
                 newBean.setIsGroup(false);
                 new HashSet<Authorizable>();
@@ -638,9 +642,18 @@ public class DumpserviceImpl implements Dumpservice {
             if (group != null) {
                 AuthorizableConfigBean bean = new AuthorizableConfigBean();
                 bean.setPrincipalID(group.getID());
+
+                String groupName = StringUtils.defaultIfEmpty(AcHelper.valuesToString(group.getProperty("profile/givenName")),
+                        group.getID());
+                bean.setName(groupName);
+
+                if (group.hasProperty(AuthorizableCreatorServiceImpl.REP_EXTERNAL_ID)) {
+                    bean.setExternalId(AcHelper.valuesToString(group.getProperty(AuthorizableCreatorServiceImpl.REP_EXTERNAL_ID)));
+                }
+
                 addDeclaredMembers(group, bean);
                 bean.setIsGroup(group.isGroup());
-                bean.setPath(getIntermediatePath(group.getPath(), group.getID()));
+                bean.setPath(getIntermediatePath(group.getPath()));
 
                 groupBeans.add(bean);
             } else {

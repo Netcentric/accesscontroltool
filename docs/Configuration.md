@@ -40,6 +40,7 @@ property | comment | required
 --- | --- | ---
 name | Name of the group as shown in UI | optional, if empty group id is taken
 description | Description of the group | optional
+externalId | Required for AC setups since AEM 6.2 SP1 that synchronize groups from LDAP to AEM. The value has to be in format LDAP-DN;IDP-NAME where LDAP-DN is the full distinguished name and IDP-NAME is configured in OSGI config PID org.apache.jackrabbit.oak.security.authentication.ldap.impl.LdapIdentityProvider property "provider-name". Example: `externalId: "cn=group-name,ou=mydepart,ou=Groups,dc=comp,dc=com;IDPNAME"`. Since v1.9.3 | optional
 path | Path of the group either relative or absolute | optional
 isMemberOf | comma separated list of groups this groups is a member of | optional
 members | comma separated list of groups that are member of this group (allows to specify the relationshipo from the other side, however prefer `isMemberOf` over members if possible) | optional
