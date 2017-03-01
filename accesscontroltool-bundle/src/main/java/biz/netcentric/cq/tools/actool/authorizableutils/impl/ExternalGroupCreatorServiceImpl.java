@@ -37,6 +37,12 @@ import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
+/** SCR component to create external groups (as configured using "externalId"). Only available if package
+ * o.a.j.oak.spi.security.authentication.external.basic (optional OSGi import) is available (this is the case starting from AEM 6.1+SP1, the
+ * functionality is crucial since the change in AEM 6.2 + oak 1.4.7 (see #140).
+ * 
+ * This service is only referenced from AuthorizableCreatorServiceImpl that gracefully handles the situation when this service does not
+ * exist, e.g. for AEM 6.0. */
 @Service(ExternalGroupCreatorServiceImpl.class)
 @Component(metatype = false)
 public class ExternalGroupCreatorServiceImpl {
