@@ -43,7 +43,7 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
                 .append("\n");
         sb.append("\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_FIRST_PROPERTY))
-                .append("- name: ").append("\n");
+                .append("- name: '").append(authorizableConfigBean.getName()).append("'\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
                 .append("memberOf: "
                         + authorizableConfigBean.getMemberOfString())
@@ -51,10 +51,13 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
                 .append("path: " + authorizableConfigBean.getPath())
                 .append("\n");
-        sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
-                .append("isGroup: " + "'" + authorizableConfigBean.isGroup()
-                        + "'")
-                .append("\n");
+
+        if (StringUtils.isNotBlank(authorizableConfigBean.getExternalId())) {
+            sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
+                    .append("externalId: " + authorizableConfigBean.getExternalId())
+                    .append("\n");
+        }
+
         sb.append("\n");
     }
 

@@ -207,4 +207,17 @@ public class AcHelper {
         return pathBasedAceMap;
     }
 
+    public static String valuesToString(Value[] propertyValues) throws RepositoryException {
+        if (propertyValues == null) {
+            return null;
+        } else if (propertyValues.length == 0) {
+            return null;
+        } else if (propertyValues.length == 1) {
+            return propertyValues[0].getString();
+        } else {
+            throw new IllegalArgumentException(
+                    "Unexpectedly received more than one value for a property that is expected to be non-multiple");
+        }
+    }
+
 }
