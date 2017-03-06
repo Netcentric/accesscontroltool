@@ -38,6 +38,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
 import biz.netcentric.cq.tools.actool.configreader.TestAceBean;
+import biz.netcentric.cq.tools.actool.configreader.TestAuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configreader.TestYamlConfigReader;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
@@ -98,7 +99,7 @@ public class BeanValidatorsTest {
             assertEquals(
                     ValidatorTestHelper.getSimpleValidationException(authorizableBean,
                             authorizableValidator),
-                    authorizableBean.getAssertedExceptionString());
+                    ((TestAuthorizableConfigBean) authorizableBean).getAssertedExceptionString());
         }
     }
 
@@ -108,7 +109,8 @@ public class BeanValidatorsTest {
                 groupsFromConfig);
         for (final AceBean aceBean : aceBeanList) {
             assertEquals("Problem in bean " + aceBean, ((TestAceBean) aceBean).getAssertedExceptionString(),
-                    ValidatorTestHelper.getSimpleValidationException(aceBean, aceBeanValidator, accessControlManager));
+                    ValidatorTestHelper.getSimpleValidationException(aceBean, aceBeanValidator,
+                            accessControlManager));
         }
     }
 
