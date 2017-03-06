@@ -32,7 +32,6 @@ public class TestYamlConfigReader extends YamlConfigReader {
         super.setupAuthorizableBean(authorizableConfigBean, currentPrincipalDataMap, authorizableId, isGroupSection);
         ((TestAuthorizableConfigBean) authorizableConfigBean).setAssertedExceptionString(getMapValueAsString(
                 currentPrincipalDataMap, ASSERTED_EXCEPTION));
-
     }
 
     @Override
