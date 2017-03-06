@@ -63,6 +63,7 @@ public class YamlConfigReader implements ConfigReader {
     private static final String GROUP_CONFIG_PROPERTY_PASSWORD = "password";
     private static final String GROUP_CONFIG_PROPERTY_NAME = "name";
     private static final String GROUP_CONFIG_PROPERTY_DESCRIPTION = "description";
+    private static final String GROUP_CONFIG_PROPERTY_EXTERNAL_ID = "externalId";
 
     private static final String GROUP_CONFIG_PROPERTY_MIGRATE_FROM = "migrateFrom";
 
@@ -341,11 +342,24 @@ public class YamlConfigReader implements ConfigReader {
             final Map<String, String> currentPrincipalDataMap,
             final String authorizableId,
             boolean isGroupSection) {
+
         authorizableConfigBean.setPrincipalID(authorizableId);
-        authorizableConfigBean.setPrincipalName(getMapValueAsString(
-                currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_NAME));
+
+        authorizableConfigBean.setName(getMapValueAsString(currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_NAME));
+
         authorizableConfigBean.setDescription(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_DESCRIPTION));
+        
+        String externalIdVal = getMapValueAsString(currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_EXTERNAL_ID);
+        if (StringUtils.isNotBlank(externalIdVal)) {
+            authorizableConfigBean.setExternalId(externalIdVal);
+            // if an externalId is used, the principalName differs from authorizableId
+            String principalName = StringUtils.substringBeforeLast(externalIdVal, ";");
+            authorizableConfigBean.setPrincipalName(principalName);
+        } else {
+            // default: rep:authorizableId and rep:principalName are equal
+            authorizableConfigBean.setPrincipalName(authorizableId);
+        }
 
         authorizableConfigBean.setMemberOfString(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBER_OF));

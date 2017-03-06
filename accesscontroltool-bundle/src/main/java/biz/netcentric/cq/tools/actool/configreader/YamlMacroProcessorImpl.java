@@ -36,6 +36,8 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
             Pattern.CASE_INSENSITIVE);
     private final Pattern ifPattern = Pattern.compile("if +(\\$\\{[^\\}]+\\})", Pattern.CASE_INSENSITIVE);
 
+    private final Pattern variableDefPattern = Pattern.compile("DEF +([a-z0-9]+)=\"([^\"]*)\"", Pattern.CASE_INSENSITIVE);
+
     YamlMacroElEvaluator elEvaluator = new YamlMacroElEvaluator();
 
     @Reference
@@ -56,6 +58,15 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
         } else if (o instanceof String) {
             String str = (String) o;
 
+            Matcher variableDefMatcher = variableDefPattern.matcher(str);
+            if (variableDefMatcher.find()) {
+                String varName = variableDefMatcher.group(1);
+                String varValue = variableDefMatcher.group(2);
+                String varValueEvaluated = elEvaluator.evaluateEl(varValue, String.class, variables);
+                variables.put(varName, varValueEvaluated);
+                return null;
+            }
+            
             String result = elEvaluator.evaluateEl(str, String.class, variables);
             return result;
 
@@ -87,11 +98,13 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
                     // map is skipped and value returned directly
                     return evaluateIfStatement(variables, objVal, ifMatcher, history);
                 }
-
+                
                 // default: transform both key and value
                 Object transformedKey = transform(key, variables, history);
                 Object transformedVal = transform(objVal, variables, history);
-                resultMap.put(transformedKey, transformedVal);
+                if (transformedVal != null) {
+                    resultMap.put(transformedKey, transformedVal);
+                }
 
             }
             return resultMap;
@@ -131,7 +144,9 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
     }
 
     private void addToListWithPotentialUnfolding(List transformedList, Object transformedObject) {
-        if (transformedObject instanceof ToBeUnfoldedList) {
+        if(transformedObject==null) {
+            return; // this happens for vars with DEF - those are evaluated already, entry must be left out
+        } else if (transformedObject instanceof ToBeUnfoldedList) {
             // add entries individually (for for loops)
             ToBeUnfoldedList toBeUnfoldedList = (ToBeUnfoldedList) transformedObject;
             for (Object object : toBeUnfoldedList) {
