@@ -61,7 +61,7 @@ public class YamlConfigReader implements ConfigReader {
     private static final String GROUP_CONFIG_PROPERTY_MEMBERS = "members";
     private static final String GROUP_CONFIG_PROPERTY_PATH = "path";
     private static final String GROUP_CONFIG_PROPERTY_PASSWORD = "password";
-    private static final String GROUP_CONFIG_PROPERTY_NAME = "name";
+    protected static final String GROUP_CONFIG_PROPERTY_NAME = "name";
     private static final String GROUP_CONFIG_PROPERTY_DESCRIPTION = "description";
     private static final String GROUP_CONFIG_PROPERTY_EXTERNAL_ID = "externalId";
 
@@ -188,7 +188,7 @@ public class YamlConfigReader implements ConfigReader {
             if ((currentPrincipalData != null) && !currentPrincipalData.isEmpty()) {
 
                 for (final Map<String, String> currentPrincipalDataMap : currentPrincipalData) {
-                    final AuthorizableConfigBean tmpPrincipalConfigBean = new AuthorizableConfigBean();
+                    final AuthorizableConfigBean tmpPrincipalConfigBean = getNewAuthorizableConfigBean();
                     setupAuthorizableBean(tmpPrincipalConfigBean, currentPrincipalDataMap, currentPrincipal, isGroupSection);
                     if (authorizableValidator != null) {
                         authorizableValidator.validate(tmpPrincipalConfigBean);
@@ -248,7 +248,8 @@ public class YamlConfigReader implements ConfigReader {
                 }
 
                 for (final Map<String, ?> currentAceDefinition : aceDefinitions) {
-                    AceBean newAceBean = setupAceBean(principalName, currentAceDefinition);
+                    AceBean newAceBean = getNewAceBean();
+                    setupAceBean(principalName, currentAceDefinition, newAceBean);
                     if (aceBeanValidator != null) {
                         aceBeanValidator.validate(newAceBean, session.getAccessControlManager());
                     }
@@ -303,9 +304,16 @@ public class YamlConfigReader implements ConfigReader {
         }
     }
 
-    protected AceBean setupAceBean(final String principal,
-            final Map<String, ?> currentAceDefinition) {
-        final AceBean tmpAclBean = new AceBean();
+    protected AceBean getNewAceBean() {
+        return new AceBean();
+    }
+
+    protected AuthorizableConfigBean getNewAuthorizableConfigBean() {
+        return new AuthorizableConfigBean();
+    }
+
+    protected void setupAceBean(final String principal,
+            final Map<String, ?> currentAceDefinition, final AceBean tmpAclBean) {
         tmpAclBean.setPrincipal(principal);
         tmpAclBean.setJcrPath(getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_PROPERTY_PATH));
@@ -327,7 +335,6 @@ public class YamlConfigReader implements ConfigReader {
         String initialContent = getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_INITIAL_CONTENT);
         tmpAclBean.setInitialContent(initialContent);
-        return tmpAclBean;
     }
 
     protected String[] parseActionsString(final String actionsStringFromConfig) {
@@ -335,12 +342,11 @@ public class YamlConfigReader implements ConfigReader {
         return StringUtils.isNotBlank(actionsStringFromConfig) ? actionsStringFromConfig.split(",") : empty;
     }
 
-    private void setupAuthorizableBean(
+    protected void setupAuthorizableBean(
             final AuthorizableConfigBean authorizableConfigBean,
             final Map<String, String> currentPrincipalDataMap,
             final String authorizableId,
             boolean isGroupSection) {
-
         authorizableConfigBean.setPrincipalID(authorizableId);
 
         authorizableConfigBean.setName(getMapValueAsString(currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_NAME));
@@ -385,10 +391,6 @@ public class YamlConfigReader implements ConfigReader {
                 currentPrincipalDataMap, USER_CONFIG_PROFILE_CONTENT));
         authorizableConfigBean.setPreferencesContent(getMapValueAsString(
                 currentPrincipalDataMap, USER_CONFIG_PREFERENCES_CONTENT));
-
-        authorizableConfigBean.setAssertedExceptionString(getMapValueAsString(
-                currentPrincipalDataMap, ASSERTED_EXCEPTION));
-
     }
 
     protected String getMapValueAsString(
