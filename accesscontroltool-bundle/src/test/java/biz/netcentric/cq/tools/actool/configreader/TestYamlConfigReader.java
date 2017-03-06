@@ -10,6 +10,8 @@ import biz.netcentric.cq.tools.actool.configmodel.AceBean;
  * @author jochenkoschorke */
 public class TestYamlConfigReader extends YamlConfigReader {
 
+    protected final String ASSERTED_EXCEPTION = "assertedException";
+
     @Override
     protected AceBean setupAceBean(final String principal,
             final Map<String, ?> currentAceDefinition) {

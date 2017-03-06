@@ -75,8 +75,6 @@ public class YamlConfigReader implements ConfigReader {
     @Reference
     private SlingRepository repository;
 
-    protected final String ASSERTED_EXCEPTION = "assertedException";
-
     private final Pattern forLoopPattern = Pattern.compile("for (\\w+) in \\[([,/\\s\\w\\-]+)\\]", Pattern.CASE_INSENSITIVE);
 
     @Override
@@ -165,7 +163,7 @@ public class YamlConfigReader implements ConfigReader {
 
     private Map<String, Set<AuthorizableConfigBean>> getAuthorizablesMap(
             List<LinkedHashMap> yamlMap, final AuthorizableValidator authorizableValidator, boolean isGroupSection)
-                    throws AcConfigBeanValidationException {
+            throws AcConfigBeanValidationException {
         final Set<String> alreadyProcessedGroups = new HashSet<String>();
         final Map<String, Set<AuthorizableConfigBean>> principalMap = new LinkedHashMap<String, Set<AuthorizableConfigBean>>();
 
@@ -208,7 +206,7 @@ public class YamlConfigReader implements ConfigReader {
             List<LinkedHashMap> aceYamlList,
             final Set<String> groupsFromCurrentConfig,
             final AceBeanValidator aceBeanValidator) throws RepositoryException,
-                    AcConfigBeanValidationException {
+            AcConfigBeanValidationException {
 
         final Map<String, Set<AceBean>> aceMap = new LinkedHashMap<String, Set<AceBean>>();
 
@@ -279,7 +277,7 @@ public class YamlConfigReader implements ConfigReader {
     protected void handleWildcards(final Session session,
             final Map<String, Set<AceBean>> aceMap, final String principal,
             final AceBean tmpAclBean) throws InvalidQueryException,
-                    RepositoryException {
+            RepositoryException {
         // perform query using the path containing wildcards
         final String query = "/jcr:root" + tmpAclBean.getJcrPath();
         final Set<Node> result = QueryHelper.getNodes(session, query);
@@ -349,7 +347,7 @@ public class YamlConfigReader implements ConfigReader {
 
         authorizableConfigBean.setDescription(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_DESCRIPTION));
-        
+
         String externalIdVal = getMapValueAsString(currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_EXTERNAL_ID);
         if (StringUtils.isNotBlank(externalIdVal)) {
             authorizableConfigBean.setExternalId(externalIdVal);
