@@ -107,12 +107,6 @@ public class AceServiceImpl implements AceService {
     public void activate(final Map<?, ?> properties)
             throws Exception {
         LOG.debug("Activated AceService!");
-        modified(properties);
-    }
-
-    @Modified
-    public void modified(final Map<?, ?> properties) {
-        LOG.debug("Modified AceService!");
         configurationPath = PropertiesUtil.toString(properties.get(PROPERTY_CONFIGURATION_PATH), "");
         LOG.info("Conifg " + PROPERTY_CONFIGURATION_PATH + "=" + configurationPath);
         intermediateSaves = PropertiesUtil.toBoolean(properties.get(PROPERTY_INTERMEDIATE_SAVES), false);
