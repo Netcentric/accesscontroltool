@@ -11,6 +11,7 @@ package biz.netcentric.cq.tools.actool.configreader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -154,7 +155,8 @@ public class YamlConfigReader implements ConfigReader {
     private Object getConfigSection(final String sectionName, final Collection yamlList) {
         final List<LinkedHashMap<?, ?>> yamList = new ArrayList<LinkedHashMap<?, ?>>(yamlList);
         for (final LinkedHashMap<?, ?> currMap : yamList) {
-            if (sectionName.equals(currMap.keySet().iterator().next())) {
+            Iterator<?> keyIt = currMap.keySet().iterator();
+            if (keyIt.hasNext() && sectionName.equals(keyIt.next())) {
                 return currMap.get(sectionName);
             }
         }
