@@ -29,13 +29,14 @@ import org.mockito.Mock;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
-import biz.netcentric.cq.tools.actool.configreader.YamlConfigReader;
+import biz.netcentric.cq.tools.actool.configreader.TestAceBean;
+import biz.netcentric.cq.tools.actool.configreader.TestYamlConfigReader;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
 import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
 
 /** Contains unit tests checking support of different restrictions
- * 
+ *
  * @author jochenkoschorkej */
 public class RestrictionValidationTest {
 
@@ -52,7 +53,7 @@ public class RestrictionValidationTest {
     AccessControlManager accessControlManager;
 
     @InjectMocks
-    ConfigReader yamlConfigReader = new YamlConfigReader();
+    ConfigReader yamlConfigReader = new TestYamlConfigReader();
 
     List<LinkedHashMap> aclList;
     Set<String> groupsFromConfig;
@@ -112,8 +113,9 @@ public class RestrictionValidationTest {
         final AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(
                 groupsFromConfig);
         for (final AceBean aceBean : aceBeanList) {
-            assertEquals("Problem in bean " + aceBean, aceBean.getAssertedExceptionString(),
+            assertEquals("Problem in bean " + aceBean, ((TestAceBean) aceBean).getAssertedExceptionString(),
                     ValidatorTestHelper.getSimpleValidationException(aceBean, aceBeanValidator, accessControlManager));
+
         }
     }
 
