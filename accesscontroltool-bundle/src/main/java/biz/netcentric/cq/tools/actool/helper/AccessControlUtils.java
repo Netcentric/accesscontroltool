@@ -9,8 +9,6 @@
 package biz.netcentric.cq.tools.actool.helper;
 
 import java.security.Principal;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -205,28 +203,7 @@ public class AccessControlUtils {
         }
     }
 
-    /** Converts the given privilege names into a set of privilege objects.
-     * 
-     * @param privNames (may be {@code null}
-     * @param acMgr
-     * @return a set of privileges (never {@code null}, but may be empty set)
-     * @throws RepositoryException */
-    public static Set<Privilege> getPrivilegeSet(String[] privNames,
-            AccessControlManager acMgr) throws RepositoryException {
-        if (privNames == null) {
-            return Collections.emptySet();
-        }
-        final Set privileges = new HashSet(privNames.length);
-        for (final String name : privNames) {
-            final Privilege p = acMgr.privilegeFromName(name);
-            if (p.isAggregate()) {
-                privileges.addAll(Arrays.asList(p.getAggregatePrivileges()));
-            } else {
-                privileges.add(p);
-            }
-        }
-        return privileges;
-    }
+
 
     /** @param session admin session
      * @param path valid node path in CRX

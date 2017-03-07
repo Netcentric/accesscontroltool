@@ -337,7 +337,7 @@ public class YamlConfigReader implements ConfigReader {
         tmpAclBean.setInitialContent(initialContent);
     }
 
-    protected String[] parseActionsString(final String actionsStringFromConfig) {
+    public static String[] parseActionsString(final String actionsStringFromConfig) {
         final String[] empty = {};
         return StringUtils.isNotBlank(actionsStringFromConfig) ? actionsStringFromConfig.split(",") : empty;
     }

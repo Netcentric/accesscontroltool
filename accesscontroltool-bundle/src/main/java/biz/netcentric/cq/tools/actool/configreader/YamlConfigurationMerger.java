@@ -8,6 +8,8 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
+import static biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo.msHumanReadable;
+
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -17,6 +19,7 @@ import java.util.Set;
 
 import javax.jcr.RepositoryException;
 
+import org.apache.commons.lang.time.StopWatch;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
@@ -59,6 +62,9 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             final AcInstallationHistoryPojo history,
             final ConfigReader configReader) throws RepositoryException,
                     AcConfigBeanValidationException {
+
+        StopWatch sw = new StopWatch();
+        sw.start();
 
         final GlobalConfiguration globalConfiguration = new GlobalConfiguration();
         final Map<String, Set<AuthorizableConfigBean>> mergedAuthorizablesMapfromConfig = new LinkedHashMap<String, Set<AuthorizableConfigBean>>();
@@ -167,6 +173,10 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
 
         history.setMergedAndProcessedConfig(
                 "# Merged configuration of " + configFileContentByFilename.size() + " files \n" + yamlParser.dump(acConfiguration));
+
+        String msg = "Loaded configuration in " + msHumanReadable(sw.getTime());
+        LOG.info(msg);
+        history.addMessage(msg);
 
         return acConfiguration;
     }

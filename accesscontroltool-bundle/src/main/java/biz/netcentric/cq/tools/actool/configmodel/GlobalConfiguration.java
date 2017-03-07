@@ -20,9 +20,11 @@ public class GlobalConfiguration {
 
     public static final String KEY_MIN_REQUIRED_VERSION = "minRequiredVersion";
     public static final String KEY_ALLOW_EXTERNAL_GROUP_NAMES_REGEX = "allowExternalGroupNamesRegEx";
+    public static final String KEY_INSTALL_ACLS_INCREMENTALLY = "installAclsIncrementally";
 
     private Pattern allowExternalGroupNamesRegEx;
     private String minRequiredVersion;
+    private boolean installAclsIncrementally = true;
 
     public GlobalConfiguration() {
     }
@@ -32,6 +34,9 @@ public class GlobalConfiguration {
         if (globalConfigMap != null) {
             setAllowExternalGroupNamesRegEx((String) globalConfigMap.get(KEY_ALLOW_EXTERNAL_GROUP_NAMES_REGEX));
             setMinRequiredVersion((String) globalConfigMap.get(KEY_MIN_REQUIRED_VERSION));
+            if (globalConfigMap.containsKey(KEY_INSTALL_ACLS_INCREMENTALLY)) {
+                setInstallAclsIncrementally(Boolean.valueOf(globalConfigMap.get(KEY_INSTALL_ACLS_INCREMENTALLY).toString()));
+            }
         }
 
     }
@@ -55,6 +60,11 @@ public class GlobalConfiguration {
             }
         }
 
+        // default is true, if false is configured anywhere that value is used
+        if (!otherGlobalConfig.installAclsIncrementally) {
+            installAclsIncrementally = false;
+        }
+
     }
 
     public Pattern getAllowExternalGroupNamesRegEx() {
@@ -74,5 +84,12 @@ public class GlobalConfiguration {
         this.minRequiredVersion = requiredMinVersion;
     }
 
+    public boolean getInstallAclsIncrementally() {
+        return installAclsIncrementally;
+    }
+
+    public void setInstallAclsIncrementally(boolean installAclsIncrementally) {
+        this.installAclsIncrementally = installAclsIncrementally;
+    }
 
 }

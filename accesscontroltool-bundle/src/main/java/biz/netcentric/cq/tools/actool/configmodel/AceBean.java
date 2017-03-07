@@ -57,7 +57,7 @@ public class AceBean implements AcDumpElement {
         clone.setPrincipal(principal);
         clone.setPermission(permission);
         clone.setActions(actions);
-        clone.setRestrictions(restrictions);
+        clone.setRestrictions(new ArrayList<Restriction>(restrictions));
         clone.setInitialContent(initialContent);
         clone.setKeepOrder(keepOrder);
 
@@ -127,6 +127,7 @@ public class AceBean implements AcDumpElement {
             }
             restrictions.add(new Restriction(RESTRICTION_NAME_GLOB, oldStyleRepGlob));
         }
+
 
     }
 
@@ -212,14 +213,13 @@ public class AceBean implements AcDumpElement {
 
     @Override
     public String toString() {
-        return "AceBean [jcrPath=" + jcrPath + "\n" + ", actionsStringFromConfig=" + actionsStringFromConfig
-                + "\n"
+        return "AceBean [jcrPath=" + jcrPath + "\n" + ", actionsStringFromConfig=" + actionsStringFromConfig + "\n"
                 + ", privilegesString=" + privilegesString + "\n" + ", principal=" + principal + "\n" + ", permission=" + permission
-                + ", actions="
-                + Arrays.toString(actions) + "\n" + "\n" + ", restrictions="
+                + "\n, actions=" + Arrays.toString(actions) + "\n" + ", restrictions="
                 + restrictions + "\n"
                 + ", initialContent=" + initialContent + "]";
     }
+
 
     @Override
     public int hashCode() {
