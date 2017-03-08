@@ -11,7 +11,7 @@
 
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
     <artifactId>accesscontroltool</artifactId>
-    <version>1.9.3-SNAPSHOT</version>
+    <version>1.9.3-rc-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Access Control Tool - Reactor Project</name>
