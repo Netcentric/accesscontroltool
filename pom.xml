@@ -361,6 +361,10 @@
                         <pushReleases>true</pushReleases>
                         <autoVersionSubmodules>true</autoVersionSubmodules>
                         <releaseBranchVersionSuffix>rc</releaseBranchVersionSuffix>
+                        <flowInitContext>
+                            <developBranchName>develop_19x</developBranchName>
+                            <masterBranchName>master_19x</masterBranchName>
+                        </flowInitContext>                        
                     </configuration>
                 </plugin>
             </plugins>
