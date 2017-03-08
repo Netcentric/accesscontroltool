@@ -98,7 +98,7 @@ public class AceBeanInstallerImpl implements AceBeanInstaller {
             orderedAceBeanSetFromConfig.addAll(aceBeanSetFromConfig);
 
             // Remove all config contained auhtorizables from ACL of this path
-            int countRemoved = AccessControlUtils.deleteAllEntriesForAuthorizableFromACL(session,
+            int countRemoved = AccessControlUtils.deleteAllEntriesForPrincipalsFromACL(session,
                     path, authorizablesToRemoveAcesFor.toArray(new String[authorizablesToRemoveAcesFor.size()]));
             final String message = "Deleted " + countRemoved + " ACEs for configured authorizables from path " + path;
             LOG.debug(message);

@@ -11,7 +11,7 @@
     <parent>
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
         <artifactId>accesscontroltool</artifactId>
-        <version>1.9.2</version>
+        <version>1.9.3</version>
     </parent>
 
     <!-- ====================================================================== -->
@@ -149,6 +149,13 @@
         </dependency> 
         
         <dependency>
+          <groupId>org.apache.jackrabbit</groupId>
+          <artifactId>oak-auth-external</artifactId>
+          <version>1.2.7</version>
+          <optional>true</optional>
+        </dependency> 
+            
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <version>1.5.10</version>
@@ -190,6 +197,12 @@
               <configuration>
                 <instructions>
                     <Embed-Dependency>el-api,jasper-el</Embed-Dependency>
+                    <!-- Required to support 6.1 and 6.2 -->
+                    <Import-Package>
+                        org.apache.jackrabbit.oak.spi.security.authentication.external;version="[1.0,3)",
+                        *
+                    </Import-Package>              
+                    
                 </instructions>
                 
               </configuration>

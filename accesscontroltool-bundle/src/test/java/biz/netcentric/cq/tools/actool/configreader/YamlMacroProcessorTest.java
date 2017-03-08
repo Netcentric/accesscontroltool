@@ -31,6 +31,7 @@ import org.mockito.Mock;
 
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
@@ -182,11 +183,11 @@ public class YamlMacroProcessorTest {
 
         AuthorizableConfigBean group1 = groups.get("content-node1-reader").iterator().next();
         assertEquals("/home/groups/test", group1.getPath());
-        assertEquals("Jcr Content Property in Name val1", group1.getPrincipalName());
+        assertEquals("Jcr Content Property in Name val1", group1.getName());
 
         AuthorizableConfigBean group2 = groups.get("content-node1-writer").iterator().next();
         assertEquals("/home/groups/test", group2.getPath());
-        assertEquals("Writer of Node 1", group2.getPrincipalName());
+        assertEquals("Writer of Node 1", group2.getName());
 
     }
 
@@ -237,7 +238,7 @@ public class YamlMacroProcessorTest {
         assertEquals("Number of users", 1, users.size());
         AuthorizableConfigBean user = users.get("test-system-user").iterator().next();
         assertEquals(user.isSystemUser(), true);
-        assertEquals(user.getPrincipalName(), "Test System User");
+        assertEquals(user.getName(), "Test System User");
     }
 
     // --- using YamlConfigReader to make assertions easier (the raw yaml structure makes it really hard)
@@ -252,9 +253,45 @@ public class YamlMacroProcessorTest {
         return new YamlConfigReader().getGroupConfigurationBeans(yamlList, null);
     }
 
+    private GlobalConfiguration readGlobalConfig(List<LinkedHashMap> yamlList) throws AcConfigBeanValidationException {
+        return new YamlConfigReader().getGlobalConfiguration(yamlList);
+    }
+
     private Map<String, Set<AuthorizableConfigBean>> readUserConfigs(List<LinkedHashMap> yamlList)
             throws AcConfigBeanValidationException {
         return new YamlConfigReader().getUserConfigurationBeans(yamlList, null);
+    }
+
+    @Test
+    public void testVariables() throws Exception {
+
+        List<LinkedHashMap> yamlList = getYamlList("test-variables.yaml");
+
+        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo);
+
+        GlobalConfiguration globalConfiguration = readGlobalConfig(yamlList);
+        Map<String, Set<AuthorizableConfigBean>> groups = readGroupConfigs(yamlList);
+        assertEquals("var2 and var1", groups.get("testGroup").iterator().next().getName());
+        assertEquals("var3 and var1", groups.get("testGroup").iterator().next().getDescription());
+
+        assertEquals("var1-BRAND1", groups.get("testGroupNested-BRAND1").iterator().next().getName());
+        assertEquals("var1-BRAND2", groups.get("testGroupNested-BRAND2").iterator().next().getName());
+        assertEquals("var1-BRAND3", groups.get("testGroupNested-BRAND3").iterator().next().getName());
+
+    }
+
+    @Test
+    public void testVariableForLdap() throws Exception {
+
+        List<LinkedHashMap> yamlList = getYamlList("test-variables-ldap.yaml");
+
+        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo);
+
+        GlobalConfiguration globalConfiguration = readGlobalConfig(yamlList);
+        Map<String, Set<AuthorizableConfigBean>> groups = readGroupConfigs(yamlList);
+        assertEquals("cn=editor-group,ou=mydepart,ou=Groups,dc=comp,dc=com;IDPNAME",
+                groups.get("aem-only-editor-group").iterator().next().getExternalId());
+
     }
 
 }

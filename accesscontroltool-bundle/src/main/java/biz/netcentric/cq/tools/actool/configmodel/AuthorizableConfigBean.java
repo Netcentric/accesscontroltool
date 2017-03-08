@@ -21,8 +21,10 @@ import biz.netcentric.cq.tools.actool.helper.Constants;
 
 public class AuthorizableConfigBean implements AcDumpElement {
 
-    private String principalID;
+    private String principalID; // this should really be called authorizableId (as it is in repo)
     private String principalName;
+
+    private String name; // (non-technical) name as used in profile
     private String description;
 
     private String[] memberOf;
@@ -34,9 +36,11 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private String path;
     private String password;
 
+    private String externalId;
+
     private String profileContent;
     private String preferencesContent;
-    
+
     private String migrateFrom;
 
     private boolean isGroup = true;
@@ -58,6 +62,13 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.principalName = principalName;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public String getPath() {
         return path;
@@ -82,7 +93,15 @@ public class AuthorizableConfigBean implements AcDumpElement {
     public void setPassword(final String password) {
         this.password = password;
     }
-    
+
+    public String getExternalId() {
+        return externalId;
+    }
+
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
+    }
+
     public String getProfileContent() {
         return profileContent;
     }
@@ -196,7 +215,6 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.members = members;
     }
 
-
     public String getMigrateFrom() {
         return migrateFrom;
     }
@@ -205,7 +223,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
      * to be used temporarily (usually only included in one released version that travels all environments, once all groups are migrated the
      * config should be removed). If not set (the default) nothing happens. If the property points to a group that does not exist (anymore),
      * the property is ignored.
-     * 
+     *
      * @param migrateFrom */
     public void setMigrateFrom(String migrateFrom) {
         this.migrateFrom = migrateFrom;
@@ -229,17 +247,5 @@ public class AuthorizableConfigBean implements AcDumpElement {
     @Override
     public void accept(final AcDumpElementVisitor acDumpElementVisitor) {
         acDumpElementVisitor.visit(this);
-    }
-
-    // --- only for junit test (TODO: check if test can be refactored to not require
-
-    private String assertedExceptionString = null;
-
-    public String getAssertedExceptionString() {
-        return assertedExceptionString;
-    }
-
-    public void setAssertedExceptionString(final String assertedException) {
-        assertedExceptionString = assertedException;
     }
 }

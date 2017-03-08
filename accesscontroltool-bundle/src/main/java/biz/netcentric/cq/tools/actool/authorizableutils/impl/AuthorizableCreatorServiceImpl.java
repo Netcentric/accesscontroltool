@@ -20,19 +20,17 @@ import java.util.regex.Pattern;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFactory;
 import javax.jcr.ValueFormatException;
-import javax.jcr.lock.LockException;
-import javax.jcr.nodetype.ConstraintViolationException;
-import javax.jcr.version.VersionException;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
@@ -49,6 +47,7 @@ import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorExcep
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.ContentHelper;
@@ -65,9 +64,16 @@ public class AuthorizableCreatorServiceImpl implements
 
     private static final String PRINCIPAL_EVERYONE = "everyone";
 
+    // not using org.apache.jackrabbit.oak.spi.security.authentication.external.basic.DefaultSyncContext.REP_EXTERNAL_ID since it is an
+    // optional dependency and not available in AEM 6.1
+    public static final String REP_EXTERNAL_ID = "rep:externalId";
+
     AcInstallationHistoryPojo status;
     Map<String, Set<AuthorizableConfigBean>> principalMapFromConfig;
     AuthorizableInstallationHistory authorizableInstallationHistory;
+
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL_UNARY)
+    ExternalGroupCreatorServiceImpl externalGroupCreatorService;
 
     @Override
     public void createNewAuthorizables(
@@ -138,7 +144,7 @@ public class AuthorizableCreatorServiceImpl implements
             }
 
             // move authorizable if path changed (retaining existing members)
-            handleIntermediatePath(session, authorizableConfigBean, history,
+            handleRecreationOfAuthorizableIfNecessary(session, authorizableConfigBean, history,
                     authorizableInstallationHistory, userManager);
 
             mergeGroup(history, authorizableInstallationHistory,
@@ -206,7 +212,7 @@ public class AuthorizableCreatorServiceImpl implements
 
     }
 
-    private void handleIntermediatePath(final Session session,
+    private void handleRecreationOfAuthorizableIfNecessary(final Session session,
             AuthorizableConfigBean principalConfigBean,
             AcInstallationHistoryPojo history,
             AuthorizableInstallationHistory authorizableInstallationHistory,
@@ -219,6 +225,7 @@ public class AuthorizableCreatorServiceImpl implements
 
         String intermediatedPathOfExistingAuthorizable = existingAuthorizable.getPath()
                 .substring(0, existingAuthorizable.getPath().lastIndexOf("/"));
+
         // Relative paths need to be prefixed with /home/groups (issue #10)
         String authorizablePathFromBean = principalConfigBean.getPath();
         if (StringUtils.isNotEmpty(authorizablePathFromBean) && (authorizablePathFromBean.charAt(0) != '/')) {
@@ -227,15 +234,33 @@ public class AuthorizableCreatorServiceImpl implements
                             ? "/" + PATH_SEGMENT_SYSTEMUSERS : "")
                     + "/" + authorizablePathFromBean;
         }
-        if (!StringUtils.equals(intermediatedPathOfExistingAuthorizable, authorizablePathFromBean)
-                && StringUtils.isNotBlank(principalConfigBean.getPath())) {
-            StringBuilder message = new StringBuilder();
-            message.append("found change of intermediate path:\n"
-                    + "existing authorizable: " + existingAuthorizable.getID() + " has intermediate path: "
-                    + intermediatedPathOfExistingAuthorizable + "\n"
-                    + "authorizable from config: " + principalConfigBean.getPrincipalID() + " has intermediate path: "
-                    + authorizablePathFromBean
-                    + "\n");
+
+        boolean pathHasChanged = !StringUtils.equals(intermediatedPathOfExistingAuthorizable, authorizablePathFromBean)
+                && StringUtils.isNotBlank(principalConfigBean.getPath());
+
+        if (pathHasChanged) {
+            String msg = "Found change of intermediate path for " + existingAuthorizable.getID() + ": "
+                    + intermediatedPathOfExistingAuthorizable + " -> " + authorizablePathFromBean;
+            history.addMessage(msg);
+            LOG.info(msg);
+        }
+        
+        // using "" to compare non-external (both sides) to true
+        String externalIdExistingAuthorizable = StringUtils
+                .defaultIfEmpty(AcHelper.valuesToString(existingAuthorizable.getProperty(REP_EXTERNAL_ID)), "");
+        String externalIdConfig = StringUtils.defaultIfEmpty(principalConfigBean.getExternalId(), "");
+
+        boolean externalIdHasChanged = !StringUtils.equals(externalIdExistingAuthorizable, externalIdConfig);
+        
+
+        if (externalIdHasChanged) {
+            String msg = "Found change of external id of " + existingAuthorizable.getID() + ": '"
+                    + externalIdExistingAuthorizable + "' (current) is not '" + externalIdConfig + "' (in config)";
+            history.addMessage(msg);
+            LOG.info(msg);
+        }
+
+        if (pathHasChanged || externalIdHasChanged) {
 
             // save members of existing group before deletion
             Set<Authorizable> membersOfDeletedGroup = new HashSet<Authorizable>();
@@ -266,32 +291,24 @@ public class AuthorizableCreatorServiceImpl implements
                 }
             }
 
-            deleteOldIntermediatePath(session,
-                    session.getNode(intermediatedPathOfExistingAuthorizable));
+            deleteOldIntermediatePath(session, session.getNode(intermediatedPathOfExistingAuthorizable));
 
-            message.append("recreated authorizable with new intermediate path! "
-                    + (newAuthorizable.isGroup() ? "(retained " + countMovedMembersOfGroup + " members of group)" : ""));
-            history.addMessage(message.toString());
-            LOG.info(message.toString());
+            String msg = "Recreated authorizable " + newAuthorizable + " at path " + newAuthorizable.getPath()
+                    + (newAuthorizable.isGroup() ? "(retained " + countMovedMembersOfGroup + " members of group)" : "");
+            history.addMessage(msg);
+            LOG.info(msg);
 
         }
 
     }
 
-    /** // deletes old intermediatePath parent node and all empty parent nodes up to /home/groups or /home/users
+    /** Deletes old intermediatePath parent node and all empty parent nodes up to /home/groups or /home/user.
      *
      * @param session
      * @param oldIntermediateNode
-     * @throws RepositoryException
-     * @throws PathNotFoundException
-     * @throws VersionException
-     * @throws LockException
-     * @throws ConstraintViolationException
-     * @throws AccessDeniedException */
+     * @throws RepositoryException */
     private void deleteOldIntermediatePath(final Session session,
-            Node oldIntermediateNode) throws RepositoryException,
-                    PathNotFoundException, VersionException, LockException,
-                    ConstraintViolationException, AccessDeniedException {
+            Node oldIntermediateNode) throws RepositoryException {
 
         // if '/home/groups' or '/home/users' was intermediatedNode, these must
         // not get deleted!
@@ -357,20 +374,36 @@ public class AuthorizableCreatorServiceImpl implements
         String principalId = principalConfigBean.getPrincipalID();
 
         Authorizable newAuthorizable = null;
-        if (isGroup) {
+        
+        if (StringUtils.isNotEmpty(principalConfigBean.getExternalId())) {
+            // external group
+            if (!isGroup) {
+                throw new IllegalStateException("External IDs are only supported for groups (" + principalConfigBean.getPrincipalID()
+                        + " is using '" + principalConfigBean.getExternalId() + "')");
+            } 
+            if (externalGroupCreatorService == null) {
+                throw new IllegalStateException("External IDs are not availabe for your AEM version ("
+                        + principalConfigBean.getPrincipalID() + " is using '" + principalConfigBean.getExternalId() + "')");
+            }
+            newAuthorizable = externalGroupCreatorService.createGroupWithExternalId(userManager, principalConfigBean, status,
+                    authorizableInstallationHistory, vf, principalMapFromConfig, session);
+            LOG.info("Successfully created new external group: {}", principalId);
+        } else if (isGroup) {
+            // internal group
             newAuthorizable = createNewGroup(userManager, principalConfigBean,
                     status, authorizableInstallationHistory, vf,
                     principalMapFromConfig, session);
-            authorizableInstallationHistory
-                    .addNewCreatedAuthorizable(principalId);
-            LOG.info("Successfully created new Group: {}", principalId);
+            LOG.info("Successfully created new group: {}", principalId);
         } else {
+            // internal user
             newAuthorizable = createNewUser(userManager, principalConfigBean, status, authorizableInstallationHistory, vf,
                     principalMapFromConfig, session);
-            LOG.info("Successfully created new User: {}", principalId);
-            authorizableInstallationHistory
-                    .addNewCreatedAuthorizable(principalId);
+            LOG.info("Successfully created new user: {}", principalId);
         }
+
+        // for rollback
+        authorizableInstallationHistory.addNewCreatedAuthorizable(principalId);
+
         return newAuthorizable;
     }
 
@@ -523,7 +556,7 @@ public class AuthorizableCreatorServiceImpl implements
             ContentHelper.importContent(session, authorizable.getPath() + "/preferences", preferencesContent);
         }
 
-        String name = principalConfigBean.getPrincipalName();
+        String name = principalConfigBean.getName();
         if (StringUtils.isNotBlank(name)) {
             if (authorizable.isGroup()) {
                 authorizable.setProperty("profile/givenName", vf.createValue(name));
@@ -813,4 +846,7 @@ public class AuthorizableCreatorServiceImpl implements
             }
         }
     }
+
+
+
 }

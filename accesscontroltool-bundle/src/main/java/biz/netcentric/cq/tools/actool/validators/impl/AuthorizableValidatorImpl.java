@@ -201,13 +201,13 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
     public boolean validateAuthorizableId(
             final AuthorizableConfigBean tmpPrincipalConfigBean)
                     throws InvalidGroupNameException {
-        final String currentPrincipal = tmpPrincipalConfigBean.getPrincipalID();
+        final String authorizableId = tmpPrincipalConfigBean.getPrincipalID();
 
-        if (Validators.isValidAuthorizableId(currentPrincipal)) {
-            tmpPrincipalConfigBean.setPrincipalID(currentPrincipal);
+        if (Validators.isValidAuthorizableId(authorizableId)) {
+            tmpPrincipalConfigBean.setPrincipalID(authorizableId);
         } else {
             final String message = "Validation error while reading group data: invalid group name: "
-                    + currentPrincipal;
+                    + authorizableId;
             LOG.error(message);
             throw new InvalidGroupNameException(message);
 

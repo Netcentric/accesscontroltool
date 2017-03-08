@@ -230,16 +230,14 @@ public class AccessControlUtils {
 
     /** @param session admin session
      * @param path valid node path in CRX
-     * @param authorizableIds ids of authorizables to be deleted from ACL of node specified by path
+     * @param principalNames principal names of authorizables to be deleted from ACL of node specified by path
      * @return count ACEs that were removed */
-    public static int deleteAllEntriesForAuthorizableFromACL(final Session session,
-            final String path, String[] authorizableIds)
+    public static int deleteAllEntriesForPrincipalsFromACL(final Session session,
+            final String path, String[] principalNames)
                     throws UnsupportedRepositoryOperationException, RepositoryException {
-        final AccessControlManager accessControlManager = session
-                .getAccessControlManager();
+        final AccessControlManager accessControlManager = session.getAccessControlManager();
 
-        final JackrabbitAccessControlList acl = AccessControlUtils.getModifiableAcl(
-                accessControlManager, path);
+        final JackrabbitAccessControlList acl = AccessControlUtils.getModifiableAcl(accessControlManager, path);
         if (acl == null) {
             // do nothing, if there is no content node at the given path
             return 0;
@@ -252,7 +250,8 @@ public class AccessControlUtils {
         for (final AccessControlEntry ace : aces) {
             final JackrabbitAccessControlEntry jace = (JackrabbitAccessControlEntry) ace;
 
-            if (ArrayUtils.contains(authorizableIds, jace.getPrincipal().getName())) {
+            String principalNameInCurrentAce = jace.getPrincipal().getName();
+            if (ArrayUtils.contains(principalNames, principalNameInCurrentAce)) {
                 acl.removeAccessControlEntry(jace);
                 // bind new policy
                 accessControlManager.setPolicy(path, acl);

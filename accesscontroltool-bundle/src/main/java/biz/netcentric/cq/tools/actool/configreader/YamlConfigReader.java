@@ -11,6 +11,7 @@ package biz.netcentric.cq.tools.actool.configreader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -44,26 +45,26 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
 @Component(label = "AC Yaml Config Reader", description = "Service that installs groups & ACEs according to textual configuration files")
 public class YamlConfigReader implements ConfigReader {
 
-
     private static final Logger LOG = LoggerFactory.getLogger(YamlConfigReader.class);
 
-    private static final String ACE_CONFIG_PROPERTY_GLOB = "repGlob";
-    private static final String ACE_CONFIG_PROPERTY_RESTRICTIONS = "restrictions";
+    protected static final String ACE_CONFIG_PROPERTY_GLOB = "repGlob";
+    protected static final String ACE_CONFIG_PROPERTY_RESTRICTIONS = "restrictions";
 
-    private static final String ACE_CONFIG_PROPERTY_PERMISSION = "permission";
-    private static final String ACE_CONFIG_PROPERTY_PRIVILEGES = "privileges";
-    private static final String ACE_CONFIG_PROPERTY_ACTIONS = "actions";
-    private static final String ACE_CONFIG_PROPERTY_PATH = "path";
-    private static final String ACE_CONFIG_PROPERTY_KEEP_ORDER = "keepOrder";
-    private static final String ACE_CONFIG_INITIAL_CONTENT = "initialContent";
+    protected static final String ACE_CONFIG_PROPERTY_PERMISSION = "permission";
+    protected static final String ACE_CONFIG_PROPERTY_PRIVILEGES = "privileges";
+    protected static final String ACE_CONFIG_PROPERTY_ACTIONS = "actions";
+    protected static final String ACE_CONFIG_PROPERTY_PATH = "path";
+    protected static final String ACE_CONFIG_PROPERTY_KEEP_ORDER = "keepOrder";
+    protected static final String ACE_CONFIG_INITIAL_CONTENT = "initialContent";
 
     private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF = "isMemberOf";
     private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY = "memberOf";
     private static final String GROUP_CONFIG_PROPERTY_MEMBERS = "members";
     private static final String GROUP_CONFIG_PROPERTY_PATH = "path";
     private static final String GROUP_CONFIG_PROPERTY_PASSWORD = "password";
-    private static final String GROUP_CONFIG_PROPERTY_NAME = "name";
+    protected static final String GROUP_CONFIG_PROPERTY_NAME = "name";
     private static final String GROUP_CONFIG_PROPERTY_DESCRIPTION = "description";
+    private static final String GROUP_CONFIG_PROPERTY_EXTERNAL_ID = "externalId";
 
     private static final String GROUP_CONFIG_PROPERTY_MIGRATE_FROM = "migrateFrom";
 
@@ -74,8 +75,6 @@ public class YamlConfigReader implements ConfigReader {
 
     @Reference
     private SlingRepository repository;
-
-    private final String ASSERTED_EXCEPTION = "assertedException";
 
     private final Pattern forLoopPattern = Pattern.compile("for (\\w+) in \\[([,/\\s\\w\\-]+)\\]", Pattern.CASE_INSENSITIVE);
 
@@ -156,7 +155,8 @@ public class YamlConfigReader implements ConfigReader {
     private Object getConfigSection(final String sectionName, final Collection yamlList) {
         final List<LinkedHashMap<?, ?>> yamList = new ArrayList<LinkedHashMap<?, ?>>(yamlList);
         for (final LinkedHashMap<?, ?> currMap : yamList) {
-            if (sectionName.equals(currMap.keySet().iterator().next())) {
+            Iterator<?> keyIt = currMap.keySet().iterator();
+            if (keyIt.hasNext() && sectionName.equals(keyIt.next())) {
                 return currMap.get(sectionName);
             }
         }
@@ -190,7 +190,7 @@ public class YamlConfigReader implements ConfigReader {
             if ((currentPrincipalData != null) && !currentPrincipalData.isEmpty()) {
 
                 for (final Map<String, String> currentPrincipalDataMap : currentPrincipalData) {
-                    final AuthorizableConfigBean tmpPrincipalConfigBean = new AuthorizableConfigBean();
+                    final AuthorizableConfigBean tmpPrincipalConfigBean = getNewAuthorizableConfigBean();
                     setupAuthorizableBean(tmpPrincipalConfigBean, currentPrincipalDataMap, currentPrincipal, isGroupSection);
                     if (authorizableValidator != null) {
                         authorizableValidator.validate(tmpPrincipalConfigBean);
@@ -250,9 +250,8 @@ public class YamlConfigReader implements ConfigReader {
                 }
 
                 for (final Map<String, ?> currentAceDefinition : aceDefinitions) {
-                    final AceBean newAceBean = new AceBean();
-                    setupAceBean(principalName, currentAceDefinition,
-                            newAceBean);
+                    AceBean newAceBean = getNewAceBean();
+                    setupAceBean(principalName, currentAceDefinition, newAceBean);
                     if (aceBeanValidator != null) {
                         aceBeanValidator.validate(newAceBean, session.getAccessControlManager());
                     }
@@ -278,7 +277,7 @@ public class YamlConfigReader implements ConfigReader {
         }
     }
 
-    private void handleWildcards(final Session session,
+    protected void handleWildcards(final Session session,
             final Map<String, Set<AceBean>> aceMap, final String principal,
             final AceBean tmpAclBean) throws InvalidQueryException,
             RepositoryException {
@@ -307,7 +306,15 @@ public class YamlConfigReader implements ConfigReader {
         }
     }
 
-    private void setupAceBean(final String principal,
+    protected AceBean getNewAceBean() {
+        return new AceBean();
+    }
+
+    protected AuthorizableConfigBean getNewAuthorizableConfigBean() {
+        return new AuthorizableConfigBean();
+    }
+
+    protected void setupAceBean(final String principal,
             final Map<String, ?> currentAceDefinition, final AceBean tmpAclBean) {
         tmpAclBean.setPrincipal(principal);
         tmpAclBean.setJcrPath(getMapValueAsString(currentAceDefinition,
@@ -318,11 +325,9 @@ public class YamlConfigReader implements ConfigReader {
                 currentAceDefinition, ACE_CONFIG_PROPERTY_PRIVILEGES));
         tmpAclBean.setPermission(getMapValueAsString(
                 currentAceDefinition, ACE_CONFIG_PROPERTY_PERMISSION));
-        
+
         tmpAclBean.setRestrictions(currentAceDefinition.get(ACE_CONFIG_PROPERTY_RESTRICTIONS),
                 (String) currentAceDefinition.get(ACE_CONFIG_PROPERTY_GLOB));
-        tmpAclBean.setAssertedExceptionString(getMapValueAsString(
-                currentAceDefinition, ASSERTED_EXCEPTION));
         tmpAclBean.setActions(parseActionsString(getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_PROPERTY_ACTIONS)));
 
@@ -333,24 +338,34 @@ public class YamlConfigReader implements ConfigReader {
                 ACE_CONFIG_INITIAL_CONTENT);
         tmpAclBean.setInitialContent(initialContent);
     }
-    
-   
 
-    private String[] parseActionsString(final String actionsStringFromConfig) {
+    protected String[] parseActionsString(final String actionsStringFromConfig) {
         final String[] empty = {};
         return StringUtils.isNotBlank(actionsStringFromConfig) ? actionsStringFromConfig.split(",") : empty;
     }
 
-    private void setupAuthorizableBean(
+    protected void setupAuthorizableBean(
             final AuthorizableConfigBean authorizableConfigBean,
             final Map<String, String> currentPrincipalDataMap,
             final String authorizableId,
             boolean isGroupSection) {
         authorizableConfigBean.setPrincipalID(authorizableId);
-        authorizableConfigBean.setPrincipalName(getMapValueAsString(
-                currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_NAME));
+
+        authorizableConfigBean.setName(getMapValueAsString(currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_NAME));
+
         authorizableConfigBean.setDescription(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_DESCRIPTION));
+
+        String externalIdVal = getMapValueAsString(currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_EXTERNAL_ID);
+        if (StringUtils.isNotBlank(externalIdVal)) {
+            authorizableConfigBean.setExternalId(externalIdVal);
+            // if an externalId is used, the principalName differs from authorizableId
+            String principalName = StringUtils.substringBeforeLast(externalIdVal, ";");
+            authorizableConfigBean.setPrincipalName(principalName);
+        } else {
+            // default: rep:authorizableId and rep:principalName are equal
+            authorizableConfigBean.setPrincipalName(authorizableId);
+        }
 
         authorizableConfigBean.setMemberOfString(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBER_OF));
@@ -378,13 +393,9 @@ public class YamlConfigReader implements ConfigReader {
                 currentPrincipalDataMap, USER_CONFIG_PROFILE_CONTENT));
         authorizableConfigBean.setPreferencesContent(getMapValueAsString(
                 currentPrincipalDataMap, USER_CONFIG_PREFERENCES_CONTENT));
-
-        authorizableConfigBean.setAssertedExceptionString(getMapValueAsString(
-                currentPrincipalDataMap, ASSERTED_EXCEPTION));
-
     }
 
-    private String getMapValueAsString(
+    protected String getMapValueAsString(
             final Map<String, ?> currentAceDefinition,
             final String propertyName) {
         if (currentAceDefinition.get(propertyName) != null) {
