@@ -1,0 +1,84 @@
+#
+# (C) Copyright 2015 Netcentric AG.
+#
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+    
+- group_config:
+
+    - content-reader:
+
+       - name: 
+         isMemberOf: 
+         path: /home/groups/g
+    
+    - for brand IN [ BRAND1, BRAND2 ]:
+    
+        - content-${brand}-reader:
+
+           - name: 
+             isMemberOf: 
+             path: /home/groups/${brand}
+
+        - content-${brand}-writer:
+
+           - name: 
+             isMemberOf: 
+             path: /home/groups/${brand}
+             
+        - for mkt in [ MKT1, MKT2 ]:
+                           
+            - content-${brand}-${mkt}-reader:
+    
+               - name: 
+                 isMemberOf: 
+                 path: /home/groups/${brand}/${mkt}
+    
+            - content-${brand}-${mkt}-writer:
+    
+               - name: 
+                 isMemberOf: 
+                 path: /home/groups/${brand}/${mkt}
+         
+         
+- ace_config:
+    
+    - for brand IN [ BRAND1, BRAND2 ]:
+    
+        - content-${brand}-reader:
+        
+            - path:  /content/${brand}
+              permission: allow
+              actions: read,acl_read
+              privileges: 
+              repGlob:          
+
+        - content-${brand}-writer:
+
+            - path:  /content/${brand}
+              permission: allow
+              actions: read,acl_read, modify, create
+              privileges: 
+              repGlob:
+             
+        - for mkt in [ MKT1, MKT2 ]:
+                           
+            - content-${brand}-${mkt}-reader:
+            
+                - path:  /content/${brand}/${mkt}
+                  permission: allow
+                  actions: read,acl_read
+                  privileges: 
+                  repGlob:          
+    
+            - content-${brand}-${mkt}-writer:
+    
+                - path:  /content/${brand}/${mkt}
+                  permission: allow
+                  actions: read,acl_read, modify, create
+                  privileges: 
+                  repGlob:
+                   

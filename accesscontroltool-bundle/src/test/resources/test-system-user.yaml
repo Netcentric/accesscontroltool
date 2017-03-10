@@ -1,0 +1,8 @@
+- user_config:
+
+    - test-system-user:
+
+       - name: Test System User
+         isMemberOf: 
+         path: s
+         isSystemUser: true

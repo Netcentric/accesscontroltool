@@ -1,0 +1,35 @@
+#
+# (C) Copyright 2017 Netcentric AG.
+#
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+
+
+# variable declarations are possible on any list level
+- DEF var1="var1"
+- DEF var2="var2 and ${var1}"
+    
+- group_config:
+
+    - DEF var3="var3 and ${var1}"
+    
+    - testGroup:
+
+       - name: "${var2}"
+         description: "${var3}"
+         isMemberOf: 
+         path: /home/groups/g
+    
+    - FOR brand IN [ BRAND1, BRAND2, BRAND3 ]:
+    
+        - DEF varInLoop="${var1}-${brand}"
+    
+        - testGroupNested-${brand}:
+
+           - name: "${varInLoop}"
+             isMemberOf: 
+             path: /home/groups/${brand}    
+    
