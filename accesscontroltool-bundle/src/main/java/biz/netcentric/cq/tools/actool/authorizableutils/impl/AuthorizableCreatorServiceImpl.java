@@ -375,27 +375,18 @@ public class AuthorizableCreatorServiceImpl implements
 
         Authorizable newAuthorizable = null;
         
-        if (StringUtils.isNotEmpty(principalConfigBean.getExternalId())) {
-            // external group
-            if (!isGroup) {
-                throw new IllegalStateException("External IDs are only supported for groups (" + principalConfigBean.getPrincipalID()
-                        + " is using '" + principalConfigBean.getExternalId() + "')");
-            } 
-            if (externalGroupCreatorService == null) {
-                throw new IllegalStateException("External IDs are not availabe for your AEM version ("
-                        + principalConfigBean.getPrincipalID() + " is using '" + principalConfigBean.getExternalId() + "')");
-            }
-            newAuthorizable = externalGroupCreatorService.createGroupWithExternalId(userManager, principalConfigBean, status,
-                    authorizableInstallationHistory, vf, principalMapFromConfig, session);
-            LOG.info("Successfully created new external group: {}", principalId);
-        } else if (isGroup) {
-            // internal group
+        if (isGroup) {
             newAuthorizable = createNewGroup(userManager, principalConfigBean,
                     status, authorizableInstallationHistory, vf,
                     principalMapFromConfig, session);
             LOG.info("Successfully created new group: {}", principalId);
         } else {
-            // internal user
+            if (StringUtils.isNotEmpty(principalConfigBean.getExternalId())) {
+                throw new IllegalStateException("External IDs are not supported for users (" + principalConfigBean.getPrincipalID()
+                        + " is using '" + principalConfigBean.getExternalId()
+                        + "') - use a ootb sync handler to have users automatically created.");
+            }
+
             newAuthorizable = createNewUser(userManager, principalConfigBean, status, authorizableInstallationHistory, vf,
                     principalMapFromConfig, session);
             LOG.info("Successfully created new user: {}", principalId);
@@ -524,12 +515,26 @@ public class AuthorizableCreatorServiceImpl implements
         // create new Group
         Group newGroup = null;
         try {
-            PrincipalImpl principalForNewGroup = new PrincipalImpl(groupID);
-            if (StringUtils.isNotBlank(intermediatePath)) {
-                newGroup = userManager.createGroup(principalForNewGroup, intermediatePath);
+
+            if (StringUtils.isNotEmpty(principalConfigBean.getExternalId())) {
+
+                if (externalGroupCreatorService == null) {
+                    throw new IllegalStateException("External IDs are not availabe for your AEM version ("
+                            + principalConfigBean.getPrincipalID() + " is using '" + principalConfigBean.getExternalId() + "')");
+                }
+                newGroup = (Group) externalGroupCreatorService.createGroupWithExternalId(userManager, principalConfigBean, status,
+                        authorizableInstallationHistory, vf, principalMapFromConfig, session);
+                LOG.info("Successfully created new external group: {}", groupID);
             } else {
-                newGroup = userManager.createGroup(principalForNewGroup);
+
+                PrincipalImpl principalForNewGroup = new PrincipalImpl(groupID);
+                if (StringUtils.isNotBlank(intermediatePath)) {
+                    newGroup = userManager.createGroup(principalForNewGroup, intermediatePath);
+                } else {
+                    newGroup = userManager.createGroup(principalForNewGroup);
+                }
             }
+
 
         } catch (AuthorizableExistsException e) {
             LOG.warn("Group {} already exists in system!", groupID);
