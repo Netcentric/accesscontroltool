@@ -37,6 +37,7 @@ import org.apache.jackrabbit.api.security.user.UserManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.authorizableutils.impl.PrincipalImpl;
 import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
@@ -135,7 +136,13 @@ public class AcHelper {
         // Also see https://issues.apache.org/jira/browse/OAK-3228
         final JackrabbitSession js = (JackrabbitSession) session;
         final UserManager userManager = js.getUserManager();
-        final Authorizable authorizable = userManager.getAuthorizable(principalName);
+
+        Authorizable authorizable = userManager.getAuthorizable(new PrincipalImpl(principalName));
+        if (authorizable == null) {
+            // try interpreting principal name as authorizableId (this is significantly slower, but for LDAP case the principalName could
+            // be a plain id (and not a full LDAP DN like the principal name in repo is)
+            authorizable = userManager.getAuthorizable(principalName);
+        }
         principal = authorizable != null ? authorizable.getPrincipal() : null;
         return principal;
     }
