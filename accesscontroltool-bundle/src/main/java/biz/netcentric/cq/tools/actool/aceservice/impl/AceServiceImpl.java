@@ -30,12 +30,9 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Modified;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
-import org.apache.jackrabbit.api.JackrabbitSession;
-import org.apache.jackrabbit.api.security.principal.PrincipalManager;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.commons.osgi.PropertiesUtil;
@@ -693,52 +690,48 @@ public class AceServiceImpl implements AceService {
             final Session session) {
 
         StringBuilder message = new StringBuilder();
-        String message2 = "";
+
         try {
+            // first the ACE entries have to be deleted
+
+            Set<String> principalIds = new HashSet<String>();
+            Set<AclBean> aclBeans = QueryHelper.getAuthorizablesAcls(session, authorizableIds, principalIds);
+            String deleteAcesResultMsg = PurgeHelper.deleteAcesForPrincipalIds(session, principalIds, aclBeans);
+            message.append(deleteAcesResultMsg);
+
+            // then the authorizables can be deleted
             UserManager userManager = AccessControlUtils.getUserManagerAutoSaveDisabled(session);
-            PrincipalManager principalManager = ((JackrabbitSession) session).getPrincipalManager();
-
             for (String authorizableId : authorizableIds) {
-                message.append(deleteAuthorizableFromHome(authorizableId,
-                        userManager, principalManager));
+                String deleteResultMsg = deleteAuthorizable(authorizableId, userManager);
+                message.append(deleteResultMsg);
             }
+            message.append("Deleted " + authorizableIds.size() + " authorizables\n");
 
-            Set<AclBean> aclBeans = QueryHelper.getAuthorizablesAcls(session,
-                    authorizableIds);
-
-            message.append(PurgeHelper.deleteAcesFromAuthorizables(session,
-                    authorizableIds, aclBeans));
             session.save();
-        } catch (RepositoryException e) {
-            message2 = message2
-                    + " deletion of ACEs failed! reason: RepositoryException: "
-                    + e.toString();
-            LOG.error("RepositoryException: ", e);
         } catch (Exception e) {
-            LOG.error("Exception: ", e);
+            message.append("Deletion of ACEs failed! reason: RepositoryException: " + e);
+            LOG.error("Exception while purgin authorizables: " + e, e);
         }
 
-        return message + message2;
+        return message.toString();
     }
 
-    private String deleteAuthorizableFromHome(final String authorizableId,
-            final UserManager userManager,
-            final PrincipalManager principalManager) {
+    private String deleteAuthorizable(final String authorizableId,
+            final UserManager userManager) {
         String message;
-        if (principalManager.hasPrincipal(authorizableId)) {
-            Authorizable authorizable;
-            try {
-                authorizable = userManager.getAuthorizable(authorizableId);
+        try {
+            Authorizable authorizable = userManager.getAuthorizable(authorizableId);
+            if (authorizable != null) {
                 authorizable.remove();
-            } catch (RepositoryException e) {
-                LOG.error("RepositoryException: ", e);
+                message = "Deleted authorizable " + authorizableId + "\n";
+            } else {
+                message = "Could not delete authorizable '" + authorizableId + "' because it does not exist\n";
             }
-            message = "removed authorizable: " + authorizableId
-                    + " from /home\n";
-        } else {
-            message = "deletion of authorizable: " + authorizableId
-                    + " from home failed! Reason: authorizable doesn't exist\n";
+        } catch (RepositoryException e) {
+            message = "Error while deleting authorizable '" + authorizableId + "': e=" + e;
+            LOG.warn("Error while deleting authorizable '" + authorizableId + "': e=" + e, e);
         }
+
         return message;
     }
 
