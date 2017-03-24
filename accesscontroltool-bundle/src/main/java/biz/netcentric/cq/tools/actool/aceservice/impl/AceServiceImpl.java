@@ -689,6 +689,9 @@ public class AceServiceImpl implements AceService {
     private String purgeAuthorizables(Set<String> authorizableIds,
             final Session session) {
 
+        StopWatch sw = new StopWatch();
+        sw.start();
+
         StringBuilder message = new StringBuilder();
 
         try {
@@ -705,11 +708,15 @@ public class AceServiceImpl implements AceService {
                 String deleteResultMsg = deleteAuthorizable(authorizableId, userManager);
                 message.append(deleteResultMsg);
             }
-            message.append("Deleted " + authorizableIds.size() + " authorizables\n");
 
             session.save();
+
+            sw.stop();
+            String executionTime = msHumanReadable(sw.getTime());
+            message.append("Purged " + authorizableIds.size() + " authorizables in " + executionTime + "\n");
+
         } catch (Exception e) {
-            message.append("Deletion of ACEs failed! reason: RepositoryException: " + e);
+            message.append("Deletion of ACEs failed! reason: RepositoryException: " + e + "\n");
             LOG.error("Exception while purgin authorizables: " + e, e);
         }
 

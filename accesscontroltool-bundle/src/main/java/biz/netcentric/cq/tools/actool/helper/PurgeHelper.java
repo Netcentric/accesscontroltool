@@ -152,7 +152,8 @@ public class PurgeHelper {
                         aMgr.removePolicy(aclBean.getParentPath(), acl);
                     }
 
-                    String msg = "Removed ACE of principal: " + principalId + " from ACL of node: " + parentNodePath + " " + (aclEmpty ? " (and the now emtpy ACL itself)":"") ;
+                    String msg = "Path " + parentNodePath + ": Removed entry for '" + principalId + "' from ACL "
+                            + (aclEmpty ? " (and the now emtpy ACL itself)" : "");
                     LOG.info(msg);
                     message.append(msg + "\n");
                     aceCounter++;
@@ -162,7 +163,9 @@ public class PurgeHelper {
         }
         sw.stop();
         String executionTime = msHumanReadable(sw.getTime());
-        String resultMsg = "Deleted " + aceCounter + " ACEs for " + principalIds.size() + " principals in " + executionTime;
+        String resultMsg = (aceCounter > 0)
+                ? "Deleted " + aceCounter + " ACEs for " + principalIds.size() + " principals in " + executionTime
+                : "Did not delete any ACEs";
         message.append(resultMsg + "\n");
         LOG.debug(resultMsg);
 
