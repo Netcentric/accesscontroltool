@@ -203,7 +203,7 @@ public class QueryHelper {
             ItemNotFoundException {
         AccessControlManager aMgr = session.getAccessControlManager();
         AccessControlList acl;
-        Set<AclBean> aclSet = new LinkedHashSet<AclBean>();
+        Set<AclBean> aclSet = new TreeSet<AclBean>(); // use natural ordering
         for (Node allowOrDenyNode : nodeSet) {
             String principalId = allowOrDenyNode.getProperty("rep:principalName").getValue().getString();
             principalIdsToBeFilled.add(principalId);
