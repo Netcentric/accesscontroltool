@@ -9,6 +9,7 @@
 package biz.netcentric.cq.tools.actool.helper;
 
 import java.security.Principal;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,10 +20,20 @@ import javax.jcr.security.AccessControlEntry;
 
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 
-public class AclBean {
+public class AclBean implements Comparable<AclBean> {
 
     private String jcrPath;
     private String parentPath;
+    private JackrabbitAccessControlList acl;
+
+    public AclBean(JackrabbitAccessControlList acl, String jcrPath) {
+        this.jcrPath = jcrPath;
+        this.acl = acl;
+    }
+
+    public AclBean() {
+
+    }
 
     public String getParentPath() {
         return parentPath;
@@ -32,17 +43,6 @@ public class AclBean {
         this.parentPath = parentPath;
     }
 
-    private JackrabbitAccessControlList acl;
-
-    public AclBean(JackrabbitAccessControlList acl, String jcrPath) {
-        super();
-        this.jcrPath = jcrPath;
-        this.acl = acl;
-    }
-
-    public AclBean() {
-
-    }
 
     public String getJcrPath() {
         return jcrPath;
@@ -82,12 +82,21 @@ public class AclBean {
 
     @Override
     public String toString() {
-        return "[" + this.jcrPath + " " + this.acl.toString() + "]";
+        return "[AclBean " + this.jcrPath + " " + this.acl.toString() + "]";
     }
 
     @Override
     public boolean equals(Object obj) {
         return this.acl.equals(obj);
+    }
+
+    @Override
+    public int compareTo(AclBean o) {
+        if (o == null) {
+            return -1;
+        }
+        return Collator.getInstance().compare(getParentPath(), o.getParentPath());
+
     }
 
 }
