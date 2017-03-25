@@ -8,6 +8,40 @@
  */
 package biz.netcentric.cq.tools.actool.aceservice.impl;
 
+import static biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo.msHumanReadable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.UnsupportedRepositoryOperationException;
+import javax.jcr.ValueFormatException;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.StopWatch;
+import org.apache.felix.scr.annotations.Activate;
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.Service;
+import org.apache.jackrabbit.api.JackrabbitSession;
+import org.apache.jackrabbit.api.security.principal.PrincipalManager;
+import org.apache.jackrabbit.api.security.user.Authorizable;
+import org.apache.jackrabbit.api.security.user.UserManager;
+import org.apache.sling.commons.osgi.PropertiesUtil;
+import org.apache.sling.jcr.api.SlingRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import biz.netcentric.cq.tools.actool.aceservice.AceService;
 import biz.netcentric.cq.tools.actool.acls.AceBeanInstaller;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
@@ -20,30 +54,14 @@ import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetriever;
 import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
 import biz.netcentric.cq.tools.actool.configreader.ConfigurationMerger;
 import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
-import biz.netcentric.cq.tools.actool.helper.*;
+import biz.netcentric.cq.tools.actool.helper.AcHelper;
+import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
+import biz.netcentric.cq.tools.actool.helper.AclBean;
+import biz.netcentric.cq.tools.actool.helper.PurgeHelper;
+import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 import biz.netcentric.cq.tools.actool.session.SessionManager;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.time.StopWatch;
-import org.apache.felix.scr.annotations.*;
-import org.apache.jackrabbit.api.JackrabbitSession;
-import org.apache.jackrabbit.api.security.principal.PrincipalManager;
-import org.apache.jackrabbit.api.security.user.Authorizable;
-import org.apache.jackrabbit.api.security.user.UserManager;
-import org.apache.sling.commons.osgi.PropertiesUtil;
-import org.apache.sling.jcr.api.SlingRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.UnsupportedRepositoryOperationException;
-import javax.jcr.ValueFormatException;
-import java.util.*;
-
-import static biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo.msHumanReadable;
 
 @Service
 @Component(metatype = true, label = "AC Installation Service", description = "Service that installs groups & ACEs according to textual configuration files")
