@@ -8,7 +8,15 @@
  */
 package biz.netcentric.cq.tools.actool.configuploadlistener.impl;
 
-import java.util.Map;
+import biz.netcentric.cq.tools.actool.aceservice.AceService;
+import biz.netcentric.cq.tools.actool.configuploadlistener.UploadListenerService;
+import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
+import biz.netcentric.cq.tools.actool.session.SessionManager;
+import org.apache.commons.lang.StringUtils;
+import org.apache.felix.scr.annotations.*;
+import org.apache.sling.commons.osgi.PropertiesUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -16,24 +24,7 @@ import javax.jcr.Session;
 import javax.jcr.observation.Event;
 import javax.jcr.observation.EventIterator;
 import javax.jcr.observation.EventListener;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Deactivate;
-import org.apache.felix.scr.annotations.Properties;
-import org.apache.felix.scr.annotations.PropertyOption;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
-import org.apache.sling.commons.osgi.PropertiesUtil;
-import org.apache.sling.jcr.api.SlingRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import biz.netcentric.cq.tools.actool.aceservice.AceService;
-import biz.netcentric.cq.tools.actool.configuploadlistener.UploadListenerService;
-import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
+import java.util.Map;
 
 @Component(metatype = true, label = "AC Configuration Upload Listener Service", immediate = true, description = "Listens for ACL configuration uploads and triggers ACL Service.")
 @Properties({
@@ -56,7 +47,7 @@ public class UploadListenerServiceImpl implements UploadListenerService,
     private Session adminSession;
 
     @Reference
-    SlingRepository repository;
+    SessionManager sessionManager;
 
     @Reference
     AceService aceService;
@@ -117,14 +108,14 @@ public class UploadListenerServiceImpl implements UploadListenerService,
             this.enabled = false;
         }
 
+        adminSession = sessionManager.getSession();
         setEventListener();
     }
 
     private void setEventListener() throws Exception {
+        LOG.info("SET EVENT LISTENER");
         if (StringUtils.isNotBlank(this.configurationPath)) {
             try {
-                adminSession = repository.loginAdministrative(null);
-
                 adminSession
                         .getWorkspace()
                         .getObservationManager()
@@ -156,9 +147,7 @@ public class UploadListenerServiceImpl implements UploadListenerService,
 
     @Deactivate
     public void deactivate() {
-        if (adminSession != null) {
-            adminSession.logout();
-        }
+        sessionManager.close(adminSession);
     }
 
     public void setPath(String path) {

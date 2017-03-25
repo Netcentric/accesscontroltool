@@ -8,62 +8,6 @@ d * (C) Copyright 2015 Netcentric AG.
  */
 package biz.netcentric.cq.tools.actool.dumpservice.impl;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-
-import javax.jcr.AccessDeniedException;
-import javax.jcr.ItemExistsException;
-import javax.jcr.ItemNotFoundException;
-import javax.jcr.Node;
-import javax.jcr.NodeIterator;
-import javax.jcr.PathNotFoundException;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.UnsupportedRepositoryOperationException;
-import javax.jcr.ValueFormatException;
-import javax.jcr.lock.LockException;
-import javax.jcr.nodetype.ConstraintViolationException;
-import javax.jcr.nodetype.NoSuchNodeTypeException;
-import javax.jcr.security.AccessControlEntry;
-import javax.jcr.version.VersionException;
-import javax.servlet.ServletOutputStream;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Modified;
-import org.apache.felix.scr.annotations.Properties;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
-import org.apache.jackrabbit.api.JackrabbitSession;
-import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
-import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
-import org.apache.jackrabbit.api.security.user.Authorizable;
-import org.apache.jackrabbit.api.security.user.Group;
-import org.apache.jackrabbit.api.security.user.Query;
-import org.apache.jackrabbit.api.security.user.QueryBuilder;
-import org.apache.jackrabbit.api.security.user.QueryBuilder.Direction;
-import org.apache.jackrabbit.api.security.user.User;
-import org.apache.jackrabbit.api.security.user.UserManager;
-import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.resource.ResourceResolverFactory;
-import org.apache.sling.commons.osgi.PropertiesUtil;
-import org.apache.sling.jcr.api.SlingRepository;
-import org.osgi.service.component.ComponentContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import biz.netcentric.cq.tools.actool.authorizableutils.impl.AuthorizableCreatorServiceImpl;
 import biz.netcentric.cq.tools.actool.authorizableutils.impl.PrincipalImpl;
 import biz.netcentric.cq.tools.actool.comparators.AcePathComparator;
@@ -76,13 +20,34 @@ import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementYamlVisitor;
 import biz.netcentric.cq.tools.actool.dumpservice.AceDumpData;
 import biz.netcentric.cq.tools.actool.dumpservice.CompleteAcDump;
 import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
-import biz.netcentric.cq.tools.actool.helper.AcHelper;
-import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
-import biz.netcentric.cq.tools.actool.helper.AceWrapper;
-import biz.netcentric.cq.tools.actool.helper.AclBean;
-import biz.netcentric.cq.tools.actool.helper.Constants;
-import biz.netcentric.cq.tools.actool.helper.QueryHelper;
+import biz.netcentric.cq.tools.actool.helper.*;
 import biz.netcentric.cq.tools.actool.installationhistory.impl.HistoryUtils;
+import biz.netcentric.cq.tools.actool.session.SessionManager;
+import org.apache.commons.lang.StringUtils;
+import org.apache.felix.scr.annotations.*;
+import org.apache.felix.scr.annotations.Properties;
+import org.apache.felix.scr.annotations.Property;
+import org.apache.jackrabbit.api.JackrabbitSession;
+import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
+import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
+import org.apache.jackrabbit.api.security.user.*;
+import org.apache.jackrabbit.api.security.user.QueryBuilder.Direction;
+import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.apache.sling.commons.osgi.PropertiesUtil;
+import org.osgi.service.component.ComponentContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.jcr.*;
+import javax.jcr.lock.LockException;
+import javax.jcr.nodetype.ConstraintViolationException;
+import javax.jcr.nodetype.NoSuchNodeTypeException;
+import javax.jcr.security.AccessControlEntry;
+import javax.jcr.version.VersionException;
+import javax.servlet.ServletOutputStream;
+import java.io.IOException;
+import java.util.*;
 
 @Service
 @Component(metatype = true, label = "AC Dump Service", description = "Service that creates dumps of the current AC configurations (groups&ACEs)")
@@ -116,9 +81,8 @@ public class DumpserviceImpl implements Dumpservice {
     private int nrOfSavedDumps;
     private boolean includeUsersInDumps = false;
 
-
     @Reference
-    private SlingRepository repository;
+    private SessionManager sessionManager;
 
     @Reference
     private ResourceResolverFactory resourceResolverFactory;
@@ -147,7 +111,6 @@ public class DumpserviceImpl implements Dumpservice {
 
     }
 
-
     @Override
     public boolean isIncludeUsers() {
         return includeUsersInDumps;
@@ -175,16 +138,14 @@ public class DumpserviceImpl implements Dumpservice {
     private void persistDump(String dump) {
         Session session = null;
         try {
-            session = repository.loginAdministrative(null);
+            session = sessionManager.getSession();
             Node rootNode = HistoryUtils.getAcHistoryRootNode(session);
             createTransientDumpNode(dump, rootNode);
             session.save();
         } catch (RepositoryException e) {
             LOG.error("RepositoryException: {}", e);
         } finally {
-            if (session != null) {
-                session.logout();
-            }
+            sessionManager.close(session);
         }
     }
 
@@ -248,7 +209,8 @@ public class DumpserviceImpl implements Dumpservice {
     /** returns the complete AC dump (groups&ACEs) as String in YAML format
      *
      * @param keyOrder either principals (AcHelper.PRINCIPAL_BASED_ORDER) or node paths (AcHelper.PATH_BASED_ORDER) as keys
-     * @param aclOrderInMap specifies whether the allow and deny ACEs within an ACL should be divided in separate blocks (first deny then allow)
+     * @param aclOrderInMap specifies whether the allow and deny ACEs within an ACL should be divided in separate blocks (first deny then
+     *            allow)
      * @return String containing complete AC dump */
     private String getCompleteDump(int keyOrder, int aclOrderInMap) {
         Session session = null;
@@ -258,12 +220,13 @@ public class DumpserviceImpl implements Dumpservice {
         try {
 
             AceDumpData aceDumpData = createAclDumpMap(
-                    keyOrder, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE, // this ORDER is important to keep the ORDER of denies with "keepOrder"
-                                                             // attribute that is automatically added if needed
+                    keyOrder, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE, // this ORDER is important to keep the ORDER of denies with
+                                                                       // "keepOrder"
+                    // attribute that is automatically added if needed
                     queryExcludePaths);
             Map<String, Set<AceBean>> aclDumpMap = aceDumpData.getAceDump();
 
-            session = repository.loginAdministrative(null);
+            session = sessionManager.getSession();
             Set<AuthorizableConfigBean> groupBeans = getGroupBeans(session);
             Set<User> usersFromACEs = getUsersFromAces(keyOrder, session, aclDumpMap);
             Set<AuthorizableConfigBean> userBeans = getUserBeans(usersFromACEs);
@@ -279,9 +242,7 @@ public class DumpserviceImpl implements Dumpservice {
         } catch (RepositoryException e) {
             LOG.error("RepositoryException in AceServiceImpl: {}", e);
         } finally {
-            if (session != null) {
-                session.logout();
-            }
+            sessionManager.close(session);
         }
         return null;
     }
@@ -297,7 +258,7 @@ public class DumpserviceImpl implements Dumpservice {
      * @throws RepositoryException */
     private Set<User> getUsersFromAces(int mapOrder, Session session,
             Map<String, Set<AceBean>> aclDumpMap) throws AccessDeniedException,
-                    UnsupportedRepositoryOperationException, RepositoryException {
+            UnsupportedRepositoryOperationException, RepositoryException {
 
         Set<User> usersFromACEs = new HashSet<User>();
         UserManager um = ((JackrabbitSession) session).getUserManager();
@@ -398,18 +359,16 @@ public class DumpserviceImpl implements Dumpservice {
 
     public AceDumpData createAclDumpMap(final int keyOrder, final int aclOrdering,
             final String[] excludePaths) throws ValueFormatException,
-                    IllegalArgumentException, IllegalStateException,
-                    RepositoryException {
+            IllegalArgumentException, IllegalStateException,
+            RepositoryException {
         return createAclDumpMap(keyOrder, aclOrdering, excludePaths, includeUsersInDumps);
     }
 
     /** returns a Map with holds either principal or path based ACE data
      *
-     * @param request
      * @param keyOrder either principals (AceHelper.PRINCIPAL_BASED_ORDERING) or node paths (AceHelper.PATH_BASED_ORDERING) as keys
      * @param aclOrdering specifies whether the allow and deny ACEs within an ACL should be divided in separate blocks (first deny then
      *            allow)
-     * @param isFilterACEs
      * @param isIncludeUsers
      * @return
      * @throws RepositoryException */
@@ -419,7 +378,7 @@ public class DumpserviceImpl implements Dumpservice {
             final boolean isIncludeUsers) throws RepositoryException {
         Session session = null;
         try {
-            session = repository.loginAdministrative(null);
+            session = sessionManager.getSession();
 
             AceDumpData aceDumpData = new AceDumpData();
             UserManager um = ((JackrabbitSession) session).getUserManager();
@@ -482,9 +441,7 @@ public class DumpserviceImpl implements Dumpservice {
             return aceDumpData;
 
         } finally {
-            if (session != null) {
-                session.logout();
-            }
+            sessionManager.close(session);
         }
 
     }

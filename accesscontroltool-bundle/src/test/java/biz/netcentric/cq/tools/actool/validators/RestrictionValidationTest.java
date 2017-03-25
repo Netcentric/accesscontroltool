@@ -1,39 +1,34 @@
 package biz.netcentric.cq.tools.actool.validators;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.withSettings;
-import static org.mockito.MockitoAnnotations.initMocks;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Set;
+import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
+import biz.netcentric.cq.tools.actool.configreader.TestAceBean;
+import biz.netcentric.cq.tools.actool.configreader.TestYamlConfigReader;
+import biz.netcentric.cq.tools.actool.session.SessionManager;
+import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
+import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
+import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
+import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.security.AccessControlList;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.AccessControlPolicy;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
 
-import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
-import org.apache.sling.jcr.api.SlingRepository;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-
-import biz.netcentric.cq.tools.actool.configmodel.AceBean;
-import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
-import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
-import biz.netcentric.cq.tools.actool.configreader.TestAceBean;
-import biz.netcentric.cq.tools.actool.configreader.TestYamlConfigReader;
-import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
-import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
-import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.*;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 /** Contains unit tests checking support of different restrictions
  *
@@ -41,7 +36,7 @@ import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
 public class RestrictionValidationTest {
 
     @Mock
-    SlingRepository repository;
+    SessionManager sessionManager;
 
     @Mock
     Session session;
@@ -65,7 +60,7 @@ public class RestrictionValidationTest {
             AcConfigBeanValidationException {
 
         initMocks(this);
-        doReturn(session).when(repository).loginAdministrative(null);
+        when(sessionManager.getSession()).thenReturn(session);
 
         accessControlPolicy = mock(AccessControlList.class,
                 withSettings().extraInterfaces(JackrabbitAccessControlList.class));

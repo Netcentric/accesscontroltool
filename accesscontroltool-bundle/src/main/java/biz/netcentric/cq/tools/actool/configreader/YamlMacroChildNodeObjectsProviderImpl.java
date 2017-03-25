@@ -8,31 +8,20 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
+import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.session.SessionManager;
+import com.day.cq.commons.jcr.JcrConstants;
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.jcr.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.jcr.Node;
-import javax.jcr.NodeIterator;
-import javax.jcr.PathNotFoundException;
-import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.Value;
-import javax.jcr.ValueFormatException;
-
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
-import org.apache.sling.jcr.api.SlingRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.day.cq.commons.jcr.JcrConstants;
-
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 @Service
 @Component
@@ -41,7 +30,7 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
     private static final Logger LOG = LoggerFactory.getLogger(YamlMacroChildNodeObjectsProviderImpl.class);
 
     @Reference
-    private SlingRepository repository;
+    private SessionManager sessionManager;
 
     @Override
     public List<Object> getValuesForPath(String pathOfChildrenOfClause, AcInstallationHistoryPojo history) {
@@ -52,7 +41,7 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
 
         Session session = null;
         try {
-            session = repository.loginAdministrative(null);
+            session = sessionManager.getSession();
 
             Node node = session.getNode(pathOfChildrenOfClause);
 
@@ -108,9 +97,7 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
         } catch (RepositoryException e) {
             throw new IllegalStateException("Could not get children of path " + pathOfChildrenOfClause + ": " + e, e);
         } finally {
-            if (session != null && session.isLive()) {
-                session.logout();
-            }
+            sessionManager.close(session);
         }
 
         String msg = "Loop for children of " + pathOfChildrenOfClause + " evaluates to " + results.size() + " children";

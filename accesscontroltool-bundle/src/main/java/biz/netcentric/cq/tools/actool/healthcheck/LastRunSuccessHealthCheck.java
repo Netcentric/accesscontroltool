@@ -8,28 +8,26 @@
  */
 package biz.netcentric.cq.tools.actool.healthcheck;
 
-import java.util.Date;
-
-import javax.jcr.Node;
-import javax.jcr.NodeIterator;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-
+import biz.netcentric.cq.tools.actool.installationhistory.impl.HistoryUtils;
+import biz.netcentric.cq.tools.actool.session.SessionManager;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.sling.hc.annotations.SlingHealthCheck;
 import org.apache.sling.hc.api.HealthCheck;
 import org.apache.sling.hc.api.Result;
 import org.apache.sling.hc.util.FormattingResultLog;
-import org.apache.sling.jcr.api.SlingRepository;
 
-import biz.netcentric.cq.tools.actool.installationhistory.impl.HistoryUtils;
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import java.util.Date;
 
 /** Sling Health Check that returns WARN if the last installation failed. */
 @SlingHealthCheck(name = "Last Run of AC Tool", tags = "actool")
 public class LastRunSuccessHealthCheck implements HealthCheck {
 
     @Reference
-    private SlingRepository repository;
+    private SessionManager sessionManager;
 
     @Override
     public Result execute() {
@@ -38,7 +36,7 @@ public class LastRunSuccessHealthCheck implements HealthCheck {
         Session session = null;
 
         try {
-            session = repository.loginAdministrative(null);
+            session = sessionManager.getSession();
 
             Node statisticsRootNode = HistoryUtils.getAcHistoryRootNode(session);
             NodeIterator it = statisticsRootNode.getNodes();
@@ -61,9 +59,7 @@ public class LastRunSuccessHealthCheck implements HealthCheck {
         } catch (RepositoryException e) {
             return new Result(Result.Status.HEALTH_CHECK_ERROR, "Error while retrieving last AC Tool runs", e);
         } finally {
-            if (session != null && session.isLive()) {
-                session.logout();
-            }
+            sessionManager.close(session);
         }
         return new Result(resultLog);
     }

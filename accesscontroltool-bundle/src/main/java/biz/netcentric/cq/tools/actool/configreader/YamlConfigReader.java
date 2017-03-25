@@ -8,38 +8,28 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.query.InvalidQueryException;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
-import org.apache.sling.jcr.api.SlingRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
+import biz.netcentric.cq.tools.actool.session.SessionManager;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
+import org.apache.commons.lang.StringUtils;
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.query.InvalidQueryException;
+import java.util.*;
+import java.util.regex.Pattern;
 
 @Service
 @Component(label = "AC Yaml Config Reader", description = "Service that installs groups & ACEs according to textual configuration files")
@@ -74,7 +64,7 @@ public class YamlConfigReader implements ConfigReader {
     private static final String USER_CONFIG_PREFERENCES_CONTENT = "preferencesContent";
 
     @Reference
-    private SlingRepository repository;
+    SessionManager sessionManager;
 
     private final Pattern forLoopPattern = Pattern.compile("for (\\w+) in \\[([,/\\s\\w\\-]+)\\]", Pattern.CASE_INSENSITIVE);
 
@@ -215,12 +205,11 @@ public class YamlConfigReader implements ConfigReader {
         if (aceYamlList == null) {
             return aceMap;
         }
-
         Session session = null;
         try {
-            if (repository != null) {
-                session = repository.loginAdministrative(null);
-            }
+
+            session = sessionManager.getSession();
+
             for (final Map<String, List<Map<String, ?>>> currentPrincipalAceMap : aceYamlList) {
 
                 final String principalName = currentPrincipalAceMap.keySet().iterator().next();
@@ -267,14 +256,12 @@ public class YamlConfigReader implements ConfigReader {
                         aceMap.get(principalName).add(newAceBean);
                     }
                 }
-
             }
-            return aceMap;
         } finally {
-            if (session != null) {
-                session.logout();
-            }
+            sessionManager.close(session);
         }
+
+        return aceMap;
     }
 
     protected void handleWildcards(final Session session,

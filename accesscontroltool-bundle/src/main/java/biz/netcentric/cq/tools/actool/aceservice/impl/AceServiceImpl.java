@@ -8,41 +8,6 @@
  */
 package biz.netcentric.cq.tools.actool.aceservice.impl;
 
-import static biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo.msHumanReadable;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
-
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.UnsupportedRepositoryOperationException;
-import javax.jcr.ValueFormatException;
-
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.time.StopWatch;
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Modified;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
-import org.apache.jackrabbit.api.JackrabbitSession;
-import org.apache.jackrabbit.api.security.principal.PrincipalManager;
-import org.apache.jackrabbit.api.security.user.Authorizable;
-import org.apache.jackrabbit.api.security.user.UserManager;
-import org.apache.sling.commons.osgi.PropertiesUtil;
-import org.apache.sling.jcr.api.SlingRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import biz.netcentric.cq.tools.actool.aceservice.AceService;
 import biz.netcentric.cq.tools.actool.acls.AceBeanInstaller;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
@@ -55,13 +20,30 @@ import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetriever;
 import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
 import biz.netcentric.cq.tools.actool.configreader.ConfigurationMerger;
 import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
-import biz.netcentric.cq.tools.actool.helper.AcHelper;
-import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
-import biz.netcentric.cq.tools.actool.helper.AclBean;
-import biz.netcentric.cq.tools.actool.helper.PurgeHelper;
-import biz.netcentric.cq.tools.actool.helper.QueryHelper;
+import biz.netcentric.cq.tools.actool.helper.*;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.session.SessionManager;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.StopWatch;
+import org.apache.felix.scr.annotations.*;
+import org.apache.jackrabbit.api.JackrabbitSession;
+import org.apache.jackrabbit.api.security.principal.PrincipalManager;
+import org.apache.jackrabbit.api.security.user.Authorizable;
+import org.apache.jackrabbit.api.security.user.UserManager;
+import org.apache.sling.commons.osgi.PropertiesUtil;
+import org.apache.sling.jcr.api.SlingRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.UnsupportedRepositoryOperationException;
+import javax.jcr.ValueFormatException;
+import java.util.*;
+
+import static biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo.msHumanReadable;
 
 @Service
 @Component(metatype = true, label = "AC Installation Service", description = "Service that installs groups & ACEs according to textual configuration files")
@@ -94,6 +76,9 @@ public class AceServiceImpl implements AceService {
 
     @Reference
     private ConfigFilesRetriever configFilesRetriever;
+
+    @Reference
+    private SessionManager sessionManager;
 
     private boolean isExecuting = false;
 
@@ -228,12 +213,10 @@ public class AceServiceImpl implements AceService {
             throw new IllegalArgumentException(message);
         }
 
-
         installAuthorizables(history, authorizableHistorySet, acConfiguration.getAuthorizablesConfig());
 
         installAces(history, acConfiguration, repositoryDumpAceMap, restrictedToPaths);
     }
-
 
     private void removeAcesForPathsNotInConfig(AcInstallationHistoryPojo history, Session session, Set<String> principalsInConfig,
             Map<String, Set<AceBean>> repositoryDumpAceMap, Set<String> acePathsFromConfig)
@@ -243,8 +226,8 @@ public class AceServiceImpl implements AceService {
         int countPathsCleaned = 0;
         Set<String> relevantPathsForCleanup = getRelevantPathsForAceCleanup(principalsInConfig, repositoryDumpAceMap,
                 acePathsFromConfig);
-        
-        for (String relevantPath: relevantPathsForCleanup) {
+
+        for (String relevantPath : relevantPathsForCleanup) {
             // delete ACE if principal *is* in config, but the path *is not* in config
             int countRemoved = AccessControlUtils.deleteAllEntriesForPrincipalsFromACL(session,
                     relevantPath, principalsInConfig.toArray(new String[principalsInConfig.size()]));
@@ -257,7 +240,7 @@ public class AceServiceImpl implements AceService {
             }
             countAcesCleaned += countRemoved;
         }
-        
+
         if (countAcesCleaned > 0) {
             String message = "Cleaned " + countAcesCleaned + " ACEs from " + countPathsCleaned
                     + " paths in repository (ACEs that belong to users in the AC Config, "
@@ -361,7 +344,6 @@ public class AceServiceImpl implements AceService {
     private void installAces(AcInstallationHistoryPojo history,
             AcConfiguration acConfiguration, Map<String, Set<AceBean>> repositoryDumpAceMap, String[] restrictedToPaths) throws Exception {
 
-
         Map<String, Set<AceBean>> aceMapFromConfig = acConfiguration.getAceConfig();
 
         // --- installation of ACEs from configuration ---
@@ -370,7 +352,7 @@ public class AceServiceImpl implements AceService {
 
         Session session = null;
         try {
-            session = repository.loginAdministrative(null);
+            session = sessionManager.getSession();
 
             Set<String> principalsToRemoveAcesFor = getPrincipalNamesToRemoveAcesFor(acConfiguration.getAuthorizablesConfig());
             removeAcesForPathsNotInConfig(history, session, principalsToRemoveAcesFor, repositoryDumpAceMap,
@@ -394,11 +376,8 @@ public class AceServiceImpl implements AceService {
             session.save();
             history.addMessage("Persisted changes of ACLs");
         } finally {
-            if (session != null) {
-                session.logout();
-            }
+            sessionManager.close(session);
         }
-
 
     }
 
@@ -411,15 +390,15 @@ public class AceServiceImpl implements AceService {
         Map<String, Set<AceBean>> filteredPathBasedAceMapFromConfig = new HashMap<String, Set<AceBean>>();
         for (final String path : pathBasedAceMapFromConfig.keySet()) {
             boolean isRelevant = isRelevantPath(path, restrictedToPaths);
-            if(isRelevant) {
+            if (isRelevant) {
                 filteredPathBasedAceMapFromConfig.put(path, pathBasedAceMapFromConfig.get(path));
             }
         }
-        
+
         int skipped = pathBasedAceMapFromConfig.keySet().size() - filteredPathBasedAceMapFromConfig.keySet().size();
         String message = "Will install AC Config at " + filteredPathBasedAceMapFromConfig.keySet().size() + " paths (skipping " + skipped
                 + " due to paths restriction " + Arrays.toString(restrictedToPaths) + ")";
-        
+
         history.addMessage(message);
         LOG.info(message);
 
@@ -438,7 +417,7 @@ public class AceServiceImpl implements AceService {
             AcInstallationHistoryPojo history,
             Set<AuthorizableInstallationHistory> authorizableHistorySet,
             Map<String, Set<AuthorizableConfigBean>> authorizablesMapfromConfig)
-                    throws RepositoryException, Exception {
+            throws RepositoryException, Exception {
         // --- installation of Authorizables from configuration ---
 
         StopWatch stopWatch = new StopWatch();
@@ -460,7 +439,7 @@ public class AceServiceImpl implements AceService {
         // in case of an exception during the installation of the ACEs the
         // performed installation of authorizables from config
         // has to be reverted using the rollback method
-        Session authorizableInstallationSession = repository.loginAdministrative(null);
+        Session authorizableInstallationSession = sessionManager.getSession();
         try {
             // only save session if no exceptions occured
             AuthorizableInstallationHistory authorizableInstallationHistory = new AuthorizableInstallationHistory();
@@ -473,22 +452,21 @@ public class AceServiceImpl implements AceService {
         } catch (Exception e) {
             throw new AuthorizableCreatorException(e);
         } finally {
-            if (authorizableInstallationSession != null) {
-                authorizableInstallationSession.logout();
-            }
+            sessionManager.close(authorizableInstallationSession);
         }
 
         String message = "Finished installation of authorizables without errors in "
                 + AcInstallationHistoryPojo.msHumanReadable(stopWatch.getTime());
         history.addMessage(message);
         LOG.info(message);
+
     }
 
     private void removeObsoleteAuthorizables(AcInstallationHistoryPojo history, Set<String> obsoleteAuthorizables) {
 
         Session session = null;
         try {
-            session = repository.loginAdministrative(null);
+            session = sessionManager.getSession();
 
             if (obsoleteAuthorizables.isEmpty()) {
                 history.addVerboseMessage("No obsolete authorizables configured");
@@ -523,7 +501,6 @@ public class AceServiceImpl implements AceService {
                 history.addMessage("(" + obsoleteAuthorizablesAlreadyPurged.size() + " have been purged already)");
             }
 
-
             String purgeAuthorizablesResultMsg = purgeAuthorizables(obsoleteAuthorizables, session);
             LOG.info(purgeAuthorizablesResultMsg);
             history.addVerboseMessage(purgeAuthorizablesResultMsg); // this message is too long for regular log
@@ -534,10 +511,7 @@ public class AceServiceImpl implements AceService {
             LOG.error(excMsg, e);
 
         } finally {
-            if (session != null) {
-                session.logout();
-
-            }
+            sessionManager.close(session);
 
         }
 
@@ -548,7 +522,6 @@ public class AceServiceImpl implements AceService {
             Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet,
             AcConfiguration acConfiguration, String[] restrictedToPaths) throws ValueFormatException,
             RepositoryException, Exception {
-
 
         String message = "Starting installation of merged configurations...";
         LOG.debug(message);
@@ -583,7 +556,7 @@ public class AceServiceImpl implements AceService {
         String message = "";
         boolean flag = true;
         try {
-            session = repository.loginAdministrative(null);
+            session = sessionManager.getSession();
             PurgeHelper.purgeAcl(session, path);
             session.save();
         } catch (Exception e) {
@@ -591,9 +564,7 @@ public class AceServiceImpl implements AceService {
             message = e.toString();
             LOG.error("Exception: ", e);
         } finally {
-            if (session != null) {
-                session.logout();
-            }
+            sessionManager.close(session);
         }
         if (flag) {
             // TODO: save purge history under current history node
@@ -614,7 +585,7 @@ public class AceServiceImpl implements AceService {
         String message = "";
         boolean flag = true;
         try {
-            session = repository.loginAdministrative(null);
+            session = sessionManager.getSession();
             message = PurgeHelper.purgeACLs(session, path);
             AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
             history.addMessage("purge method: purgeACLs()");
@@ -626,9 +597,7 @@ public class AceServiceImpl implements AceService {
             flag = false;
             message = e.toString();
         } finally {
-            if (session != null) {
-                session.logout();
-            }
+            sessionManager.close(session);
         }
         if (flag) {
             return message;
@@ -641,7 +610,7 @@ public class AceServiceImpl implements AceService {
         Session session = null;
         String message = "";
         try {
-            session = repository.loginAdministrative(null);
+            session = sessionManager.getSession();
 
             Set<String> authorizabesFromConfigurations = getAllAuthorizablesFromConfig(session);
             message = purgeAuthorizables(authorizabesFromConfigurations,
@@ -655,9 +624,7 @@ public class AceServiceImpl implements AceService {
         } catch (Exception e) {
             LOG.error("Exception: ", e);
         } finally {
-            if (session != null) {
-                session.logout();
-            }
+            sessionManager.close(session);
         }
         return message;
     }
@@ -668,7 +635,7 @@ public class AceServiceImpl implements AceService {
         String message = "";
         try {
             try {
-                session = repository.loginAdministrative(null);
+                session = sessionManager.getSession();
                 authorizableIds = authorizableIds.trim();
                 Set<String> authorizablesSet = new HashSet<String>(
                         new ArrayList(Arrays.asList(authorizableIds.split(","))));
@@ -682,9 +649,7 @@ public class AceServiceImpl implements AceService {
 
             }
         } finally {
-            if (session != null) {
-                session.logout();
-            }
+            sessionManager.close(session);
         }
         return message;
     }

@@ -8,35 +8,27 @@
  */
 package biz.netcentric.cq.tools.actool.installationhistory.impl;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
+import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
+import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.session.SessionManager;
+import com.day.cq.commons.jcr.JcrConstants;
+import org.apache.commons.lang.StringUtils;
+import org.apache.felix.scr.annotations.*;
+import org.apache.jackrabbit.commons.JcrUtils;
+import org.apache.sling.commons.osgi.PropertiesUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Properties;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
-import org.apache.jackrabbit.commons.JcrUtils;
-import org.apache.sling.commons.osgi.PropertiesUtil;
-import org.apache.sling.jcr.api.SlingRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.day.cq.commons.jcr.JcrConstants;
-
-import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
-import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 @Service
 @Component(metatype = true, label = "AC History Service", immediate = true, description = "Service that writes & fetches Ac installation histories")
@@ -52,7 +44,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
     private int nrOfSavedHistories;
 
     @Reference
-    private SlingRepository repository;
+    private SessionManager sessionManager;
 
     @Activate
     public void activate(@SuppressWarnings("rawtypes") final Map properties)
@@ -75,8 +67,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         
         Session session = null;
         try {
-
-            session = repository.loginAdministrative(null);
+            session = sessionManager.getSession();
             Node historyNode = HistoryUtils.persistHistory(session, history, this.nrOfSavedHistories);
 
             String mergedAndProcessedConfig = history.getMergedAndProcessedConfig();
@@ -92,9 +83,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         } catch (RepositoryException e) {
             LOG.error("RepositoryException: ", e);
         } finally {
-            if (session != null) {
-                session.logout();
-            }
+            sessionManager.close(session);
         }
     }
 
@@ -102,14 +91,12 @@ public class AcHistoryServiceImpl implements AcHistoryService {
     public String[] getInstallationLogPaths() {
         Session session = null;
         try {
-            session = repository.loginAdministrative(null);
+            session = sessionManager.getSession();
             return HistoryUtils.getHistoryInfos(session);
         } catch (RepositoryException e) {
             LOG.error("RepositoryException: ", e);
         } finally {
-            if (session != null) {
-                session.logout();
-            }
+            sessionManager.close(session);
         }
         return null;
     }
@@ -129,7 +116,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         Session session = null;
         String history = "";
         try {
-            session = repository.loginAdministrative(null);
+            session = sessionManager.getSession();
 
             Node statisticsRootNode = HistoryUtils.getAcHistoryRootNode(session);
             NodeIterator it = statisticsRootNode.getNodes();
@@ -146,9 +133,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         } catch (RepositoryException e) {
             LOG.error("RepositoryException: ", e);
         } finally {
-            if (session != null) {
-                session.logout();
-            }
+            sessionManager.close(session);
         }
         return history;
     }
@@ -187,7 +172,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         Session session = null;
         String history = "";
         try {
-            session = repository.loginAdministrative(null);
+            session = sessionManager.getSession();
 
             Node statisticsRootNode = HistoryUtils
                     .getAcHistoryRootNode(session);
@@ -205,9 +190,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         } catch (RepositoryException e) {
             LOG.error("RepositoryException: ", e);
         } finally {
-            if (session != null) {
-                session.logout();
-            }
+            sessionManager.close(session);
         }
         return history;
     }
@@ -217,7 +200,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         Session session = null;
 
         try {
-            session = repository.loginAdministrative(null);
+            session = sessionManager.getSession();
             Node acHistoryRootNode = HistoryUtils.getAcHistoryRootNode(session);
             NodeIterator nodeIterator = acHistoryRootNode.getNodes();
             Set<Node> historyNodes = new TreeSet<Node>(
@@ -235,9 +218,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         } catch (RepositoryException e) {
             LOG.error("Exception: ", e);
         } finally {
-            if (session != null) {
-                session.logout();
-            }
+            sessionManager.close(session);
         }
     }
 
