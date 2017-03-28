@@ -8,6 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
@@ -55,6 +56,29 @@ public class YamlConfigurationMergerTest {
         assertEquals(2, groupB.getMemberOf().length);
         groups.get("groupC").iterator().next();
         groups.get("groupD").iterator().next();
+    }
+
+    @Test
+    public void testEnsureIsMemberOfIsUsedWherePossible() throws RepositoryException, IOException, AcConfigBeanValidationException {
+        
+        final String config = YamlConfigReaderTest.getTestConfigAsString("test-membergroups.yaml");
+        final ConfigReader reader = new YamlConfigReader();
+        final Map<String, String> configs = new HashMap<String, String>();
+        configs.put("/etc/config", config);
+
+        AcConfiguration acConfiguration = merger.getMergedConfigurations(configs, mock(AcInstallationHistoryPojo.class), reader);
+        
+        AuthorizableConfigBean groupAConfig = acConfiguration.getAuthorizablesConfig().get("groupA").iterator().next();
+        assertEquals("groupA", groupAConfig.getPrincipalID());
+        String[] members = groupAConfig.getMemberOf();
+
+        assertArrayEquals("check if groups have been copied over into isMemberOf field",
+                new String[] { "groupB", "groupC", "groupD" }, members);
+        //
+        AuthorizableConfigBean groupBConfig = acConfiguration.getAuthorizablesConfig().get("groupB").iterator().next();
+
+        assertArrayEquals("ensure that members that were added to isMemberOf are removed from original members arr", new String[0],
+                groupBConfig.getMembers());
     }
 
 }
