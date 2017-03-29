@@ -29,9 +29,13 @@ import javax.jcr.ValueFormatException;
 import javax.jcr.query.InvalidQueryException;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryResult;
+import javax.jcr.security.AccessControlEntry;
+import javax.jcr.security.AccessControlList;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
+import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
+import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.slf4j.Logger;
@@ -66,6 +70,12 @@ public class AcHelper {
 
     public static int PRINCIPAL_BASED_ORDER = 1;
     public static int PATH_BASED_ORDER = 2;
+
+    public static AceBean getAceBean(AccessControlEntry ace, AccessControlList acl) throws RepositoryException {
+        AceWrapper aceWrapper = new AceWrapper((JackrabbitAccessControlEntry) ace, ( (JackrabbitAccessControlList)  acl).getPath());
+        AceBean aceBean = AcHelper.getAceBean(aceWrapper);
+        return aceBean;
+    }
 
     public static AceBean getAceBean(final AceWrapper ace)
             throws ValueFormatException, IllegalStateException,
@@ -143,6 +153,7 @@ public class AcHelper {
             // be a plain id (and not a full LDAP DN like the principal name in repo is)
             authorizable = userManager.getAuthorizable(principalName);
         }
+
         principal = authorizable != null ? authorizable.getPrincipal() : null;
         return principal;
     }

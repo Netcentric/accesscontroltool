@@ -53,6 +53,13 @@ public class AcInstallationHistoryPojo {
     // only for install hook case
     private String crxPackageName;
 
+    private int countAclsNoChange = 0;
+    private int countAclsChanged = 0;
+    private int countAclsPathDoesNotExist = 0;
+
+    private int countActionCacheHit = 0;
+    private int countActionCacheMiss = 0;
+
     private DateFormat timestampFormat = new SimpleDateFormat("HH:mm:ss.SSS");
 
     public enum Rendition {
@@ -267,4 +274,43 @@ public class AcInstallationHistoryPojo {
         return result;
     }
 
+    public void incCountAclsNoChange() {
+        countAclsNoChange++;
+    }
+
+    public int getCountAclsUnchanged() {
+        return countAclsNoChange;
+    }
+
+    public void incCountAclsChanged() {
+        countAclsChanged++;
+    }
+
+    public int getCountAclsChanged() {
+        return countAclsChanged;
+    }
+
+    public void incCountAclsPathDoesNotExist() {
+        countAclsPathDoesNotExist++;
+    }
+
+    public int getCountAclsPathDoesNotExist() {
+        return countAclsPathDoesNotExist;
+    }
+
+    public void incCountActionCacheMiss() {
+        countActionCacheMiss++;
+    }
+
+    public int getCountActionCacheMiss() {
+        return countActionCacheMiss;
+    }
+
+    public void incCountActionCacheHit() {
+        countActionCacheHit++;
+    }
+
+    public int getCountActionCacheHit() {
+        return countActionCacheHit;
+    }
 }

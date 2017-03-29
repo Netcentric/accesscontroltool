@@ -71,8 +71,11 @@ public class AceServiceImpl implements AceService {
     @Reference
     AuthorizableCreatorService authorizableCreatorService;
 
-    @Reference
-    AceBeanInstaller aceBeanInstaller;
+    @Reference(target = "(component.name=biz.netcentric.cq.tools.actool.acls.AceBeanInstallerClassic)")
+    AceBeanInstaller aceBeanInstallerClassic;
+
+    @Reference(target = "(component.name=biz.netcentric.cq.tools.actool.acls.AceBeanInstallerIncremental)")
+    AceBeanInstaller aceBeanInstallerIncremental;
 
     @Reference
     private SlingRepository repository;
@@ -376,20 +379,31 @@ public class AceServiceImpl implements AceService {
             Map<String, Set<AceBean>> filteredPathBasedAceMapFromConfig = filterForRestrictedPaths(pathBasedAceMapFromConfig,
                     restrictedToPaths, history);
 
-            String msg = "*** Starting installation of " + collectAceCount(filteredPathBasedAceMapFromConfig) + " ACLs for "
+            AceBeanInstaller aceBeanInstaller = acConfiguration.getGlobalConfiguration().getInstallAclsIncrementally()
+                    ? aceBeanInstallerIncremental : aceBeanInstallerClassic;
+
+            String msg = "*** Starting installation of " + collectAceCount(filteredPathBasedAceMapFromConfig) + " ACE configurations for "
                     + filteredPathBasedAceMapFromConfig.size()
-                    + " paths in content nodes...";
+                    + " paths in content nodes using strategy " + aceBeanInstaller.getClass().getSimpleName() + "...";
             LOG.info(msg);
             history.addMessage(msg);
+
             aceBeanInstaller.installPathBasedACEs(filteredPathBasedAceMapFromConfig, session, history, principalsToRemoveAcesFor,
                     intermediateSaves);
 
             // if everything went fine (no exceptions), save the session
             // thus persisting the changed ACLs
-            history.addVerboseMessage(
-                    "Finished (transient) installation of access control configuration without errors, saving now...");
-            session.save();
-            history.addMessage("Persisted changes of ACLs");
+            if (session.hasPendingChanges()) {
+                session.save();
+                String msgSave = "Persisted changes of ACLs";
+                history.addMessage(msgSave);
+                LOG.info(msgSave);
+            } else {
+                String msgSave = "No changes were made to ACLs (session has no pending changes)";
+                history.addMessage(msgSave);
+                LOG.info(msgSave);
+            }
+
         } finally {
             if (session != null) {
                 session.logout();
@@ -551,11 +565,18 @@ public class AceServiceImpl implements AceService {
         LOG.debug(message);
         history.addVerboseMessage(message);
 
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+
         Map<String, Set<AceBean>> repositoryDumpAceMap = null;
         LOG.debug("Building dump from repository (to compare delta with config to be installed)");
         repositoryDumpAceMap = dumpservice.createAclDumpMap(AcHelper.PATH_BASED_ORDER,
                 AcHelper.ACE_ORDER_NONE,
                 new String[0], true).getAceDump();
+
+        String msg = "Retrieved existing ACLs from repository in " + msHumanReadable(stopWatch.getTime());
+        LOG.info(msg);
+        history.addMessage(msg);
 
         installAcConfiguration(acConfiguration, history, authorizableInstallationHistorySet, repositoryDumpAceMap, restrictedToPaths);
 
