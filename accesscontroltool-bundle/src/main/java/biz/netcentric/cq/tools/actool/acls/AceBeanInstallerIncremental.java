@@ -260,6 +260,8 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
             Set<AceBean> aceBeansForActionEntry = null;
             Session clonedSession = null;
             try {
+                // the clone is needed to ensure no pending changes are introduced (even if there would not be real pending changes
+                // since we add and remove, but session.hasPendingChanges() is true then)
                 clonedSession = cloneSession(session);
                 aceBeansForActionEntry = getPrincipalAceBeansForActionAceBean(origAceBean, clonedSession);
             } finally {
@@ -275,7 +277,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
 
     }
 
-    private Set<AceBean> getPrincipalAceBeansForActionAceBean(AceBean origAceBean, Session session) throws RepositoryException {
+    Set<AceBean> getPrincipalAceBeansForActionAceBean(AceBean origAceBean, Session session) throws RepositoryException {
 
         Set<AceBean> aceBeansForActionEntry = new LinkedHashSet<AceBean>();
 
@@ -317,11 +319,10 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
         }
         AccessControlManager acMgr = session.getAccessControlManager();
         acMgr.setPolicy(origAceBean.getJcrPath(), newAcl);
-        // session.refresh(false);
 
         // handle privileges
         AceBean firstMappedBean = aceBeansForActionEntry.iterator().next(); // apply additional privileges only to first bean
-        Set<String> newPrivilegesFirstMappedBean = new HashSet<String>();
+        Set<String> newPrivilegesFirstMappedBean = new LinkedHashSet<String>();
         // first add regular privileges
         if (firstMappedBean.getPrivileges() != null) {
             newPrivilegesFirstMappedBean.addAll(Arrays.asList(firstMappedBean.getPrivileges()));
@@ -380,7 +381,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
         return privileges;
     }
 
-    private boolean definesContent(String pagePath, Session session) throws RepositoryException {
+    boolean definesContent(String pagePath, Session session) throws RepositoryException {
         if (pagePath == null || pagePath.equals("/")) {
             return false;
         }

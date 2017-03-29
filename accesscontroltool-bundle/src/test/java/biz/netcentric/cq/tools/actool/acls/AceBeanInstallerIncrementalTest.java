@@ -8,6 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.acls;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -64,9 +66,16 @@ public class AceBeanInstallerIncrementalTest {
     String testPrincipal1 = "testPrincipal1";
     String testPrincipal2 = "testPrincipal2";
     String testPrincipal3 = "testPrincipal3";
+
     AceBean bean1 = createTestBean(testPath, testPrincipal1, true, "jcr:read", "");
-    AceBean bean2 = createTestBean(testPath, testPrincipal2, true, "jcr:read,rep:write", "");
+    AceBean bean2 = createTestBean(testPath, testPrincipal2, true, "jcr:read,jcr:lockManagement,jcr:versionManagement,rep:write", "");
+    AceBean bean2Content = createTestBean(testPath, testPrincipal2, true,
+            "jcr:addChildNodes,jcr:nodeTypeManagement,jcr:removeChildNodes,jcr:removeNode", "",
+            new Restriction(AceBean.RESTRICTION_NAME_GLOB, "*/jcr:content*"));
     AceBean bean3 = createTestBean(testPath, testPrincipal3, true, "rep:write", "");
+
+    AceBean beanWithAction1 = createTestBean(testPath, testPrincipal1, true, "", "read");
+    AceBean beanWithAction2 = createTestBean(testPath, testPrincipal2, true, "", "read,create,modify,delete");
 
     @Spy
     AceBeanInstallerIncremental aceBeanInstallerIncremental;
@@ -91,12 +100,9 @@ public class AceBeanInstallerIncrementalTest {
 
         // empty by default
         doReturn(new JackrabbitAccessControlEntry[0]).when(jackrabbitAccessControlList).getAccessControlEntries();
+        doReturn(testPath).when(jackrabbitAccessControlList).getPath();
 
         doReturn(jackrabbitAccessControlList).when(aceBeanInstallerIncremental).getAccessControlList(eq(accessControlManager), anyString());
-
-        // by default do not return any actions
-        doReturn(new PrincipalImpl(FAKE_PRINCIPAL_ID)).when(aceBeanInstallerIncremental).applyCqActions(any(AceBean.class), eq(session),
-                anyString());
 
         doReturn(true).when(aceBeanInstallerIncremental).installPrivileges(any(AceBean.class), any(Principal.class),
                 eq(jackrabbitAccessControlList), eq(session), eq(accessControlManager));
@@ -114,6 +120,39 @@ public class AceBeanInstallerIncrementalTest {
                 .privilegeFromName("jcr:read");
 
         doReturn(session).when(aceBeanInstallerIncremental).cloneSession(session);
+
+        doReturn(true).when(aceBeanInstallerIncremental).definesContent(testPath, session);
+        doReturn(new PrincipalImpl(FAKE_PRINCIPAL_ID)).when(aceBeanInstallerIncremental).applyCqActions(any(AceBean.class), eq(session),
+                anyString());
+    }
+
+    @Test
+    public void testPrivilegesToComparableSet() throws RepositoryException {
+
+        // ensure mocking is correct
+        assertFalse(accessControlManager.privilegeFromName("jcr:removeNode").isAggregate()); // default mocking
+        assertFalse(accessControlManager.privilegeFromName("jcr:lockManagement").isAggregate()); // default mocking
+        assertTrue(accessControlManager.privilegeFromName("jcr:read").isAggregate()); // aggragate test mocking
+
+        assertEquals("simple non-aggregate must equal",
+                "[jcr:lockManagement]",
+                createComparablePrivSet("jcr:lockManagement"));
+
+        assertEquals("simple aggregate must be resolved to non-aggregates",
+                "[jcr:readNodes, jcr:readProperties]",
+                createComparablePrivSet("jcr:read"));
+
+        assertEquals("non-aggregate order is sorted (test order un-changed)",
+                "[jcr:lockManagement, jcr:removeNode]",
+                createComparablePrivSet("jcr:lockManagement, jcr:removeNode"));
+
+        assertEquals("non-aggregate order is sorted (test order changed)",
+                "[jcr:lockManagement, jcr:removeNode]",
+                createComparablePrivSet("jcr:removeNode, jcr:lockManagement"));
+
+        assertEquals("privilege order not important even for mix of aggregate and non-aggregate privs (must be still equal)",
+                "[jcr:lockManagement, jcr:readNodes, jcr:readProperties, jcr:removeNode]",
+                createComparablePrivSet("jcr:removeNode, jcr:read, jcr:lockManagement"));
 
     }
 
@@ -138,7 +177,7 @@ public class AceBeanInstallerIncrementalTest {
     @Test
     public void testSimplePrivilegesAcesUnchanged() throws Exception {
 
-        // make bean1 and bea
+        // make bean1 and bean
         doReturn(new JackrabbitAccessControlEntry[] { 
                 aceBeanToAce(bean1),  aceBeanToAce(bean2),  aceBeanToAce(bean3)
         }).when(jackrabbitAccessControlList).getAccessControlEntries();
@@ -176,6 +215,98 @@ public class AceBeanInstallerIncrementalTest {
 
     }
 
+    @Test
+    public void testGetPrincipalAceBeansForActionAceBeanIsCalledToResolveActions() throws Exception {
+
+        // read maps to one simple bean
+        doReturn(asSet(bean1)).when(aceBeanInstallerIncremental).getPrincipalAceBeansForActionAceBean(beanWithAction1, session);
+        // read,create,modify,delete maps to two beans
+        doReturn(asSet(bean2, bean2Content)).when(aceBeanInstallerIncremental).getPrincipalAceBeansForActionAceBean(beanWithAction2,
+                session);
+
+        aceBeanInstallerIncremental.installAcl(
+                asSet(beanWithAction1, beanWithAction2), testPath,
+                asSet(testPrincipal1, testPrincipal2), session, history);
+
+        verify(jackrabbitAccessControlList, never()).removeAccessControlEntry(any(JackrabbitAccessControlEntry.class));
+
+        verify(aceBeanInstallerIncremental).installPrivileges(eq(bean1), eq(new PrincipalImpl(testPrincipal1)),
+                eq(jackrabbitAccessControlList), eq(session), eq(accessControlManager));
+        verify(aceBeanInstallerIncremental).installPrivileges(eq(bean2), eq(new PrincipalImpl(testPrincipal2)),
+                eq(jackrabbitAccessControlList), eq(session), eq(accessControlManager));
+        verify(aceBeanInstallerIncremental).installPrivileges(eq(bean2Content), eq(new PrincipalImpl(testPrincipal2)),
+                eq(jackrabbitAccessControlList), eq(session), eq(accessControlManager));
+
+    }
+
+
+    @Test
+    public void testGetPrincipalAceBeansForActionRead() throws Exception {
+
+        AceBean bean1Clone = bean1.clone();
+        bean1Clone.setPrincipal(FAKE_PRINCIPAL_ID);
+
+        // test simple read bean
+        doReturn(new JackrabbitAccessControlEntry[] {
+                aceBeanToAce(bean1Clone)
+        }).when(jackrabbitAccessControlList).getAccessControlEntries();
+
+        Set<AceBean> resultAceBeans = aceBeanInstallerIncremental.getPrincipalAceBeansForActionAceBean(beanWithAction1,
+                session);
+
+        assertEquals(1, resultAceBeans.size());
+
+        Iterator<AceBean> resultAceBeansIt = resultAceBeans.iterator();
+        AceBean firstResult = resultAceBeansIt.next();
+
+        assertEquals(bean1.getPrincipalName(), firstResult.getPrincipalName());
+        assertEquals(bean1.getPermission(), firstResult.getPermission());
+        assertEquals(bean1.getJcrPath(), firstResult.getJcrPath());
+        assertArrayEquals(bean1.getPrivileges(), firstResult.getPrivileges());
+        assertArrayEquals(null, firstResult.getActions());
+        assertTrue(firstResult.getRestrictions().isEmpty());
+    }
+
+    @Test
+    public void testGetPrincipalAceBeansForActionReadCreateModifyDelete() throws Exception {
+
+        // test read,create,modify.delete
+        AceBean bean2Clone = bean2.clone();
+        bean2Clone.setPrincipal(FAKE_PRINCIPAL_ID);
+        AceBean bean2ContentClone = bean2Content.clone();
+        bean2ContentClone.setPrincipal(FAKE_PRINCIPAL_ID);
+
+        doReturn(new JackrabbitAccessControlEntry[] {
+                aceBeanToAce(bean2Clone), aceBeanToAce(bean2ContentClone)
+        }).when(jackrabbitAccessControlList).getAccessControlEntries();
+
+        Set<AceBean> resultAceBeans = aceBeanInstallerIncremental.getPrincipalAceBeansForActionAceBean(beanWithAction2,
+                session);
+
+        assertEquals(2, resultAceBeans.size());
+
+        Iterator<AceBean> resultAceBeansIt = resultAceBeans.iterator();
+        AceBean firstResult = resultAceBeansIt.next();
+
+        assertEquals(bean2.getPrincipalName(), firstResult.getPrincipalName());
+        assertEquals(bean2.getPermission(), firstResult.getPermission());
+        assertEquals(bean2.getJcrPath(), firstResult.getJcrPath());
+        assertArrayEquals(bean2.getPrivileges(), firstResult.getPrivileges());
+        assertArrayEquals(null, firstResult.getActions());
+        assertTrue(firstResult.getRestrictions().isEmpty());
+
+        AceBean secondResult = resultAceBeansIt.next();
+
+        assertEquals(bean2Content.getPrincipalName(), secondResult.getPrincipalName());
+        assertEquals(bean2Content.getPermission(), secondResult.getPermission());
+        assertEquals(bean2Content.getJcrPath(), secondResult.getJcrPath());
+        assertArrayEquals(bean2Content.getPrivileges(), secondResult.getPrivileges());
+        assertArrayEquals(null, secondResult.getActions());
+        assertEquals(1, secondResult.getRestrictions().size());
+        assertEquals(AceBean.RESTRICTION_NAME_GLOB, secondResult.getRestrictions().get(0).getName());
+        assertEquals("*/jcr:content*", secondResult.getRestrictions().get(0).getValue());
+    }
+
     public static <T> Set<T> asSet(T... objects) {
         return new LinkedHashSet<T>(Arrays.asList(objects));
     }
@@ -190,36 +321,6 @@ public class AceBeanInstallerIncrementalTest {
         testBean.setActions(YamlConfigReader.parseActionsString(actions));
         testBean.setRestrictions(Arrays.asList(restrictions));
         return testBean;
-    }
-
-    @Test
-    public void testPrivilegesToComparableSet() throws RepositoryException {
-
-        // ensure mocking is correct
-        assertFalse(accessControlManager.privilegeFromName("jcr:removeNode").isAggregate()); // default mocking
-        assertFalse(accessControlManager.privilegeFromName("jcr:lockManagement").isAggregate()); // default mocking
-        assertTrue(accessControlManager.privilegeFromName("jcr:read").isAggregate()); // aggragate test mocking
-
-        assertEquals("simple non-aggregate must equal",
-                "[jcr:lockManagement]",
-                createComparablePrivSet("jcr:lockManagement"));
-
-        assertEquals("simple aggregate must be resolved to non-aggregates",
-                "[jcr:readNodes, jcr:readProperties]",
-                createComparablePrivSet("jcr:read"));
-
-        assertEquals("non-aggregate order is sorted (test order un-changed)",
-                "[jcr:lockManagement, jcr:removeNode]",
-                createComparablePrivSet("jcr:lockManagement, jcr:removeNode"));
-
-        assertEquals("non-aggregate order is sorted (test order changed)",
-                "[jcr:lockManagement, jcr:removeNode]",
-                createComparablePrivSet("jcr:removeNode, jcr:lockManagement"));
-
-        assertEquals("privilege order not important even for mix of aggregate and non-aggregate privs (must be still equal)",
-                "[jcr:lockManagement, jcr:readNodes, jcr:readProperties, jcr:removeNode]",
-                createComparablePrivSet("jcr:removeNode, jcr:read, jcr:lockManagement"));
-
     }
 
     private String createComparablePrivSet(String privsIn) throws RepositoryException {
@@ -329,6 +430,12 @@ public class AceBeanInstallerIncrementalTest {
         public Privilege[] getAggregatePrivileges() {
             return aggregatePrivileges;
         }
+
+        @Override
+        public String toString() {
+            return "[TestPrivilege " + priv + " aggregate of " + Arrays.toString(aggregatePrivileges) + "]";
+        }
+
     }
 
     static final class TestValue implements Value {
