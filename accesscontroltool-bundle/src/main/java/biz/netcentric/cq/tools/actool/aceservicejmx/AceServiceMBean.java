@@ -46,7 +46,7 @@ public interface AceServiceMBean {
     String purgeACLs(@Name("path") final String path);
 
     @Description("Purges all authorizables contained in configuration files and all their ACEs from the system")
-    public String purgeAllAuthorizablesFromConfigurations();
+    public String purgeAllAuthorizablesFromConfiguration();
 
     @Description("Provides status and links to the saved history logs")
     String[] getSavedLogs() throws RepositoryException;

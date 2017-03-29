@@ -10,7 +10,6 @@ package biz.netcentric.cq.tools.actool.aceservice.impl;
 
 import static biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo.msHumanReadable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -692,24 +691,20 @@ public class AceServiceImpl implements AceService {
     }
 
     @Override
-    public String purgeAuthorizables(String authorizableIds) {
+    public String purgeAuthorizables(String[] authorizableIds) {
         Session session = null;
         String message = "";
         try {
-            try {
-                session = repository.loginAdministrative(null);
-                authorizableIds = authorizableIds.trim();
-                Set<String> authorizablesSet = new HashSet<String>(
-                        new ArrayList(Arrays.asList(authorizableIds.split(","))));
-                message = purgeAuthorizables(authorizablesSet, session);
-                AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
-                history.addMessage("purge method: purgeAuthorizables()");
-                history.addMessage(message);
-                acHistoryService.persistAcePurgeHistory(history);
-            } catch (RepositoryException e) {
-                LOG.error("Exception: ", e);
-
-            }
+            session = repository.loginAdministrative(null);
+            Set<String> authorizablesSet = new HashSet<String>(Arrays.asList(authorizableIds));
+            message = purgeAuthorizables(authorizablesSet, session);
+            AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
+            history.addMessage("purge method: purgeAuthorizables()");
+            history.addMessage(message);
+            acHistoryService.persistAcePurgeHistory(history);
+        } catch (RepositoryException e) {
+            LOG.error("Exception: ", e);
+            message = e.toString();
         } finally {
             if (session != null) {
                 session.logout();
@@ -718,8 +713,7 @@ public class AceServiceImpl implements AceService {
         return message;
     }
 
-    private String purgeAuthorizables(Set<String> authorizableIds,
-            final Session session) {
+    private String purgeAuthorizables(Set<String> authorizableIds, final Session session) {
 
         StopWatch sw = new StopWatch();
         sw.start();

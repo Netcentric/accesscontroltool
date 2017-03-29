@@ -75,14 +75,6 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements
         return aceService.execute(configurationRootPath, restrictedToPaths).toString();
     }
 
-    private String[] commaSeparatedStringToArr(String paths) {
-        String[] restrictedToPaths = null;
-        if (StringUtils.isNotBlank(paths)) {
-            restrictedToPaths = paths.split("[ \t]*,[ \t]*");
-        }
-        return restrictedToPaths;
-    }
-
     @Override
     public boolean isReadyToStart() {
         return aceService.isReadyToStart();
@@ -169,13 +161,21 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements
     }
 
     @Override
-    public String purgeAllAuthorizablesFromConfigurations() {
+    public String purgeAllAuthorizablesFromConfiguration() {
         return aceService.purgeAuthorizablesFromConfig();
     }
 
     @Override
     public String purgeAuthorizables(String authorizableIds) {
-        return aceService.purgeAuthorizables(authorizableIds);
+        return aceService.purgeAuthorizables(commaSeparatedStringToArr(authorizableIds));
+    }
+
+    private String[] commaSeparatedStringToArr(String str) {
+        String[] restrictedToPaths = null;
+        if (StringUtils.isNotBlank(str)) {
+            restrictedToPaths = str.trim().split("[ \t]*,[ \t]*");
+        }
+        return restrictedToPaths;
     }
 
 }

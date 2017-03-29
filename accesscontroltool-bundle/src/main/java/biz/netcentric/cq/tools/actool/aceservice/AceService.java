@@ -52,19 +52,19 @@ public interface AceService {
      * @return status message */
     public String purgeACL(final String path);
 
-    /** purges all acls of the node specified by path and all acls of all subnodes
+    /** Purges all acls of the node specified by path and all acls of all subnodes
      *
      * @param path the path from which to purge the ACL (including those of all subnodes)
      * @return status message */
     public String purgeACLs(final String path);
 
-    /** method that purges authorizable(s) and all respective aces from the system
+    /** Purges authorizable(s) and all respective aces from the system
      *
-     * @param authorizableIds comma-separated list of authorizable ids
+     * @param authorizableIds Array of authorizableIds to purge
      * @return status message */
-    public String purgeAuthorizables(String authorizableIds);
+    public String purgeAuthorizables(String[] authorizableIds);
 
-    /** returns current execution status
+    /** Returns current execution status
      *
      * @return true if the service is executing, false if not */
     public boolean isExecuting();
@@ -79,6 +79,9 @@ public interface AceService {
      * @return set containing paths */
     public Set<String> getCurrentConfigurationPaths();
 
+    /** Purges all authorizables form configuration with their ACEs (effectively purges everything contained in configuration)
+     * 
+     * @return */
     public String purgeAuthorizablesFromConfig();
 
     /** Common entry point for JMX and install hook.
