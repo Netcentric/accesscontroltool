@@ -8,8 +8,12 @@
  */
 package biz.netcentric.cq.tools.actool.authorizableutils.impl;
 
+import static java.util.Arrays.asList;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -22,6 +26,7 @@ import javax.jcr.RepositoryException;
 
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
+import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,6 +38,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
@@ -45,6 +51,10 @@ public class AuthorizableCreatorServiceImplTest {
     public static final String GROUP2 = "group2";
     public static final String GROUP3 = "group3";
     public static final String EXTERNALGROUP = "externalGroup";
+
+    public static final String USER1 = "user1";
+
+    public static final String SYSTEM_USER1 = "systemuser1";
 
     // class under test
     @Spy
@@ -70,30 +80,40 @@ public class AuthorizableCreatorServiceImplTest {
     @Mock
     private Group group3;
 
-
     @Mock
     private Group externalGroup;
     
+    @Mock
+    private User systemUser1;
+
+    @Mock
+    private User regularUser1;
+
     @Before
     public void setup() throws RepositoryException {
 
         status.setAcConfiguration(acConfiguration);
         acConfiguration.setGlobalConfiguration(globalConfiguration);
 
-        setupAuthorizable(testGroup, TESTGROUP);
-        setupAuthorizable(group1, GROUP1);
-        setupAuthorizable(group2, GROUP2);
-        setupAuthorizable(group3, GROUP3);
-        setupAuthorizable(externalGroup, EXTERNALGROUP);
+        setupAuthorizable(testGroup, TESTGROUP, true, false);
+        setupAuthorizable(group1, GROUP1, true, false);
+        setupAuthorizable(group2, GROUP2, true, false);
+        setupAuthorizable(group3, GROUP3, true, false);
+        setupAuthorizable(externalGroup, EXTERNALGROUP, true, false);
+
+        setupAuthorizable(systemUser1, SYSTEM_USER1, false, true);
+        setupAuthorizable(regularUser1, USER1, false, false);
     }
 
-    private void setupAuthorizable(Authorizable authorizable, String id) throws RepositoryException {
+    private void setupAuthorizable(Authorizable authorizable, String id, boolean isGroup, boolean isSystemUser) throws RepositoryException {
         doReturn(authorizable).when(userManager).getAuthorizable(id);
         doReturn(id).when(authorizable).getID();
+        doReturn(isGroup).when(authorizable).isGroup();
+        doReturn("/home/" + (isGroup ? "groups" : "users") + (isSystemUser ? "/system" : "") + "/test").when(authorizable).getPath();
     }
     
     @Test
-    public void testMergeMemberOfGroups() throws Exception {
+    public void testApplyGroupMembershipConfigMemberOf() throws Exception {
         HashSet<String> configuredGroups = new HashSet<String>(Arrays.asList(GROUP1, GROUP2));
         HashSet<String> groupsInRepo = new HashSet<String>(Arrays.asList(GROUP2, GROUP3, EXTERNALGROUP));
 
@@ -106,7 +126,7 @@ public class AuthorizableCreatorServiceImplTest {
             }
         }).when(cut).validateAssignedGroups(userManager, TESTGROUP, configuredGroups);
 
-        cut.mergeMemberOfGroups(TESTGROUP, status, userManager, configuredGroups, groupsInRepo);
+        cut.applyGroupMembershipConfigIsMemberOf(TESTGROUP, status, userManager, configuredGroups, groupsInRepo);
         
         verifyZeroInteractions(group2); // in configuredGroups and in groupsInRepo
         verifyZeroInteractions(externalGroup); // matches external.* and hence must not be removed (even though it is not in the
@@ -120,4 +140,66 @@ public class AuthorizableCreatorServiceImplTest {
         
     }
     
+    @Test
+    public void testApplyGroupMembershipConfigMembers() throws Exception {
+
+        AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
+        history.setAcConfiguration(new AcConfiguration());
+        history.getAcConfiguration().setGlobalConfiguration(new GlobalConfiguration());
+
+        AuthorizableConfigBean authorizableConfigBean = new AuthorizableConfigBean();
+        authorizableConfigBean.setPrincipalID(TESTGROUP);
+
+        Set<String> authorizablesInConfig = new HashSet<String>(asList(GROUP1));
+
+        // test no change
+        authorizableConfigBean.setMembers(new String[] { GROUP2, GROUP3, SYSTEM_USER1 });
+        doReturn(asList(group2, group3, regularUser1, systemUser1).iterator()).when(testGroup).getDeclaredMembers();
+        cut.applyGroupMembershipConfigMembers(authorizableConfigBean, history, TESTGROUP, userManager, authorizablesInConfig);
+        verify(testGroup, times(0)).addMember(any(Authorizable.class));
+        verify(testGroup, times(0)).removeMember(any(Authorizable.class));
+        reset(testGroup);
+
+        // test removed in config
+        authorizableConfigBean.setMembers(new String[] {});
+        doReturn(asList(group2, group3, regularUser1, systemUser1).iterator()).when(testGroup).getDeclaredMembers();
+        cut.applyGroupMembershipConfigMembers(authorizableConfigBean, history, TESTGROUP, userManager, authorizablesInConfig);
+        verify(testGroup, times(0)).addMember(any(Authorizable.class));
+        verify(testGroup).removeMember(group2);
+        verify(testGroup).removeMember(group3);
+        verify(testGroup).removeMember(systemUser1);
+        verify(testGroup, times(0)).removeMember(regularUser1);// regular user must not be removed
+        reset(testGroup);
+
+        // test to be added as in config but not in repo
+        authorizableConfigBean.setMembers(new String[] { GROUP2, GROUP3, SYSTEM_USER1 });
+        doReturn(asList().iterator()).when(testGroup).getDeclaredMembers();
+        cut.applyGroupMembershipConfigMembers(authorizableConfigBean, history, TESTGROUP, userManager, authorizablesInConfig);
+        verify(testGroup).addMember(group2);
+        verify(testGroup).addMember(group3);
+        verify(testGroup).addMember(systemUser1);
+        verify(testGroup, times(0)).removeMember(any(Authorizable.class));
+        reset(testGroup);
+
+        // test authorizable in config not removed
+        authorizableConfigBean.setMembers(new String[] {});
+        doReturn(asList(group1, group2).iterator()).when(testGroup).getDeclaredMembers();
+        cut.applyGroupMembershipConfigMembers(authorizableConfigBean, history, TESTGROUP, userManager, authorizablesInConfig);
+        verify(testGroup, times(0)).addMember(any(Authorizable.class));
+        verify(testGroup, times(0)).removeMember(group1); // must not be removed since it's contained in config
+        verify(testGroup).removeMember(group2);
+        reset(testGroup);
+
+        // test authorizable in config not removed if allowExternalGroupNamesRegEx is configured
+        history.getAcConfiguration().getGlobalConfiguration().setAllowExternalGroupNamesRegEx("group2.*");
+        authorizableConfigBean.setMembers(new String[] {});
+        doReturn(asList(group1, group2).iterator()).when(testGroup).getDeclaredMembers();
+        cut.applyGroupMembershipConfigMembers(authorizableConfigBean, history, TESTGROUP, userManager, authorizablesInConfig);
+        verify(testGroup, times(0)).addMember(any(Authorizable.class));
+        verify(testGroup, times(0)).removeMember(group1); // must not be removed since it's contained in config
+        verify(testGroup, times(0)).removeMember(group2); // must not be removed since allowExternalGroupNamesRegEx config
+        reset(testGroup);
+
+    }
+
 }

@@ -10,11 +10,15 @@ package biz.netcentric.cq.tools.actool.configreader;
 
 import static biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo.msHumanReadable;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
@@ -41,7 +45,6 @@ import biz.netcentric.cq.tools.actool.validators.ObsoleteAuthorizablesValidator;
 import biz.netcentric.cq.tools.actool.validators.YamlConfigurationsValidator;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
-import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableMemberGroupsValidator;
 import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
 
 @Service
@@ -159,9 +162,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             obsoleteAuthorizablesValidator.validate(obsoleteAuthorizables, authorizableIdsFromAllConfigs, sourceFile);
         }
 
-        // set member groups
-        final AuthorizableMemberGroupsValidator membersValidator = new AuthorizableMemberGroupsValidator();
-        membersValidator.validate(mergedAuthorizablesMapfromConfig);
+        ensureIsMemberOfIsUsedWherePossible(mergedAuthorizablesMapfromConfig, history);
 
         GlobalConfigurationValidator.validate(globalConfiguration);
 
@@ -179,5 +180,38 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         history.addMessage(msg);
 
         return acConfiguration;
+    }
+
+    void ensureIsMemberOfIsUsedWherePossible(Map<String, Set<AuthorizableConfigBean>> mergedAuthorizablesMapfromConfig,
+            AcInstallationHistoryPojo history) {
+        for (final Entry<String, Set<AuthorizableConfigBean>> aceConfigEntry : mergedAuthorizablesMapfromConfig.entrySet()) {
+            final String groupName = aceConfigEntry.getKey();
+            final AuthorizableConfigBean group = aceConfigEntry.getValue().iterator().next();
+            String[] origMembersArr = group.getMembers();
+
+            if ((origMembersArr == null) || (origMembersArr.length == 0)) {
+                continue;
+            }
+
+            final List<String> members = new ArrayList<String>(Arrays.asList(origMembersArr));
+
+            Iterator<String> membersIt = members.iterator();
+            while (membersIt.hasNext()) {
+                String member = membersIt.next();
+
+                boolean memberContainedInConfig = mergedAuthorizablesMapfromConfig.containsKey(member);
+                if (memberContainedInConfig) {
+                    AuthorizableConfigBean groupForIsMemberOf = mergedAuthorizablesMapfromConfig.get(member).iterator().next();
+                    groupForIsMemberOf.addIsMemberOf(groupName);
+                    membersIt.remove();
+                    history.addWarning("Group " + group.getPrincipalID() + " is declaring member " + member
+                            + " - moving relationship to isMemberOf of authorizable " + groupForIsMemberOf.getPrincipalID()
+                            + " (always prefer using isMemberOf over members if possible referenced member is availalbe in configuration)");
+                }
+
+            }
+            group.setMembers(members.toArray(new String[members.size()]));
+
+        }
     }
 }
