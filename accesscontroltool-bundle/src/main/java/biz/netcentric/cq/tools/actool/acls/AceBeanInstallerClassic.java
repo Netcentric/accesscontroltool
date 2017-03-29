@@ -124,7 +124,12 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
                     + ", principal: " + principal.getName() + ", privileges: "
                     + aceBean.getPrivilegesString() + ", allow: " + aceBean.isAllow());
         }
-        acMgr.setPolicy(aceBean.getJcrPath(), acl);
+
+        if (!acl.isEmpty()) {
+            acMgr.setPolicy(aceBean.getJcrPath(), acl);
+        } else {
+            acMgr.removePolicy(aceBean.getJcrPath(), acl);
+        }
 
    }
     

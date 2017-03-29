@@ -9,6 +9,8 @@
 package biz.netcentric.cq.tools.actool.helper;
 
 import java.security.Principal;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -151,59 +153,29 @@ public class AccessControlUtils {
         return null;
     }
 
-    /** A utility method to add a new access control entry.<br>
-     * Please note, that calling {@link javax.jcr.Session#save()} is required in order to persist the changes.
-     *
-     * @param session The editing session.
-     * @param absPath The absolute path of the target node.
-     * @param principal The principal to grant/deny privileges to.
-     * @param privilegeNames The names of the privileges to grant or deny.
-     * @param isAllow {@code true} to grant; {@code false} otherwise.
-     * @return {@code true} if the node's ACL was modified and the session has pending changes.
-     * @throws RepositoryException If an error occurs. */
-    public static boolean addAccessControlEntry(Session session,
-            String absPath, Principal principal, String[] privilegeNames,
-            boolean isAllow) throws RepositoryException {
-        return addAccessControlEntry(session, absPath, principal,
-                privilegesFromNames(session, privilegeNames), isAllow);
-    }
 
-    /** A utility method to add a new access control entry. Please note, that a call to {@link javax.jcr.Session#save()} is required in
-     * order to persist the changes.
-     *
-     * @param session The editing session
-     * @param absPath The absolute path of the target node.
-     * @param principal The principal to grant/deny privileges to.
-     * @param privileges The privileges to grant or deny
-     * @param isAllow {@code true} to grant; {@code false} otherwise;
-     * @return {@code true} if the node's ACL was modified and the session has pending changes.
-     * @throws RepositoryException If an error occurs. */
-    public static boolean addAccessControlEntry(Session session,
-            String absPath, Principal principal, Privilege[] privileges,
-            boolean isAllow) throws RepositoryException {
-        final JackrabbitAccessControlList acl = getAccessControlList(session, absPath);
-        if (acl != null) {
-            if (acl.addEntry(principal, privileges, isAllow)) {
-                session.getAccessControlManager().setPolicy(absPath, acl);
-                return true;
-            } // else: not modified
-        } // else: no acl found.
-
-        return false;
-    }
-
-    private static Principal getEveryonePrincipal(Session session)
-            throws RepositoryException {
-        if (session instanceof JackrabbitSession) {
-            return ((JackrabbitSession) session).getPrincipalManager()
-                    .getEveryone();
-        } else {
-            throw new UnsupportedOperationException(
-                    "Failed to retrieve everyone principal: JackrabbitSession expected.");
+    /** Converts the given privilege names into a set of privilege objects.
+     * 
+     * @param privNames (may be {@code null}
+     * @param acMgr
+     * @return a set of privileges (never {@code null}, but may be empty set)
+     * @throws RepositoryException */
+    public static Set<Privilege> getPrivilegeSet(String[] privNames,
+            AccessControlManager acMgr) throws RepositoryException {
+        if (privNames == null) {
+            return Collections.emptySet();
         }
+        final Set privileges = new HashSet(privNames.length);
+        for (final String name : privNames) {
+            final Privilege p = acMgr.privilegeFromName(name);
+            if (p.isAggregate()) {
+                privileges.addAll(Arrays.asList(p.getAggregatePrivileges()));
+            } else {
+                privileges.add(p);
+            }
+        }
+        return privileges;
     }
-
-
 
     /** @param session admin session
      * @param path valid node path in CRX
@@ -231,7 +203,12 @@ public class AccessControlUtils {
             if (ArrayUtils.contains(principalNames, principalNameInCurrentAce)) {
                 acl.removeAccessControlEntry(jace);
                 // bind new policy
-                accessControlManager.setPolicy(path, acl);
+                if (!acl.isEmpty()) {
+                    accessControlManager.setPolicy(path, acl);
+                } else {
+                    accessControlManager.removePolicy(path, acl);
+                }
+
                 countRemoved++;
             }
         }
