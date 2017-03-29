@@ -291,7 +291,11 @@ public class AceBeanInstallerImpl implements AceBeanInstaller {
                     + ", principal: " + principal.getName() + ", privileges: "
                     + aceBean.getPrivilegesString() + ", allow: " + aceBean.isAllow());
         }
-        acMgr.setPolicy(aceBean.getJcrPath(), acl);
+        if (!acl.isEmpty()) {
+            acMgr.setPolicy(aceBean.getJcrPath(), acl);
+        } else {
+            acMgr.removePolicy(aceBean.getJcrPath(), acl);
+        }
     }
 
     private void removeRedundantPrivileges(AceBean aceBean, Session session) throws RepositoryException {
