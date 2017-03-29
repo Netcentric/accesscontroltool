@@ -1,20 +1,6 @@
 package biz.netcentric.cq.tools.actool.configreader;
 
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.jcr.Node;
-import javax.jcr.Session;
-import javax.jcr.nodetype.NodeType;
-
+import biz.netcentric.cq.tools.actool.session.SessionManager;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Component;
@@ -23,10 +9,16 @@ import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.commons.JcrUtils;
 import org.apache.jackrabbit.vault.fs.io.Archive;
 import org.apache.jackrabbit.vault.fs.io.Archive.Entry;
-import org.apache.sling.jcr.api.SlingRepository;
 import org.apache.sling.settings.SlingSettingsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.jcr.Node;
+import javax.jcr.Session;
+import javax.jcr.nodetype.NodeType;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.util.*;
 
 @Service
 @Component(label = "AC Config Files Retriever", description = "Provides a map path->yamlConfigContent of relevant configs")
@@ -37,16 +29,15 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
     @Reference
     private SlingSettingsService slingSettingsService;
 
-
     @Reference
-    private SlingRepository repository;
+    private SessionManager sessionManager;
 
     @Override
     public Map<String, String> getConfigFileContentFromNode(String rootPath) throws Exception {
 
         Session session = null;
         try {
-            session = repository.loginAdministrative(null);
+            session = sessionManager.getSession(); //0
 
             Node rootNode = session.getNode(rootPath);
 
@@ -56,9 +47,7 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
             Map<String, String> configurations = getConfigurations(new NodeInJcr(rootNode));
             return configurations;
         } finally {
-            if (session != null) {
-                session.logout();
-            }
+            sessionManager.close(session);
         }
 
     }
@@ -128,12 +117,12 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
     }
 
     /**
-     * 
+     *
      * @param name a name containing a number of runmodes concatenated with AND and OR. The name must stick to the following grammar
      * <pre>&lt;somename&gt;['.'{&lt;runmode&gt;'.'|&lt;runmode&gt;','}]</pre>
      * The separator '.' means AND, "," means OR.
      * As usual in most programming languages the AND has a higher precendence.
-     * @return the run modes being extracted from the given name 
+     * @return the run modes being extracted from the given name
      * (the outer set of run modes represent OR concatenated run modes, the inner set AND concatenated run modes)
      */
     static Set<Set<String>> extractRunModesFromName(final String name) {
@@ -144,7 +133,7 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
         if (positionDot == -1) {
         	return requiredRunModes;
         }
-        
+
         String allSegments = name.substring(positionDot + 1);
         String[] orSegments = allSegments.split(",");
         for (String orSegment : orSegments) {

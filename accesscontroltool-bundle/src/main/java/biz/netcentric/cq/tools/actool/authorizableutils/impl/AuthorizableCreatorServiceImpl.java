@@ -8,40 +8,6 @@
  */
 package biz.netcentric.cq.tools.actool.authorizableutils.impl;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import javax.jcr.AccessDeniedException;
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.UnsupportedRepositoryOperationException;
-import javax.jcr.ValueFactory;
-import javax.jcr.ValueFormatException;
-
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.ReferenceCardinality;
-import org.apache.felix.scr.annotations.Service;
-import org.apache.jackrabbit.api.JackrabbitSession;
-import org.apache.jackrabbit.api.security.user.Authorizable;
-import org.apache.jackrabbit.api.security.user.AuthorizableExistsException;
-import org.apache.jackrabbit.api.security.user.Group;
-import org.apache.jackrabbit.api.security.user.User;
-import org.apache.jackrabbit.api.security.user.UserManager;
-import org.apache.sling.jcr.api.SlingRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableBean;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
@@ -52,6 +18,24 @@ import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.ContentHelper;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.session.SessionManager;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.ReferenceCardinality;
+import org.apache.felix.scr.annotations.Service;
+import org.apache.jackrabbit.api.JackrabbitSession;
+import org.apache.jackrabbit.api.security.user.*;
+import org.apache.sling.jcr.api.SlingRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.jcr.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.regex.Pattern;
 
 @Service
 @Component(metatype = true, label = "AC AuthorizableCreatorService", description = "Service that installs groups according to textual configuration files")
@@ -74,6 +58,9 @@ public class AuthorizableCreatorServiceImpl implements
 
     @Reference(cardinality = ReferenceCardinality.OPTIONAL_UNARY)
     ExternalGroupCreatorServiceImpl externalGroupCreatorService;
+
+    @Reference
+    private SessionManager sessionManager;
 
     @Override
     public void createNewAuthorizables(
@@ -331,14 +318,14 @@ public class AuthorizableCreatorServiceImpl implements
             history.addMessage(msg);
             LOG.info(msg);
         }
-        
+
         // using "" to compare non-external (both sides) to true
         String externalIdExistingAuthorizable = StringUtils
                 .defaultIfEmpty(AcHelper.valuesToString(existingAuthorizable.getProperty(REP_EXTERNAL_ID)), "");
         String externalIdConfig = StringUtils.defaultIfEmpty(principalConfigBean.getExternalId(), "");
 
         boolean externalIdHasChanged = !StringUtils.equals(externalIdExistingAuthorizable, externalIdConfig);
-        
+
 
         if (externalIdHasChanged) {
             String msg = "Found change of external id of " + existingAuthorizable.getID() + ": '"
@@ -459,7 +446,7 @@ public class AuthorizableCreatorServiceImpl implements
         String principalId = principalConfigBean.getPrincipalID();
 
         Authorizable newAuthorizable = null;
-        
+
         if (isGroup) {
             newAuthorizable = createNewGroup(userManager, principalConfigBean,
                     status, authorizableInstallationHistory, vf,
@@ -821,7 +808,7 @@ public class AuthorizableCreatorServiceImpl implements
     public void performRollback(SlingRepository repository,
             AuthorizableInstallationHistory authorizableInstallationHistory,
             AcInstallationHistoryPojo history) throws RepositoryException {
-        Session session = repository.loginAdministrative(null);
+        Session session = sessionManager.getSession();
         ValueFactory vf = session.getValueFactory();
         try {
             JackrabbitSession js = (JackrabbitSession) session;
@@ -933,7 +920,7 @@ public class AuthorizableCreatorServiceImpl implements
         } finally {
             if (session != null) {
                 session.save();
-                session.logout();
+                sessionManager.close(session);
             }
         }
     }

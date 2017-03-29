@@ -8,32 +8,26 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
-import static biz.netcentric.cq.tools.actool.configreader.YamlConfigReaderTest.getYamlList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.MockitoAnnotations.initMocks;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.jcr.RepositoryException;
-
+import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
+import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.session.SessionManager;
+import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-import biz.netcentric.cq.tools.actool.configmodel.AceBean;
-import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
-import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
-import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
+import javax.jcr.RepositoryException;
+import java.io.IOException;
+import java.util.*;
+
+import static biz.netcentric.cq.tools.actool.configreader.YamlConfigReaderTest.getYamlList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 public class YamlMacroProcessorTest {
 
@@ -43,8 +37,14 @@ public class YamlMacroProcessorTest {
     @Mock
     AcInstallationHistoryPojo acInstallationHistoryPojo;
 
+    @Mock
+    private SessionManager sessionManager;
+
     @InjectMocks
     YamlMacroProcessorImpl yamlMacroProcessor = new YamlMacroProcessorImpl();
+
+    @InjectMocks
+    YamlConfigReader yamlConfigReader = new YamlConfigReader();
 
     @Before
     public void setup() {
@@ -246,20 +246,21 @@ public class YamlMacroProcessorTest {
     private Map<String, Set<AceBean>> readAceConfigs(final List<LinkedHashMap> yamlList)
             throws RepositoryException, AcConfigBeanValidationException {
         Map<String, Set<AuthorizableConfigBean>> groups = readGroupConfigs(yamlList);
-        return new YamlConfigReader().getAceConfigurationBeans(yamlList, groups.keySet(), null);
+
+        return yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null);
     }
 
     private Map<String, Set<AuthorizableConfigBean>> readGroupConfigs(List<LinkedHashMap> yamlList) throws AcConfigBeanValidationException {
-        return new YamlConfigReader().getGroupConfigurationBeans(yamlList, null);
+        return yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
     }
 
     private GlobalConfiguration readGlobalConfig(List<LinkedHashMap> yamlList) throws AcConfigBeanValidationException {
-        return new YamlConfigReader().getGlobalConfiguration(yamlList);
+        return yamlConfigReader.getGlobalConfiguration(yamlList);
     }
 
     private Map<String, Set<AuthorizableConfigBean>> readUserConfigs(List<LinkedHashMap> yamlList)
             throws AcConfigBeanValidationException {
-        return new YamlConfigReader().getUserConfigurationBeans(yamlList, null);
+        return yamlConfigReader.getUserConfigurationBeans(yamlList, null);
     }
 
     @Test
