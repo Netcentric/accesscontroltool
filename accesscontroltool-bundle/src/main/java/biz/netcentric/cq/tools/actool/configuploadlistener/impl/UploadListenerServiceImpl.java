@@ -105,7 +105,7 @@ public class UploadListenerServiceImpl implements UploadListenerService,
     @Activate
     public void activate(@SuppressWarnings("rawtypes") final Map properties)
             throws Exception {
-        this.configurationPath = aceService.getConfigurationRootPath();
+        this.configurationPath = aceService.getConfiguredAcConfigurationRootPath();
         String statusService = PropertiesUtil
                 .toString(
                         properties

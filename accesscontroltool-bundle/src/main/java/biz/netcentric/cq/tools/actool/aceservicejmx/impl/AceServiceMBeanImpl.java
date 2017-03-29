@@ -54,17 +54,33 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements
     Dumpservice dumpservice;
 
     @Override
-    public String execute() {
+    public String apply() {
         return aceService.execute().toString();
     }
 
     @Override
-    public String execute(String paths) {
+    public String applyRestrictedToPaths(String paths) {
+        String[] restrictedToPaths = commaSeparatedStringToArr(paths);
+        return aceService.execute(restrictedToPaths).toString();
+    }
+
+    @Override
+    public String apply(String configurationRootPath) {
+        return aceService.execute(configurationRootPath).toString();
+    }
+
+    @Override
+    public String applyRestrictedToPaths(String configurationRootPath, String paths) {
+        String[] restrictedToPaths = commaSeparatedStringToArr(paths);
+        return aceService.execute(configurationRootPath, restrictedToPaths).toString();
+    }
+
+    private String[] commaSeparatedStringToArr(String paths) {
         String[] restrictedToPaths = null;
         if (StringUtils.isNotBlank(paths)) {
-            restrictedToPaths = paths.split(",");
+            restrictedToPaths = paths.split("[ \t]*,[ \t]*");
         }
-        return aceService.execute(restrictedToPaths).toString();
+        return restrictedToPaths;
     }
 
     @Override

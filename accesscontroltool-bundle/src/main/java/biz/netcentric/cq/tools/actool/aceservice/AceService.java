@@ -22,11 +22,24 @@ public interface AceService {
      * @return the history */
     public AcInstallationHistoryPojo execute();
 
-    /** Applies parts of the history
+    /** Applies the configuration as stored at the given configurationRootPath to the repository.
+     * 
+     * @param configurationRootPath the root path for configuration files
+     * @return the history */
+    public AcInstallationHistoryPojo execute(String configurationRootPath);
+
+    /** Applies parts of the configuration (based on given paths)
      * 
      * @param restrictedToPaths only apply ACLs to root paths as given
      * @return the history */
     public AcInstallationHistoryPojo execute(String[] restrictedToPaths);
+
+    /** Applies the configuration as stored at the given configurationRootPath to the repository, but only apply ACEs to given restrictedToPaths.
+     * 
+     * @param restrictedToPaths only apply ACLs to root paths as given
+     * @param configurationRootPath the root path for configuration files
+     * @return the history */
+    public AcInstallationHistoryPojo execute(String configurationRootPath, String[] restrictedToPaths);
 
     /** method that indicates whether the service is ready for installation (if at least one configurations was found in repository)
      *
@@ -59,7 +72,7 @@ public interface AceService {
     /** return the path in repository under witch the ac confiuration are stored
      *
      * @return node path in repository */
-    public String getConfigurationRootPath();
+    public String getConfiguredAcConfigurationRootPath();
 
     /** return a set containing the paths to the newest configurations under the configuration root path
      *

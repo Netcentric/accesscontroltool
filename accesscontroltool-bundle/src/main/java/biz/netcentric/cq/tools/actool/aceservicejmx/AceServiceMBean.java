@@ -24,11 +24,18 @@ public interface AceServiceMBean {
 
     boolean isReadyToStart();
 
-    @Description("Executes the installation of the ACE configuration(s)")
-    String execute();
+    @Description("Applies the ACE configuration")
+    String apply();
 
-    @Description("Executes the installation of the ACE configuration(s), but restricted to given paths")
-    String execute(
+    @Description("Applies the ACE configuration, but restricted to given paths")
+    String applyRestrictedToPaths(
+            @Name("paths") @Description("comma separated list of paths to apply the configuration to, other paths will be skipped") String restrictedToPaths);
+
+    @Description("Applies the ACE configuration as located at given path")
+    String apply(@Name("configurationRootPath") @Description("The configuration root path") String configurationRootPath);
+
+    @Description("Applies the ACE configuration, but restricted to given paths")
+    String applyRestrictedToPaths(@Name("configurationRootPath") @Description("The configuration root path") String configurationRootPath,
             @Name("paths") @Description("comma separated list of paths to apply the configuration to, other paths will be skipped") String restrictedToPaths);
 
     @Description("Purges the AccessControlList of the given path, if existing")
