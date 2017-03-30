@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import com.day.cq.commons.jcr.JcrConstants;
 
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
+import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
@@ -72,11 +73,11 @@ public class AcHistoryServiceImpl implements AcHistoryService {
             LOG.info(message);
             return;
         }
-        
+
         Session session = null;
         try {
 
-            session = repository.loginAdministrative(null);
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
             Node historyNode = HistoryUtils.persistHistory(session, history, this.nrOfSavedHistories);
 
             String mergedAndProcessedConfig = history.getMergedAndProcessedConfig();
@@ -102,7 +103,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
     public String[] getInstallationLogPaths() {
         Session session = null;
         try {
-            session = repository.loginAdministrative(null);
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
             return HistoryUtils.getHistoryInfos(session);
         } catch (RepositoryException e) {
             LOG.error("RepositoryException: ", e);
@@ -129,7 +130,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         Session session = null;
         String history = "";
         try {
-            session = repository.loginAdministrative(null);
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
 
             Node statisticsRootNode = HistoryUtils.getAcHistoryRootNode(session);
             NodeIterator it = statisticsRootNode.getNodes();
@@ -187,7 +188,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         Session session = null;
         String history = "";
         try {
-            session = repository.loginAdministrative(null);
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
 
             Node statisticsRootNode = HistoryUtils
                     .getAcHistoryRootNode(session);
@@ -217,7 +218,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         Session session = null;
 
         try {
-            session = repository.loginAdministrative(null);
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
             Node acHistoryRootNode = HistoryUtils.getAcHistoryRootNode(session);
             NodeIterator nodeIterator = acHistoryRootNode.getNodes();
             Set<Node> historyNodes = new TreeSet<Node>(

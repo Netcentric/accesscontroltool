@@ -55,6 +55,7 @@ import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.AclBean;
+import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.PurgeHelper;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
@@ -228,12 +229,10 @@ public class AceServiceImpl implements AceService {
             throw new IllegalArgumentException(message);
         }
 
-
         installAuthorizables(history, authorizableHistorySet, acConfiguration.getAuthorizablesConfig());
 
         installAces(history, acConfiguration, repositoryDumpAceMap, restrictedToPaths);
     }
-
 
     private void removeAcesForPathsNotInConfig(AcInstallationHistoryPojo history, Session session, Set<String> principalsInConfig,
             Map<String, Set<AceBean>> repositoryDumpAceMap, Set<String> acePathsFromConfig)
@@ -257,7 +256,7 @@ public class AceServiceImpl implements AceService {
             }
             countAcesCleaned += countRemoved;
         }
-        
+
         if (countAcesCleaned > 0) {
             String message = "Cleaned " + countAcesCleaned + " ACEs from " + countPathsCleaned
                     + " paths in repository (ACEs that belong to users in the AC Config, "
@@ -361,7 +360,6 @@ public class AceServiceImpl implements AceService {
     private void installAces(AcInstallationHistoryPojo history,
             AcConfiguration acConfiguration, Map<String, Set<AceBean>> repositoryDumpAceMap, String[] restrictedToPaths) throws Exception {
 
-
         Map<String, Set<AceBean>> aceMapFromConfig = acConfiguration.getAceConfig();
 
         // --- installation of ACEs from configuration ---
@@ -370,7 +368,7 @@ public class AceServiceImpl implements AceService {
 
         Session session = null;
         try {
-            session = repository.loginAdministrative(null);
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
 
             Set<String> principalsToRemoveAcesFor = getPrincipalNamesToRemoveAcesFor(acConfiguration.getAuthorizablesConfig());
             removeAcesForPathsNotInConfig(history, session, principalsToRemoveAcesFor, repositoryDumpAceMap,
@@ -409,7 +407,6 @@ public class AceServiceImpl implements AceService {
                 session.logout();
             }
         }
-
 
     }
 
@@ -471,7 +468,7 @@ public class AceServiceImpl implements AceService {
         // in case of an exception during the installation of the ACEs the
         // performed installation of authorizables from config
         // has to be reverted using the rollback method
-        Session authorizableInstallationSession = repository.loginAdministrative(null);
+        Session authorizableInstallationSession = repository.loginService(Constants.USER_AC_SERVICE, null);
         try {
             // only save session if no exceptions occured
             AuthorizableInstallationHistory authorizableInstallationHistory = new AuthorizableInstallationHistory();
@@ -499,7 +496,7 @@ public class AceServiceImpl implements AceService {
 
         Session session = null;
         try {
-            session = repository.loginAdministrative(null);
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
 
             if (obsoleteAuthorizables.isEmpty()) {
                 history.addVerboseMessage("No obsolete authorizables configured");
@@ -534,7 +531,6 @@ public class AceServiceImpl implements AceService {
                 history.addMessage("(" + obsoleteAuthorizablesAlreadyPurged.size() + " have been purged already)");
             }
 
-
             String purgeAuthorizablesResultMsg = purgeAuthorizables(obsoleteAuthorizables, session);
             LOG.info(purgeAuthorizablesResultMsg);
             history.addVerboseMessage(purgeAuthorizablesResultMsg); // this message is too long for regular log
@@ -559,7 +555,6 @@ public class AceServiceImpl implements AceService {
             Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet,
             AcConfiguration acConfiguration, String[] restrictedToPaths) throws ValueFormatException,
             RepositoryException, Exception {
-
 
         String message = "Starting installation of merged configurations...";
         LOG.debug(message);
@@ -601,7 +596,7 @@ public class AceServiceImpl implements AceService {
         String message = "";
         boolean flag = true;
         try {
-            session = repository.loginAdministrative(null);
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
             PurgeHelper.purgeAcl(session, path);
             session.save();
         } catch (Exception e) {
@@ -632,7 +627,7 @@ public class AceServiceImpl implements AceService {
         String message = "";
         boolean flag = true;
         try {
-            session = repository.loginAdministrative(null);
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
             message = PurgeHelper.purgeACLs(session, path);
             AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
             history.addMessage("purge method: purgeACLs()");
@@ -659,7 +654,7 @@ public class AceServiceImpl implements AceService {
         Session session = null;
         String message = "";
         try {
-            session = repository.loginAdministrative(null);
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
 
             Set<String> authorizabesFromConfigurations = getAllAuthorizablesFromConfig(session);
             message = purgeAuthorizables(authorizabesFromConfigurations,
@@ -686,7 +681,7 @@ public class AceServiceImpl implements AceService {
         String message = "";
         try {
             try {
-                session = repository.loginAdministrative(null);
+                session = repository.loginService(Constants.USER_AC_SERVICE, null);
                 authorizableIds = authorizableIds.trim();
                 Set<String> authorizablesSet = new HashSet<String>(
                         new ArrayList(Arrays.asList(authorizableIds.split(","))));

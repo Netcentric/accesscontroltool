@@ -42,6 +42,7 @@ import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.aceservice.AceService;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableBean;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
@@ -821,7 +822,7 @@ public class AuthorizableCreatorServiceImpl implements
     public void performRollback(SlingRepository repository,
             AuthorizableInstallationHistory authorizableInstallationHistory,
             AcInstallationHistoryPojo history) throws RepositoryException {
-        Session session = repository.loginAdministrative(null);
+        Session session = repository.loginService(Constants.USER_AC_SERVICE,null);
         ValueFactory vf = session.getValueFactory();
         try {
             JackrabbitSession js = (JackrabbitSession) session;

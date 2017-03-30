@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import com.day.cq.commons.jcr.JcrConstants;
 
+import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 @Service
@@ -52,7 +53,7 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
 
         Session session = null;
         try {
-            session = repository.loginAdministrative(null);
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
 
             Node node = session.getNode(pathOfChildrenOfClause);
 

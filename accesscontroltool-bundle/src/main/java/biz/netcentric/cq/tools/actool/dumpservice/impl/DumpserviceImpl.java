@@ -64,6 +64,7 @@ import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.aceservice.AceService;
 import biz.netcentric.cq.tools.actool.authorizableutils.impl.AuthorizableCreatorServiceImpl;
 import biz.netcentric.cq.tools.actool.authorizableutils.impl.PrincipalImpl;
 import biz.netcentric.cq.tools.actool.comparators.AcePathComparator;
@@ -175,7 +176,7 @@ public class DumpserviceImpl implements Dumpservice {
     private void persistDump(String dump) {
         Session session = null;
         try {
-            session = repository.loginAdministrative(null);
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
             Node rootNode = HistoryUtils.getAcHistoryRootNode(session);
             createTransientDumpNode(dump, rootNode);
             session.save();
@@ -263,7 +264,7 @@ public class DumpserviceImpl implements Dumpservice {
                     queryExcludePaths);
             Map<String, Set<AceBean>> aclDumpMap = aceDumpData.getAceDump();
 
-            session = repository.loginAdministrative(null);
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
             Set<AuthorizableConfigBean> groupBeans = getGroupBeans(session);
             Set<User> usersFromACEs = getUsersFromAces(keyOrder, session, aclDumpMap);
             Set<AuthorizableConfigBean> userBeans = getUserBeans(usersFromACEs);
@@ -419,7 +420,7 @@ public class DumpserviceImpl implements Dumpservice {
             final boolean isIncludeUsers) throws RepositoryException {
         Session session = null;
         try {
-            session = repository.loginAdministrative(null);
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
 
             AceDumpData aceDumpData = new AceDumpData();
             UserManager um = ((JackrabbitSession) session).getUserManager();

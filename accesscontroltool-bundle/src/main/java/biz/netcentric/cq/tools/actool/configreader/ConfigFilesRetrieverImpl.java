@@ -28,6 +28,8 @@ import org.apache.sling.settings.SlingSettingsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.helper.Constants;
+
 @Service
 @Component(label = "AC Config Files Retriever", description = "Provides a map path->yamlConfigContent of relevant configs")
 public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
@@ -37,7 +39,6 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
     @Reference
     private SlingSettingsService slingSettingsService;
 
-
     @Reference
     private SlingRepository repository;
 
@@ -46,7 +47,7 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
 
         Session session = null;
         try {
-            session = repository.loginAdministrative(null);
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
 
             Node rootNode = session.getNode(rootPath);
 
