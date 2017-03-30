@@ -10,7 +10,6 @@ package biz.netcentric.cq.tools.actool.aceservice.impl;
 
 import static biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo.msHumanReadable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -37,6 +36,7 @@ import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
+import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,8 +97,8 @@ public class AceServiceImpl implements AceService {
 
     private boolean isExecuting = false;
 
-    @Property(label = "Configuration storage path", description = "enter CRX path where ACE configuration gets stored", name = AceServiceImpl.PROPERTY_CONFIGURATION_PATH, value = "")
-    private String configurationPath;
+    @Property(label = "Configuration storage path", description = "CRX path where ACE configuration gets stored", name = AceServiceImpl.PROPERTY_CONFIGURATION_PATH, value = "")
+    private String configuredAcConfigurationRootPath;
 
     @Property(label = "Use intermedate saves", description = "Saves ACLs for each path individually - this can be used to avoid problems with large changesets and MongoDB (OAK-5557), however the rollback is disabled then.", name = AceServiceImpl.PROPERTY_INTERMEDIATE_SAVES, value = "")
     private boolean intermediateSaves;
@@ -107,19 +107,29 @@ public class AceServiceImpl implements AceService {
     public void activate(final Map<?, ?> properties)
             throws Exception {
         LOG.debug("Activated AceService!");
-        configurationPath = PropertiesUtil.toString(properties.get(PROPERTY_CONFIGURATION_PATH), "");
-        LOG.info("Conifg " + PROPERTY_CONFIGURATION_PATH + "=" + configurationPath);
+        configuredAcConfigurationRootPath = PropertiesUtil.toString(properties.get(PROPERTY_CONFIGURATION_PATH), "");
+        LOG.info("Conifg " + PROPERTY_CONFIGURATION_PATH + "=" + configuredAcConfigurationRootPath);
         intermediateSaves = PropertiesUtil.toBoolean(properties.get(PROPERTY_INTERMEDIATE_SAVES), false);
         LOG.info("Conifg " + PROPERTY_INTERMEDIATE_SAVES + "=" + intermediateSaves);
     }
 
     @Override
     public AcInstallationHistoryPojo execute() {
-        return execute(null);
+        return execute(getConfiguredAcConfigurationRootPath(), null);
+    }
+
+    @Override
+    public AcInstallationHistoryPojo execute(String configurationRootPath) {
+        return execute(configurationRootPath, null);
     }
 
     @Override
     public AcInstallationHistoryPojo execute(String[] restrictedToPaths) {
+        return execute(getConfiguredAcConfigurationRootPath(), restrictedToPaths);
+    }
+
+    @Override
+    public AcInstallationHistoryPojo execute(String configurationRootPath, String[] restrictedToPaths) {
 
         AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
         if (isExecuting) {
@@ -129,8 +139,7 @@ public class AceServiceImpl implements AceService {
 
         Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet = new LinkedHashSet<AuthorizableInstallationHistory>();
         try {
-            String rootPath = getConfigurationRootPath();
-            Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(rootPath);
+            Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configurationRootPath);
             installConfigurationFiles(history, newestConfigurations, authorizableInstallationHistorySet, restrictedToPaths);
         } catch (AuthorizableCreatorException e) {
             history.addError(e.toString());
@@ -179,7 +188,8 @@ public class AceServiceImpl implements AceService {
             StopWatch sw = new StopWatch();
             sw.start();
             isExecuting = true;
-            String message = "*** Applying AC Tool Configuration...";
+            String bundleVersion = FrameworkUtil.getBundle(AceServiceImpl.class).getVersion().toString();
+            String message = "*** Applying AC Tool Configuration using v" + bundleVersion + "... ";
             LOG.info(message);
             history.addMessage(message);
 
@@ -584,12 +594,12 @@ public class AceServiceImpl implements AceService {
 
     @Override
     public boolean isReadyToStart() {
-        String rootPath = getConfigurationRootPath();
+        String rootPath = getConfiguredAcConfigurationRootPath();
         try {
             return !configFilesRetriever.getConfigFileContentFromNode(rootPath).isEmpty();
 
         } catch (Exception e) {
-            LOG.warn("Could not retrieve config file content for root path " + configurationPath);
+            LOG.warn("Could not retrieve config file content for root path " + configuredAcConfigurationRootPath);
             return false;
         }
 
@@ -681,24 +691,20 @@ public class AceServiceImpl implements AceService {
     }
 
     @Override
-    public String purgeAuthorizables(String authorizableIds) {
+    public String purgeAuthorizables(String[] authorizableIds) {
         Session session = null;
         String message = "";
         try {
-            try {
-                session = repository.loginAdministrative(null);
-                authorizableIds = authorizableIds.trim();
-                Set<String> authorizablesSet = new HashSet<String>(
-                        new ArrayList(Arrays.asList(authorizableIds.split(","))));
-                message = purgeAuthorizables(authorizablesSet, session);
-                AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
-                history.addMessage("purge method: purgeAuthorizables()");
-                history.addMessage(message);
-                acHistoryService.persistAcePurgeHistory(history);
-            } catch (RepositoryException e) {
-                LOG.error("Exception: ", e);
-
-            }
+            session = repository.loginAdministrative(null);
+            Set<String> authorizablesSet = new HashSet<String>(Arrays.asList(authorizableIds));
+            message = purgeAuthorizables(authorizablesSet, session);
+            AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
+            history.addMessage("purge method: purgeAuthorizables()");
+            history.addMessage(message);
+            acHistoryService.persistAcePurgeHistory(history);
+        } catch (RepositoryException e) {
+            LOG.error("Exception: ", e);
+            message = e.toString();
         } finally {
             if (session != null) {
                 session.logout();
@@ -707,8 +713,7 @@ public class AceServiceImpl implements AceService {
         return message;
     }
 
-    private String purgeAuthorizables(Set<String> authorizableIds,
-            final Session session) {
+    private String purgeAuthorizables(Set<String> authorizableIds, final Session session) {
 
         StopWatch sw = new StopWatch();
         sw.start();
@@ -769,8 +774,8 @@ public class AceServiceImpl implements AceService {
     }
 
     @Override
-    public String getConfigurationRootPath() {
-        return configurationPath;
+    public String getConfiguredAcConfigurationRootPath() {
+        return configuredAcConfigurationRootPath;
     }
 
     @Override
@@ -778,9 +783,9 @@ public class AceServiceImpl implements AceService {
 
         Set<String> paths = new LinkedHashSet<String>();
         try {
-            paths = configFilesRetriever.getConfigFileContentFromNode(configurationPath).keySet();
+            paths = configFilesRetriever.getConfigFileContentFromNode(configuredAcConfigurationRootPath).keySet();
         } catch (Exception e) {
-            LOG.warn("Could not retrieve config file content for root path " + configurationPath);
+            LOG.warn("Could not retrieve config file content for root path " + configuredAcConfigurationRootPath);
         }
         return paths;
     }
@@ -788,10 +793,11 @@ public class AceServiceImpl implements AceService {
     public Set<String> getAllAuthorizablesFromConfig(Session session)
             throws Exception {
         AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
-        Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configurationPath);
+        Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configuredAcConfigurationRootPath);
         AcConfiguration acConfiguration = configurationMerger.getMergedConfigurations(newestConfigurations, history, configReader);
         Set<String> allAuthorizablesFromConfig = acConfiguration.getAceConfig().keySet();
         return allAuthorizablesFromConfig;
     }
+
 
 }
