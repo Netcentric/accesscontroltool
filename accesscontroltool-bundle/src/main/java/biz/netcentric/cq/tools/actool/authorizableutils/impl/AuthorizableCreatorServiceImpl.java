@@ -80,34 +80,28 @@ public class AuthorizableCreatorServiceImpl implements
             Map<String, Set<AuthorizableConfigBean>> principalMapFromConfig,
             final Session session, AcInstallationHistoryPojo status,
             AuthorizableInstallationHistory authorizableInstallationHistory)
-                    throws AccessDeniedException,
-                    UnsupportedRepositoryOperationException, RepositoryException,
-                    AuthorizableCreatorException {
+            throws RepositoryException, AuthorizableCreatorException {
 
         this.status = status;
         this.principalMapFromConfig = principalMapFromConfig;
         this.authorizableInstallationHistory = authorizableInstallationHistory;
 
-        Set<String> authorizableFromConfigurations = principalMapFromConfig.keySet();
+        Set<String> authorizablesFromConfigurations = principalMapFromConfig.keySet();
 
-        for (String principalId : authorizableFromConfigurations) {
+        for (String principalId : authorizablesFromConfigurations) {
 
-            Set<AuthorizableConfigBean> currentPrincipalData = principalMapFromConfig
-                    .get(principalId);
-            Iterator<AuthorizableConfigBean> it = currentPrincipalData
-                    .iterator();
+            Set<AuthorizableConfigBean> currentPrincipalData = principalMapFromConfig.get(principalId);
+            Iterator<AuthorizableConfigBean> it = currentPrincipalData.iterator();
 
             AuthorizableConfigBean tmpPricipalConfigBean = null;
             while (it.hasNext()) {
-
                 tmpPricipalConfigBean = it.next();
-                status.addVerboseMessage("Starting installation of authorizable bean: "
-                        + tmpPricipalConfigBean.toString());
+                status.addVerboseMessage("Starting installation of authorizable bean: " + tmpPricipalConfigBean.toString());
             }
 
             installAuthorizableConfigurationBean(session,
                     tmpPricipalConfigBean, status,
-                    authorizableInstallationHistory);
+                    authorizableInstallationHistory, authorizablesFromConfigurations);
         }
 
     }
@@ -115,7 +109,7 @@ public class AuthorizableCreatorServiceImpl implements
     private void installAuthorizableConfigurationBean(final Session session,
             AuthorizableConfigBean authorizableConfigBean,
             AcInstallationHistoryPojo history,
-            AuthorizableInstallationHistory authorizableInstallationHistory)
+            AuthorizableInstallationHistory authorizableInstallationHistory, Set<String> authorizablesFromConfigurations)
                     throws AccessDeniedException,
                     UnsupportedRepositoryOperationException, RepositoryException,
                     AuthorizableExistsException, AuthorizableCreatorException {
@@ -147,26 +141,119 @@ public class AuthorizableCreatorServiceImpl implements
             handleRecreationOfAuthorizableIfNecessary(session, authorizableConfigBean, history,
                     authorizableInstallationHistory, userManager);
 
-            mergeGroup(history, authorizableInstallationHistory,
+            applyGroupMembershipConfigIsMemberOf(history, authorizableInstallationHistory,
                     authorizableConfigBean, userManager);
 
         }
 
-        if (authorizableConfigBean.isGroup()) {
-            // this has to be added explicitly here (all other memberships are maintained isMemberOf)
-            Group installedGroup = (Group) userManager.getAuthorizable(principalId);
-            Authorizable anonymous = userManager.getAuthorizable(Constants.USER_ANONYMOUS);
-            if (authorizableConfigBean.membersContainsAnonymous()) {
-                installedGroup.addMember(anonymous);
-            } else {
-                installedGroup.removeMember(anonymous);
-            }
-        }
+        applyGroupMembershipConfigMembers(authorizableConfigBean, history, principalId, userManager, authorizablesFromConfigurations);
 
         if (StringUtils.isNotBlank(authorizableConfigBean.getMigrateFrom()) && authorizableConfigBean.isGroup()) {
             migrateFromOldGroup(authorizableConfigBean, userManager);
         }
 
+    }
+
+    /** This is only relevant for members that point to groups/users not contained in configuration.
+     * {@link biz.netcentric.cq.tools.actool.configreader.YamlConfigurationMerger#ensureIsMemberOfIsUsedWherePossible()} ensures that
+     * regular relationships between groups contained in config are kept in isMemberOf */
+    @SuppressWarnings("unchecked")
+    void applyGroupMembershipConfigMembers(AuthorizableConfigBean authorizableConfigBean, AcInstallationHistoryPojo history,
+            String principalId, UserManager userManager, Set<String> authorizablesFromConfigurations) throws RepositoryException {
+        if (authorizableConfigBean.isGroup()) {
+            String[] membersInConfigArr = authorizableConfigBean.getMembers();
+
+            Group installedGroup = (Group) userManager.getAuthorizable(principalId);
+
+            Set<String> membersInConfig = membersInConfigArr != null ? new HashSet<String>(Arrays.asList(membersInConfigArr))
+                    : new HashSet<String>();
+            Set<String> relevantMembersInRepo = getDeclaredMembers(installedGroup);
+
+            // ensure authorizables from config itself that are added via isMemberOf are not deleted
+            relevantMembersInRepo = new HashSet<String>(CollectionUtils.subtract(relevantMembersInRepo, authorizablesFromConfigurations));
+            // ensure regular users are never removed
+            relevantMembersInRepo = removeRegularUsers(relevantMembersInRepo, userManager);
+            // take configuration 'allowExternalGroupNamesRegEx' into account (and remove matching groups from further handling)
+            relevantMembersInRepo = removeExternalGroupsThatAreUntouchedByConfiguration(relevantMembersInRepo, history);
+
+            Set<String> membersToAdd = new HashSet<String>(CollectionUtils.subtract(membersInConfig, relevantMembersInRepo));
+            Set<String> membersToRemove = new HashSet<String>(CollectionUtils.subtract(relevantMembersInRepo, membersInConfig));
+
+            if (!membersToAdd.isEmpty()) {
+                history.addVerboseMessage(
+                        "Adding " + membersToAdd.size() + " external members to group " + authorizableConfigBean.getPrincipalID());
+                for (String member : membersToAdd) {
+                    Authorizable memberGroup = userManager.getAuthorizable(member);
+                    if (memberGroup == null) {
+                        throw new IllegalStateException(
+                                "Member " + member + " does not exist and cannot be added as external member to group "
+                                        + authorizableConfigBean.getPrincipalID());
+                    }
+                    installedGroup.addMember(memberGroup);
+                    history.addVerboseMessage(
+                            "Adding " + member + " as external member to group " + authorizableConfigBean.getPrincipalID());
+                }
+
+            }
+
+            if (!membersToRemove.isEmpty()) {
+                history.addVerboseMessage(
+                        "Removing " + membersToRemove.size() + " external members to group " + authorizableConfigBean.getPrincipalID());
+                for (String member : membersToRemove) {
+                    Authorizable memberGroup = userManager.getAuthorizable(member);
+                    installedGroup.removeMember(memberGroup);
+                    history.addVerboseMessage(
+                            "Removing " + member + " as external member to group " + authorizableConfigBean.getPrincipalID());
+                }
+            }
+        }
+    }
+
+    private Set<String> removeRegularUsers(Set<String> allMembersFromRepo, UserManager userManager) throws RepositoryException {
+
+        Set<String> relevantMembers = new HashSet<String>(allMembersFromRepo);
+        Iterator<String> relevantMembersIt = relevantMembers.iterator();
+        while (relevantMembersIt.hasNext()) {
+            String memberId = relevantMembersIt.next();
+            Authorizable member = userManager.getAuthorizable(memberId);
+
+            if (member != null && !member.isGroup() // if user
+                    && !member.getPath().startsWith(Constants.USERS_ROOT + "/system/") // but not system user
+                    && !member.getID().equals(Constants.USER_ANONYMOUS) // and not anonymous
+            ) {
+                // not relevant for further handling
+                relevantMembersIt.remove();
+            }
+        }
+
+        return relevantMembers;
+    }
+
+    private Set<String> removeExternalGroupsThatAreUntouchedByConfiguration(Set<String> relevantMembersInRepo,
+            AcInstallationHistoryPojo history) {
+        Set<String> relevantMembers = new HashSet<String>(relevantMembersInRepo);
+        Pattern allowExternalGroupNamesRegEx = history.getAcConfiguration().getGlobalConfiguration().getAllowExternalGroupNamesRegEx();
+        if (allowExternalGroupNamesRegEx != null) {
+            Iterator<String> relevantMembersIt = relevantMembers.iterator();
+            while (relevantMembersIt.hasNext()) {
+                String member = relevantMembersIt.next();
+                if (allowExternalGroupNamesRegEx.matcher(member).matches()) {
+                    relevantMembersIt.remove();
+                }
+            }
+        }
+
+        return relevantMembers;
+
+    }
+
+    private Set<String> getDeclaredMembers(Group installedGroup) throws RepositoryException {
+        Set<String> membersInRepo = new HashSet<String>();
+        Iterator<Authorizable> currentMemberInRepo = installedGroup.getDeclaredMembers();
+        while (currentMemberInRepo.hasNext()) {
+            membersInRepo.add(currentMemberInRepo.next().getID());
+        }
+        return membersInRepo;
     }
 
     private void migrateFromOldGroup(AuthorizableConfigBean authorizableConfigBean, UserManager userManager) throws RepositoryException {
@@ -328,18 +415,16 @@ public class AuthorizableCreatorServiceImpl implements
         }
     }
 
-    private void mergeGroup(AcInstallationHistoryPojo status,
+    private void applyGroupMembershipConfigIsMemberOf(AcInstallationHistoryPojo status,
             AuthorizableInstallationHistory authorizableInstallationHistory,
-            AuthorizableConfigBean principalConfigBean, UserManager userManager)
+            AuthorizableConfigBean authorizableConfigBean, UserManager userManager)
                     throws RepositoryException, ValueFormatException,
                     UnsupportedRepositoryOperationException,
                     AuthorizableExistsException, AuthorizableCreatorException {
-        String[] memberOf = principalConfigBean.getMemberOf();
-        String principalId = principalConfigBean.getPrincipalID();
+        String[] memberOf = authorizableConfigBean.getMemberOf();
+        String authorizableId = authorizableConfigBean.getPrincipalID();
 
-        LOG.debug("Authorizable {} already exists", principalId);
-
-        Authorizable currentGroupFromRepository = userManager.getAuthorizable(principalId);
+        Authorizable currentGroupFromRepository = userManager.getAuthorizable(authorizableId);
         Set<String> membershipGroupsFromConfig = getMembershipGroupsFromConfig(memberOf);
         Set<String> membershipGroupsFromRepository = getMembershipGroupsFromRepository(currentGroupFromRepository);
 
@@ -349,7 +434,7 @@ public class AuthorizableCreatorServiceImpl implements
                 currentGroupFromRepository.getPath(),
                 membershipGroupsFromRepository);
 
-        mergeMemberOfGroups(principalId, status, userManager, membershipGroupsFromConfig, membershipGroupsFromRepository);
+        applyGroupMembershipConfigIsMemberOf(authorizableId, status, userManager, membershipGroupsFromConfig, membershipGroupsFromRepository);
     }
 
     private String getAuthorizableName(Authorizable currentGroupFromRepository) throws RepositoryException, ValueFormatException {
@@ -424,29 +509,29 @@ public class AuthorizableCreatorServiceImpl implements
     }
 
     @SuppressWarnings("unchecked")
-    void mergeMemberOfGroups(String principalId,
+    void applyGroupMembershipConfigIsMemberOf(String authorizableId,
             AcInstallationHistoryPojo status, UserManager userManager,
             Set<String> membershipGroupsFromConfig,
             Set<String> membershipGroupsFromRepository)
                     throws RepositoryException, AuthorizableExistsException,
                     AuthorizableCreatorException {
-        LOG.debug("mergeMemberOfGroups() for {}", principalId);
+        LOG.debug("mergeMemberOfGroups() for {}", authorizableId);
 
         // membership to everyone cannot be removed or added => take it out from both lists
         membershipGroupsFromConfig.remove(PRINCIPAL_EVERYONE);
         membershipGroupsFromRepository.remove(PRINCIPAL_EVERYONE);
 
-        logAndVerboseHistoryMessage(status, "Principal " + principalId + " isMemberOf(repo)=" + membershipGroupsFromRepository);
-        logAndVerboseHistoryMessage(status, "Principal " + principalId + " isMemberOf(conifg)=" + membershipGroupsFromConfig);
+        logAndVerboseHistoryMessage(status, "Authorizable " + authorizableId + " isMemberOf(repo)=" + membershipGroupsFromRepository);
+        logAndVerboseHistoryMessage(status, "Authorizable " + authorizableId + " isMemberOf(conifg)=" + membershipGroupsFromConfig);
 
-        Set<String> validatedMembershipGroupsFromConfig = validateAssignedGroups(userManager, principalId, membershipGroupsFromConfig);
+        Set<String> validatedMembershipGroupsFromConfig = validateAssignedGroups(userManager, authorizableId, membershipGroupsFromConfig);
 
         Collection<String> unChangedMembers = CollectionUtils.intersection(membershipGroupsFromRepository,
                 validatedMembershipGroupsFromConfig);
-        logAndVerboseHistoryMessage(status, "Principal " + principalId + " remains member of groups " + unChangedMembers);
+        logAndVerboseHistoryMessage(status, "Authorizable " + authorizableId + " remains member of groups " + unChangedMembers);
 
         Collection<String> toBeAddedMembers = CollectionUtils.subtract(validatedMembershipGroupsFromConfig, membershipGroupsFromRepository);
-        logAndVerboseHistoryMessage(status, "Principal " + principalId + " will be added as member of " + toBeAddedMembers);
+        logAndVerboseHistoryMessage(status, "Authorizable " + authorizableId + " will be added as member of " + toBeAddedMembers);
 
         Collection<String> toBeRemovedMembers = CollectionUtils.subtract(membershipGroupsFromRepository,
                 validatedMembershipGroupsFromConfig);
@@ -462,33 +547,33 @@ public class AuthorizableCreatorServiceImpl implements
                 toBeRemovedMembersIt.remove();
             }
         }
-        logAndVerboseHistoryMessage(status, "Principal " + principalId + " will be removed from members of " + toBeRemovedMembers);
+        logAndVerboseHistoryMessage(status, "Authorizable " + authorizableId + " will be removed from members of " + toBeRemovedMembers);
 
         if (!toBeSkippedFromRemovalMembers.isEmpty()) {
-            logAndVerboseHistoryMessage(status, "Principal " + principalId + " remains member of groups "
+            logAndVerboseHistoryMessage(status, "Authorizable " + authorizableId + " remains member of groups "
                     + toBeSkippedFromRemovalMembers + " (due to configured ignoredMembershipsPattern=" + ignoredMembershipsPattern + ")");
 
         }
 
         // perform changes
 
-        Authorizable currentAuthorizable = userManager.getAuthorizable(principalId);
+        Authorizable currentAuthorizable = userManager.getAuthorizable(authorizableId);
 
         for (String groupId : toBeAddedMembers) {
-            LOG.debug("Membership Change: Adding {} to members of group {} in repository", principalId, groupId);
+            LOG.debug("Membership Change: Adding {} to members of group {} in repository", authorizableId, groupId);
             Authorizable targetAuthorizable = userManager.getAuthorizable(groupId);
             ((Group) targetAuthorizable).addMember(currentAuthorizable);
         }
 
         for (String groupId : toBeRemovedMembers) {
-            LOG.debug("Membership Change: Removing {} from members of group {} in repository", principalId, groupId);
+            LOG.debug("Membership Change: Removing {} from members of group {} in repository", authorizableId, groupId);
             Authorizable targetAuthorizable = userManager.getAuthorizable(groupId);
             ((Group) targetAuthorizable).removeMember(currentAuthorizable);
         }
 
         if (!toBeAddedMembers.isEmpty() && !toBeAddedMembers.isEmpty()) {
             logAndVerboseHistoryMessage(status,
-                    "Membership Change: Principal " + principalId + " was added to " + toBeAddedMembers.size()
+                    "Membership Change: Authorizable " + authorizableId + " was added to " + toBeAddedMembers.size()
                             + " and removed from " + toBeRemovedMembers.size() + " groups");
         }
 
@@ -651,6 +736,7 @@ public class AuthorizableCreatorServiceImpl implements
         return null;
     }
 
+
     /** Validates the authorizables in 'membersOf' array of a given authorizable. Validation fails if an authorizable is a user.
      *
      * If an authorizable contained in membersOf array doesn't exist it gets created and the current authorizable gets added as a member.
@@ -667,13 +753,13 @@ public class AuthorizableCreatorServiceImpl implements
                     AuthorizableCreatorException {
 
         Set<String> authorizableSet = new HashSet<String>();
-        for (String memberOfPrincipal : isMemberOf) {
+        for (String memberOfAuthorizable : isMemberOf) {
 
-            if (StringUtils.equals(authorizablelID, memberOfPrincipal)) {
+            if (StringUtils.equals(authorizablelID, memberOfAuthorizable)) {
                 throw new AuthorizableCreatorException("Cannot add authorizable " + authorizablelID + " as member of itself.");
             }
 
-            Authorizable authorizable = userManager.getAuthorizable(memberOfPrincipal);
+            Authorizable authorizable = userManager.getAuthorizable(memberOfAuthorizable);
 
             // validation
 
@@ -685,7 +771,7 @@ public class AuthorizableCreatorServiceImpl implements
                     authorizableSet.add(authorizable.getID());
                 } else {
                     String message = "Failed to add authorizable "
-                            + authorizablelID + " to autorizable " + memberOfPrincipal
+                            + authorizablelID + " to autorizable " + memberOfAuthorizable
                             + "! Authorizable is not a group";
                     throw new AuthorizableCreatorException(message);
                 }
@@ -694,10 +780,10 @@ public class AuthorizableCreatorServiceImpl implements
             } else {
                 // check if authorizable is contained in any of the
                 // configurations
-                if (principalMapFromConfig.keySet().contains(memberOfPrincipal)) {
+                if (principalMapFromConfig.keySet().contains(memberOfAuthorizable)) {
 
                     // get authorizable intermediatePath
-                    Set<AuthorizableConfigBean> authorizableConfigSet = principalMapFromConfig.get(memberOfPrincipal);
+                    Set<AuthorizableConfigBean> authorizableConfigSet = principalMapFromConfig.get(memberOfAuthorizable);
                     Iterator<AuthorizableConfigBean> it = authorizableConfigSet.iterator();
                     AuthorizableConfigBean authorizableConfigBean = null;
                     while (it.hasNext()) {
@@ -709,18 +795,18 @@ public class AuthorizableCreatorServiceImpl implements
                     // string (no path defined in configuration) the standard
                     // path gets used
                     Group newGroup = userManager.createGroup(
-                            new PrincipalImpl(memberOfPrincipal),
+                            new PrincipalImpl(memberOfAuthorizable),
                             authorizableConfigBean.getPath());
                     authorizableSet.add(newGroup.getID());
                     authorizableInstallationHistory.addNewCreatedAuthorizable(newGroup.getID());
-                    LOG.info("Created group to be able to add {} to group {} ", authorizablelID, memberOfPrincipal);
+                    LOG.info("Created group to be able to add {} to group {} ", authorizablelID, memberOfAuthorizable);
                 } else {
                     String message = "Failed to add group: "
                             + authorizablelID
                             + " as member to authorizable: "
-                            + memberOfPrincipal
+                            + memberOfAuthorizable
                             + ". Neither found this authorizable ("
-                            + memberOfPrincipal
+                            + memberOfAuthorizable
                             + ") in any of the configurations nor installed in the system!";
                     LOG.error(message);
 

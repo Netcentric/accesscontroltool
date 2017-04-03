@@ -12,12 +12,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElement;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementVisitor;
-import biz.netcentric.cq.tools.actool.helper.Constants;
 
 public class AuthorizableConfigBean implements AcDumpElement {
 
@@ -27,7 +25,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private String name; // (non-technical) name as used in profile
     private String description;
 
-    private String[] memberOf;
+    private String[] isMemberOf;
     private String memberOfStringFromConfig;
 
     private String[] members;
@@ -143,11 +141,11 @@ public class AuthorizableConfigBean implements AcDumpElement {
     }
 
     public String[] getMemberOf() {
-        return memberOf;
+        return isMemberOf;
     }
 
     public boolean isMemberOfOtherGroups() {
-        return memberOf != null;
+        return isMemberOf != null;
     }
 
     public String getMemberOfStringFromConfig() {
@@ -155,38 +153,38 @@ public class AuthorizableConfigBean implements AcDumpElement {
     }
 
     public String getMemberOfString() {
-        if (memberOf == null) {
+        if (isMemberOf == null) {
             return "";
         }
 
         final StringBuilder memberOfString = new StringBuilder();
 
-        for (final String group : memberOf) {
+        for (final String group : isMemberOf) {
             memberOfString.append(group).append(",");
         }
         return StringUtils.chop(memberOfString.toString());
     }
 
     public void setMemberOf(final String[] memberOf) {
-        this.memberOf = memberOf;
+        this.isMemberOf = memberOf;
     }
 
     public void setMemberOf(final List<String> memberOf) {
         if ((memberOf != null) && !memberOf.isEmpty()) {
-            this.memberOf = memberOf.toArray(new String[memberOf.size()]);
+            this.isMemberOf = memberOf.toArray(new String[memberOf.size()]);
         }
     }
 
-    public void addMemberOf(final String member) {
-        if (memberOf == null) {
-            memberOf = new String[] { member };
+    public void addIsMemberOf(final String member) {
+        if (isMemberOf == null) {
+            isMemberOf = new String[] { member };
             return;
         }
         final List<String> memberList = new ArrayList<String>();
-        memberList.addAll(Arrays.asList(memberOf));
+        memberList.addAll(Arrays.asList(isMemberOf));
         if (!memberList.contains(member)) {
             memberList.add(member);
-            memberOf = memberList.toArray(new String[memberList.size()]);
+            isMemberOf = memberList.toArray(new String[memberList.size()]);
         }
     }
 
@@ -229,9 +227,6 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.migrateFrom = migrateFrom;
     }
 
-    public boolean membersContainsAnonymous() {
-        return ArrayUtils.contains(members, Constants.USER_ANONYMOUS);
-    }
 
     @Override
     public String toString() {

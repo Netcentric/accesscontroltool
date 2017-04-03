@@ -108,7 +108,7 @@ Group memberships can be set on user entry or group entry or both.
 
 ## Configuration of ACEs
 
-The configurations are done per principal (currently on group ids are supported due to [issue #141](https://github.com/Netcentric/accesscontroltool/issues/141)) followed by indented settings for each ACE. This data includes
+The configurations are done per principal followed by indented settings for each ACE. This data includes
 
 property | comment | required
 --- | --- | ---
