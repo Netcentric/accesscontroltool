@@ -8,7 +8,6 @@
  */
 package biz.netcentric.cq.tools.actool.validators.impl;
 
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -45,16 +44,16 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.NoGroupDefinedExcept
 import biz.netcentric.cq.tools.actool.validators.exceptions.TooManyActionsException;
 
 public class AceBeanValidatorImpl implements AceBeanValidator {
+    private static final Logger LOG = LoggerFactory.getLogger(AceBeanValidatorImpl.class);
 
-    private static final Logger LOG = LoggerFactory
-            .getLogger(AceBeanValidatorImpl.class);
     private long currentBeanCounter = 0;
     private AceBean aceBean;
-    private Set<String> groupsFromCurrentConfig;
-    private boolean enabled = true;
+    private Set<String> authorizableIdsFromCurrentConfig;
 
-    public AceBeanValidatorImpl(Set<String> groupsFromCurrentConfig) {
-        this.groupsFromCurrentConfig = groupsFromCurrentConfig;
+    private String previousPrincipal;
+
+    public AceBeanValidatorImpl(Set<String> authorizableIdsFromCurrentConfig) {
+        this.authorizableIdsFromCurrentConfig = authorizableIdsFromCurrentConfig;
     }
 
     public AceBeanValidatorImpl() {
@@ -63,9 +62,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
     @Override
     public boolean validate(final AceBean aceBean, AccessControlManager aclManager)
             throws AcConfigBeanValidationException {
-        if (!this.enabled) {
-            return true;
-        }
+
         this.aceBean = aceBean;
         return validate(aclManager);
     }
@@ -76,16 +73,17 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
             return true;
         }
 
+        maintainBeanCounter();
+
         // mandatory properties per AceBean
         boolean isActionDefined = false;
         boolean isPrivilegeDefined = false;
 
-        this.currentBeanCounter++;
-        validateAuthorizableId(this.groupsFromCurrentConfig, this.aceBean);
-        validateAcePath(this.aceBean);
+        validateAuthorizableId();
+        validateAcePath();
 
-        isActionDefined = validateActions(this.aceBean);
-        isPrivilegeDefined = validatePrivileges(this.aceBean, aclManager);
+        isActionDefined = validateActions();
+        isPrivilegeDefined = validatePrivileges(aclManager);
 
         validatePermission(this.aceBean);
 
@@ -108,8 +106,16 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
         return true;
     }
 
-    @Override
-    public boolean validateRestrictions(final AceBean tmpAceBean, final AccessControlManager aclManager)
+    private void maintainBeanCounter() {
+        if (StringUtils.equals(aceBean.getPrincipalName(), previousPrincipal)) {
+            this.currentBeanCounter++;
+        } else {
+            this.currentBeanCounter = 1;
+        }
+        previousPrincipal = aceBean.getPrincipalName();
+    }
+
+    private boolean validateRestrictions(final AceBean tmpAceBean, final AccessControlManager aclManager)
             throws InvalidRepGlobException, InvalidRestrictionsException {
         boolean valid = true;
 
@@ -165,11 +171,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
         return jacl;
     }
 
-
-
-    @Override
-    public boolean validatePermission(final AceBean tmpAclBean)
-            throws InvalidPermissionException {
+    private boolean validatePermission(final AceBean tmpAclBean) throws InvalidPermissionException {
 
         final String permission = tmpAclBean.getPermission();
         if (StringUtils.isNotBlank(this.aceBean.getInitialContent()) && StringUtils.isBlank(permission)) {
@@ -188,17 +190,14 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
         return true;
     }
 
-    @Override
-    public boolean validateActions(final AceBean tmpAclBean)
-            throws InvalidActionException, TooManyActionsException,
-            DoubledDefinedActionException {
-        final String principal = tmpAclBean.getPrincipalName();
+    private boolean validateActions() throws InvalidActionException, TooManyActionsException, DoubledDefinedActionException {
+        final String principal = aceBean.getPrincipalName();
 
-        if (!StringUtils.isNotBlank(tmpAclBean.getActionsStringFromConfig())) {
+        if (!StringUtils.isNotBlank(aceBean.getActionsStringFromConfig())) {
             return false;
         }
 
-        final String[] actions = tmpAclBean.getActionsStringFromConfig().split(",");
+        final String[] actions = aceBean.getActionsStringFromConfig().split(",");
 
         if (actions.length > CqActions.ACTIONS.length) {
             final String errorMessage = getBeanDescription(this.currentBeanCounter,
@@ -227,17 +226,15 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
                 throw new DoubledDefinedActionException(errorMessage);
             }
         }
-        tmpAclBean.setActions(actions);
+        aceBean.setActions(actions);
 
         return true;
     }
 
-    @Override
-    public boolean validatePrivileges(final AceBean tmpAclBean, AccessControlManager aclManager)
-            throws InvalidJcrPrivilegeException,
-            DoubledDefinedJcrPrivilegeException {
-        final String currentEntryValue = tmpAclBean.getPrivilegesString();
-        final String principal = tmpAclBean.getPrincipalName();
+    public boolean validatePrivileges(AccessControlManager aclManager)
+            throws InvalidJcrPrivilegeException, DoubledDefinedJcrPrivilegeException {
+        final String currentEntryValue = aceBean.getPrivilegesString();
+        final String principal = aceBean.getPrincipalName();
 
         if (!StringUtils.isNotBlank(currentEntryValue)) {
             return false;
@@ -265,19 +262,18 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
                 throw new DoubledDefinedJcrPrivilegeException(errorMessage);
             }
         }
-        tmpAclBean.setPrivilegesString(currentEntryValue);
+        aceBean.setPrivilegesString(currentEntryValue);
 
         return true;
     }
 
-    @Override
-    public boolean validateAcePath(final AceBean tmpAclBean)
-            throws InvalidPathException {
+
+    private boolean validateAcePath() throws InvalidPathException {
         boolean isPathDefined = false;
-        final String currentEntryValue = tmpAclBean.getJcrPath();
-        final String principal = tmpAclBean.getPrincipalName();
+        final String currentEntryValue = aceBean.getJcrPath();
+        final String principal = aceBean.getPrincipalName();
         if (Validators.isValidNodePath(currentEntryValue)) {
-            tmpAclBean.setJcrPath(currentEntryValue);
+            aceBean.setJcrPath(currentEntryValue);
             isPathDefined = true;
         } else {
             final String errorMessage = getBeanDescription(this.currentBeanCounter,
@@ -288,22 +284,20 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
         return isPathDefined;
     }
 
-    @Override
-    public boolean validateAuthorizableId(
-            final Set<String> groupsFromCurrentConfig, final AceBean tmpAclBean)
-                    throws NoGroupDefinedException, InvalidGroupNameException {
+
+    private boolean validateAuthorizableId() throws NoGroupDefinedException, InvalidGroupNameException {
         boolean valid = true;
-        final String principal = tmpAclBean.getPrincipalName();
+        final String principal = aceBean.getPrincipalName();
         // validate authorizable name format
         if (Validators.isValidAuthorizableId(principal)) {
 
             // validate if authorizable is contained in config
-            if (!groupsFromCurrentConfig.contains(principal)) {
+            if (!authorizableIdsFromCurrentConfig.contains(principal)) {
                 final String message = getBeanDescription(this.currentBeanCounter,
                         principal) + " is not defined in group configuration";
                 throw new NoGroupDefinedException(message);
             }
-            tmpAclBean.setPrincipal(principal);
+            aceBean.setPrincipal(principal);
         } else {
             valid = false;
             final String errorMessage = getBeanDescription(this.currentBeanCounter,
@@ -318,45 +312,10 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
         return valid;
     }
 
-    @Override
-    public void setBean(AceBean aceBean) {
-        this.aceBean = aceBean;
-
-    }
-
-    @Override
-    public void setGroupsFromCurrentConfig(
-            final Set<String> groupsFromCurrentConfig) {
-        this.groupsFromCurrentConfig = groupsFromCurrentConfig;
-    }
-
-    @Override
-    public void setBeanCounter(final long value) {
-        this.currentBeanCounter = value;
-    }
-
     private String getBeanDescription(final long beanCounter,
             final String principalName) {
-        return "Validation error while reading ACE definition nr."
-                + beanCounter + " of authorizable: " + principalName;
+        return "Validation error while reading ACE definition nr." + beanCounter + " of authorizable " + principalName;
     }
 
-    @Override
-    public void setCurrentAuthorizableName(final String name) {
-        if (this.enabled) {
-            LOG.debug("Start validation of ACEs for authorizable: {}", name);
-            this.currentBeanCounter = 0;
-        }
-    }
 
-    @Override
-    public void enable() {
-        this.enabled = true;
-
-    }
-
-    @Override
-    public void disable() {
-        this.enabled = false;
-    }
 }

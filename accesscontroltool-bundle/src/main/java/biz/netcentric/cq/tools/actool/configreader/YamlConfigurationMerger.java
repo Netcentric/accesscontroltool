@@ -145,8 +145,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             // --- authorizables config section
             final AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(authorizableIdsFromAllConfigs);
             final Map<String, Set<AceBean>> aceMapFromConfig = configReader.getAceConfigurationBeans(yamlRootList,
-                    authorizableIdsFromAllConfigs,
-                    aceBeanValidator);
+                    authorizableIdsFromAllConfigs, aceBeanValidator);
 
             configurationsValidator.validateKeepOrder(mergedAceMapFromConfig, aceMapFromConfig, sourceFile);
 

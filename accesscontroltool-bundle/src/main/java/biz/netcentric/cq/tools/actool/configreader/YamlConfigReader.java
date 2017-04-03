@@ -244,11 +244,6 @@ public class YamlConfigReader implements ConfigReader {
 
                 // create ACE bean and populate it according to the properties
                 // in the config
-
-                if (aceBeanValidator != null) {
-                    aceBeanValidator.setCurrentAuthorizableName(principalName);
-                }
-
                 for (final Map<String, ?> currentAceDefinition : aceDefinitions) {
                     AceBean newAceBean = getNewAceBean();
                     setupAceBean(principalName, currentAceDefinition, newAceBean);

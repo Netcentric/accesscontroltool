@@ -27,7 +27,6 @@ import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
-import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
 import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
 
 /** Helper class containing static methods used in validator-related unit tests based on test yaml files
@@ -72,18 +71,8 @@ public class ValidatorTestHelper {
             List<AceBean> aceBeanList)
                     throws RepositoryException, AcConfigBeanValidationException {
 
-        final AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(
-                groupsFromConfig);
-
-        // disable validator since we want to put all data from test-config
-        // (regardless if valid or not) into beans for following tests
-        // otherwise reading of test-config would be aborted after the first
-        // exception
-        aceBeanValidator.disable();
-
         final Map<String, Set<AceBean>> aceMap = yamlConfigReader
-                .getAceConfigurationBeans(yamlList, groupsFromConfig,
-                        aceBeanValidator);
+                .getAceConfigurationBeans(yamlList, groupsFromConfig, null);
 
         for (final Entry<String, Set<AceBean>> aceMapEntrySet : aceMap.entrySet()) {
             aceBeanList.addAll(aceMapEntrySet.getValue());
