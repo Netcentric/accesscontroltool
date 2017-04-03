@@ -10,6 +10,8 @@ package biz.netcentric.cq.tools.actool.configreader;
 
 import java.util.List;
 
+import javax.jcr.Session;
+
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 /** Provides the objects for .
@@ -17,6 +19,6 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryP
  * @author ghenzler */
 public interface YamlMacroChildNodeObjectsProvider {
 
-    List<Object> getValuesForPath(String pathOfChildrenOfClause, AcInstallationHistoryPojo history);
+    List<Object> getValuesForPath(String pathOfChildrenOfClause, AcInstallationHistoryPojo history, Session session);
 
 }

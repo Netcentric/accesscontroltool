@@ -11,6 +11,7 @@ package biz.netcentric.cq.tools.actool.configreader;
 import java.util.Map;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
@@ -31,7 +32,7 @@ public interface ConfigurationMerger {
     public abstract AcConfiguration getMergedConfigurations(
             final Map<String, String> newestConfigurations,
             final AcInstallationHistoryPojo history,
-            final ConfigReader configReader) throws RepositoryException,
+            final ConfigReader configReader, Session session) throws RepositoryException,
             AcConfigBeanValidationException;
 
 }

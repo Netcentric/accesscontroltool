@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import com.day.cq.commons.jcr.JcrConstants;
 
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
-import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
@@ -65,19 +64,17 @@ public class AcHistoryServiceImpl implements AcHistoryService {
     }
 
     @Override
-    public void persistHistory(AcInstallationHistoryPojo history) {
+    public void persistHistory(AcInstallationHistoryPojo history, Session session) {
 
-    	if (nrOfSavedHistories == 0) {
-        	String message = "History hasn't been persisted, configured number of histories is " + nrOfSavedHistories;
+        if (nrOfSavedHistories == 0) {
+            String message = "History hasn't been persisted, configured number of histories is " + nrOfSavedHistories;
             history.addVerboseMessage(message);
             LOG.info(message);
             return;
         }
 
-        Session session = null;
         try {
 
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
             Node historyNode = HistoryUtils.persistHistory(session, history, this.nrOfSavedHistories);
 
             String mergedAndProcessedConfig = history.getMergedAndProcessedConfig();
@@ -92,25 +89,15 @@ public class AcHistoryServiceImpl implements AcHistoryService {
             session.save();
         } catch (RepositoryException e) {
             LOG.error("RepositoryException: ", e);
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
         }
     }
 
     @Override
-    public String[] getInstallationLogPaths() {
-        Session session = null;
+    public String[] getInstallationLogPaths(Session session) {
         try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
             return HistoryUtils.getHistoryInfos(session);
         } catch (RepositoryException e) {
             LOG.error("RepositoryException: ", e);
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
         }
         return null;
     }
@@ -126,11 +113,9 @@ public class AcHistoryServiceImpl implements AcHistoryService {
     }
 
     @Override
-    public String getLastInstallationHistory() {
-        Session session = null;
+    public String getLastInstallationHistory(Session session) {
         String history = "";
         try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
 
             Node statisticsRootNode = HistoryUtils.getAcHistoryRootNode(session);
             NodeIterator it = statisticsRootNode.getNodes();
@@ -146,10 +131,6 @@ public class AcHistoryServiceImpl implements AcHistoryService {
             }
         } catch (RepositoryException e) {
             LOG.error("RepositoryException: ", e);
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
         }
         return history;
     }
@@ -161,9 +142,10 @@ public class AcHistoryServiceImpl implements AcHistoryService {
             if (configFileContentsByName == null) {
                 return;
             }
-            
-            String commonPrefix = StringUtils.getCommonPrefix(configFileContentsByName.keySet().toArray(new String[configFileContentsByName.size()]));
-            
+
+            String commonPrefix = StringUtils
+                    .getCommonPrefix(configFileContentsByName.keySet().toArray(new String[configFileContentsByName.size()]));
+
             for (String fullConfigFilePath : configFileContentsByName.keySet()) {
                 File targetPathFile = new File(
                         INSTALLED_CONFIGS_NODE_NAME + "/" + StringUtils.substringAfter(fullConfigFilePath, commonPrefix));
@@ -171,7 +153,8 @@ public class AcHistoryServiceImpl implements AcHistoryService {
                 Node configFolder = JcrUtils.getOrCreateByPath(historyNode,
                         targetPathParentDir != null ? targetPathParentDir.getPath() : targetPathFile.getPath(), false,
                         JcrConstants.NT_FOLDER, JcrConstants.NT_FOLDER, false);
-                ByteArrayInputStream configFileInputStream = new ByteArrayInputStream( configFileContentsByName.get(fullConfigFilePath).getBytes() );
+                ByteArrayInputStream configFileInputStream = new ByteArrayInputStream(
+                        configFileContentsByName.get(fullConfigFilePath).getBytes());
                 JcrUtils.putFile(configFolder, targetPathFile.getName(), "text/yaml", configFileInputStream);
             }
 
@@ -184,11 +167,9 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         }
     }
 
-    public String showHistory(int n) {
-        Session session = null;
+    public String showHistory(int n, Session session) {
         String history = "";
         try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
 
             Node statisticsRootNode = HistoryUtils
                     .getAcHistoryRootNode(session);
@@ -205,20 +186,14 @@ public class AcHistoryServiceImpl implements AcHistoryService {
             }
         } catch (RepositoryException e) {
             LOG.error("RepositoryException: ", e);
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
         }
         return history;
     }
 
     @Override
-    public void persistAcePurgeHistory(AcInstallationHistoryPojo history) {
-        Session session = null;
+    public void persistAcePurgeHistory(AcInstallationHistoryPojo history, Session session) {
 
         try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
             Node acHistoryRootNode = HistoryUtils.getAcHistoryRootNode(session);
             NodeIterator nodeIterator = acHistoryRootNode.getNodes();
             Set<Node> historyNodes = new TreeSet<Node>(
@@ -235,16 +210,12 @@ public class AcHistoryServiceImpl implements AcHistoryService {
 
         } catch (RepositoryException e) {
             LOG.error("Exception: ", e);
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
         }
     }
 
     private static Node persistPurgeAceHistory(final Session session,
             AcInstallationHistoryPojo history, final Node historyNode)
-                    throws RepositoryException {
+            throws RepositoryException {
 
         Node purgeHistoryNode = historyNode.addNode(
                 "purge_" + System.currentTimeMillis(),

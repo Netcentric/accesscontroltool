@@ -45,19 +45,22 @@ public interface Dumpservice {
      * @param aclOrdering specifies whether the allow and deny ACEs within an ACL should be divided in separate blocks (first deny then
      *            allow)
      * @param isIncludeUsers
+     * @param session a jcr session
      * @return AceDumpData */
-    public AceDumpData createAclDumpMap( final int keyOrder, final int aclOrdering,
+    public AceDumpData createAclDumpMap(final int keyOrder, final int aclOrdering,
             final String[] excludePaths,
-            final boolean isIncludeUsers) throws RepositoryException;
+            final boolean isIncludeUsers, Session session) throws RepositoryException;
 
     /** method that return a dump comprising of all groups and all aces in path based view
-     *
+     * 
+     * @param session a jcr session
      * @return a string comprising the dump information */
-    public String getCompletePathBasedDumpsAsString();
+    public String getCompletePathBasedDumpsAsString(Session session);
 
     /** method that return a dump comprising of all groups and all aces in principal based view
-     *
+     * 
+     * @param session a jcr session
      * @return a string comprising the dump information */
-    public String getCompletePrincipalBasedDumpsAsString();
+    public String getCompletePrincipalBasedDumpsAsString(Session session);
 
 }

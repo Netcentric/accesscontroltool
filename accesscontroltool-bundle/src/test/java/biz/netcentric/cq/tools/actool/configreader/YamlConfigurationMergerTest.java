@@ -11,6 +11,7 @@ package biz.netcentric.cq.tools.actool.configreader;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -18,9 +19,11 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
@@ -35,8 +38,12 @@ public class YamlConfigurationMergerTest {
 
     private YamlConfigurationMerger merger;
 
+    @Mock
+    Session session;
+
     @Before
     public void setup() {
+        initMocks(this);
         merger = new YamlConfigurationMerger();
         merger.yamlMacroProcessor = new YamlMacroProcessorImpl();
         merger.obsoleteAuthorizablesValidator = new ObsoleteAuthorizablesValidatorImpl();
@@ -48,7 +55,7 @@ public class YamlConfigurationMergerTest {
         final ConfigReader reader = new YamlConfigReader();
         final Map<String, String> configs = new HashMap<String, String>();
         configs.put("/etc/config", config);
-        AcConfiguration acConfiguration = merger.getMergedConfigurations(configs, mock(AcInstallationHistoryPojo.class), reader);
+        AcConfiguration acConfiguration = merger.getMergedConfigurations(configs, mock(AcInstallationHistoryPojo.class), reader, session);
         final Map<String, Set<AuthorizableConfigBean>> groups = acConfiguration.getAuthorizablesConfig();
         final AuthorizableConfigBean groupA = groups.get("groupA").iterator().next();
         assertEquals(3, groupA.getMemberOf().length);
@@ -60,14 +67,14 @@ public class YamlConfigurationMergerTest {
 
     @Test
     public void testEnsureIsMemberOfIsUsedWherePossible() throws RepositoryException, IOException, AcConfigBeanValidationException {
-        
+
         final String config = YamlConfigReaderTest.getTestConfigAsString("test-membergroups.yaml");
         final ConfigReader reader = new YamlConfigReader();
         final Map<String, String> configs = new HashMap<String, String>();
         configs.put("/etc/config", config);
 
-        AcConfiguration acConfiguration = merger.getMergedConfigurations(configs, mock(AcInstallationHistoryPojo.class), reader);
-        
+        AcConfiguration acConfiguration = merger.getMergedConfigurations(configs, mock(AcInstallationHistoryPojo.class), reader, session);
+
         AuthorizableConfigBean groupAConfig = acConfiguration.getAuthorizablesConfig().get("groupA").iterator().next();
         assertEquals("groupA", groupAConfig.getPrincipalID());
         String[] members = groupAConfig.getMemberOf();

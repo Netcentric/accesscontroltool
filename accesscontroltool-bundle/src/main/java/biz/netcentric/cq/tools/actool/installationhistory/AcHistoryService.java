@@ -12,18 +12,18 @@ import javax.jcr.Session;
 
 public interface AcHistoryService {
 
-    public void persistHistory(AcInstallationHistoryPojo history);
+    public void persistHistory(AcInstallationHistoryPojo history, Session session);
 
-    public void persistAcePurgeHistory(AcInstallationHistoryPojo history);
+    public void persistAcePurgeHistory(AcInstallationHistoryPojo history, Session session);
 
-    public String[] getInstallationLogPaths();
+    public String[] getInstallationLogPaths(Session session);
 
     public String getLogHtml(Session session, String path);
 
     public String getLogTxt(Session session, String path);
 
-    public String getLastInstallationHistory();
+    public String getLastInstallationHistory(Session session);
 
-    public String showHistory(int n);
+    public String showHistory(int n, Session session);
 
 }

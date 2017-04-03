@@ -11,6 +11,8 @@ package biz.netcentric.cq.tools.actool.configreader;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import javax.jcr.Session;
+
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 /** Processes FOR and IF statements in yaml files.
@@ -18,6 +20,6 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryP
  * @author ghenzler */
 public interface YamlMacroProcessor {
 
-    List<LinkedHashMap> processMacros(List<LinkedHashMap> yamlList, AcInstallationHistoryPojo history);
+    List<LinkedHashMap> processMacros(List<LinkedHashMap> yamlList, AcInstallationHistoryPojo history, Session session);
 
 }

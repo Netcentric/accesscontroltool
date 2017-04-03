@@ -22,6 +22,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.felix.scr.annotations.Component;
@@ -63,8 +64,8 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
     public AcConfiguration getMergedConfigurations(
             final Map<String, String> configFileContentByFilename,
             final AcInstallationHistoryPojo history,
-            final ConfigReader configReader) throws RepositoryException,
-                    AcConfigBeanValidationException {
+            final ConfigReader configReader, Session session) throws RepositoryException,
+            AcConfigBeanValidationException {
 
         StopWatch sw = new StopWatch();
         sw.start();
@@ -89,7 +90,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
 
             List<LinkedHashMap> yamlRootList = (List<LinkedHashMap>) yamlParser.load(entry.getValue());
 
-            yamlRootList = yamlMacroProcessor.processMacros(yamlRootList, history);
+            yamlRootList = yamlMacroProcessor.processMacros(yamlRootList, history, session);
             // set merged config per file to ensure it is there in case of validation errors (for success, the actual merged config is set
             // after this loop)
             history.setMergedAndProcessedConfig("# File " + sourceFile + "\n" + yamlParser.dump(yamlRootList));
@@ -145,7 +146,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             // --- authorizables config section
             final AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(authorizableIdsFromAllConfigs);
             final Map<String, Set<AceBean>> aceMapFromConfig = configReader.getAceConfigurationBeans(yamlRootList,
-                    authorizableIdsFromAllConfigs, aceBeanValidator);
+                    authorizableIdsFromAllConfigs, aceBeanValidator, session);
 
             configurationsValidator.validateKeepOrder(mergedAceMapFromConfig, aceMapFromConfig, sourceFile);
 

@@ -33,5 +33,5 @@ public interface AuthorizableCreatorService {
 
     public void performRollback(SlingRepository repository,
             AuthorizableInstallationHistory authorizableInstallationHistory,
-            AcInstallationHistoryPojo history) throws RepositoryException;
+            AcInstallationHistoryPojo history, Session session) throws RepositoryException;
 }

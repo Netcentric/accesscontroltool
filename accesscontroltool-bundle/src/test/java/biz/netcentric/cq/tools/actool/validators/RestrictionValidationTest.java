@@ -93,7 +93,7 @@ public class RestrictionValidationTest {
         groupsFromConfig = yamlConfigReader.getGroupConfigurationBeans(
                 yamlList, authorizableValidator).keySet();
         ValidatorTestHelper.createAuthorizableTestBeans(yamlList, yamlConfigReader, authorizableBeanList);
-        ValidatorTestHelper.createAceTestBeans(yamlList, yamlConfigReader, groupsFromConfig, aceBeanList);
+        ValidatorTestHelper.createAceTestBeans(yamlList, yamlConfigReader, groupsFromConfig, aceBeanList, session);
     }
 
     @Test
