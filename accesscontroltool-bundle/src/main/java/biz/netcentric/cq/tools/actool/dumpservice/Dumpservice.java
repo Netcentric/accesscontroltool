@@ -52,15 +52,13 @@ public interface Dumpservice {
             final boolean isIncludeUsers, Session session) throws RepositoryException;
 
     /** method that return a dump comprising of all groups and all aces in path based view
-     * 
-     * @param session a jcr session
+     *
      * @return a string comprising the dump information */
-    public String getCompletePathBasedDumpsAsString(Session session);
+    public String getCompletePathBasedDumpsAsString();
 
     /** method that return a dump comprising of all groups and all aces in principal based view
-     * 
-     * @param session a jcr session
+     *
      * @return a string comprising the dump information */
-    public String getCompletePrincipalBasedDumpsAsString(Session session);
+    public String getCompletePrincipalBasedDumpsAsString();
 
 }

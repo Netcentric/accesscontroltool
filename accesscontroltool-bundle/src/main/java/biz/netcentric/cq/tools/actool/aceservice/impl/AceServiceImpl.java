@@ -56,6 +56,7 @@ import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.AclBean;
+import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.PurgeHelper;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
@@ -115,22 +116,22 @@ public class AceServiceImpl implements AceService {
     }
 
     @Override
-    public AcInstallationHistoryPojo execute(Session session) {
-        return execute(getConfiguredAcConfigurationRootPath(), null, session);
+    public AcInstallationHistoryPojo execute() {
+        return execute(getConfiguredAcConfigurationRootPath(), null);
     }
 
     @Override
-    public AcInstallationHistoryPojo execute(String configurationRootPath, Session session) {
-        return execute(configurationRootPath, null, session);
+    public AcInstallationHistoryPojo execute(String configurationRootPath) {
+        return execute(configurationRootPath, null);
     }
 
     @Override
-    public AcInstallationHistoryPojo execute(String[] restrictedToPaths, Session session) {
-        return execute(getConfiguredAcConfigurationRootPath(), restrictedToPaths, session);
+    public AcInstallationHistoryPojo execute(String[] restrictedToPaths) {
+        return execute(getConfiguredAcConfigurationRootPath(), restrictedToPaths);
     }
 
     @Override
-    public AcInstallationHistoryPojo execute(String configurationRootPath, String[] restrictedToPaths, Session session) {
+    public AcInstallationHistoryPojo execute(String configurationRootPath, String[] restrictedToPaths) {
 
         AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
         if (isExecuting) {
@@ -139,8 +140,10 @@ public class AceServiceImpl implements AceService {
         }
 
         Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet = new LinkedHashSet<AuthorizableInstallationHistory>();
+        Session session = null;
         try {
-            Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configurationRootPath, session);
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configurationRootPath);
             installConfigurationFiles(history, newestConfigurations, authorizableInstallationHistorySet, restrictedToPaths, session);
         } catch (AuthorizableCreatorException e) {
             history.addError(e.toString());
@@ -157,20 +160,14 @@ public class AceServiceImpl implements AceService {
 
             if (!intermediateSaves) {
                 for (AuthorizableInstallationHistory authorizableInstallationHistory : authorizableInstallationHistorySet) {
-                    Session rollbackSession = null;
                     try {
                         String message = "performing authorizable installation rollback(s)";
                         LOG.info(message);
                         history.addMessage(message);
-                        rollbackSession = session.impersonate(new SimpleCredentials(session.getUserID(), "".toCharArray()));
                         authorizableCreatorService.performRollback(repository,
                                 authorizableInstallationHistory, history, session);
                     } catch (RepositoryException e1) {
                         LOG.error("Exception: ", e1);
-                    } finally {
-                        if (rollbackSession != null) {
-                            rollbackSession.logout();
-                        }
                     }
                 }
             } else {
@@ -179,6 +176,10 @@ public class AceServiceImpl implements AceService {
                 history.addMessage(message);
             }
 
+        } finally {
+            if (session != null) {
+                session.logout();
+            }
         }
         return history;
     }
@@ -227,7 +228,7 @@ public class AceServiceImpl implements AceService {
             throw e; // handling is different depending on JMX or install hook case
         } finally {
             try {
-                acHistoryService.persistHistory(history, session);
+                acHistoryService.persistHistory(history);
             } catch (Exception e) {
                 LOG.warn("Could not persist history, e=" + e, e);
             }
@@ -571,10 +572,10 @@ public class AceServiceImpl implements AceService {
     }
 
     @Override
-    public boolean isReadyToStart(Session session) {
+    public boolean isReadyToStart() {
         String rootPath = getConfiguredAcConfigurationRootPath();
         try {
-            return !configFilesRetriever.getConfigFileContentFromNode(rootPath, session).isEmpty();
+            return !configFilesRetriever.getConfigFileContentFromNode(rootPath).isEmpty();
 
         } catch (Exception e) {
             LOG.warn("Could not retrieve config file content for root path " + configuredAcConfigurationRootPath);
@@ -584,16 +585,22 @@ public class AceServiceImpl implements AceService {
     }
 
     @Override
-    public String purgeACL(String path, Session session) {
+    public String purgeACL(String path) {
+        Session session = null;
         String message = "";
         boolean flag = true;
         try {
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
             PurgeHelper.purgeAcl(session, path);
             session.save();
         } catch (Exception e) {
             flag = false;
             message = e.toString();
             LOG.error("Exception: ", e);
+        } finally {
+            if (session != null) {
+                session.logout();
+            }
         }
         if (flag) {
             // TODO: save purge history under current history node
@@ -602,27 +609,33 @@ public class AceServiceImpl implements AceService {
             AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
             history.addMessage("purge method: purgeACL()");
             history.addMessage(message);
-            acHistoryService.persistAcePurgeHistory(history, session);
+            acHistoryService.persistAcePurgeHistory(history);
             return message;
         }
         return "Deletion of ACL failed! Reason:" + message;
     }
 
     @Override
-    public String purgeACLs(String path, Session session) {
+    public String purgeACLs(String path) {
+        Session session = null;
         String message = "";
         boolean flag = true;
         try {
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
             message = PurgeHelper.purgeACLs(session, path);
             AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
             history.addMessage("purge method: purgeACLs()");
             history.addMessage(message);
-            acHistoryService.persistAcePurgeHistory(history, session);
+            acHistoryService.persistAcePurgeHistory(history);
             session.save();
         } catch (Exception e) {
             LOG.error("Exception: ", e);
             flag = false;
             message = e.toString();
+        } finally {
+            if (session != null) {
+                session.logout();
+            }
         }
         if (flag) {
             return message;
@@ -631,9 +644,11 @@ public class AceServiceImpl implements AceService {
     }
 
     @Override
-    public String purgeAuthorizablesFromConfig(Session session) {
+    public String purgeAuthorizablesFromConfig() {
+        Session session = null;
         String message = "";
         try {
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
 
             Set<String> authorizabesFromConfigurations = getAllAuthorizablesFromConfig(session);
             message = purgeAuthorizables(authorizabesFromConfigurations,
@@ -641,26 +656,39 @@ public class AceServiceImpl implements AceService {
             AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
             history.addMessage("purge method: purgAuthorizablesFromConfig()");
             history.addMessage(message);
-            acHistoryService.persistAcePurgeHistory(history, session);
+            acHistoryService.persistAcePurgeHistory(history);
         } catch (RepositoryException e) {
             LOG.error("RepositoryException: ", e);
         } catch (Exception e) {
             LOG.error("Exception: ", e);
+        } finally {
+            if (session != null) {
+                session.logout();
+            }
         }
         return message;
     }
 
     @Override
-    public String purgeAuthorizables(String[] authorizableIds, Session session) {
+    public String purgeAuthorizables(String[] authorizableIds) {
+        Session session = null;
         String message = "";
-
-        Set<String> authorizablesSet = new HashSet<String>(Arrays.asList(authorizableIds));
-        message = purgeAuthorizables(authorizablesSet, session);
-        AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
-        history.addMessage("purge method: purgeAuthorizables()");
-        history.addMessage(message);
-        acHistoryService.persistAcePurgeHistory(history, session);
-
+        try {
+            session = repository.loginAdministrative(null);
+            Set<String> authorizablesSet = new HashSet<String>(Arrays.asList(authorizableIds));
+            message = purgeAuthorizables(authorizablesSet, session);
+            AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
+            history.addMessage("purge method: purgeAuthorizables()");
+            history.addMessage(message);
+            acHistoryService.persistAcePurgeHistory(history);
+        } catch (RepositoryException e) {
+            LOG.error("Exception: ", e);
+            message = e.toString();
+        } finally {
+            if (session != null) {
+                session.logout();
+            }
+        }
         return message;
     }
 
@@ -730,11 +758,11 @@ public class AceServiceImpl implements AceService {
     }
 
     @Override
-    public Set<String> getCurrentConfigurationPaths(Session session) {
+    public Set<String> getCurrentConfigurationPaths() {
 
         Set<String> paths = new LinkedHashSet<String>();
         try {
-            paths = configFilesRetriever.getConfigFileContentFromNode(configuredAcConfigurationRootPath, session).keySet();
+            paths = configFilesRetriever.getConfigFileContentFromNode(configuredAcConfigurationRootPath).keySet();
         } catch (Exception e) {
             LOG.warn("Could not retrieve config file content for root path " + configuredAcConfigurationRootPath);
         }
@@ -744,8 +772,7 @@ public class AceServiceImpl implements AceService {
     public Set<String> getAllAuthorizablesFromConfig(Session session)
             throws Exception {
         AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
-        Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configuredAcConfigurationRootPath,
-                session);
+        Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configuredAcConfigurationRootPath);
         AcConfiguration acConfiguration = configurationMerger.getMergedConfigurations(newestConfigurations, history, configReader, session);
         Set<String> allAuthorizablesFromConfig = acConfiguration.getAceConfig().keySet();
         return allAuthorizablesFromConfig;

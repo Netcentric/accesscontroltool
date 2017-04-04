@@ -62,121 +62,39 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements
 
     @Override
     public String apply() {
-        Session session = null;
-        try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            return aceService.execute(session).toString();
-        } catch (RepositoryException e) {
-            LOG.error("error executing jmx call", e);
-            return "An error has ocurred. See logs for details";
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
-        }
+        return aceService.execute().toString();
     }
 
     @Override
     public String applyRestrictedToPaths(String paths) {
-
-        Session session = null;
-        try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            String[] restrictedToPaths = commaSeparatedStringToArr(paths);
-            return aceService.execute(restrictedToPaths, session).toString();
-        } catch (RepositoryException e) {
-            LOG.error("error executing jmx call", e);
-            return "An error has ocurred. See logs for details";
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
-        }
-
+        String[] restrictedToPaths = commaSeparatedStringToArr(paths);
+        return aceService.execute(restrictedToPaths).toString();
     }
 
     @Override
     public String apply(String configurationRootPath) {
-        Session session = null;
-        try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            return aceService.execute(configurationRootPath, session).toString();
-        } catch (RepositoryException e) {
-            LOG.error("error executing jmx call", e);
-            return "An error has ocurred. See logs for details";
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
-        }
-
+        return aceService.execute(configurationRootPath).toString();
     }
 
     @Override
     public String applyRestrictedToPaths(String configurationRootPath, String paths) {
-        Session session = null;
-        try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            String[] restrictedToPaths = commaSeparatedStringToArr(paths);
-            return aceService.execute(configurationRootPath, restrictedToPaths, session).toString();
-        } catch (RepositoryException e) {
-            LOG.error("error executing jmx call", e);
-            return "An error has ocurred. See logs for details";
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
-        }
-
+        String[] restrictedToPaths = commaSeparatedStringToArr(paths);
+        return aceService.execute(configurationRootPath, restrictedToPaths).toString();
     }
 
     @Override
     public boolean isReadyToStart() {
-        Session session = null;
-        try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            return aceService.isReadyToStart(session);
-        } catch (RepositoryException e) {
-            LOG.error("error executing jmx call", e);
-            return false;
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
-        }
-
+        return aceService.isReadyToStart();
     }
 
     @Override
     public String purgeACL(final String path) {
-        Session session = null;
-        try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            return aceService.purgeACL(path, session);
-        } catch (RepositoryException e) {
-            LOG.error("error executing jmx call", e);
-            return "An error has ocurred. See logs for details";
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
-        }
+        return aceService.purgeACL(path);
     }
 
     @Override
     public String purgeACLs(final String path) {
-        Session session = null;
-        try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            return aceService.purgeACLs(path, session);
-        } catch (RepositoryException e) {
-            LOG.error("error executing jmx call", e);
-            return "An error has ocurred. See logs for details";
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
-        }
+        return aceService.purgeACLs(path);
     }
 
     @Override
@@ -186,160 +104,77 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements
 
     @Override
     public String[] getConfigurationFiles() {
-        Session session = null;
-        try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            final Set<String> paths = aceService.getCurrentConfigurationPaths(session);
-            StringBuilder sb = new StringBuilder();
-            int cnt = 1;
-            for (String path : paths) {
-                sb.append(cnt + ". " + path + " \n");
-                cnt++;
-            }
-
-            return paths.toArray(new String[paths.size()]);
-
-        } catch (RepositoryException e) {
-            LOG.error("error executing jmx call", e);
-            return new String[] { "An error has ocurred. See logs for details" };
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
+        final Set<String> paths = aceService.getCurrentConfigurationPaths();
+        StringBuilder sb = new StringBuilder();
+        int cnt = 1;
+        for (String path : paths) {
+            sb.append(cnt + ". " + path + " \n");
+            cnt++;
         }
+
+        return paths.toArray(new String[paths.size()]);
 
     }
 
     @Override
     public String[] getSavedLogs() {
-        Session session = null;
-        try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            String[] logs = acHistoryService.getInstallationLogPaths(session);
-            if (logs.length == 0) {
-                return new String[] { "no logs found" };
-            }
-            return logs;
-        } catch (RepositoryException e) {
-            LOG.error("error executing jmx call", e);
-            return new String[] { "An error has ocurred. See logs for details" };
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
+        String[] logs = acHistoryService.getInstallationLogPaths();
+        if (logs.length == 0) {
+            return new String[] { "no logs found" };
         }
-
+        return logs;
     }
 
     @Override
     public String pathBasedDump() {
-        Session session = null;
-        try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            StopWatch sw = new StopWatch();
-            sw.start();
-            String dump = dumpservice.getCompletePathBasedDumpsAsString(session);
-            sw.stop();
-            LOG.info("path based dump took: " + sw.getTime() + " ms");
-            return dump;
-        } catch (RepositoryException e) {
-            LOG.error("error executing jmx call", e);
-            return "An error has ocurred. See logs for details";
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
-        }
-
+        StopWatch sw = new StopWatch();
+        sw.start();
+        String dump = dumpservice.getCompletePathBasedDumpsAsString();
+        sw.stop();
+        LOG.info("path based dump took: " + sw.getTime() + " ms");
+        return dump;
     }
 
     @Override
     public String groupBasedDump() {
-        Session session = null;
-        try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            StopWatch sw = new StopWatch();
-            sw.start();
-            String dump = dumpservice.getCompletePrincipalBasedDumpsAsString(session);
-            sw.stop();
-            LOG.info("group based dump took: " + sw.getTime() + " ms");
-            return dump;
-        } catch (RepositoryException e) {
-            LOG.error("error executing jmx call", e);
-            return "An error has ocurred. See logs for details";
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
-        }
-
+        StopWatch sw = new StopWatch();
+        sw.start();
+        String dump = dumpservice.getCompletePrincipalBasedDumpsAsString();
+        sw.stop();
+        LOG.info("group based dump took: " + sw.getTime() + " ms");
+        return dump;
     }
 
     @Override
     public String showHistoryLog(final String n) {
-        Session session = null;
-        try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            int i;
-            String[] logs = acHistoryService.getInstallationLogPaths(session);
-            if (logs.length == 0) {
-                return "no logs found";
-            }
-            int numberOfFoundLogs = logs.length;
-
-            String errorMessage = "please enter a valid log number (between 1 and "
-                    + numberOfFoundLogs + ")";
-            try {
-                i = Integer.parseInt(n);
-            } catch (NumberFormatException e) {
-                return errorMessage;
-            }
-            if (i < 1 || i > numberOfFoundLogs) {
-                return errorMessage;
-            }
-            return acHistoryService.showHistory(i, session);
-        } catch (RepositoryException e) {
-            LOG.error("error executing jmx call", e);
-            return "An error has ocurred. See logs for details";
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
+        int i;
+        String[] logs = acHistoryService.getInstallationLogPaths();
+        if (logs.length == 0) {
+            return "no logs found";
         }
+        int numberOfFoundLogs = logs.length;
 
+        String errorMessage = "please enter a valid log number (between 1 and "
+                + numberOfFoundLogs + ")";
+        try {
+            i = Integer.parseInt(n);
+        } catch (NumberFormatException e) {
+            return errorMessage;
+        }
+        if (i < 1 || i > numberOfFoundLogs) {
+            return errorMessage;
+        }
+        return acHistoryService.showHistory(i);
     }
 
     @Override
     public String purgeAllAuthorizablesFromConfiguration() {
-        Session session = null;
-        try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            return aceService.purgeAuthorizablesFromConfig(session);
-        } catch (RepositoryException e) {
-            LOG.error("error executing jmx call", e);
-            return "An error has ocurred. See logs for details";
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
-        }
+        return aceService.purgeAuthorizablesFromConfig();
     }
 
     @Override
     public String purgeAuthorizables(String authorizableIds) {
-        Session session = null;
-        try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            return aceService.purgeAuthorizables(commaSeparatedStringToArr(authorizableIds), session);
-        } catch (RepositoryException e) {
-            LOG.error("error executing jmx call", e);
-            return "An error has ocurred. See logs for details";
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
-        }
-
+        return aceService.purgeAuthorizables(commaSeparatedStringToArr(authorizableIds));
     }
 
     private String[] commaSeparatedStringToArr(String str) {

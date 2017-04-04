@@ -57,7 +57,6 @@ import org.apache.jackrabbit.api.security.user.QueryBuilder.Direction;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.ComponentContext;
@@ -119,9 +118,6 @@ public class DumpserviceImpl implements Dumpservice {
     @Reference
     private SlingRepository repository;
 
-    @Reference
-    private ResourceResolverFactory resourceResolverFactory;
-
     @Activate
     public void activate(@SuppressWarnings("rawtypes") final Map properties,
             final ComponentContext context) throws Exception {
@@ -157,17 +153,43 @@ public class DumpserviceImpl implements Dumpservice {
     }
 
     @Override
-    public String getCompletePathBasedDumpsAsString(Session session) {
-        String dump = getCompleteDump(AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE, session);
-        persistDump(dump, session);
-        return dump;
+    public String getCompletePathBasedDumpsAsString() {
+        Session session = null;
+        try {
+
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            String dump = getCompleteDump(AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE, session);
+            persistDump(dump, session);
+            return dump;
+
+        } catch (RepositoryException e) {
+            LOG.error("Repository exception in DumpserviceImpl", e);
+            return null;
+        } finally {
+            if (session != null) {
+                session.logout();
+            }
+        }
     }
 
     @Override
-    public String getCompletePrincipalBasedDumpsAsString(Session session) {
-        String dump = getCompleteDump(AcHelper.PRINCIPAL_BASED_ORDER, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE, session);
-        persistDump(dump, session);
-        return dump;
+    public String getCompletePrincipalBasedDumpsAsString() {
+        Session session = null;
+        try {
+
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            String dump = getCompleteDump(AcHelper.PRINCIPAL_BASED_ORDER, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE, session);
+            persistDump(dump, session);
+            return dump;
+        } catch (RepositoryException e) {
+            LOG.error("Repository exception in DumpserviceImpl", e);
+            return null;
+        } finally {
+            if (session != null) {
+                session.logout();
+            }
+        }
+
     }
 
     private void persistDump(String dump, Session session) {
@@ -242,7 +264,6 @@ public class DumpserviceImpl implements Dumpservice {
      * @param keyOrder either principals (AcHelper.PRINCIPAL_BASED_ORDER) or node paths (AcHelper.PATH_BASED_ORDER) as keys
      * @param aclOrderInMap specifies whether the allow and deny ACEs within an ACL should be divided in separate blocks (first deny then
      *            allow)
-     * @param session a jcr session
      * @return String containing complete AC dump */
     private String getCompleteDump(int keyOrder, int aclOrderInMap, Session session) {
 

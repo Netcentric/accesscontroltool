@@ -28,6 +28,8 @@ import org.apache.sling.settings.SlingSettingsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.helper.Constants;
+
 @Service
 @Component(label = "AC Config Files Retriever", description = "Provides a map path->yamlConfigContent of relevant configs")
 public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
@@ -41,15 +43,24 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
     private SlingRepository repository;
 
     @Override
-    public Map<String, String> getConfigFileContentFromNode(String rootPath, Session session) throws Exception {
+    public Map<String, String> getConfigFileContentFromNode(String rootPath) throws Exception {
 
-        Node rootNode = session.getNode(rootPath);
+        Session session = null;
+        try {
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
 
-        if (rootNode == null) {
-            throw new IllegalArgumentException("No configuration path configured! please check the configuration of AcService!");
+            Node rootNode = session.getNode(rootPath);
+
+            if (rootNode == null) {
+                throw new IllegalArgumentException("No configuration path configured! please check the configuration of AcService!");
+            }
+            Map<String, String> configurations = getConfigurations(new NodeInJcr(rootNode));
+            return configurations;
+        } finally {
+            if (session != null) {
+                session.logout();
+            }
         }
-        Map<String, String> configurations = getConfigurations(new NodeInJcr(rootNode));
-        return configurations;
 
     }
 
@@ -85,9 +96,7 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
     }
 
     static boolean isRelevantConfiguration(final String entryName, final String parentName, final Set<String> currentRunModes) {
-        if (!entryName.endsWith(".yaml") && !entryName.equals("config") /*
-                                                                         * name 'config' without .yaml allowed for backwards compatibility
-                                                                         */) {
+        if (!entryName.endsWith(".yaml") && !entryName.equals("config") /* name 'config' without .yaml allowed for backwards compatibility */) {
             return false;
         }
 
@@ -101,52 +110,51 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
 
         // check the OR concatenated run modes
         for (Set<String> andRunModes : requiredRunModes) {
-            // within each OR section is a number of AND concatenated run modes
-            boolean restrictionFulfilled = true;
-            for (String andRunMode : andRunModes) {
-                // all must be fulfilled
-                if (!currentRunModes.contains(andRunMode)) {
-                    restrictionFulfilled = false;
-                    break;
-                }
-            }
-            if (restrictionFulfilled) {
-                LOG.debug("The following run modes are all set: {}, there proceed installing file '{}'", StringUtils.join(andRunModes, ","),
-                        entryName);
-                return true;
-            }
+        	// within each OR section is a number of AND concatenated run modes
+        	boolean restrictionFulfilled = true;
+        	for (String andRunMode : andRunModes) {
+        		// all must be fulfilled
+        		if (!currentRunModes.contains(andRunMode)) {
+        			restrictionFulfilled = false;
+        			break;
+        		}
+        	}
+        	if (restrictionFulfilled) {
+        		LOG.debug("The following run modes are all set: {}, there proceed installing file '{}'", StringUtils.join(andRunModes,","), entryName);
+        		return true;
+        	}
         }
         LOG.debug("The run mode restrictions could not be fullfilled, therefore not installing file '{}'", entryName);
         return false;
     }
 
-    /** @param name a name containing a number of runmodes concatenated with AND and OR. The name must stick to the following grammar
+    /**
      * 
-     *            <pre>
-     * &lt;somename&gt;['.'{&lt;runmode&gt;'.'|&lt;runmode&gt;','}]
-     *            </pre>
-     * 
-     *            The separator '.' means AND, "," means OR. As usual in most programming languages the AND has a higher precendence.
-     * @return the run modes being extracted from the given name (the outer set of run modes represent OR concatenated run modes, the inner
-     *         set AND concatenated run modes) */
+     * @param name a name containing a number of runmodes concatenated with AND and OR. The name must stick to the following grammar
+     * <pre>&lt;somename&gt;['.'{&lt;runmode&gt;'.'|&lt;runmode&gt;','}]</pre>
+     * The separator '.' means AND, "," means OR.
+     * As usual in most programming languages the AND has a higher precendence.
+     * @return the run modes being extracted from the given name 
+     * (the outer set of run modes represent OR concatenated run modes, the inner set AND concatenated run modes)
+     */
     static Set<Set<String>> extractRunModesFromName(final String name) {
         Set<Set<String>> requiredRunModes = new HashSet<Set<String>>();
 
         // strip prefix as the name starts usually with config.
         int positionDot = name.indexOf(".");
         if (positionDot == -1) {
-            return requiredRunModes;
+        	return requiredRunModes;
         }
-
+        
         String allSegments = name.substring(positionDot + 1);
         String[] orSegments = allSegments.split(",");
         for (String orSegment : orSegments) {
-            Set<String> andRunModes = new HashSet<String>();
-            String[] andSegments = orSegment.split("\\.");
-            for (String andSegment : andSegments) {
-                andRunModes.add(andSegment);
-            }
-            requiredRunModes.add(andRunModes);
+        	Set<String> andRunModes = new HashSet<String>();
+        	String[] andSegments = orSegment.split("\\.");
+        	for (String andSegment : andSegments) {
+        		andRunModes.add(andSegment);
+        	}
+        	requiredRunModes.add(andRunModes);
         }
         return requiredRunModes;
     }

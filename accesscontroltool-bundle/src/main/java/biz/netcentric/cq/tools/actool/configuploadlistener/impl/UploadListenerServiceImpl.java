@@ -20,9 +20,10 @@ import javax.jcr.observation.EventListener;
 import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Properties;
-import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.PropertyOption;
+import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.commons.osgi.PropertiesUtil;
@@ -38,9 +39,9 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 @Component(metatype = true, label = "AC Configuration Upload Listener Service", immediate = true, description = "Listens for ACL configuration uploads and triggers ACL Service.")
 @Properties({
 
-        @Property(label = "Service status", name = UploadListenerServiceImpl.ACE_UPLOAD_LISTENER_SET_STATUS_SERVICE, options = {
-                @PropertyOption(name = "disabled", value = "disabled"),
-                @PropertyOption(name = "enabled", value = "enabled") }) })
+@Property(label = "Service status", name = UploadListenerServiceImpl.ACE_UPLOAD_LISTENER_SET_STATUS_SERVICE, options = {
+        @PropertyOption(name = "disabled", value = "disabled"),
+        @PropertyOption(name = "enabled", value = "enabled") }) })
 @Service(value = UploadListenerService.class)
 public class UploadListenerServiceImpl implements UploadListenerService,
         EventListener {
@@ -52,6 +53,8 @@ public class UploadListenerServiceImpl implements UploadListenerService,
 
     private static final Logger LOG = LoggerFactory
             .getLogger(UploadListenerServiceImpl.class);
+
+    private Session adminSession;
 
     @Reference
     SlingRepository repository;
@@ -67,76 +70,61 @@ public class UploadListenerServiceImpl implements UploadListenerService,
 
         if (this.enabled) {
             int changes = 0; // Number of new or changed files.
-            Session session = null;
-
             try {
-                session = repository.loginService(Constants.USER_AC_SERVICE, null);
                 while (events.hasNext()) {
                     Event event = events.nextEvent();
                     Node node = null;
                     switch (event.getType()) {
                     case Event.NODE_ADDED:
-                        node = session.getNode(event.getPath());
+                        node = adminSession.getNode(event.getPath());
                         break;
                     case Event.PROPERTY_CHANGED:
                         if (event.getPath().endsWith("jcr:content/jcr:data")) {
-                            node = session.getNode(event.getPath().replace("/jcr:content/jcr:data", ""));
+                            node = adminSession.getNode(event.getPath().replace("/jcr:content/jcr:data", ""));
                         }
                         break;
                     default:
-                        LOG.warn("Unexpected event: {}", event);
+                        LOG.warn("Unexpected event: {}", event);    
                     }
                     if (node != null && node.hasProperty("jcr:content/jcr:data")) {
-                        LOG.info("Detected new or changed node at {}.", node.getPath());
+                        LOG.info("Detected new or changed node at {}.",  node.getPath());
                         ++changes;
                     } else {
                         LOG.debug("Node {} associated with event does not have configuration data.", event.getPath());
                     }
                 }
-                if (changes > 0) {
-                    LOG.info("There are {} new or changed files. Triggering reload of configuration.", changes);
-                    aceService.execute(session);
-                }
             } catch (RepositoryException e) {
                 LOG.error("Error while handling events.", e);
-            } finally {
-                if (session != null) {
-                    session.logout();
-                }
             }
-
+            if (changes > 0) {
+                LOG.info("There are {} new or changed files. Triggering reload of configuration.", changes);
+                aceService.execute();
+            }
         }
     }
 
     @Activate
     public void activate(@SuppressWarnings("rawtypes") final Map properties)
             throws Exception {
-        Session adminSession = null;
-        try {
-            adminSession = repository.loginService(Constants.USER_AC_SERVICE, null);
-            this.configurationPath = aceService.getConfiguredAcConfigurationRootPath();
-            String statusService = PropertiesUtil
-                    .toString(
-                            properties
-                                    .get(UploadListenerServiceImpl.ACE_UPLOAD_LISTENER_SET_STATUS_SERVICE),
-                            "");
-            if (StringUtils.equals(statusService, "enabled")) {
-                this.enabled = true;
-            } else {
-                this.enabled = false;
-            }
-
-            setEventListener();
-        } finally {
-            if (adminSession != null) {
-                adminSession.logout();
-            }
+        this.configurationPath = aceService.getConfiguredAcConfigurationRootPath();
+        String statusService = PropertiesUtil
+                .toString(
+                        properties
+                                .get(UploadListenerServiceImpl.ACE_UPLOAD_LISTENER_SET_STATUS_SERVICE),
+                        "");
+        if (StringUtils.equals(statusService, "enabled")) {
+            this.enabled = true;
+        } else {
+            this.enabled = false;
         }
+
+        setEventListener();
     }
 
     private void setEventListener() throws Exception {
         if (StringUtils.isNotBlank(this.configurationPath)) {
             try {
+                adminSession = repository.loginService(Constants.USER_AC_SERVICE, null);
 
                 adminSession
                         .getWorkspace()
@@ -164,6 +152,13 @@ public class UploadListenerServiceImpl implements UploadListenerService,
             }
         } else {
             LOG.warn("no root ACE configuration path configured in AceService");
+        }
+    }
+
+    @Deactivate
+    public void deactivate() {
+        if (adminSession != null) {
+            adminSession.logout();
         }
     }
 
