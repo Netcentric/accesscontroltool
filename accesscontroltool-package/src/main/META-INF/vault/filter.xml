@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <workspaceFilter version="1.0">
 	<filter root="/apps/netcentric/actool"/>  
-	<filter root="/home/users/system/netcentric/actool/acl/ynUbs6nnylcpRBs0eXdv"/>
-	<filter root="/" mode="merge"/>
+	<filter root="/home/users/system/actool/actool-service"/>
+	<filter root="/rep:policy" mode="merge"/>
 </workspaceFilter>
