@@ -117,7 +117,7 @@ public class AuthorizableCreatorServiceImplTest {
         HashSet<String> configuredGroups = new HashSet<String>(Arrays.asList(GROUP1, GROUP2));
         HashSet<String> groupsInRepo = new HashSet<String>(Arrays.asList(GROUP2, GROUP3, EXTERNALGROUP));
 
-        globalConfiguration.setAllowExternalGroupNamesRegEx("external.*");
+        globalConfiguration.setKeepExistingMembershipsForGroupNamesRegEx("external.*");
 
         // just return the value as passed in as third argument
         doAnswer(new Answer<Set<String>>() {
@@ -191,7 +191,7 @@ public class AuthorizableCreatorServiceImplTest {
         reset(testGroup);
 
         // test authorizable in config not removed if allowExternalGroupNamesRegEx is configured
-        history.getAcConfiguration().getGlobalConfiguration().setAllowExternalGroupNamesRegEx("group2.*");
+        history.getAcConfiguration().getGlobalConfiguration().setKeepExistingMembershipsForGroupNamesRegEx("group2.*");
         authorizableConfigBean.setMembers(new String[] {});
         doReturn(asList(group1, group2).iterator()).when(testGroup).getDeclaredMembers();
         cut.applyGroupMembershipConfigMembers(authorizableConfigBean, history, TESTGROUP, userManager, authorizablesInConfig);

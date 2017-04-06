@@ -145,7 +145,7 @@ public class AceServiceImpl implements AceService {
             Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configurationRootPath, session);
             installConfigurationFiles(history, newestConfigurations, authorizableInstallationHistorySet, restrictedToPaths, session);
         } catch (AuthorizableCreatorException e) {
-            history.addError(e.toString());
+            // exception was added to history in installConfigurationFiles() before it was saved
             LOG.warn("Exception during installation of authorizables (no rollback), e=" + e, e);
             // here no rollback of authorizables necessary since session wasn't
             // saved
@@ -155,7 +155,7 @@ public class AceServiceImpl implements AceService {
             // otherwise changes made on the ACLs would get persisted
 
             LOG.error("Exception in AceServiceImpl: {}", e);
-            history.addError(e.toString());
+            // exception was added to history in installConfigurationFiles() before it was saved
 
             if (!intermediateSaves) {
                 for (AuthorizableInstallationHistory authorizableInstallationHistory : authorizableInstallationHistorySet) {

@@ -232,12 +232,12 @@ public class AuthorizableCreatorServiceImpl implements
     private Set<String> removeExternalGroupsThatAreUntouchedByConfiguration(Set<String> relevantMembersInRepo,
             AcInstallationHistoryPojo history) {
         Set<String> relevantMembers = new HashSet<String>(relevantMembersInRepo);
-        Pattern allowExternalGroupNamesRegEx = history.getAcConfiguration().getGlobalConfiguration().getAllowExternalGroupNamesRegEx();
-        if (allowExternalGroupNamesRegEx != null) {
+        Pattern keepExistingMembershipsForGroupNamesRegEx = history.getAcConfiguration().getGlobalConfiguration().getKeepExistingMembershipsForGroupNamesRegEx();
+        if (keepExistingMembershipsForGroupNamesRegEx != null) {
             Iterator<String> relevantMembersIt = relevantMembers.iterator();
             while (relevantMembersIt.hasNext()) {
                 String member = relevantMembersIt.next();
-                if (allowExternalGroupNamesRegEx.matcher(member).matches()) {
+                if (keepExistingMembershipsForGroupNamesRegEx.matcher(member).matches()) {
                     relevantMembersIt.remove();
                 }
             }
@@ -537,7 +537,7 @@ public class AuthorizableCreatorServiceImpl implements
                 validatedMembershipGroupsFromConfig);
         Set<String> toBeSkippedFromRemovalMembers = new HashSet<String>();
 
-        Pattern ignoredMembershipsPattern = status.getAcConfiguration().getGlobalConfiguration().getAllowExternalGroupNamesRegEx();
+        Pattern ignoredMembershipsPattern = status.getAcConfiguration().getGlobalConfiguration().getKeepExistingMembershipsForGroupNamesRegEx();
 
         Iterator<String> toBeRemovedMembersIt = toBeRemovedMembers.iterator();
         while (toBeRemovedMembersIt.hasNext()) {

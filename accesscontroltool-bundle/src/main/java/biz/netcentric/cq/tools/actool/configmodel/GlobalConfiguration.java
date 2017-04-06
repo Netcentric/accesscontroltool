@@ -19,10 +19,12 @@ import biz.netcentric.cq.tools.actool.validators.GlobalConfigurationValidator;
 public class GlobalConfiguration {
 
     public static final String KEY_MIN_REQUIRED_VERSION = "minRequiredVersion";
-    public static final String KEY_ALLOW_EXTERNAL_GROUP_NAMES_REGEX = "allowExternalGroupNamesRegEx";
     public static final String KEY_INSTALL_ACLS_INCREMENTALLY = "installAclsIncrementally";
 
-    private Pattern allowExternalGroupNamesRegEx;
+    public static final String KEY_KEEP_EXISTING_MEMBERSHIPS_FOR_GROUP_NAMES_REGEX = "keepExistingMembershipsForGroupNamesRegEx";
+    public static final String KEY_ALLOW_EXTERNAL_GROUP_NAMES_REGEX_OBSOLETE = "allowExternalGroupNamesRegEx";
+
+    private Pattern keepExistingMembershipsForGroupNamesRegEx;
     private String minRequiredVersion;
     private boolean installAclsIncrementally = true;
 
@@ -32,7 +34,14 @@ public class GlobalConfiguration {
     public GlobalConfiguration(Map<String, ?> globalConfigMap) {
 
         if (globalConfigMap != null) {
-            setAllowExternalGroupNamesRegEx((String) globalConfigMap.get(KEY_ALLOW_EXTERNAL_GROUP_NAMES_REGEX));
+            if(globalConfigMap.get(KEY_ALLOW_EXTERNAL_GROUP_NAMES_REGEX_OBSOLETE)!=null) {
+                throw new IllegalArgumentException("Configuration property " + KEY_ALLOW_EXTERNAL_GROUP_NAMES_REGEX_OBSOLETE
+                        + " was renamed to " + KEY_KEEP_EXISTING_MEMBERSHIPS_FOR_GROUP_NAMES_REGEX
+                        + " (since v2.0.0) - please adjust your configuration.");
+                
+            }
+            
+            setKeepExistingMembershipsForGroupNamesRegEx((String) globalConfigMap.get(KEY_KEEP_EXISTING_MEMBERSHIPS_FOR_GROUP_NAMES_REGEX));
             setMinRequiredVersion((String) globalConfigMap.get(KEY_MIN_REQUIRED_VERSION));
             if (globalConfigMap.containsKey(KEY_INSTALL_ACLS_INCREMENTALLY)) {
                 setInstallAclsIncrementally(Boolean.valueOf(globalConfigMap.get(KEY_INSTALL_ACLS_INCREMENTALLY).toString()));
@@ -43,11 +52,11 @@ public class GlobalConfiguration {
 
     public void merge(GlobalConfiguration otherGlobalConfig) {
 
-        if (otherGlobalConfig.getAllowExternalGroupNamesRegEx() != null) {
-            if (allowExternalGroupNamesRegEx == null) {
-                allowExternalGroupNamesRegEx = otherGlobalConfig.getAllowExternalGroupNamesRegEx();
+        if (otherGlobalConfig.getKeepExistingMembershipsForGroupNamesRegEx() != null) {
+            if (keepExistingMembershipsForGroupNamesRegEx == null) {
+                keepExistingMembershipsForGroupNamesRegEx = otherGlobalConfig.getKeepExistingMembershipsForGroupNamesRegEx();
             } else {
-                throw new IllegalArgumentException("Duplicate config for " + KEY_ALLOW_EXTERNAL_GROUP_NAMES_REGEX);
+                throw new IllegalArgumentException("Duplicate config for " + KEY_KEEP_EXISTING_MEMBERSHIPS_FOR_GROUP_NAMES_REGEX);
             }
         }
         
@@ -67,12 +76,12 @@ public class GlobalConfiguration {
 
     }
 
-    public Pattern getAllowExternalGroupNamesRegEx() {
-        return allowExternalGroupNamesRegEx;
+    public Pattern getKeepExistingMembershipsForGroupNamesRegEx() {
+        return keepExistingMembershipsForGroupNamesRegEx;
     }
 
-    public void setAllowExternalGroupNamesRegEx(String allowExternalGroupNamesRegEx) {
-        this.allowExternalGroupNamesRegEx = StringUtils.isNotBlank(allowExternalGroupNamesRegEx)
+    public void setKeepExistingMembershipsForGroupNamesRegEx(String allowExternalGroupNamesRegEx) {
+        this.keepExistingMembershipsForGroupNamesRegEx = StringUtils.isNotBlank(allowExternalGroupNamesRegEx)
                 ? Pattern.compile(allowExternalGroupNamesRegEx) : null;
     }
 
