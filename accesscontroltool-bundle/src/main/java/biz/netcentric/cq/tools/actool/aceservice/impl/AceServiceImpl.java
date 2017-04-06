@@ -21,7 +21,6 @@ import java.util.Set;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.SimpleCredentials;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
 
@@ -143,7 +142,7 @@ public class AceServiceImpl implements AceService {
         Session session = null;
         try {
             session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configurationRootPath);
+            Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configurationRootPath, session);
             installConfigurationFiles(history, newestConfigurations, authorizableInstallationHistorySet, restrictedToPaths, session);
         } catch (AuthorizableCreatorException e) {
             history.addError(e.toString());
@@ -161,13 +160,16 @@ public class AceServiceImpl implements AceService {
             if (!intermediateSaves) {
                 for (AuthorizableInstallationHistory authorizableInstallationHistory : authorizableInstallationHistorySet) {
                     try {
+                        session.refresh(true); // reset the session that might have an inconsistent state
                         String message = "performing authorizable installation rollback(s)";
                         LOG.info(message);
                         history.addMessage(message);
                         authorizableCreatorService.performRollback(repository,
                                 authorizableInstallationHistory, history, session);
                     } catch (RepositoryException e1) {
-                        LOG.error("Exception: ", e1);
+                        String rollbackErr = "Could not perform rollback: " + e1;
+                        LOG.error(rollbackErr, e1);
+                        history.addError(rollbackErr);
                     }
                 }
             } else {
@@ -191,8 +193,7 @@ public class AceServiceImpl implements AceService {
             throws Exception {
 
         String origThreadName = Thread.currentThread().getName();
-        Session configurationSession = null;
-        Session obsoleteAuthorizablesSession = null;
+
         try {
             Thread.currentThread().setName(origThreadName + "-ACTool-Config-Worker");
             StopWatch sw = new StopWatch();
@@ -210,13 +211,10 @@ public class AceServiceImpl implements AceService {
                 AcConfiguration acConfiguration = configurationMerger.getMergedConfigurations(configurationFileContentsByFilename, history,
                         configReader, session);
                 history.setAcConfiguration(acConfiguration);
-                // clone sessions to keep in different transaction
-                configurationSession = session.impersonate(new SimpleCredentials(session.getUserID(), "".toCharArray()));
-                installMergedConfigurations(history, authorizableInstallationHistorySet, acConfiguration, restrictedToPaths,
-                        configurationSession);
-                obsoleteAuthorizablesSession = session.impersonate(new SimpleCredentials(session.getUserID(), "".toCharArray()));
-                // this runs as "own transaction" after session.save() of ACLs
-                removeObsoleteAuthorizables(history, acConfiguration.getObsoleteAuthorizables(), obsoleteAuthorizablesSession);
+
+                installMergedConfigurations(history, authorizableInstallationHistorySet, acConfiguration, restrictedToPaths, session);
+
+                removeObsoleteAuthorizables(history, acConfiguration.getObsoleteAuthorizables(), session);
 
             }
             sw.stop();
@@ -232,18 +230,13 @@ public class AceServiceImpl implements AceService {
             } catch (Exception e) {
                 LOG.warn("Could not persist history, e=" + e, e);
             }
-            if (obsoleteAuthorizablesSession != null) {
-                obsoleteAuthorizablesSession.logout();
-            }
-            if (configurationSession != null) {
-                configurationSession.logout();
-            }
 
             Thread.currentThread().setName(origThreadName);
             isExecuting = false;
         }
 
     }
+
 
     private void installAcConfiguration(
             AcConfiguration acConfiguration, AcInstallationHistoryPojo history,
@@ -475,7 +468,7 @@ public class AceServiceImpl implements AceService {
         history.addMessage(msg);
 
         try {
-            // only save session if no exceptions occured
+            // only save session if no exceptions occurred
             AuthorizableInstallationHistory authorizableInstallationHistory = new AuthorizableInstallationHistory();
             authorizableHistorySet.add(authorizableInstallationHistory);
             authorizableCreatorService.createNewAuthorizables(
@@ -573,15 +566,20 @@ public class AceServiceImpl implements AceService {
 
     @Override
     public boolean isReadyToStart() {
+        Session session = null;
         String rootPath = getConfiguredAcConfigurationRootPath();
         try {
-            return !configFilesRetriever.getConfigFileContentFromNode(rootPath).isEmpty();
-
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            boolean isReadyToStart = !configFilesRetriever.getConfigFileContentFromNode(rootPath, session).isEmpty();
+            return isReadyToStart;
         } catch (Exception e) {
             LOG.warn("Could not retrieve config file content for root path " + configuredAcConfigurationRootPath);
             return false;
+        } finally {
+            if (session != null) {
+                session.logout();
+            }
         }
-
     }
 
     @Override
@@ -674,7 +672,7 @@ public class AceServiceImpl implements AceService {
         Session session = null;
         String message = "";
         try {
-            session = repository.loginAdministrative(null);
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
             Set<String> authorizablesSet = new HashSet<String>(Arrays.asList(authorizableIds));
             message = purgeAuthorizables(authorizablesSet, session);
             AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
@@ -760,11 +758,17 @@ public class AceServiceImpl implements AceService {
     @Override
     public Set<String> getCurrentConfigurationPaths() {
 
+        Session session = null;
         Set<String> paths = new LinkedHashSet<String>();
         try {
-            paths = configFilesRetriever.getConfigFileContentFromNode(configuredAcConfigurationRootPath).keySet();
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            paths = configFilesRetriever.getConfigFileContentFromNode(configuredAcConfigurationRootPath, session).keySet();
         } catch (Exception e) {
-            LOG.warn("Could not retrieve config file content for root path " + configuredAcConfigurationRootPath);
+            LOG.warn("Could not retrieve config file content for root path " + configuredAcConfigurationRootPath + ": e=" + e, e);
+        } finally {
+            if (session != null) {
+                session.logout();
+            }
         }
         return paths;
     }
@@ -772,7 +776,8 @@ public class AceServiceImpl implements AceService {
     public Set<String> getAllAuthorizablesFromConfig(Session session)
             throws Exception {
         AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
-        Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configuredAcConfigurationRootPath);
+        Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configuredAcConfigurationRootPath,
+                session);
         AcConfiguration acConfiguration = configurationMerger.getMergedConfigurations(newestConfigurations, history, configReader, session);
         Set<String> allAuthorizablesFromConfig = acConfiguration.getAceConfig().keySet();
         return allAuthorizablesFromConfig;
