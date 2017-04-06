@@ -92,7 +92,7 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
 
             installAcl(orderedAceBeanSetFromConfig, path, principalsToRemoveAcesFor, session, history);
 
-            if (intermediateSaves) {
+            if (intermediateSaves && session.hasPendingChanges()) {
                 final String messageSave = "Saved session for path " + path;
                 LOG.debug(messageSave);
                 history.addVerboseMessage(messageSave);

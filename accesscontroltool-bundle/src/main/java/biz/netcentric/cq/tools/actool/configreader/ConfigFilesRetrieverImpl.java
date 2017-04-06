@@ -28,8 +28,6 @@ import org.apache.sling.settings.SlingSettingsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.helper.Constants;
-
 @Service
 @Component(label = "AC Config Files Retriever", description = "Provides a map path->yamlConfigContent of relevant configs")
 public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
@@ -43,24 +41,16 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
     private SlingRepository repository;
 
     @Override
-    public Map<String, String> getConfigFileContentFromNode(String rootPath) throws Exception {
+    public Map<String, String> getConfigFileContentFromNode(String rootPath, Session session) throws Exception {
 
-        Session session = null;
-        try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
 
-            Node rootNode = session.getNode(rootPath);
+        Node rootNode = session.getNode(rootPath);
 
-            if (rootNode == null) {
-                throw new IllegalArgumentException("No configuration path configured! please check the configuration of AcService!");
-            }
-            Map<String, String> configurations = getConfigurations(new NodeInJcr(rootNode));
-            return configurations;
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
+        if (rootNode == null) {
+            throw new IllegalArgumentException("No configuration path configured! please check the configuration of AcService!");
         }
+        Map<String, String> configurations = getConfigurations(new NodeInJcr(rootNode));
+        return configurations;
 
     }
 

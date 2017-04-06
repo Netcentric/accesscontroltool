@@ -27,7 +27,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.SimpleCredentials;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.security.AccessControlEntry;
 import javax.jcr.security.AccessControlManager;
@@ -47,6 +46,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
+import biz.netcentric.cq.tools.actool.helper.SessionUtil;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 @Service
@@ -210,12 +210,6 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
         return acl;
     }
 
-
-    protected Session cloneSession(Session session) throws RepositoryException {
-        Session clone = session.impersonate(new SimpleCredentials(session.getUserID(), "".toCharArray()));
-        return clone;
-    }
-
     private Set<AceBean> transformActionsIntoPrivileges(Set<AceBean> aceBeanSetFromConfig, Session session,
             AcInstallationHistoryPojo history) throws RepositoryException {
 
@@ -262,7 +256,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
             try {
                 // the clone is needed to ensure no pending changes are introduced (even if there would not be real pending changes
                 // since we add and remove, but session.hasPendingChanges() is true then)
-                clonedSession = cloneSession(session);
+                clonedSession = SessionUtil.cloneSession(session);
                 aceBeansForActionEntry = getPrincipalAceBeansForActionAceBean(origAceBean, clonedSession);
             } finally {
                 clonedSession.logout();

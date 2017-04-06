@@ -37,6 +37,7 @@ import javax.jcr.Binary;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.SimpleCredentials;
 import javax.jcr.Value;
 import javax.jcr.ValueFormatException;
 import javax.jcr.security.AccessControlManager;
@@ -119,7 +120,8 @@ public class AceBeanInstallerIncrementalTest {
         doReturn(new TestPrivilege("jcr:read", new String[] { "jcr:readNodes", "jcr:readProperties" })).when(accessControlManager)
                 .privilegeFromName("jcr:read");
 
-        doReturn(session).when(aceBeanInstallerIncremental).cloneSession(session);
+        // easier to mock than the static SessionUtil.clone()
+        doReturn(session).when(session).impersonate(any(SimpleCredentials.class));
 
         doReturn(true).when(aceBeanInstallerIncremental).definesContent(testPath, session);
         doReturn(new PrincipalImpl(FAKE_PRINCIPAL_ID)).when(aceBeanInstallerIncremental).applyCqActions(any(AceBean.class), eq(session),
