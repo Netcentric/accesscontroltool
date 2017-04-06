@@ -18,6 +18,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.jcr.security.AccessControlManager;
 
 import org.apache.commons.io.IOUtils;
@@ -39,7 +40,7 @@ public class ValidatorTestHelper {
 
     static void createAuthorizableTestBeans(final List<LinkedHashMap> yamlList, ConfigReader yamlConfigReader,
             List<AuthorizableConfigBean> authorizableBeanList)
-                    throws AcConfigBeanValidationException {
+            throws AcConfigBeanValidationException {
         final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl("/home/groups", "/home/users");
         authorizableValidator.disable();
         final Map<String, Set<AuthorizableConfigBean>> groupsMap = yamlConfigReader
@@ -68,11 +69,11 @@ public class ValidatorTestHelper {
     }
 
     static void createAceTestBeans(final List<LinkedHashMap> yamlList, ConfigReader yamlConfigReader, Set<String> groupsFromConfig,
-            List<AceBean> aceBeanList)
-                    throws RepositoryException, AcConfigBeanValidationException {
+            List<AceBean> aceBeanList, Session session)
+            throws RepositoryException, AcConfigBeanValidationException {
 
         final Map<String, Set<AceBean>> aceMap = yamlConfigReader
-                .getAceConfigurationBeans(yamlList, groupsFromConfig, null);
+                .getAceConfigurationBeans(yamlList, groupsFromConfig, null, session);
 
         for (final Entry<String, Set<AceBean>> aceMapEntrySet : aceMap.entrySet()) {
             aceBeanList.addAll(aceMapEntrySet.getValue());

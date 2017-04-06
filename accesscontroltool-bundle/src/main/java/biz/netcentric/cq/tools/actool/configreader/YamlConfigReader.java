@@ -81,7 +81,7 @@ public class YamlConfigReader implements ConfigReader {
     @Override
     @SuppressWarnings("rawtypes")
     public Map<String, Set<AceBean>> getAceConfigurationBeans(final Collection<?> aceConfigData, final Set<String> groupsFromConfig,
-            final AceBeanValidator aceBeanValidator) throws RepositoryException, AcConfigBeanValidationException {
+            final AceBeanValidator aceBeanValidator, Session session) throws RepositoryException, AcConfigBeanValidationException {
 
         final List<LinkedHashMap> aclList = (List<LinkedHashMap>) getConfigSection(Constants.ACE_CONFIGURATION_KEY, aceConfigData);
 
@@ -91,7 +91,7 @@ public class YamlConfigReader implements ConfigReader {
         }
 
         // group based Map from config file
-        final Map<String, Set<AceBean>> aceMapFromConfig = getPreservedOrderdAceMap(aclList, groupsFromConfig, aceBeanValidator);
+        final Map<String, Set<AceBean>> aceMapFromConfig = getPreservedOrderdAceMap(aclList, groupsFromConfig, aceBeanValidator, session);
         return aceMapFromConfig;
 
     }
@@ -207,7 +207,7 @@ public class YamlConfigReader implements ConfigReader {
     private Map<String, Set<AceBean>> getPreservedOrderdAceMap(
             List<LinkedHashMap> aceYamlList,
             final Set<String> groupsFromCurrentConfig,
-            final AceBeanValidator aceBeanValidator) throws RepositoryException,
+            final AceBeanValidator aceBeanValidator, Session session) throws RepositoryException,
             AcConfigBeanValidationException {
 
         final Map<String, Set<AceBean>> aceMap = new LinkedHashMap<String, Set<AceBean>>();
@@ -216,60 +216,51 @@ public class YamlConfigReader implements ConfigReader {
             return aceMap;
         }
 
-        Session session = null;
-        try {
-            if (repository != null) {
-                session = repository.loginAdministrative(null);
+        for (final Map<String, List<Map<String, ?>>> currentPrincipalAceMap : aceYamlList) {
+
+            final String principalName = currentPrincipalAceMap.keySet().iterator().next();
+
+            final List<Map<String, ?>> aceDefinitions = currentPrincipalAceMap.get(principalName);
+
+            LOG.debug("start reading ACE configuration of authorizable: {}", principalName);
+
+            // if current principal is not yet in map, add new key and empty
+            // set for storing the pricipals ACE beans
+            if (aceMap.get(principalName) == null) {
+                final Set<AceBean> tmpSet = new LinkedHashSet<AceBean>();
+                aceMap.put(principalName, tmpSet);
             }
-            for (final Map<String, List<Map<String, ?>>> currentPrincipalAceMap : aceYamlList) {
 
-                final String principalName = currentPrincipalAceMap.keySet().iterator().next();
+            if ((aceDefinitions == null) || aceDefinitions.isEmpty()) {
+                LOG.warn("no ACE definition(s) found for autorizable: {}",
+                        principalName);
+                continue;
+            }
 
-                final List<Map<String, ?>> aceDefinitions = currentPrincipalAceMap.get(principalName);
-
-                LOG.debug("start reading ACE configuration of authorizable: {}", principalName);
-
-                // if current principal is not yet in map, add new key and empty
-                // set for storing the pricipals ACE beans
-                if (aceMap.get(principalName) == null) {
-                    final Set<AceBean> tmpSet = new LinkedHashSet<AceBean>();
-                    aceMap.put(principalName, tmpSet);
+            // create ACE bean and populate it according to the properties
+            // in the config
+            for (final Map<String, ?> currentAceDefinition : aceDefinitions) {
+                AceBean newAceBean = getNewAceBean();
+                setupAceBean(principalName, currentAceDefinition, newAceBean);
+                if (aceBeanValidator != null) {
+                    aceBeanValidator.validate(newAceBean, session.getAccessControlManager());
                 }
 
-                if ((aceDefinitions == null) || aceDefinitions.isEmpty()) {
-                    LOG.warn("no ACE definition(s) found for autorizable: {}",
-                            principalName);
-                    continue;
+                // --- handle wildcards ---
+
+                if ((newAceBean.getJcrPath() != null)
+                        && newAceBean.getJcrPath().contains("*")
+                        && (null != session)) {
+                    handleWildcards(session, aceMap, principalName,
+                            newAceBean);
+                } else {
+                    aceMap.get(principalName).add(newAceBean);
                 }
-
-                // create ACE bean and populate it according to the properties
-                // in the config
-                for (final Map<String, ?> currentAceDefinition : aceDefinitions) {
-                    AceBean newAceBean = getNewAceBean();
-                    setupAceBean(principalName, currentAceDefinition, newAceBean);
-                    if (aceBeanValidator != null) {
-                        aceBeanValidator.validate(newAceBean, session.getAccessControlManager());
-                    }
-
-                    // --- handle wildcards ---
-
-                    if ((newAceBean.getJcrPath() != null)
-                            && newAceBean.getJcrPath().contains("*")
-                            && (null != session)) {
-                        handleWildcards(session, aceMap, principalName,
-                                newAceBean);
-                    } else {
-                        aceMap.get(principalName).add(newAceBean);
-                    }
-                }
-
             }
-            return aceMap;
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
+
         }
+        return aceMap;
+
     }
 
     protected void handleWildcards(final Session session,

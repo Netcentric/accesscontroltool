@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -43,6 +44,9 @@ public class YamlMacroProcessorTest {
     @Mock
     AcInstallationHistoryPojo acInstallationHistoryPojo;
 
+    @Mock
+    Session session;
+
     @InjectMocks
     YamlMacroProcessorImpl yamlMacroProcessor = new YamlMacroProcessorImpl();
 
@@ -56,7 +60,7 @@ public class YamlMacroProcessorTest {
 
         List<LinkedHashMap> yamlList = getYamlList("test-loop.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
 
         Map<String, Set<AuthorizableConfigBean>> groups = readGroupConfigs(yamlList);
         assertEquals("Number of groups", 10, groups.size());
@@ -78,7 +82,7 @@ public class YamlMacroProcessorTest {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
         List<LinkedHashMap> yamlList = getYamlList("test-nested-loops.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
 
         final Map<String, Set<AuthorizableConfigBean>> groups = readGroupConfigs(yamlList);
 
@@ -92,7 +96,7 @@ public class YamlMacroProcessorTest {
 
         List<LinkedHashMap> yamlList = getYamlList("test-loop.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
 
         final Map<String, Set<AceBean>> aces = readAceConfigs(yamlList);
         assertEquals("Number of ACEs", 5, aces.size());
@@ -102,13 +106,14 @@ public class YamlMacroProcessorTest {
         assertEquals("Number of ACEs for groupB", 2, group2.size());
     }
 
-    /** @see <a href="https://github.com/Netcentric/accesscontroltool/issues/14">https://github.com/Netcentric/accesscontroltool/issues/14</a> */
+    /** @see <a href=
+     *      "https://github.com/Netcentric/accesscontroltool/issues/14">https://github.com/Netcentric/accesscontroltool/issues/14</a> */
     @Test
     public void testAceLoopWithHyphen() throws IOException, AcConfigBeanValidationException, RepositoryException {
 
         List<LinkedHashMap> yamlList = getYamlList("test-loop-with-hyphen.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
 
         final Map<String, Set<AceBean>> aces = readAceConfigs(yamlList);
         assertEquals("Number of ACEs", 5, aces.size());
@@ -123,7 +128,7 @@ public class YamlMacroProcessorTest {
 
         List<LinkedHashMap> yamlList = getYamlList("test-nested-loops.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
 
         final Map<String, Set<AceBean>> aces = readAceConfigs(yamlList);
         assertEquals("Number of ACEs", 12, aces.size());
@@ -148,7 +153,7 @@ public class YamlMacroProcessorTest {
 
         List<LinkedHashMap> yamlList = getYamlList("test-if.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
 
         final Map<String, Set<AceBean>> aces = readAceConfigs(yamlList);
 
@@ -172,9 +177,9 @@ public class YamlMacroProcessorTest {
         String contentLocationChildrenFromYamlFile = "/content/test";
 
         doReturn(getExampleValuesForLoopOverChildrenOfPath()).when(yamlMacroChildNodeObjectsProvider)
-                .getValuesForPath(contentLocationChildrenFromYamlFile, acInstallationHistoryPojo);
+                .getValuesForPath(contentLocationChildrenFromYamlFile, acInstallationHistoryPojo, session);
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
 
         // new Yaml().dump(yamlList, new PrintWriter(System.out));
 
@@ -232,7 +237,7 @@ public class YamlMacroProcessorTest {
 
         List<LinkedHashMap> yamlList = getYamlList("test-system-user.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
 
         Map<String, Set<AuthorizableConfigBean>> users = readUserConfigs(yamlList);
         assertEquals("Number of users", 1, users.size());
@@ -246,7 +251,7 @@ public class YamlMacroProcessorTest {
     private Map<String, Set<AceBean>> readAceConfigs(final List<LinkedHashMap> yamlList)
             throws RepositoryException, AcConfigBeanValidationException {
         Map<String, Set<AuthorizableConfigBean>> groups = readGroupConfigs(yamlList);
-        return new YamlConfigReader().getAceConfigurationBeans(yamlList, groups.keySet(), null);
+        return new YamlConfigReader().getAceConfigurationBeans(yamlList, groups.keySet(), null, session);
     }
 
     private Map<String, Set<AuthorizableConfigBean>> readGroupConfigs(List<LinkedHashMap> yamlList) throws AcConfigBeanValidationException {
@@ -267,7 +272,7 @@ public class YamlMacroProcessorTest {
 
         List<LinkedHashMap> yamlList = getYamlList("test-variables.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
 
         GlobalConfiguration globalConfiguration = readGlobalConfig(yamlList);
         Map<String, Set<AuthorizableConfigBean>> groups = readGroupConfigs(yamlList);
@@ -285,7 +290,7 @@ public class YamlMacroProcessorTest {
 
         List<LinkedHashMap> yamlList = getYamlList("test-variables-ldap.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
 
         GlobalConfiguration globalConfiguration = readGlobalConfig(yamlList);
         Map<String, Set<AuthorizableConfigBean>> groups = readGroupConfigs(yamlList);

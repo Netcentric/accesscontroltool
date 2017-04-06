@@ -10,6 +10,8 @@ package biz.netcentric.cq.tools.actool.aceservicejmx.impl;
 
 import java.util.Set;
 
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.management.NotCompliantMBeanException;
 
 import org.apache.commons.lang.StringUtils;
@@ -19,6 +21,7 @@ import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
+import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +30,7 @@ import com.adobe.granite.jmx.annotation.AnnotatedStandardMBean;
 import biz.netcentric.cq.tools.actool.aceservice.AceService;
 import biz.netcentric.cq.tools.actool.aceservicejmx.AceServiceMBean;
 import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
+import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 
 @Service
@@ -52,6 +56,9 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements
 
     @Reference
     Dumpservice dumpservice;
+
+    @Reference
+    SlingRepository repository;
 
     @Override
     public String apply() {

@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
@@ -25,18 +26,18 @@ public interface ConfigReader {
 
     public Map<String, Set<AceBean>> getAceConfigurationBeans(
             final Collection<?> aceConfigData, Set<String> groupsFromConfig,
-            AceBeanValidator aceBeanValidator) throws RepositoryException,
+            AceBeanValidator aceBeanValidator, Session session) throws RepositoryException,
             AcConfigBeanValidationException;
 
     public Map<String, Set<AuthorizableConfigBean>> getGroupConfigurationBeans(
             final Collection<?> groupConfigData,
             AuthorizableValidator authorizableValidator)
-                    throws AcConfigBeanValidationException;
+            throws AcConfigBeanValidationException;
 
     public Map<String, Set<AuthorizableConfigBean>> getUserConfigurationBeans(
             final Collection<?> userConfigData,
             AuthorizableValidator authorizableValidator)
-                    throws AcConfigBeanValidationException;
+            throws AcConfigBeanValidationException;
 
     public GlobalConfiguration getGlobalConfiguration(final Collection yamlList);
 

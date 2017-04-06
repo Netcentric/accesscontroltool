@@ -11,6 +11,8 @@ package biz.netcentric.cq.tools.actool.aceservice;
 import java.util.Map;
 import java.util.Set;
 
+import javax.jcr.Session;
+
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
@@ -34,7 +36,8 @@ public interface AceService {
      * @return the history */
     public AcInstallationHistoryPojo execute(String[] restrictedToPaths);
 
-    /** Applies the configuration as stored at the given configurationRootPath to the repository, but only apply ACEs to given restrictedToPaths.
+    /** Applies the configuration as stored at the given configurationRootPath to the repository, but only apply ACEs to given
+     * restrictedToPaths.
      * 
      * @param restrictedToPaths only apply ACLs to root paths as given
      * @param configurationRootPath the root path for configuration files
@@ -90,9 +93,11 @@ public interface AceService {
      * @param configurationFileContentsByFilename
      * @param authorizableInstallationHistorySet
      * @param restrictedToPaths only apply ACLs to root paths as given
+     * @param a jcr session
      * @throws Exception */
     public void installConfigurationFiles(AcInstallationHistoryPojo history,
             Map<String, String> configurationFileContentsByFilename,
-            Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet, String[] restrictedToPaths) throws Exception;
+            Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet, String[] restrictedToPaths, Session session)
+            throws Exception;
 
 }

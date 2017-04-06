@@ -8,13 +8,15 @@
  */
 package biz.netcentric.cq.tools.actool.installhook;
 
+import javax.jcr.Session;
+
 import org.apache.jackrabbit.vault.fs.io.Archive;
 
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 public interface AcToolInstallHookService {
 
-    public AcInstallationHistoryPojo installYamlFilesFromPackage(Archive archive)
-			throws Exception;
+    public AcInstallationHistoryPojo installYamlFilesFromPackage(Archive archive, Session session)
+            throws Exception;
 
 }

@@ -39,6 +39,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
 import biz.netcentric.cq.tools.actool.configreader.TestAceBean;
 import biz.netcentric.cq.tools.actool.configreader.TestYamlConfigReader;
+import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
 import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
@@ -73,7 +74,7 @@ public class RestrictionValidationTest {
             AcConfigBeanValidationException {
 
         initMocks(this);
-        doReturn(session).when(repository).loginAdministrative(null);
+        doReturn(session).when(repository).loginService(Constants.USER_AC_SERVICE, null);
 
         accessControlPolicy = mock(AccessControlList.class,
                 withSettings().extraInterfaces(JackrabbitAccessControlList.class));
@@ -92,7 +93,7 @@ public class RestrictionValidationTest {
         groupsFromConfig = yamlConfigReader.getGroupConfigurationBeans(
                 yamlList, authorizableValidator).keySet();
         ValidatorTestHelper.createAuthorizableTestBeans(yamlList, yamlConfigReader, authorizableBeanList);
-        ValidatorTestHelper.createAceTestBeans(yamlList, yamlConfigReader, groupsFromConfig, aceBeanList);
+        ValidatorTestHelper.createAceTestBeans(yamlList, yamlConfigReader, groupsFromConfig, aceBeanList, session);
     }
 
     @Test
