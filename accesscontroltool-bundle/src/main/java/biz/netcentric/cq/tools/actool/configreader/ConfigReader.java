@@ -24,7 +24,7 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
 
 public interface ConfigReader {
 
-    public Map<String, Set<AceBean>> getAceConfigurationBeans(
+    public Set<AceBean> getAceConfigurationBeans(
             final Collection<?> aceConfigData, Set<String> groupsFromConfig,
             AceBeanValidator aceBeanValidator, Session session) throws RepositoryException,
             AcConfigBeanValidationException;

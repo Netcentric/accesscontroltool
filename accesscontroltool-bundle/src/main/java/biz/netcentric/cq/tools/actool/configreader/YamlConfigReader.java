@@ -80,7 +80,7 @@ public class YamlConfigReader implements ConfigReader {
 
     @Override
     @SuppressWarnings("rawtypes")
-    public Map<String, Set<AceBean>> getAceConfigurationBeans(final Collection<?> aceConfigData, final Set<String> groupsFromConfig,
+    public Set<AceBean> getAceConfigurationBeans(final Collection<?> aceConfigData, final Set<String> groupsFromConfig,
             final AceBeanValidator aceBeanValidator, Session session) throws RepositoryException, AcConfigBeanValidationException {
 
         final List<LinkedHashMap> aclList = (List<LinkedHashMap>) getConfigSection(Constants.ACE_CONFIGURATION_KEY, aceConfigData);
@@ -91,7 +91,7 @@ public class YamlConfigReader implements ConfigReader {
         }
 
         // group based Map from config file
-        final Map<String, Set<AceBean>> aceMapFromConfig = getPreservedOrderdAceMap(aclList, groupsFromConfig, aceBeanValidator, session);
+        Set<AceBean> aceMapFromConfig = getPreservedOrderdAceSet(aclList, groupsFromConfig, aceBeanValidator, session);
         return aceMapFromConfig;
 
     }
@@ -204,16 +204,16 @@ public class YamlConfigReader implements ConfigReader {
 
     }
 
-    private Map<String, Set<AceBean>> getPreservedOrderdAceMap(
+    private Set<AceBean> getPreservedOrderdAceSet(
             List<LinkedHashMap> aceYamlList,
             final Set<String> groupsFromCurrentConfig,
             final AceBeanValidator aceBeanValidator, Session session) throws RepositoryException,
             AcConfigBeanValidationException {
 
-        final Map<String, Set<AceBean>> aceMap = new LinkedHashMap<String, Set<AceBean>>();
+        final Set<AceBean> aceSet = new LinkedHashSet<AceBean>();
 
         if (aceYamlList == null) {
-            return aceMap;
+            return aceSet;
         }
 
         for (final Map<String, List<Map<String, ?>>> currentPrincipalAceMap : aceYamlList) {
@@ -224,15 +224,8 @@ public class YamlConfigReader implements ConfigReader {
 
             LOG.debug("start reading ACE configuration of authorizable: {}", principalName);
 
-            // if current principal is not yet in map, add new key and empty
-            // set for storing the pricipals ACE beans
-            if (aceMap.get(principalName) == null) {
-                final Set<AceBean> tmpSet = new LinkedHashSet<AceBean>();
-                aceMap.put(principalName, tmpSet);
-            }
-
             if ((aceDefinitions == null) || aceDefinitions.isEmpty()) {
-                LOG.warn("no ACE definition(s) found for autorizable: {}",
+                LOG.warn("No ACE definition(s) found for autorizable: {}",
                         principalName);
                 continue;
             }
@@ -251,20 +244,19 @@ public class YamlConfigReader implements ConfigReader {
                 if ((newAceBean.getJcrPath() != null)
                         && newAceBean.getJcrPath().contains("*")
                         && (null != session)) {
-                    handleWildcards(session, aceMap, principalName,
-                            newAceBean);
+                    handleWildcards(session, aceSet, principalName, newAceBean);
                 } else {
-                    aceMap.get(principalName).add(newAceBean);
+                    aceSet.add(newAceBean);
                 }
             }
 
         }
-        return aceMap;
+        return aceSet;
 
     }
 
     protected void handleWildcards(final Session session,
-            final Map<String, Set<AceBean>> aceMap, final String principal,
+            final Set<AceBean> aceSet, final String principal,
             final AceBean tmpAclBean) throws InvalidQueryException,
             RepositoryException {
         // perform query using the path containing wildcards
@@ -280,13 +272,12 @@ public class YamlConfigReader implements ConfigReader {
                 final AceBean replacementBean = tmpAclBean.clone();
                 replacementBean.setJcrPath(node.getPath());
 
-                if (!aceMap.get(principal).add(replacementBean)) {
-                    LOG.warn("wildcard replacement: replacing bean: "
-                            + tmpAclBean + ", with bean " + replacementBean
-                            + " failed as the new bean already exists in ACE list");
+                if (aceSet.add(replacementBean)) {
+                    LOG.info("Wildcard replacement: Cloned " + tmpAclBean + " to " + replacementBean);
                 } else {
-                    LOG.info("wildcard replacement: replaced bean: "
-                            + tmpAclBean + ", with bean " + replacementBean);
+                    LOG.warn("Wildcard replacement failed: Cloned "
+                            + tmpAclBean + " to " + replacementBean
+                            + " but bean was already in set");
                 }
             }
         }

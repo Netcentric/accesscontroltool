@@ -72,7 +72,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
 
         final GlobalConfiguration globalConfiguration = new GlobalConfiguration();
         final Map<String, Set<AuthorizableConfigBean>> mergedAuthorizablesMapfromConfig = new LinkedHashMap<String, Set<AuthorizableConfigBean>>();
-        final Map<String, Set<AceBean>> mergedAceMapFromConfig = new LinkedHashMap<String, Set<AceBean>>();
+        final Set<AceBean> mergedAceBeansFromConfig = new LinkedHashSet<AceBean>();
         final Set<String> authorizableIdsFromAllConfigs = new HashSet<String>(); // needed for detection of doubled defined groups in
                                                                                  // configurations
         final Set<String> obsoleteAuthorizables = new HashSet<String>();
@@ -143,17 +143,17 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
 
             // --- authorizables config section
             final AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(authorizableIdsFromAllConfigs);
-            final Map<String, Set<AceBean>> aceMapFromConfig = configReader.getAceConfigurationBeans(yamlRootList,
+            final Set<AceBean> currentAceBeansFromConfig = configReader.getAceConfigurationBeans(yamlRootList,
                     authorizableIdsFromAllConfigs, aceBeanValidator, session);
 
-            configurationsValidator.validateKeepOrder(mergedAceMapFromConfig, aceMapFromConfig, sourceFile);
+            configurationsValidator.validateKeepOrder(mergedAceBeansFromConfig, currentAceBeansFromConfig, sourceFile);
 
             // add AceBeans built from current configuration to set containing AceBeans from all configurations
-            if (aceMapFromConfig != null) {
-                mergedAceMapFromConfig.putAll(aceMapFromConfig);
+            if (currentAceBeansFromConfig != null) {
+                mergedAceBeansFromConfig.addAll(currentAceBeansFromConfig);
             }
 
-            configurationsValidator.validateInitialContentForNoDuplicates(mergedAceMapFromConfig);
+            configurationsValidator.validateInitialContentForNoDuplicates(mergedAceBeansFromConfig);
 
             // --- obsolete authorizables config section
             obsoleteAuthorizables.addAll(configReader.getObsoluteAuthorizables(yamlRootList));
@@ -167,7 +167,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         AcConfiguration acConfiguration = new AcConfiguration();
         acConfiguration.setGlobalConfiguration(globalConfiguration);
         acConfiguration.setAuthorizablesConfig(mergedAuthorizablesMapfromConfig);
-        acConfiguration.setAceConfig(mergedAceMapFromConfig);
+        acConfiguration.setAceConfig(mergedAceBeansFromConfig);
         acConfiguration.setObsoleteAuthorizables(obsoleteAuthorizables);
 
         history.setMergedAndProcessedConfig(

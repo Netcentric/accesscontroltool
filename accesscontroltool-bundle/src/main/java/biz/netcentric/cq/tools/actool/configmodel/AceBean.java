@@ -26,9 +26,9 @@ import com.day.cq.security.util.CqActions;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElement;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementVisitor;
 
-/** @author jochenkoschorke This class is used to store data of an AcessControlEntry. Objects of this class get created during the reading
- *         of the configuration file in order to set the corresponding ACEs in the system on the one hand and to store data during the
- *         reading of existing ACEs before writing the data back to a dump or configuration file again on the other hand. */
+/** This class is used to store data of an AcessControlEntry. Objects of this class get created during the reading of the configuration file
+ * in order to set the corresponding ACEs in the system on the one hand and to store data during the reading of existing ACEs before writing
+ * the data back to a dump or configuration file again on the other hand. */
 public class AceBean implements AcDumpElement {
 
     public static final Logger LOG = LoggerFactory.getLogger(AceBean.class);

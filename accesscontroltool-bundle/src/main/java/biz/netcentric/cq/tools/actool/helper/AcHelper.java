@@ -181,6 +181,34 @@ public class AcHelper {
         return null;
     }
 
+    public static Map<String, Set<AceBean>> getPathBasedAceMap(Set<AceBean> aceBeansFromConfig, int sorting) {
+        final Map<String, Set<AceBean>> pathBasedAceMap = new TreeMap<String, Set<AceBean>>();
+
+        for (final AceBean bean : aceBeansFromConfig) {
+
+            // if there isn't already a path key in pathBasedAceMap create a
+            // new one and add new Set
+            // with current ACE as first entry
+            if (pathBasedAceMap.get(bean.getJcrPath()) == null) {
+
+                Set<AceBean> aceSet = null;
+                if (sorting == AcHelper.ACE_ORDER_NONE) {
+                    aceSet = new LinkedHashSet<AceBean>();
+                } else if (sorting == AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE) {
+                    aceSet = new TreeSet<AceBean>(new AcePermissionComparator());
+                }
+
+                aceSet.add(bean);
+                pathBasedAceMap.put(bean.getJcrPath(), aceSet);
+                // add current ACE to Set
+            } else {
+                pathBasedAceMap.get(bean.getJcrPath()).add(bean);
+            }
+        }
+
+        return pathBasedAceMap;
+    }
+
     /** changes a group based ACE map into a path based ACE map
      *
      * @param groupBasedAceMap the group based ace map
@@ -237,5 +265,6 @@ public class AcHelper {
                     "Unexpectedly received more than one value for a property that is expected to be non-multiple");
         }
     }
+
 
 }

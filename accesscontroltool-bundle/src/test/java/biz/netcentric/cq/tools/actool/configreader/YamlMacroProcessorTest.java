@@ -8,9 +8,10 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
+import static biz.netcentric.cq.tools.actool.configreader.YamlConfigReaderTest.filterList;
 import static biz.netcentric.cq.tools.actool.configreader.YamlConfigReaderTest.getYamlList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -98,11 +99,11 @@ public class YamlMacroProcessorTest {
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
 
-        final Map<String, Set<AceBean>> aces = readAceConfigs(yamlList);
-        assertEquals("Number of ACEs", 5, aces.size());
-        final Set<AceBean> group1 = aces.get("content-BRAND-MKT1-reader");
+        final Set<AceBean> aces = readAceConfigs(yamlList);
+        assertEquals("Number of ACEs", 7, aces.size());
+        final Set<AceBean> group1 = filterList(aces, "content-BRAND-MKT1-reader");
         assertEquals("Number of ACEs for groupA", 1, group1.size());
-        final Set<AceBean> group2 = aces.get("content-BRAND-MKT2-writer");
+        final Set<AceBean> group2 = filterList(aces, "content-BRAND-MKT2-writer");
         assertEquals("Number of ACEs for groupB", 2, group2.size());
     }
 
@@ -115,11 +116,11 @@ public class YamlMacroProcessorTest {
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
 
-        final Map<String, Set<AceBean>> aces = readAceConfigs(yamlList);
-        assertEquals("Number of ACEs", 5, aces.size());
-        final Set<AceBean> group1 = aces.get("content-BRAND-MKT-1-reader");
+        Set<AceBean> aces = readAceConfigs(yamlList);
+        assertEquals("Number of ACEs", 7, aces.size());
+        final Set<AceBean> group1 = filterList(aces, "content-BRAND-MKT-1-reader");
         assertEquals("Number of ACEs for groupA", 1, group1.size());
-        final Set<AceBean> group2 = aces.get("content-BRAND-MKT-2-writer");
+        final Set<AceBean> group2 = filterList(aces, "content-BRAND-MKT-2-writer");
         assertEquals("Number of ACEs for groupB", 2, group2.size());
     }
 
@@ -130,21 +131,21 @@ public class YamlMacroProcessorTest {
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
 
-        final Map<String, Set<AceBean>> aces = readAceConfigs(yamlList);
+        Set<AceBean> aces = readAceConfigs(yamlList);
         assertEquals("Number of ACEs", 12, aces.size());
-        assertTrue(aces.containsKey("content-BRAND1-reader"));
-        assertTrue(aces.containsKey("content-BRAND1-writer"));
-        assertTrue(aces.containsKey("content-BRAND2-reader"));
-        assertTrue(aces.containsKey("content-BRAND2-writer"));
-        assertTrue(aces.containsKey("content-BRAND1-MKT1-reader"));
-        assertTrue(aces.containsKey("content-BRAND1-MKT1-writer"));
-        assertTrue(aces.containsKey("content-BRAND2-MKT1-reader"));
-        assertTrue(aces.containsKey("content-BRAND2-MKT1-writer"));
-        assertTrue(aces.containsKey("content-BRAND1-MKT2-reader"));
-        assertTrue(aces.containsKey("content-BRAND1-MKT2-writer"));
-        assertTrue(aces.containsKey("content-BRAND2-MKT2-reader"));
-        assertTrue(aces.containsKey("content-BRAND2-MKT2-writer"));
-        final AceBean b1m1r = aces.get("content-BRAND1-MKT1-reader").iterator().next();
+        assertFalse(filterList(aces, "content-BRAND1-reader").isEmpty());
+        assertFalse(filterList(aces, "content-BRAND1-writer").isEmpty());
+        assertFalse(filterList(aces, "content-BRAND2-reader").isEmpty());
+        assertFalse(filterList(aces, "content-BRAND2-writer").isEmpty());
+        assertFalse(filterList(aces, "content-BRAND1-MKT1-reader").isEmpty());
+        assertFalse(filterList(aces, "content-BRAND1-MKT1-writer").isEmpty());
+        assertFalse(filterList(aces, "content-BRAND2-MKT1-reader").isEmpty());
+        assertFalse(filterList(aces, "content-BRAND2-MKT1-writer").isEmpty());
+        assertFalse(filterList(aces, "content-BRAND1-MKT2-reader").isEmpty());
+        assertFalse(filterList(aces, "content-BRAND1-MKT2-writer").isEmpty());
+        assertFalse(filterList(aces, "content-BRAND2-MKT2-reader").isEmpty());
+        assertFalse(filterList(aces, "content-BRAND2-MKT2-writer").isEmpty());
+        final AceBean b1m1r = filterList(aces, "content-BRAND1-MKT1-reader").iterator().next();
         assertEquals("JCR path", "/content/BRAND1/MKT1", b1m1r.getJcrPath());
     }
 
@@ -155,12 +156,12 @@ public class YamlMacroProcessorTest {
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
 
-        final Map<String, Set<AceBean>> aces = readAceConfigs(yamlList);
+        final Set<AceBean> aces = readAceConfigs(yamlList);
 
-        assertEquals("Number of Groups in ACE Section", 2, aces.size());
-        final Set<AceBean> group1 = aces.get("content-reader");
+        assertEquals("Number of Groups in ACE Section", 3, aces.size());
+        final Set<AceBean> group1 = filterList(aces, "content-reader");
         assertEquals("Number of ACEs for groupA", 1, group1.size());
-        final Set<AceBean> group2 = aces.get("content-writer");
+        final Set<AceBean> group2 = filterList(aces, "content-writer");
         assertEquals("Number of ACEs for groupB", 2, group2.size());
 
         final Map<String, Set<AuthorizableConfigBean>> groups = readGroupConfigs(yamlList);
@@ -248,7 +249,7 @@ public class YamlMacroProcessorTest {
 
     // --- using YamlConfigReader to make assertions easier (the raw yaml structure makes it really hard)
 
-    private Map<String, Set<AceBean>> readAceConfigs(final List<LinkedHashMap> yamlList)
+    private Set<AceBean> readAceConfigs(final List<LinkedHashMap> yamlList)
             throws RepositoryException, AcConfigBeanValidationException {
         Map<String, Set<AuthorizableConfigBean>> groups = readGroupConfigs(yamlList);
         return new YamlConfigReader().getAceConfigurationBeans(yamlList, groups.keySet(), null, session);

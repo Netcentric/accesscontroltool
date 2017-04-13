@@ -285,13 +285,11 @@ public class AceServiceImpl implements AceService {
         return relevantPathsForCleanup;
     }
 
-    private Set<String> collectJcrPaths(Map<String, Set<AceBean>> aceMapFromConfig) {
+    private Set<String> collectJcrPaths(Set<AceBean> aceBeansFromConfig) {
         Set<String> jcrPathsInAceConfig = new HashSet<String>();
-        for (Set<AceBean> aces : aceMapFromConfig.values()) {
-            for (AceBean aceBean : aces) {
-                String path = aceBean.getJcrPath();
-                jcrPathsInAceConfig.add(path);
-            }
+        for (AceBean aceBean : aceBeansFromConfig) {
+            String path = aceBean.getJcrPath();
+            jcrPathsInAceConfig.add(path);
         }
         return jcrPathsInAceConfig;
     }
@@ -352,15 +350,15 @@ public class AceServiceImpl implements AceService {
             AcConfiguration acConfiguration, Map<String, Set<AceBean>> repositoryDumpAceMap, String[] restrictedToPaths, Session session)
             throws Exception {
 
-        Map<String, Set<AceBean>> aceMapFromConfig = acConfiguration.getAceConfig();
+        Set<AceBean> aceBeansFromConfig = acConfiguration.getAceConfig();
 
         // --- installation of ACEs from configuration ---
         Map<String, Set<AceBean>> pathBasedAceMapFromConfig = AcHelper
-                .getPathBasedAceMap(aceMapFromConfig, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE);
+                .getPathBasedAceMap(aceBeansFromConfig, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE);
 
         Set<String> principalsToRemoveAcesFor = getPrincipalNamesToRemoveAcesFor(acConfiguration.getAuthorizablesConfig());
         removeAcesForPathsNotInConfig(history, session, principalsToRemoveAcesFor, repositoryDumpAceMap,
-                collectJcrPaths(aceMapFromConfig));
+                collectJcrPaths(aceBeansFromConfig));
 
         Map<String, Set<AceBean>> filteredPathBasedAceMapFromConfig = filterForRestrictedPaths(pathBasedAceMapFromConfig,
                 restrictedToPaths, history);
@@ -732,7 +730,7 @@ public class AceServiceImpl implements AceService {
         Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configuredAcConfigurationRootPath,
                 session);
         AcConfiguration acConfiguration = configurationMerger.getMergedConfigurations(newestConfigurations, history, configReader, session);
-        Set<String> allAuthorizablesFromConfig = acConfiguration.getAceConfig().keySet();
+        Set<String> allAuthorizablesFromConfig = acConfiguration.getAuthorizablesConfig().keySet();
         return allAuthorizablesFromConfig;
     }
 

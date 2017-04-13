@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +27,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -52,8 +54,8 @@ public class YamlConfigReaderTest {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
         final List<LinkedHashMap> yamlList = getYamlList("test-null-actions.yaml");
         final Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
-        final Map<String, Set<AceBean>> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null, session);
-        final Set<AceBean> acl = acls.get("groupA");
+        final Set<AceBean> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null, session);
+        final Set<AceBean> acl = filterList(acls, "groupA");
         for (final AceBean ace : acl) {
             assertNotNull("Testing null actions", ace.getActions());
         }
@@ -64,8 +66,8 @@ public class YamlConfigReaderTest {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
         final List<LinkedHashMap> yamlList = getYamlList("test-no-actions.yaml");
         final Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
-        final Map<String, Set<AceBean>> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null, session);
-        final Set<AceBean> acl = acls.get("groupA");
+        final Set<AceBean> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null, session);
+        final Set<AceBean> acl = filterList(acls, "groupA");
         final AceBean ace = acl.iterator().next();
         assertEquals("Number of actions", 0, ace.getActions().length);
     }
@@ -75,8 +77,8 @@ public class YamlConfigReaderTest {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
         final List<LinkedHashMap> yamlList = getYamlList("test-multiple-aces-same-path.yaml");
         final Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
-        final Map<String, Set<AceBean>> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null, session);
-        assertEquals("Number of ACLs", 3, acls.get("groupA").size());
+        final Set<AceBean> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null, session);
+        assertEquals("Number of ACLs", 3, filterList(acls, "groupA").size());
     }
 
     @Test
@@ -84,8 +86,8 @@ public class YamlConfigReaderTest {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
         final List<LinkedHashMap> yamlList = getYamlList("test-empty-glob.yaml");
         final Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
-        final Map<String, Set<AceBean>> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null, session);
-        final Iterator<AceBean> it = acls.get("groupA").iterator();
+        final Set<AceBean> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null, session);
+        final Iterator<AceBean> it = filterList(acls, "groupA").iterator();
         final AceBean ace1 = it.next();
         assertNull("repGlob", ace1.getRepGlob());
         final AceBean ace2 = it.next();
@@ -97,14 +99,14 @@ public class YamlConfigReaderTest {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
         List<LinkedHashMap> yamlList = getYamlList("test-no-aces.yaml");
         Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
-        Map<String, Set<AceBean>> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null, session);
+        Set<AceBean> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(), null, session);
         assertNull("No ACEs", acls);
         yamlList = getYamlList("test-no-groups.yaml");
         groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
         assertNull("No groups", groups);
         acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, null, session);
-        assertNotNull("ACL for groupA", acls.get("groupA"));
-        assertEquals("Number of ACEs", 1, acls.get("groupA").size());
+        assertNotNull("ACL for groupA", filterList(acls, "groupA"));
+        assertEquals("Number of ACEs", 1, filterList(acls, "groupA").size());
     }
 
     /** Test support for rep:userManagement privilege name */
@@ -114,9 +116,9 @@ public class YamlConfigReaderTest {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
         final List<LinkedHashMap> yamlList = getYamlList("test-rep-usermanagement.yaml");
         final Map<String, Set<AuthorizableConfigBean>> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
-        final Map<String, Set<AceBean>> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(),
+        final Set<AceBean> acls = yamlConfigReader.getAceConfigurationBeans(yamlList, groups.keySet(),
                 new AceBeanValidatorImpl(groups.keySet()), session);
-        final Set<AceBean> acl = acls.get("groupA");
+        final Set<AceBean> acl = filterList(acls, "groupA");
         for (final AceBean ace : acl) {
             assertNotNull("Testing null actions", ace.getActions());
         }
@@ -152,4 +154,13 @@ public class YamlConfigReaderTest {
         return stringWriter.toString();
     }
 
+    public static Set<AceBean> filterList(Set<AceBean> acls, String id) {
+        Set<AceBean> aclsFiltered = new LinkedHashSet<AceBean>();
+        for (AceBean bean : acls) {
+            if (StringUtils.equals(id, bean.getPrincipalName())) {
+                aclsFiltered.add(bean);
+            }
+        }
+        return aclsFiltered;
+    }
 }

@@ -21,8 +21,7 @@ public class AcConfiguration {
     // to be changed from map to PojoClass in future versions
     private Map<String, Set<AuthorizableConfigBean>> authorizablesMap;
 
-    // to be changed from map to PojoClass in future versions
-    private Map<String, Set<AceBean>> aceMap;
+    private Set<AceBean> aceBeansSet;
 
     private Set<String> obsoleteAuthorizables = new HashSet<String>();
 
@@ -42,12 +41,12 @@ public class AcConfiguration {
         this.authorizablesMap = authorizablesMap;
     }
 
-    public Map<String, Set<AceBean>> getAceConfig() {
-        return aceMap;
+    public Set<AceBean> getAceConfig() {
+        return aceBeansSet;
     }
 
-    public void setAceConfig(Map<String, Set<AceBean>> aceMap) {
-        this.aceMap = aceMap;
+    public void setAceConfig(Set<AceBean> aceBeansSet) {
+        this.aceBeansSet = aceBeansSet;
     }
 
     public Set<String> getObsoleteAuthorizables() {
