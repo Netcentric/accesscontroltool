@@ -59,9 +59,8 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
         // Remove all config contained authorizables from ACL of this path
         int countRemoved = AccessControlUtils.deleteAllEntriesForPrincipalsFromACL(session,
                 path, principalsToRemoveAcesFor.toArray(new String[principalsToRemoveAcesFor.size()]));
-        final String message = "Deleted " + countRemoved + " ACEs for configured principals from path " + path;
-        LOG.debug(message);
-        history.addVerboseMessage(message);
+
+        history.addVerboseMessage(LOG, "Deleted " + countRemoved + " ACEs for configured principals from path " + path);
 
         // Set ACL in repo with permissions from merged config
         for (final AceBean bean : aceBeanSetFromConfig) {
@@ -71,15 +70,13 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
             final Principal currentPrincipal = AcHelper.getPrincipal(session, bean);
 
             if (currentPrincipal == null) {
-                final String errMessage = "Could not find definition for authorizable "
+                history.addError(LOG, "Could not find definition for authorizable "
                         + bean.getPrincipalName() + " in groups config while installing ACE for: "
-                        + bean.getJcrPath() + "! Skipped installation of ACEs for this authorizable!\n";
-                LOG.error(errMessage);
-                history.addError(errMessage);
+                        + bean.getJcrPath() + "! Skipped installation of ACEs for this authorizable!\n");
                 continue;
 
             } else {
-                history.addVerboseMessage("Starting installation of bean: \n" + bean);
+                history.addVerboseMessage(LOG, "Starting installation of bean: \n" + bean);
                 installAce(bean, session, currentPrincipal, history);
             }
         }
@@ -102,16 +99,14 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
 
         JackrabbitAccessControlList acl = AccessControlUtils.getModifiableAcl(acMgr, aceBean.getJcrPath());
         if (acl == null) {
-            final String msg = "Skipped installing privileges/actions for non existing path: " + aceBean.getJcrPath();
-            LOG.debug(msg);
-            history.addMessage(msg);
+            history.addMessage(LOG, "Skipped installing privileges/actions for non existing path: " + aceBean.getJcrPath());
             return;
         }
 
         // first install actions
         final JackrabbitAccessControlList newAcl = installActions(aceBean, principal, acl, session, acMgr, history);
         if (acl != newAcl) {
-            history.addVerboseMessage("Added action(s) for path: " + aceBean.getJcrPath()
+            history.addVerboseMessage(LOG, "Added action(s) for path: " + aceBean.getJcrPath()
                     + ", principal: " + principal.getName() + ", actions: "
                     + aceBean.getActionsString() + ", allow: " + aceBean.isAllow());
             removeRedundantPrivileges(aceBean, session);
@@ -120,7 +115,7 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
 
         // then install (remaining) privileges
         if (installPrivileges(aceBean, principal, acl, session, acMgr)) {
-            history.addVerboseMessage("added privilege(s) for path: " + aceBean.getJcrPath()
+            history.addVerboseMessage(LOG, "Added privilege(s) for path: " + aceBean.getJcrPath()
                     + ", principal: " + principal.getName() + ", privileges: "
                     + aceBean.getPrivilegesString() + ", allow: " + aceBean.isAllow());
         }

@@ -90,7 +90,7 @@ public class AuthorizableCreatorServiceImpl implements
             AuthorizableConfigBean tmpPricipalConfigBean = null;
             while (it.hasNext()) {
                 tmpPricipalConfigBean = it.next();
-                status.addVerboseMessage("Starting installation of authorizable bean: " + tmpPricipalConfigBean.toString());
+                status.addVerboseMessage(LOG, "Starting installation of authorizable bean: " + tmpPricipalConfigBean.toString());
             }
 
             installAuthorizableConfigurationBean(session,
@@ -169,7 +169,7 @@ public class AuthorizableCreatorServiceImpl implements
             Set<String> membersToRemove = new HashSet<String>(CollectionUtils.subtract(relevantMembersInRepo, membersInConfig));
 
             if (!membersToAdd.isEmpty()) {
-                history.addVerboseMessage(
+                history.addVerboseMessage(LOG,
                         "Adding " + membersToAdd.size() + " external members to group " + authorizableConfigBean.getPrincipalID());
                 for (String member : membersToAdd) {
                     Authorizable memberGroup = userManager.getAuthorizable(member);
@@ -179,19 +179,19 @@ public class AuthorizableCreatorServiceImpl implements
                                         + authorizableConfigBean.getPrincipalID());
                     }
                     installedGroup.addMember(memberGroup);
-                    history.addVerboseMessage(
+                    history.addVerboseMessage(LOG,
                             "Adding " + member + " as external member to group " + authorizableConfigBean.getPrincipalID());
                 }
 
             }
 
             if (!membersToRemove.isEmpty()) {
-                history.addVerboseMessage(
+                history.addVerboseMessage(LOG,
                         "Removing " + membersToRemove.size() + " external members to group " + authorizableConfigBean.getPrincipalID());
                 for (String member : membersToRemove) {
                     Authorizable memberGroup = userManager.getAuthorizable(member);
                     installedGroup.removeMember(memberGroup);
-                    history.addVerboseMessage(
+                    history.addVerboseMessage(LOG,
                             "Removing " + member + " as external member to group " + authorizableConfigBean.getPrincipalID());
                 }
             }
@@ -251,18 +251,18 @@ public class AuthorizableCreatorServiceImpl implements
         String principalId = authorizableConfigBean.getPrincipalID();
 
         if (groupForMigration == null) {
-            status.addMessage("Group " + authorizableConfigBean.getMigrateFrom()
+            status.addMessage(LOG, "Group " + authorizableConfigBean.getMigrateFrom()
                     + " does not exist (specified as migrateFrom in group "
                     + principalId + ") - no action taken");
             return;
         }
         if (!groupForMigration.isGroup()) {
-            status.addWarning("Specifying a user in 'migrateFrom' does not make sense (migrateFrom="
+            status.addWarning(LOG, "Specifying a user in 'migrateFrom' does not make sense (migrateFrom="
                     + authorizableConfigBean.getMigrateFrom() + " in " + principalId + ")");
             return;
         }
 
-        status.addMessage("Migrating from group " + authorizableConfigBean.getMigrateFrom()
+        status.addMessage(LOG, "Migrating from group " + authorizableConfigBean.getMigrateFrom()
                 + "  to " + principalId);
 
         Set<Authorizable> usersFromGroupToTakeOver = new HashSet<Authorizable>();
@@ -275,7 +275,7 @@ public class AuthorizableCreatorServiceImpl implements
         }
 
         if (!usersFromGroupToTakeOver.isEmpty()) {
-            status.addMessage("- Taking over " + usersFromGroupToTakeOver.size() + " member users from group "
+            status.addMessage(LOG, "- Taking over " + usersFromGroupToTakeOver.size() + " member users from group "
                     + authorizableConfigBean.getMigrateFrom() + " to group " + principalId);
             Group currentGroup = (Group) userManager.getAuthorizable(principalId);
             for (Authorizable user : usersFromGroupToTakeOver) {
@@ -284,7 +284,7 @@ public class AuthorizableCreatorServiceImpl implements
         }
 
         groupForMigration.remove();
-        status.addMessage("- Deleted group " + authorizableConfigBean.getMigrateFrom());
+        status.addMessage(LOG, "- Deleted group " + authorizableConfigBean.getMigrateFrom());
 
     }
 
@@ -314,10 +314,8 @@ public class AuthorizableCreatorServiceImpl implements
                 && StringUtils.isNotBlank(principalConfigBean.getPath());
 
         if (pathHasChanged) {
-            String msg = "Found change of intermediate path for " + existingAuthorizable.getID() + ": "
-                    + intermediatedPathOfExistingAuthorizable + " -> " + authorizablePathFromBean;
-            history.addMessage(msg);
-            LOG.info(msg);
+            history.addMessage(LOG, "Found change of intermediate path for " + existingAuthorizable.getID() + ": "
+                    + intermediatedPathOfExistingAuthorizable + " -> " + authorizablePathFromBean);
         }
 
         // using "" to compare non-external (both sides) to true
@@ -328,10 +326,8 @@ public class AuthorizableCreatorServiceImpl implements
         boolean externalIdHasChanged = !StringUtils.equals(externalIdExistingAuthorizable, externalIdConfig);
 
         if (externalIdHasChanged) {
-            String msg = "Found change of external id of " + existingAuthorizable.getID() + ": '"
-                    + externalIdExistingAuthorizable + "' (current) is not '" + externalIdConfig + "' (in config)";
-            history.addMessage(msg);
-            LOG.info(msg);
+            history.addMessage(LOG, "Found change of external id of " + existingAuthorizable.getID() + ": '"
+                    + externalIdExistingAuthorizable + "' (current) is not '" + externalIdConfig + "' (in config)");
         }
 
         if (pathHasChanged || externalIdHasChanged) {
@@ -366,10 +362,8 @@ public class AuthorizableCreatorServiceImpl implements
 
             deleteOldIntermediatePath(session, session.getNode(intermediatedPathOfExistingAuthorizable));
 
-            String msg = "Recreated authorizable " + newAuthorizable + " at path " + newAuthorizable.getPath()
-                    + (newAuthorizable.isGroup() ? "(retained " + countMovedMembersOfGroup + " members of group)" : "");
-            history.addMessage(msg);
-            LOG.info(msg);
+            history.addMessage(LOG, "Recreated authorizable " + newAuthorizable + " at path " + newAuthorizable.getPath()
+            + (newAuthorizable.isGroup() ? "(retained " + countMovedMembersOfGroup + " members of group)" : ""));
 
         }
 
@@ -496,17 +490,17 @@ public class AuthorizableCreatorServiceImpl implements
         membershipGroupsFromConfig.remove(PRINCIPAL_EVERYONE);
         membershipGroupsFromRepository.remove(PRINCIPAL_EVERYONE);
 
-        logAndVerboseHistoryMessage(status, "Authorizable " + authorizableId + " isMemberOf(repo)=" + membershipGroupsFromRepository);
-        logAndVerboseHistoryMessage(status, "Authorizable " + authorizableId + " isMemberOf(conifg)=" + membershipGroupsFromConfig);
+        status.addVerboseMessage(LOG, "Authorizable " + authorizableId + " isMemberOf(repo)=" + membershipGroupsFromRepository);
+        status.addVerboseMessage(LOG, "Authorizable " + authorizableId + " isMemberOf(conifg)=" + membershipGroupsFromConfig);
 
         Set<String> validatedMembershipGroupsFromConfig = validateAssignedGroups(userManager, authorizableId, membershipGroupsFromConfig);
 
         Collection<String> unChangedMembers = CollectionUtils.intersection(membershipGroupsFromRepository,
                 validatedMembershipGroupsFromConfig);
-        logAndVerboseHistoryMessage(status, "Authorizable " + authorizableId + " remains member of groups " + unChangedMembers);
+        status.addVerboseMessage(LOG, "Authorizable " + authorizableId + " remains member of groups " + unChangedMembers);
 
         Collection<String> toBeAddedMembers = CollectionUtils.subtract(validatedMembershipGroupsFromConfig, membershipGroupsFromRepository);
-        logAndVerboseHistoryMessage(status, "Authorizable " + authorizableId + " will be added as member of " + toBeAddedMembers);
+        status.addVerboseMessage(LOG, "Authorizable " + authorizableId + " will be added as member of " + toBeAddedMembers);
 
         Collection<String> toBeRemovedMembers = CollectionUtils.subtract(membershipGroupsFromRepository,
                 validatedMembershipGroupsFromConfig);
@@ -522,10 +516,10 @@ public class AuthorizableCreatorServiceImpl implements
                 toBeRemovedMembersIt.remove();
             }
         }
-        logAndVerboseHistoryMessage(status, "Authorizable " + authorizableId + " will be removed from members of " + toBeRemovedMembers);
+        status.addVerboseMessage(LOG, "Authorizable " + authorizableId + " will be removed from members of " + toBeRemovedMembers);
 
         if (!toBeSkippedFromRemovalMembers.isEmpty()) {
-            logAndVerboseHistoryMessage(status, "Authorizable " + authorizableId + " remains member of groups "
+            status.addVerboseMessage(LOG, "Authorizable " + authorizableId + " remains member of groups "
                     + toBeSkippedFromRemovalMembers + " (due to configured ignoredMembershipsPattern=" + ignoredMembershipsPattern + ")");
 
         }
@@ -547,16 +541,11 @@ public class AuthorizableCreatorServiceImpl implements
         }
 
         if (!toBeAddedMembers.isEmpty() && !toBeAddedMembers.isEmpty()) {
-            logAndVerboseHistoryMessage(status,
+            status.addVerboseMessage(LOG,
                     "Membership Change: Authorizable " + authorizableId + " was added to " + toBeAddedMembers.size()
                             + " and removed from " + toBeRemovedMembers.size() + " groups");
         }
 
-    }
-
-    private void logAndVerboseHistoryMessage(AcInstallationHistoryPojo status, String msg) {
-        LOG.debug(msg);
-        status.addVerboseMessage(msg);
     }
 
     private Authorizable createNewGroup(
@@ -701,7 +690,7 @@ public class AuthorizableCreatorServiceImpl implements
             if (e instanceof InvocationTargetException) {
                 e = ((InvocationTargetException) e).getTargetException();
             }
-            status.addError("Could not create system user " + userID + ". e:" + e);
+            status.addError(LOG, "Could not create system user " + userID + ".", e);
         }
 
         return null;

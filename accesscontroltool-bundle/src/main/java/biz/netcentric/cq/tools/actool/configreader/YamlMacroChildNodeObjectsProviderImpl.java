@@ -100,16 +100,14 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
             }
 
         } catch (PathNotFoundException e) {
-            history.addWarning(
+            history.addWarning(LOG,
                     "Path " + pathOfChildrenOfClause + " as configured for source for FOR loop does not exist! (statement skipped)");
 
         } catch (RepositoryException e) {
             throw new IllegalStateException("Could not get children of path " + pathOfChildrenOfClause + ": " + e, e);
         }
 
-        String msg = "Loop for children of " + pathOfChildrenOfClause + " evaluates to " + results.size() + " children";
-        LOG.debug(msg);
-        history.addMessage(msg);
+        history.addMessage(LOG, "Loop for children of " + pathOfChildrenOfClause + " evaluates to " + results.size() + " children");
 
         return results;
     }

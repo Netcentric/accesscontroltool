@@ -20,14 +20,11 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.comparators.HistoryEntryComparator;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 
 public class AcInstallationHistoryPojo {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AcInstallationHistoryPojo.class);
 
     private static final String MSG_IDENTIFIER_EXCEPTION = "EXCEPTION:";
     private static final String MSG_IDENTIFIER_WARNING = "WARNING:";
@@ -128,7 +125,12 @@ public class AcInstallationHistoryPojo {
         this.crxPackageName = crxPackageName;
     }
 
-    public void addWarning(String warning) {
+    public void addWarning(Logger log, String warning) {
+        log.warn(warning);
+        addWarning(warning);
+    }
+
+    private void addWarning(String warning) {
         if (rendition.equals(Rendition.HTML)) {
             warnings.add(new HistoryEntry(msgIndex, new Timestamp(
                     new Date().getTime()), "<font color='orange'><b>"
@@ -141,29 +143,48 @@ public class AcInstallationHistoryPojo {
         msgIndex++;
     }
 
-    public void addMessage(String message) {
+    public void addMessage(Logger log, String message) {
+        log.info(message);
+        addMessage(message);
+    }
+
+    private void addMessage(String message) {
         messages.add(new HistoryEntry(msgIndex, new Timestamp(new Date()
                 .getTime()), " " + message));
         msgIndex++;
     }
 
-    public void addError(final String exception) {
+    public void addError(Logger log, String error, Throwable e) {
+        log.error(error, e);
+        addError(error + " / e=" + e);
+    }
+    public void addError(Logger log, String error) {
+        log.error(error);
+        addError(error);
+    }
+
+    public void addError(final String error) {
         if (rendition.equals(Rendition.HTML)) {
             errors.add(new HistoryEntry(msgIndex, new Timestamp(
                     new Date().getTime()), "<font color='red'><b>"
-                    + MSG_IDENTIFIER_EXCEPTION + "</b>" + " " + exception
+                            + MSG_IDENTIFIER_EXCEPTION + "</b>" + " " + error
                     + "</b></font>"));
         } else if (rendition.equals(Rendition.TXT)) {
             errors.add(new HistoryEntry(msgIndex, new Timestamp(
                     new Date().getTime()), MSG_IDENTIFIER_EXCEPTION + " "
-                    + exception));
+                            + error));
 
         }
         success = false;
         msgIndex++;
     }
 
-    public void addVerboseMessage(String message) {
+    public void addVerboseMessage(Logger log, String message) {
+        log.debug(message);
+        addVerboseMessage(message);
+    }
+
+    private void addVerboseMessage(String message) {
         verboseMessages.add(new HistoryEntry(msgIndex, new Timestamp(
                 new Date().getTime()), " " + message));
         msgIndex++;
@@ -312,4 +333,5 @@ public class AcInstallationHistoryPojo {
     public int getCountActionCacheHit() {
         return countActionCacheHit;
     }
+
 }

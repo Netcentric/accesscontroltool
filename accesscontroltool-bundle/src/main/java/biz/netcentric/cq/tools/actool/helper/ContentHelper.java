@@ -66,12 +66,10 @@ public class ContentHelper {
 
             try {
                 importContent(session, path, initialContent);
-                history.addMessage("Created initial content for path " + path);
+                history.addMessage(LOG, "Created initial content for path " + path);
                 return true;
             } catch (Exception e) {
-                String msg = "Failed creating initial content for path " + path + ": " + e;
-                history.addWarning(msg);
-                LOG.warn(msg);
+                history.addWarning(LOG, "Failed creating initial content for path " + path + ": " + e);
                 LOG.debug("Exception: " + e, e); // log stack trace only debug
                 return false;
             }

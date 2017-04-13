@@ -133,7 +133,7 @@ public class AceServiceImpl implements AceService {
 
         AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
         if (isExecuting) {
-            history.addError("AC Tool is already executing.");
+            history.addError(LOG, "AC Tool is already executing.");
             return history;
         }
 
@@ -176,9 +176,8 @@ public class AceServiceImpl implements AceService {
             sw.start();
             isExecuting = true;
             String bundleVersion = FrameworkUtil.getBundle(AceServiceImpl.class).getVersion().toString();
-            String message = "*** Applying AC Tool Configuration using v" + bundleVersion + "... ";
-            LOG.info(message);
-            history.addMessage(message);
+
+            history.addMessage(LOG, "*** Applying AC Tool Configuration using v" + bundleVersion + "... ");
 
             if (configurationFileContentsByFilename != null) {
 
@@ -242,10 +241,9 @@ public class AceServiceImpl implements AceService {
             // delete ACE if principal *is* in config, but the path *is not* in config
             int countRemoved = AccessControlUtils.deleteAllEntriesForPrincipalsFromACL(session,
                     relevantPath, principalsInConfig.toArray(new String[principalsInConfig.size()]));
-            String message = "Cleaned (deleted) " + countRemoved + " ACEs of path " + relevantPath
-                    + " from all ACEs for configured authorizables";
-            LOG.info(message);
-            history.addMessage(message);
+
+            history.addMessage(LOG, "Cleaned (deleted) " + countRemoved + " ACEs of path " + relevantPath
+                    + " from all ACEs for configured authorizables");
             if (countRemoved > 0) {
                 countPathsCleaned++;
             }
@@ -253,11 +251,9 @@ public class AceServiceImpl implements AceService {
         }
 
         if (countAcesCleaned > 0) {
-            String message = "Cleaned " + countAcesCleaned + " ACEs from " + countPathsCleaned
+            history.addMessage(LOG, "Cleaned " + countAcesCleaned + " ACEs from " + countPathsCleaned
                     + " paths in repository (ACEs that belong to users in the AC Config, "
-                    + "but resided at paths that are not contained in AC Config)";
-            LOG.info(message);
-            history.addMessage(message);
+                    + "but resided at paths that are not contained in AC Config)");
         }
 
     }
@@ -372,11 +368,10 @@ public class AceServiceImpl implements AceService {
         AceBeanInstaller aceBeanInstaller = acConfiguration.getGlobalConfiguration().getInstallAclsIncrementally()
                 ? aceBeanInstallerIncremental : aceBeanInstallerClassic;
 
-        String msg = "*** Starting installation of " + collectAceCount(filteredPathBasedAceMapFromConfig) + " ACE configurations for "
+
+        history.addMessage(LOG, "*** Starting installation of " + collectAceCount(filteredPathBasedAceMapFromConfig) + " ACE configurations for "
                 + filteredPathBasedAceMapFromConfig.size()
-                + " paths in content nodes using strategy " + aceBeanInstaller.getClass().getSimpleName() + "...";
-        LOG.info(msg);
-        history.addMessage(msg);
+                + " paths in content nodes using strategy " + aceBeanInstaller.getClass().getSimpleName() + "...");
 
         aceBeanInstaller.installPathBasedACEs(filteredPathBasedAceMapFromConfig, session, history, principalsToRemoveAcesFor,
                 intermediateSaves);
@@ -385,13 +380,9 @@ public class AceServiceImpl implements AceService {
         // thus persisting the changed ACLs
         if (session.hasPendingChanges()) {
             session.save();
-            String msgSave = "Persisted changes of ACLs";
-            history.addMessage(msgSave);
-            LOG.info(msgSave);
+            history.addMessage(LOG, "Persisted changes of ACLs");
         } else {
-            String msgSave = "No changes were made to ACLs (session has no pending changes)";
-            history.addMessage(msgSave);
-            LOG.info(msgSave);
+            history.addMessage(LOG, "No changes were made to ACLs (session has no pending changes)");
         }
 
     }
@@ -411,11 +402,9 @@ public class AceServiceImpl implements AceService {
         }
 
         int skipped = pathBasedAceMapFromConfig.keySet().size() - filteredPathBasedAceMapFromConfig.keySet().size();
-        String message = "Will install AC Config at " + filteredPathBasedAceMapFromConfig.keySet().size() + " paths (skipping " + skipped
-                + " due to paths restriction " + Arrays.toString(restrictedToPaths) + ")";
 
-        history.addMessage(message);
-        LOG.info(message);
+        history.addMessage(LOG, "Will install AC Config at " + filteredPathBasedAceMapFromConfig.keySet().size()
+                + " paths (skipping " + skipped + " due to paths restriction " + Arrays.toString(restrictedToPaths) + ")");
 
         return filteredPathBasedAceMapFromConfig;
     }
@@ -437,9 +426,8 @@ public class AceServiceImpl implements AceService {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
 
-        String msg = "*** Starting installation of " + authorizablesMapfromConfig.size() + " authorizables...";
-        LOG.info(msg);
-        history.addMessage(msg);
+
+        history.addMessage(LOG, "*** Starting installation of " + authorizablesMapfromConfig.size() + " authorizables...");
 
         try {
             // only save session if no exceptions occurred
@@ -448,15 +436,10 @@ public class AceServiceImpl implements AceService {
             if (intermediateSaves) {
                 if (session.hasPendingChanges()) {
                     session.save();
-
-                    String messageSave = "Saved session after installing authorizables.";
-                    LOG.debug(messageSave);
-                    history.addVerboseMessage(messageSave);
-
+                    history.addVerboseMessage(LOG, "Saved session after installing authorizables.");
                 } else {
-                    String messageSave = "After installing authorizables, intermediateSaves is turned on but there are no pending changes.";
-                    LOG.debug(messageSave);
-                    history.addVerboseMessage(messageSave);
+                    history.addVerboseMessage(LOG,
+                            "After installing authorizables, intermediateSaves is turned on but there are no pending changes.");
                 }
             }
 
@@ -464,10 +447,8 @@ public class AceServiceImpl implements AceService {
             throw new AuthorizableCreatorException(e);
         }
 
-        String message = "Finished installation of authorizables without errors in "
-                + AcInstallationHistoryPojo.msHumanReadable(stopWatch.getTime());
-        history.addMessage(message);
-        LOG.info(message);
+        history.addMessage(LOG, "Finished installation of authorizables without errors in "
+                + AcInstallationHistoryPojo.msHumanReadable(stopWatch.getTime()));
     }
 
     private void removeObsoleteAuthorizables(AcInstallationHistoryPojo history, Set<String> obsoleteAuthorizables, Session session) {
@@ -475,7 +456,7 @@ public class AceServiceImpl implements AceService {
         try {
 
             if (obsoleteAuthorizables.isEmpty()) {
-                history.addVerboseMessage("No obsolete authorizables configured");
+                history.addVerboseMessage(LOG, "No obsolete authorizables configured");
                 return;
             }
 
@@ -494,28 +475,21 @@ public class AceServiceImpl implements AceService {
             }
 
             if (obsoleteAuthorizables.isEmpty()) {
-                history.addMessage(
-                        "All configured " + obsoleteAuthorizablesAlreadyPurged.size()
+                history.addMessage(LOG, "All configured " + obsoleteAuthorizablesAlreadyPurged.size()
                                 + " obsolete authorizables have already been purged.");
                 return;
             }
 
-            String msg = "*** Purging " + obsoleteAuthorizables.size() + " obsolete authorizables...  ";
-            LOG.info(msg);
-            history.addMessage(msg);
+            history.addMessage(LOG, "*** Purging " + obsoleteAuthorizables.size() + " obsolete authorizables...  ");
             if (!obsoleteAuthorizablesAlreadyPurged.isEmpty()) {
-                history.addMessage("(" + obsoleteAuthorizablesAlreadyPurged.size() + " have been purged already)");
+                history.addMessage(LOG, "(" + obsoleteAuthorizablesAlreadyPurged.size() + " have been purged already)");
             }
 
             String purgeAuthorizablesResultMsg = purgeAuthorizables(obsoleteAuthorizables, session);
-            LOG.info(purgeAuthorizablesResultMsg);
-            history.addVerboseMessage(purgeAuthorizablesResultMsg); // this message is too long for regular log
-            history.addMessage("Successfully purged " + obsoleteAuthorizables);
+            history.addVerboseMessage(LOG, purgeAuthorizablesResultMsg); // this message is too long for regular log
+            history.addMessage(LOG, "Successfully purged " + obsoleteAuthorizables);
         } catch (Exception e) {
-            String excMsg = "Could not purge obsolete authorizables " + obsoleteAuthorizables + ": " + e;
-            history.addError(excMsg);
-            LOG.error(excMsg, e);
-
+            history.addError(LOG, "Could not purge obsolete authorizables " + obsoleteAuthorizables, e);
         }
 
     }
@@ -525,9 +499,8 @@ public class AceServiceImpl implements AceService {
             AcConfiguration acConfiguration, String[] restrictedToPaths, Session session) throws ValueFormatException,
             RepositoryException, Exception {
 
-        String message = "Starting installation of merged configurations...";
-        LOG.debug(message);
-        history.addVerboseMessage(message);
+
+        history.addVerboseMessage(LOG, "Starting installation of merged configurations...");
 
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
@@ -538,9 +511,7 @@ public class AceServiceImpl implements AceService {
                 AcHelper.ACE_ORDER_NONE,
                 new String[0], true, session).getAceDump();
 
-        String msg = "Retrieved existing ACLs from repository in " + msHumanReadable(stopWatch.getTime());
-        LOG.info(msg);
-        history.addMessage(msg);
+        history.addMessage(LOG, "Retrieved existing ACLs from repository in " + msHumanReadable(stopWatch.getTime()));
 
         installAcConfiguration(acConfiguration, history, repositoryDumpAceMap, restrictedToPaths, session);
 
@@ -587,8 +558,8 @@ public class AceServiceImpl implements AceService {
 
             message = "Deleted AccessControlList of node: " + path;
             AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
-            history.addMessage("purge method: purgeACL()");
-            history.addMessage(message);
+            history.addMessage(LOG, "purge method: purgeACL()");
+            history.addMessage(LOG, message);
             acHistoryService.persistAcePurgeHistory(history);
             return message;
         }
@@ -604,8 +575,8 @@ public class AceServiceImpl implements AceService {
             session = repository.loginService(Constants.USER_AC_SERVICE, null);
             message = PurgeHelper.purgeACLs(session, path);
             AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
-            history.addMessage("purge method: purgeACLs()");
-            history.addMessage(message);
+            history.addMessage(LOG, "purge method: purgeACLs()");
+            history.addMessage(LOG, message);
             acHistoryService.persistAcePurgeHistory(history);
             session.save();
         } catch (Exception e) {
@@ -634,8 +605,8 @@ public class AceServiceImpl implements AceService {
             message = purgeAuthorizables(authorizabesFromConfigurations,
                     session);
             AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
-            history.addMessage("purge method: purgAuthorizablesFromConfig()");
-            history.addMessage(message);
+            history.addMessage(LOG, "purge method: purgAuthorizablesFromConfig()");
+            history.addMessage(LOG, message);
             acHistoryService.persistAcePurgeHistory(history);
         } catch (RepositoryException e) {
             LOG.error("RepositoryException: ", e);
@@ -658,8 +629,8 @@ public class AceServiceImpl implements AceService {
             Set<String> authorizablesSet = new HashSet<String>(Arrays.asList(authorizableIds));
             message = purgeAuthorizables(authorizablesSet, session);
             AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
-            history.addMessage("purge method: purgeAuthorizables()");
-            history.addMessage(message);
+            history.addMessage(LOG, "purge method: purgeAuthorizables()");
+            history.addMessage(LOG, message);
             acHistoryService.persistAcePurgeHistory(history);
         } catch (RepositoryException e) {
             LOG.error("Exception: ", e);

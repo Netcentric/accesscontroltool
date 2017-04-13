@@ -68,9 +68,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
     public void persistHistory(AcInstallationHistoryPojo history) {
 
         if (nrOfSavedHistories == 0) {
-            String message = "History hasn't been persisted, configured number of histories is " + nrOfSavedHistories;
-            history.addVerboseMessage(message);
-            LOG.info(message);
+            history.addVerboseMessage(LOG, "History hasn't been persisted, configured number of histories is " + nrOfSavedHistories);
             return;
         }
 
@@ -175,12 +173,10 @@ public class AcHistoryServiceImpl implements AcHistoryService {
                 JcrUtils.putFile(configFolder, targetPathFile.getName(), "text/yaml", configFileInputStream);
             }
 
-            history.addVerboseMessage(
+            history.addVerboseMessage(LOG,
                     "Saved installed configuration files under : " + historyNode.getPath() + "/" + INSTALLED_CONFIGS_NODE_NAME);
         } catch (RepositoryException e) {
-            String message = e.toString();
-            history.addError(message);
-            LOG.error("Exception while saving history node " + historyNode + ": " + message, e);
+            history.addError(LOG, "Exception while saving history node " + historyNode, e);
         }
     }
 
@@ -268,9 +264,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
                     previousPurgeNode.getName());
         }
 
-        String message = "Saved history in node: " + purgeHistoryNode.getPath();
-        history.addMessage(message);
-        LOG.info(message);
+        history.addMessage(LOG, "Saved history in node: " + purgeHistoryNode.getPath());
         HistoryUtils.setHistoryNodeProperties(purgeHistoryNode, history);
         return historyNode;
     }

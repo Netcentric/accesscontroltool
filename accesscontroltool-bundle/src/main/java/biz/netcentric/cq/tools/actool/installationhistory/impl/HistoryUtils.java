@@ -92,9 +92,7 @@ public class HistoryUtils {
                     previousHistoryNode.getName());
         }
 
-        String message = "Saved history in node: " + path;
-        history.addMessage(message);
-        LOG.debug(message);
+        history.addMessage(LOG, "Saved history in node: " + path);
         return newHistoryNode;
     }
 

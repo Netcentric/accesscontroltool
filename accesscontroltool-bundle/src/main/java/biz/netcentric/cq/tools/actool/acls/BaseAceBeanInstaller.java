@@ -55,16 +55,12 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
 
         final Set<String> paths = pathBasedAceMapFromConfig.keySet();
 
-
-        final String msg = "Found " + paths.size() + "  paths in config";
-        LOG.debug(msg);
-        history.addVerboseMessage(msg);
+        history.addVerboseMessage(LOG, "Found " + paths.size() + "  paths in config");
         LOG.trace("Paths with ACEs: {}", paths);
 
         if (intermediateSaves) {
-            final String messageSave = "Will save ACL for each path to session due to configuration option intermediateSaves=true - rollback functionality is disabled.";
-            LOG.info(messageSave);
-            history.addMessage(messageSave);
+            history.addMessage(LOG, "Will save ACL for each path to session due to configuration option intermediateSaves=true - "
+                    + "rollback functionality is disabled.");
         }
 
         // loop through all nodes from config
@@ -77,9 +73,7 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
             final boolean pathExits = AccessControlUtils.getModifiableAcl(session.getAccessControlManager(), path) != null;
             if (!pathExits) {
                 if (!ContentHelper.createInitialContent(session, history, path, aceBeanSetFromConfig)) {
-                    final String msgNonExistingPath = "Skipped installing privileges/actions for non existing path: " + path;
-                    LOG.debug(msgNonExistingPath);
-                    history.addVerboseMessage(msgNonExistingPath);
+                    history.addVerboseMessage(LOG, "Skipped installing privileges/actions for non existing path: " + path);
                     history.incCountAclsPathDoesNotExist();
                     continue;
                 }
@@ -93,21 +87,16 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
             installAcl(orderedAceBeanSetFromConfig, path, principalsToRemoveAcesFor, session, history);
 
             if (intermediateSaves && session.hasPendingChanges()) {
-                final String messageSave = "Saved session for path " + path;
-                LOG.debug(messageSave);
-                history.addVerboseMessage(messageSave);
+                history.addVerboseMessage(LOG, "Saved session for path " + path);
                 session.save();
             }
         }
 
-        String message = "Finished installation of " + paths.size() + " ACLs in "
+        history.addMessage(LOG, "Finished installation of " + paths.size() + " ACLs in "
                 + AcInstallationHistoryPojo.msHumanReadable(stopWatch.getTime())
                 + " (changed ACLs=" + history.getCountAclsChanged() + " unchanged ACLs=" + history.getCountAclsUnchanged()
                 + " path does not exist=" + history.getCountAclsPathDoesNotExist() + " action cache hit/miss="
-                + history.getCountActionCacheHit() + "/" + history.getCountActionCacheMiss() + ")";
-
-        history.addMessage(message);
-        LOG.info(message);
+                + history.getCountActionCacheHit() + "/" + history.getCountActionCacheMiss() + ")");
     }
 
     /** Installs a full set of ACE beans that form an ACL for the path

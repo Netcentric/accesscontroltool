@@ -84,9 +84,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         for (final Map.Entry<String, String> entry : configFileContentByFilename.entrySet()) {
 
             String sourceFile = entry.getKey();
-            final String message = "Found configuration file " + sourceFile;
-            LOG.info(message);
-            history.addMessage(message);
+            history.addMessage(LOG, "Found configuration file " + sourceFile);
 
             List<LinkedHashMap> yamlRootList = (List<LinkedHashMap>) yamlParser.load(entry.getValue());
 
@@ -175,9 +173,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         history.setMergedAndProcessedConfig(
                 "# Merged configuration of " + configFileContentByFilename.size() + " files \n" + yamlParser.dump(acConfiguration));
 
-        String msg = "Loaded configuration in " + msHumanReadable(sw.getTime());
-        LOG.info(msg);
-        history.addMessage(msg);
+        history.addMessage(LOG, "Loaded configuration in " + msHumanReadable(sw.getTime()));
 
         return acConfiguration;
     }
@@ -204,7 +200,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
                     AuthorizableConfigBean groupForIsMemberOf = mergedAuthorizablesMapfromConfig.get(member).iterator().next();
                     groupForIsMemberOf.addIsMemberOf(groupName);
                     membersIt.remove();
-                    history.addWarning("Group " + group.getPrincipalID() + " is declaring member " + member
+                    history.addWarning(LOG, "Group " + group.getPrincipalID() + " is declaring member " + member
                             + " - moving relationship to isMemberOf of authorizable " + groupForIsMemberOf.getPrincipalID()
                             + " (always prefer using isMemberOf over members if possible referenced member is availalbe in configuration)");
                 }

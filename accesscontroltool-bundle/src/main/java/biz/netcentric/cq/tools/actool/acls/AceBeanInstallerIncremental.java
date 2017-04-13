@@ -150,12 +150,9 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
 
             history.incCountAclsChanged();
 
-            String diffMsg = "Update result at path " + path + ": O=" + countOutsideConfig + " N="
+            history.addVerboseMessage(LOG, "Update result at path " + path + ": O=" + countOutsideConfig + " N="
                     + countNoChange + " D=" + countDeleted + " A=" + countAdded
-                    + (LOG.isDebugEnabled() ? "\nDIFF at " + path + "\n" + diffLog : "");
-
-            LOG.debug(diffMsg);
-            history.addVerboseMessage(diffMsg);
+                    + (LOG.isDebugEnabled() ? "\nDIFF at " + path + "\n" + diffLog : ""));
 
         } else {
             history.incCountAclsNoChange();
@@ -164,9 +161,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
         if (!hadPendingChanges) {
             if (session.hasPendingChanges()) {
                 hadPendingChanges = true;
-                String msg = "Path " + path + " introduced pending changes to the session";
-                LOG.info(msg);
-                history.addMessage(msg);
+                history.addMessage(LOG, "Path " + path + " introduced pending changes to the session");
             }
         }
 
