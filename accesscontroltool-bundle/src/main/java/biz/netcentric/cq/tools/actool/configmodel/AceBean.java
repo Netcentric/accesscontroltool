@@ -90,6 +90,14 @@ public class AceBean implements AcDumpElement {
         return jcrPath;
     }
 
+    public String getJcrPathForPolicyApi() {
+        if (StringUtils.isBlank(jcrPath)) {
+            return null; // repository level permission
+        } else {
+            return jcrPath;
+        }
+    }
+
     public void setJcrPath(String jcrPath) {
         this.jcrPath = jcrPath;
     }

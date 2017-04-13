@@ -32,10 +32,10 @@ public class Validators {
 
     public static boolean isValidNodePath(final String path) {
         if (StringUtils.isBlank(path)) {
-            return false;
+            return true; // repository level permissions are created with 'left-out' path property
         }
-        // TO DO: proper validation
-        if ((path == null) || (path.equals(""))) {
+
+        if (!path.startsWith("/")) {
             return false;
         }
         return true;

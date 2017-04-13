@@ -287,13 +287,12 @@
          repGlob:
          assertedException: NoActionOrPrivilegeDefinedException
          
-       #8 no path defined
+       #8 no path defined : This is now ok as it is a repository level restriction
        - path: 
          permission: deny
          actions: read
          privileges: 
          repGlob:
-         assertedException: InvalidPathException
          
        #9 no permission defined
        - path: /content/dam

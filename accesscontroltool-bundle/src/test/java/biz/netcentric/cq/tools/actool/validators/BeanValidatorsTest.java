@@ -106,8 +106,7 @@ public class BeanValidatorsTest {
 
     @Test
     public void testAceBeans() {
-        final AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(
-                groupsFromConfig);
+        final AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(groupsFromConfig);
         for (final AceBean aceBean : aceBeanList) {
             assertEquals("Problem in bean " + aceBean, ((TestAceBean) aceBean).getAssertedExceptionString(),
                     ValidatorTestHelper.getSimpleValidationException(aceBean, aceBeanValidator,

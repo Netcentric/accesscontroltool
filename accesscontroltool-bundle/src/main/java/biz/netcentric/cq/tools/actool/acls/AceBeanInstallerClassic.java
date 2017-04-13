@@ -76,7 +76,6 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
                 continue;
 
             } else {
-                history.addVerboseMessage(LOG, "Starting installation of bean: \n" + bean);
                 installAce(bean, session, currentPrincipal, history);
             }
         }
@@ -97,7 +96,7 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
 
         final AccessControlManager acMgr = session.getAccessControlManager();
 
-        JackrabbitAccessControlList acl = AccessControlUtils.getModifiableAcl(acMgr, aceBean.getJcrPath());
+        JackrabbitAccessControlList acl = AccessControlUtils.getModifiableAcl(acMgr, aceBean.getJcrPathForPolicyApi());
         if (acl == null) {
             history.addMessage(LOG, "Skipped installing privileges/actions for non existing path: " + aceBean.getJcrPath());
             return;
@@ -121,9 +120,9 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
         }
 
         if (!acl.isEmpty()) {
-            acMgr.setPolicy(aceBean.getJcrPath(), acl);
+            acMgr.setPolicy(aceBean.getJcrPathForPolicyApi(), acl);
         } else {
-            acMgr.removePolicy(aceBean.getJcrPath(), acl);
+            acMgr.removePolicy(aceBean.getJcrPathForPolicyApi(), acl);
         }
 
    }
@@ -148,9 +147,9 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
 
         final CqActions cqActions = new CqActions(session);
         final Collection<String> inheritedAllows = cqActions.getAllowedActions(
-                aceBean.getJcrPath(), Collections.singleton(principal));
+                aceBean.getJcrPathForPolicyApi(), Collections.singleton(principal));
         // this does always install new entries
-        cqActions.installActions(aceBean.getJcrPath(), principal, actionMap, inheritedAllows);
+        cqActions.installActions(aceBean.getJcrPathForPolicyApi(), principal, actionMap, inheritedAllows);
 
         // since the aclist has been modified, retrieve it again
         final JackrabbitAccessControlList newAcl = AccessControlUtils.getAccessControlList(session, aceBean.getJcrPath());

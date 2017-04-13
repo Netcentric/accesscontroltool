@@ -146,7 +146,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
         }
 
         if (countAdded > 0 || countDeleted > 0) {
-            acMgr.setPolicy(path, acl);
+            acMgr.setPolicy(StringUtils.isNotBlank(path) ? path : /* repo level permission */null, acl);
 
             history.incCountAclsChanged();
 
@@ -228,7 +228,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
     private Set<AceBean> getPrincipalAceBeansForActionAceBeanCached(AceBean origAceBean, Session session,
             AcInstallationHistoryPojo history) throws RepositoryException {
         
-        String cacheKey = (definesContent(origAceBean.getJcrPath(), session) ? "definesContent" : "simple")
+        String cacheKey = (definesContent(origAceBean.getJcrPathForPolicyApi(), session) ? "definesContent" : "simple")
                 + "-" + origAceBean.getPermission() + "-" + getRestrictionsComparable(origAceBean.getRestrictions()) + "-"
                 + Arrays.toString(origAceBean.getActions());
         
@@ -274,7 +274,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
 
         Principal principal = applyCqActions(origAceBean, session, groupPrincipalId);
 
-        JackrabbitAccessControlList newAcl = getAccessControlList(session.getAccessControlManager(), origAceBean.getJcrPath());
+        JackrabbitAccessControlList newAcl = getAccessControlList(session.getAccessControlManager(), origAceBean.getJcrPathForPolicyApi());
 
         boolean isFirst = true;
         for (AccessControlEntry newAce : newAcl.getAccessControlEntries()) {
@@ -343,7 +343,8 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
     Principal applyCqActions(AceBean origAceBean, Session session, String groupPrincipalId) throws RepositoryException {
         CqActions cqActions = new CqActions(session);
         Principal principal = new PrincipalImpl(groupPrincipalId);
-        Collection<String> inheritedAllows = cqActions.getAllowedActions(origAceBean.getJcrPath(), Collections.singleton(principal));
+        Collection<String> inheritedAllows = cqActions.getAllowedActions(origAceBean.getJcrPathForPolicyApi(),
+                Collections.singleton(principal));
         // this does always install new entries
         cqActions.installActions(origAceBean.getJcrPath(), principal, origAceBean.getActionMap(), inheritedAllows);
         return principal;

@@ -27,6 +27,7 @@ import javax.jcr.security.AccessControlPolicyIterator;
 import javax.jcr.security.Privilege;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
@@ -223,8 +224,12 @@ public class AccessControlUtils {
      * @throws RepositoryException
      * @throws AccessDeniedException */
     public static JackrabbitAccessControlList getModifiableAcl(
-            AccessControlManager acMgr, String path)
-                    throws RepositoryException, AccessDeniedException {
+            AccessControlManager acMgr, String path) throws RepositoryException, AccessDeniedException {
+
+        if (StringUtils.isBlank(path)) {
+            path = null; // repository level permission
+        }
+
         AccessControlPolicy[] existing = null;
         try {
             existing = acMgr.getPolicies(path);
