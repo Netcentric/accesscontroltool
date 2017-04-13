@@ -117,7 +117,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
             }
 
             if (changeHasBeenFound || !dumpEqualToConfig) {
-                changeHasBeenFound = true; // first differenced means we delete the rest of the acl and recreate it in the following loop
+                changeHasBeenFound = true; // first difference means we delete the rest of the acl and recreate it in the following loop
                 acl.removeAccessControlEntry(ace);
                 countDeleted++;
 

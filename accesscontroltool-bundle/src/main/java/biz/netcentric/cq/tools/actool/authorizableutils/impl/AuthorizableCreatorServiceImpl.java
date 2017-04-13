@@ -32,20 +32,16 @@ import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.Service;
-import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.AuthorizableExistsException;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
-import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableBean;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
@@ -70,7 +66,7 @@ public class AuthorizableCreatorServiceImpl implements
 
     AcInstallationHistoryPojo status;
     Map<String, Set<AuthorizableConfigBean>> principalMapFromConfig;
-    AuthorizableInstallationHistory authorizableInstallationHistory;
+
 
     @Reference(cardinality = ReferenceCardinality.OPTIONAL_UNARY)
     ExternalGroupCreatorServiceImpl externalGroupCreatorService;
@@ -78,13 +74,11 @@ public class AuthorizableCreatorServiceImpl implements
     @Override
     public void createNewAuthorizables(
             Map<String, Set<AuthorizableConfigBean>> principalMapFromConfig,
-            final Session session, AcInstallationHistoryPojo status,
-            AuthorizableInstallationHistory authorizableInstallationHistory)
+            final Session session, AcInstallationHistoryPojo status)
             throws RepositoryException, AuthorizableCreatorException {
 
         this.status = status;
         this.principalMapFromConfig = principalMapFromConfig;
-        this.authorizableInstallationHistory = authorizableInstallationHistory;
 
         Set<String> authorizablesFromConfigurations = principalMapFromConfig.keySet();
 
@@ -100,16 +94,14 @@ public class AuthorizableCreatorServiceImpl implements
             }
 
             installAuthorizableConfigurationBean(session,
-                    tmpPricipalConfigBean, status,
-                    authorizableInstallationHistory, authorizablesFromConfigurations);
+                    tmpPricipalConfigBean, status, authorizablesFromConfigurations);
         }
 
     }
 
     private void installAuthorizableConfigurationBean(final Session session,
             AuthorizableConfigBean authorizableConfigBean,
-            AcInstallationHistoryPojo history,
-            AuthorizableInstallationHistory authorizableInstallationHistory, Set<String> authorizablesFromConfigurations)
+            AcInstallationHistoryPojo history, Set<String> authorizablesFromConfigurations)
             throws AccessDeniedException,
             UnsupportedRepositoryOperationException, RepositoryException,
             AuthorizableExistsException, AuthorizableCreatorException {
@@ -123,8 +115,7 @@ public class AuthorizableCreatorServiceImpl implements
         // if current authorizable from config doesn't exist yet
         Authorizable authorizableToInstall = userManager.getAuthorizable(principalId);
         if (authorizableToInstall == null) {
-            authorizableToInstall = createNewAuthorizable(authorizableConfigBean, history,
-                    authorizableInstallationHistory, userManager, vf, session);
+            authorizableToInstall = createNewAuthorizable(authorizableConfigBean, history, userManager, vf, session);
         }
         // if current authorizable from config already exists in repository
         else {
@@ -138,11 +129,9 @@ public class AuthorizableCreatorServiceImpl implements
             }
 
             // move authorizable if path changed (retaining existing members)
-            handleRecreationOfAuthorizableIfNecessary(session, authorizableConfigBean, history,
-                    authorizableInstallationHistory, userManager);
+            handleRecreationOfAuthorizableIfNecessary(session, authorizableConfigBean, history, userManager);
 
-            applyGroupMembershipConfigIsMemberOf(history, authorizableInstallationHistory,
-                    authorizableConfigBean, userManager);
+            applyGroupMembershipConfigIsMemberOf(history, authorizableConfigBean, userManager);
 
         }
 
@@ -302,7 +291,6 @@ public class AuthorizableCreatorServiceImpl implements
     private void handleRecreationOfAuthorizableIfNecessary(final Session session,
             AuthorizableConfigBean principalConfigBean,
             AcInstallationHistoryPojo history,
-            AuthorizableInstallationHistory authorizableInstallationHistory,
             UserManager userManager) throws RepositoryException, AuthorizableCreatorException {
 
         String principalId = principalConfigBean.getPrincipalID();
@@ -364,8 +352,7 @@ public class AuthorizableCreatorServiceImpl implements
             // create group again using values form config
             ValueFactory vf = session.getValueFactory();
             Authorizable newAuthorizable = createNewAuthorizable(
-                    principalConfigBean, history,
-                    authorizableInstallationHistory, userManager, vf, session);
+                    principalConfigBean, history, userManager, vf, session);
 
             int countMovedMembersOfGroup = 0;
             if (newAuthorizable.isGroup()) {
@@ -415,7 +402,6 @@ public class AuthorizableCreatorServiceImpl implements
     }
 
     private void applyGroupMembershipConfigIsMemberOf(AcInstallationHistoryPojo status,
-            AuthorizableInstallationHistory authorizableInstallationHistory,
             AuthorizableConfigBean authorizableConfigBean, UserManager userManager)
             throws RepositoryException, ValueFormatException,
             UnsupportedRepositoryOperationException,
@@ -426,12 +412,6 @@ public class AuthorizableCreatorServiceImpl implements
         Authorizable currentGroupFromRepository = userManager.getAuthorizable(authorizableId);
         Set<String> membershipGroupsFromConfig = getMembershipGroupsFromConfig(memberOf);
         Set<String> membershipGroupsFromRepository = getMembershipGroupsFromRepository(currentGroupFromRepository);
-
-        // create snapshot bean
-        authorizableInstallationHistory.addAuthorizable(
-                currentGroupFromRepository.getID(), getAuthorizableName(currentGroupFromRepository),
-                currentGroupFromRepository.getPath(),
-                membershipGroupsFromRepository);
 
         applyGroupMembershipConfigIsMemberOf(authorizableId, status, userManager, membershipGroupsFromConfig,
                 membershipGroupsFromRepository);
@@ -450,7 +430,6 @@ public class AuthorizableCreatorServiceImpl implements
     private Authorizable createNewAuthorizable(
             AuthorizableConfigBean principalConfigBean,
             AcInstallationHistoryPojo status,
-            AuthorizableInstallationHistory authorizableInstallationHistory,
             UserManager userManager, ValueFactory vf, Session session)
             throws AuthorizableExistsException, RepositoryException,
             AuthorizableCreatorException {
@@ -462,8 +441,7 @@ public class AuthorizableCreatorServiceImpl implements
 
         if (isGroup) {
             newAuthorizable = createNewGroup(userManager, principalConfigBean,
-                    status, authorizableInstallationHistory, vf,
-                    principalMapFromConfig, session);
+                    status, vf, principalMapFromConfig, session);
             LOG.info("Successfully created new group: {}", principalId);
         } else {
             if (StringUtils.isNotEmpty(principalConfigBean.getExternalId())) {
@@ -472,13 +450,10 @@ public class AuthorizableCreatorServiceImpl implements
                         + "') - use a ootb sync handler to have users automatically created.");
             }
 
-            newAuthorizable = createNewUser(userManager, principalConfigBean, status, authorizableInstallationHistory, vf,
+            newAuthorizable = createNewUser(userManager, principalConfigBean, status, vf,
                     principalMapFromConfig, session);
             LOG.info("Successfully created new user: {}", principalId);
         }
-
-        // for rollback
-        authorizableInstallationHistory.addNewCreatedAuthorizable(principalId);
 
         return newAuthorizable;
     }
@@ -587,9 +562,7 @@ public class AuthorizableCreatorServiceImpl implements
     private Authorizable createNewGroup(
             final UserManager userManager,
             AuthorizableConfigBean principalConfigBean,
-            AcInstallationHistoryPojo status,
-            AuthorizableInstallationHistory authorizableInstallationHistory,
-            ValueFactory vf,
+            AcInstallationHistoryPojo status, ValueFactory vf,
             Map<String, Set<AuthorizableConfigBean>> principalMapFromConfig, Session session)
             throws AuthorizableExistsException, RepositoryException,
             AuthorizableCreatorException {
@@ -607,8 +580,8 @@ public class AuthorizableCreatorServiceImpl implements
                     throw new IllegalStateException("External IDs are not availabe for your AEM version ("
                             + principalConfigBean.getPrincipalID() + " is using '" + principalConfigBean.getExternalId() + "')");
                 }
-                newGroup = (Group) externalGroupCreatorService.createGroupWithExternalId(userManager, principalConfigBean, status,
-                        authorizableInstallationHistory, vf, principalMapFromConfig, session);
+                newGroup = (Group) externalGroupCreatorService.createGroupWithExternalId(userManager, principalConfigBean, status, vf,
+                        principalMapFromConfig, session);
                 LOG.info("Successfully created new external group: {}", groupID);
             } else {
 
@@ -667,7 +640,6 @@ public class AuthorizableCreatorServiceImpl implements
             final UserManager userManager,
             AuthorizableConfigBean principalConfigBean,
             AcInstallationHistoryPojo status,
-            AuthorizableInstallationHistory authorizableInstallationHistory,
             ValueFactory vf,
             Map<String, Set<AuthorizableConfigBean>> principalMapFromConfig, Session session)
             throws AuthorizableExistsException, RepositoryException,
@@ -796,7 +768,6 @@ public class AuthorizableCreatorServiceImpl implements
                             new PrincipalImpl(memberOfAuthorizable),
                             authorizableConfigBean.getPath());
                     authorizableSet.add(newGroup.getID());
-                    authorizableInstallationHistory.addNewCreatedAuthorizable(newGroup.getID());
                     LOG.info("Created group to be able to add {} to group {} ", authorizablelID, memberOfAuthorizable);
                 } else {
                     String message = "Failed to add group: "
@@ -815,118 +786,7 @@ public class AuthorizableCreatorServiceImpl implements
         return authorizableSet;
     }
 
-    @Override
-    public void performRollback(SlingRepository repository,
-            AuthorizableInstallationHistory authorizableInstallationHistory,
-            AcInstallationHistoryPojo history, Session session) throws RepositoryException {
-        ValueFactory vf = session.getValueFactory();
 
-        JackrabbitSession js = (JackrabbitSession) session;
-        UserManager userManager = js.getUserManager();
 
-        // if groups was newly created delete it
-
-        Set<String> newCreatedAuthorizables = authorizableInstallationHistory
-                .getNewCreatedAuthorizables();
-        String message = "starting rollback of authorizables...";
-        history.addWarning(message);
-
-        if (!newCreatedAuthorizables.isEmpty()) {
-            history.addWarning("performing Groups rollback!");
-
-            for (String authorizableName : newCreatedAuthorizables) {
-                Authorizable authorizable = userManager.getAuthorizable(authorizableName);
-                if (authorizable != null) {
-                    authorizable.remove();
-                    message = "removed authorizable " + authorizableName + " from the system!";
-                    LOG.info(message);
-                    history.addWarning(message);
-                } else {
-                    message = "Can't remove authorizable " + authorizableName + " from the system!";
-                    LOG.error(message);
-                    history.addError(message);
-                }
-            }
-        }
-
-        // if not compare the changes and reset them to the prevoius state
-
-        Set<AuthorizableBean> authorizableBeans = authorizableInstallationHistory
-                .getAuthorizableBeans();
-
-        for (AuthorizableBean snapshotBean : authorizableBeans) {
-            Authorizable authorizable = userManager
-                    .getAuthorizable(snapshotBean.getName());
-
-            if (authorizable != null) {
-                history.addMessage("found changed authorizable:"
-                        + authorizable.getID());
-
-                // check memberOf groups
-
-                Iterator<Group> it = authorizable.memberOf();
-                Set<String> memberOfGroups = new HashSet<String>();
-                while (it.hasNext()) {
-                    memberOfGroups.add(it.next().getID());
-                }
-
-                if (snapshotBean.getAuthorizablesSnapshot().equals(
-                        memberOfGroups)) {
-                    history.addMessage("No change found in memberOfGroups of authorizable: "
-                            + authorizable.getID());
-                } else {
-                    history.addMessage("changes found in memberOfGroups of authorizable: "
-                            + authorizable.getID());
-
-                    // delete membership of currently set memberOf groups
-                    Iterator<Group> it2 = authorizable.memberOf();
-                    while (it2.hasNext()) {
-                        Group group = it2.next();
-                        group.removeMember(authorizable);
-                        history.addWarning("removed authorizable: "
-                                + authorizable.getID()
-                                + " from members of group: "
-                                + group.getID());
-                    }
-                    // reset the state from snapshot bean
-                    for (String group : snapshotBean
-                            .getAuthorizablesSnapshot()) {
-                        Authorizable groupFromSnapshot = userManager
-                                .getAuthorizable(group);
-                        if (groupFromSnapshot != null) {
-                            ((Group) groupFromSnapshot)
-                                    .addMember(authorizable);
-                            history.addWarning("add authorizable: "
-                                    + authorizable.getID()
-                                    + " to members of group: "
-                                    + groupFromSnapshot.getID() + " again");
-                        }
-                    }
-                }
-                String authorizableName = "";
-                if (authorizable.hasProperty("profile/givenName")) {
-                    authorizableName = authorizable
-                            .getProperty("profile/givenName")[0]
-                                    .getString();
-                }
-                if (snapshotBean.getName().equals(authorizableName)) {
-                    history.addMessage("No change found in name of authorizable: "
-                            + authorizable.getID());
-                } else {
-
-                    history.addMessage("change found in name of authorizable: "
-                            + authorizable.getID());
-                    authorizable.setProperty("profile/givenName",
-                            vf.createValue(snapshotBean.getName()));
-                    history.addMessage("changed name of authorizable from: "
-                            + authorizableName
-                            + " back to: "
-                            + snapshotBean.getName());
-                }
-                // TODO: compare other properties as well (name, path,...)
-            }
-        }
-
-    }
 
 }

@@ -32,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
@@ -53,7 +52,6 @@ public class ExternalGroupCreatorServiceImpl {
             final UserManager userManager,
             final AuthorizableConfigBean authorizableConfigBean,
             AcInstallationHistoryPojo status,
-            AuthorizableInstallationHistory authorizableInstallationHistory,
             ValueFactory vf,
             Map<String, Set<AuthorizableConfigBean>> principalMapFromConfig, Session session)
             throws AuthorizableExistsException, RepositoryException,

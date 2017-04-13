@@ -13,7 +13,6 @@ import java.util.Set;
 
 import javax.jcr.Session;
 
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 public interface AceService {
@@ -91,13 +90,11 @@ public interface AceService {
      * 
      * @param history
      * @param configurationFileContentsByFilename
-     * @param authorizableInstallationHistorySet
      * @param restrictedToPaths only apply ACLs to root paths as given
      * @param a jcr session
      * @throws Exception */
     public void installConfigurationFiles(AcInstallationHistoryPojo history,
-            Map<String, String> configurationFileContentsByFilename,
-            Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet, String[] restrictedToPaths, Session session)
+            Map<String, String> configurationFileContentsByFilename, String[] restrictedToPaths, Session session)
             throws Exception;
 
 }

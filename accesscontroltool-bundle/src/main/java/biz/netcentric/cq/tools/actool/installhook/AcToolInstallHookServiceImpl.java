@@ -8,10 +8,8 @@
  */
 package biz.netcentric.cq.tools.actool.installhook;
 
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import javax.jcr.Session;
 
@@ -23,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.aceservice.AceService;
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
 import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetriever;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
@@ -43,12 +40,11 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
     public AcInstallationHistoryPojo installYamlFilesFromPackage(Archive archive, Session session)
             throws Exception {
         AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
-        Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet = new LinkedHashSet<AuthorizableInstallationHistory>();
 
         Map<String, String> configs = configFilesRetriever.getConfigFileContentFromPackage(archive);
         history.setCrxPackageName(getArchiveName(archive));
         String[] restrictedToPaths = null; // never use path restriction for hook usage for now
-        aceService.installConfigurationFiles(history, configs, authorizableInstallationHistorySet, restrictedToPaths, session);
+        aceService.installConfigurationFiles(history, configs, restrictedToPaths, session);
 
         return history;
     }

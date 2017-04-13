@@ -44,7 +44,6 @@ import biz.netcentric.cq.tools.actool.aceservice.AceService;
 import biz.netcentric.cq.tools.actool.acls.AceBeanInstaller;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
-import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableInstallationHistory;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
@@ -138,12 +137,11 @@ public class AceServiceImpl implements AceService {
             return history;
         }
 
-        Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet = new LinkedHashSet<AuthorizableInstallationHistory>();
         Session session = null;
         try {
             session = repository.loginService(Constants.USER_AC_SERVICE, null);
             Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configurationRootPath, session);
-            installConfigurationFiles(history, newestConfigurations, authorizableInstallationHistorySet, restrictedToPaths, session);
+            installConfigurationFiles(history, newestConfigurations, restrictedToPaths, session);
         } catch (AuthorizableCreatorException e) {
             // exception was added to history in installConfigurationFiles() before it was saved
             LOG.warn("Exception during installation of authorizables (no rollback), e=" + e, e);
@@ -156,28 +154,6 @@ public class AceServiceImpl implements AceService {
 
             LOG.error("Exception in AceServiceImpl: {}", e);
             // exception was added to history in installConfigurationFiles() before it was saved
-
-            if (!intermediateSaves) {
-                for (AuthorizableInstallationHistory authorizableInstallationHistory : authorizableInstallationHistorySet) {
-                    try {
-                        session.refresh(true); // reset the session that might have an inconsistent state
-                        String message = "performing authorizable installation rollback(s)";
-                        LOG.info(message);
-                        history.addMessage(message);
-                        authorizableCreatorService.performRollback(repository,
-                                authorizableInstallationHistory, history, session);
-                    } catch (RepositoryException e1) {
-                        String rollbackErr = "Could not perform rollback: " + e1;
-                        LOG.error(rollbackErr, e1);
-                        history.addError(rollbackErr);
-                    }
-                }
-            } else {
-                String message = "Rollback is disabled due to configuration option intermediateSaves=true";
-                LOG.info(message);
-                history.addMessage(message);
-            }
-
         } finally {
             if (session != null) {
                 session.logout();
@@ -189,7 +165,7 @@ public class AceServiceImpl implements AceService {
     /** Common entry point for JMX and install hook. */
     @Override
     public void installConfigurationFiles(AcInstallationHistoryPojo history, Map<String, String> configurationFileContentsByFilename,
-            Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet, String[] restrictedToPaths, Session session)
+            String[] restrictedToPaths, Session session)
             throws Exception {
 
         String origThreadName = Thread.currentThread().getName();
@@ -212,7 +188,7 @@ public class AceServiceImpl implements AceService {
                         configReader, session);
                 history.setAcConfiguration(acConfiguration);
 
-                installMergedConfigurations(history, authorizableInstallationHistorySet, acConfiguration, restrictedToPaths, session);
+                installMergedConfigurations(history, acConfiguration, restrictedToPaths, session);
 
                 removeObsoleteAuthorizables(history, acConfiguration.getObsoleteAuthorizables(), session);
 
@@ -240,7 +216,6 @@ public class AceServiceImpl implements AceService {
 
     private void installAcConfiguration(
             AcConfiguration acConfiguration, AcInstallationHistoryPojo history,
-            Set<AuthorizableInstallationHistory> authorizableHistorySet,
             Map<String, Set<AceBean>> repositoryDumpAceMap, String[] restrictedToPaths, Session session) throws Exception {
 
         if (acConfiguration.getAceConfig() == null) {
@@ -249,7 +224,7 @@ public class AceServiceImpl implements AceService {
             throw new IllegalArgumentException(message);
         }
 
-        installAuthorizables(history, authorizableHistorySet, acConfiguration.getAuthorizablesConfig(), session);
+        installAuthorizables(history, acConfiguration.getAuthorizablesConfig(), session);
 
         installAces(history, acConfiguration, repositoryDumpAceMap, restrictedToPaths, session);
     }
@@ -455,7 +430,6 @@ public class AceServiceImpl implements AceService {
 
     private void installAuthorizables(
             AcInstallationHistoryPojo history,
-            Set<AuthorizableInstallationHistory> authorizableHistorySet,
             Map<String, Set<AuthorizableConfigBean>> authorizablesMapfromConfig, Session session)
             throws RepositoryException, Exception {
         // --- installation of Authorizables from configuration ---
@@ -469,13 +443,23 @@ public class AceServiceImpl implements AceService {
 
         try {
             // only save session if no exceptions occurred
-            AuthorizableInstallationHistory authorizableInstallationHistory = new AuthorizableInstallationHistory();
-            authorizableHistorySet.add(authorizableInstallationHistory);
-            authorizableCreatorService.createNewAuthorizables(
-                    authorizablesMapfromConfig,
-                    session, history,
-                    authorizableInstallationHistory);
-            session.save();
+            authorizableCreatorService.createNewAuthorizables(authorizablesMapfromConfig, session, history);
+
+            if (intermediateSaves) {
+                if (session.hasPendingChanges()) {
+                    session.save();
+
+                    String messageSave = "Saved session after installing authorizables.";
+                    LOG.debug(messageSave);
+                    history.addVerboseMessage(messageSave);
+
+                } else {
+                    String messageSave = "After installing authorizables, intermediateSaves is turned on but there are no pending changes.";
+                    LOG.debug(messageSave);
+                    history.addVerboseMessage(messageSave);
+                }
+            }
+
         } catch (Exception e) {
             throw new AuthorizableCreatorException(e);
         }
@@ -538,7 +522,6 @@ public class AceServiceImpl implements AceService {
 
     private void installMergedConfigurations(
             AcInstallationHistoryPojo history,
-            Set<AuthorizableInstallationHistory> authorizableInstallationHistorySet,
             AcConfiguration acConfiguration, String[] restrictedToPaths, Session session) throws ValueFormatException,
             RepositoryException, Exception {
 
@@ -559,8 +542,7 @@ public class AceServiceImpl implements AceService {
         LOG.info(msg);
         history.addMessage(msg);
 
-        installAcConfiguration(acConfiguration, history, authorizableInstallationHistorySet, repositoryDumpAceMap, restrictedToPaths,
-                session);
+        installAcConfiguration(acConfiguration, history, repositoryDumpAceMap, restrictedToPaths, session);
 
     }
 

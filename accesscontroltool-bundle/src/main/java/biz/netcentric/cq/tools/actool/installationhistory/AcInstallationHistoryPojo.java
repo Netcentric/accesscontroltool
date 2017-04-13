@@ -27,8 +27,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 
 public class AcInstallationHistoryPojo {
 
-    private static final Logger LOG = LoggerFactory
-            .getLogger(AcInstallationHistoryPojo.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AcInstallationHistoryPojo.class);
 
     private static final String MSG_IDENTIFIER_EXCEPTION = "EXCEPTION:";
     private static final String MSG_IDENTIFIER_WARNING = "WARNING:";
