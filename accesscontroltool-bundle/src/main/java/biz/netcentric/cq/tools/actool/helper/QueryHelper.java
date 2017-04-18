@@ -85,10 +85,15 @@ public class QueryHelper {
             if (session.nodeExists("/rep:policy")) {
                 nodes.add(session.getNode("/rep:policy"));
             }
+            if (session.nodeExists("/rep:repoPolicy")) {
+                nodes.add(session.getNode("/rep:repoPolicy"));
+            }
+
             // get the rep:policy node of "/home", if existing
             if (session.nodeExists("/home/rep:policy")) {
                 nodes.add(session.getNode("/home/rep:policy"));
             }
+
             for (String path : paths) {
                 String query = "SELECT * FROM [rep:ACL] WHERE ISDESCENDANTNODE([" + path + "])";
                 nodes.addAll(QueryHelper.getNodes(session, query, Query.JCR_SQL2));

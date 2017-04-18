@@ -85,7 +85,6 @@ public class CompleteAcDump implements AcDumpElement {
             acDumpElementVisitor.visit(new MapKey(mapKey));
 
             for (AceBean aceBean : aceBeanSet) {
-                // aceBean = CqActionsMapping.getAlignedPermissionBean(aceBean);
                 aceBean.accept(acDumpElementVisitor);
             }
         }

@@ -391,9 +391,12 @@ public class DumpserviceImpl implements Dumpservice {
         // paths of jcr:root node
         for (Node node : resultNodeSet) {
             try {
-                JackrabbitAccessControlList jackrabbitAcl = AccessControlUtils
-                        .getAccessControlList(session, node.getParent().getPath());
-                AclBean aclBean = new AclBean(jackrabbitAcl, node.getParent().getPath());
+                String path = !"rep:repoPolicy".equals(node.getName())
+                        ? node.getParent().getPath()
+                        : null /*  repo policies are accessed by using a null path */;
+
+                JackrabbitAccessControlList jackrabbitAcl = AccessControlUtils.getAccessControlList(session, path);
+                AclBean aclBean = new AclBean(jackrabbitAcl, path);
                 accessControBeanSet.add(aclBean);
             } catch (AccessDeniedException e) {
                 LOG.error("AccessDeniedException: {}", e);
@@ -503,6 +506,9 @@ public class DumpserviceImpl implements Dumpservice {
             }
         } else if (keyOrder == AcHelper.PATH_BASED_ORDER) {
             String jcrPath = aceBean.getJcrPath();
+            if (jcrPath == null) {
+                jcrPath = "";
+            }
             if (!aceMap.containsKey(jcrPath)) {
                 Set<AceBean> aceSet = getNewAceSet(aclOrdering);
                 aceSet.add(aceBean);
