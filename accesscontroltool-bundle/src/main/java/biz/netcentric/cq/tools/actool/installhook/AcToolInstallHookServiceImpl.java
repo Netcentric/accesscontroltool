@@ -20,9 +20,9 @@ import org.apache.jackrabbit.vault.fs.io.Archive;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.aceservice.AceService;
 import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetriever;
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceInternal;
 
 @Component
 @Service(value = AcToolInstallHookService.class)
@@ -31,20 +31,20 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
     private static final Logger LOG = LoggerFactory.getLogger(AcToolInstallHookServiceImpl.class);
 
     @Reference
-    private AceService aceService;
+    private AcInstallationServiceInternal acInstallationService;
 
     @Reference
     private ConfigFilesRetriever configFilesRetriever;
 
     @Override
-    public AcInstallationHistoryPojo installYamlFilesFromPackage(Archive archive, Session session)
+    public AcInstallationLog installYamlFilesFromPackage(Archive archive, Session session)
             throws Exception {
-        AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
+        AcInstallationLog history = new AcInstallationLog();
 
         Map<String, String> configs = configFilesRetriever.getConfigFileContentFromPackage(archive);
         history.setCrxPackageName(getArchiveName(archive));
         String[] restrictedToPaths = null; // never use path restriction for hook usage for now
-        aceService.installConfigurationFiles(history, configs, restrictedToPaths, session);
+        acInstallationService.installConfigurationFiles(history, configs, restrictedToPaths, session);
 
         return history;
     }

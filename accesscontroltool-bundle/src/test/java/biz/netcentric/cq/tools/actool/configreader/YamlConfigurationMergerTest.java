@@ -28,7 +28,7 @@ import org.mockito.Mock;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.ObsoleteAuthorizablesValidatorImpl;
 
@@ -56,7 +56,7 @@ public class YamlConfigurationMergerTest {
         final ConfigReader reader = new YamlConfigReader();
         final Map<String, String> configs = new HashMap<String, String>();
         configs.put("/etc/config", config);
-        AcConfiguration acConfiguration = merger.getMergedConfigurations(configs, mock(AcInstallationHistoryPojo.class), reader, session);
+        AcConfiguration acConfiguration = merger.getMergedConfigurations(configs, mock(AcInstallationLog.class), reader, session);
         final AuthorizablesConfig groups = acConfiguration.getAuthorizablesConfig();
         final AuthorizableConfigBean groupA = groups.getAuthorizableConfig("groupA");
         assertEquals(3, groupA.getMemberOf().length);
@@ -75,7 +75,7 @@ public class YamlConfigurationMergerTest {
         final Map<String, String> configs = new HashMap<String, String>();
         configs.put("/etc/config", config);
 
-        AcConfiguration acConfiguration = merger.getMergedConfigurations(configs, mock(AcInstallationHistoryPojo.class), reader, session);
+        AcConfiguration acConfiguration = merger.getMergedConfigurations(configs, mock(AcInstallationLog.class), reader, session);
 
         AuthorizableConfigBean groupAConfig = acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupA");
         assertEquals("groupA", groupAConfig.getAuthorizableId());

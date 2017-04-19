@@ -8,7 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
-import static biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo.msHumanReadable;
+import static biz.netcentric.cq.tools.actool.history.AcInstallationLog.msHumanReadable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,7 +38,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.helper.Constants;
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
 import biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator;
@@ -64,7 +64,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
     @Override
     public AcConfiguration getMergedConfigurations(
             final Map<String, String> configFileContentByFilename,
-            final AcInstallationHistoryPojo history,
+            final AcInstallationLog history,
             final ConfigReader configReader, Session session) throws RepositoryException,
             AcConfigBeanValidationException {
 
@@ -179,7 +179,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
     }
 
     void ensureIsMemberOfIsUsedWherePossible(AuthorizablesConfig mergedAuthorizablesBeansfromConfig,
-            AcInstallationHistoryPojo history) {
+            AcInstallationLog history) {
 
         for (AuthorizableConfigBean group : mergedAuthorizablesBeansfromConfig) {
             if (!group.isGroup()) {

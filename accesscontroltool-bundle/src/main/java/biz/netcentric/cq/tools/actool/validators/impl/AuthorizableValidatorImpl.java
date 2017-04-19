@@ -35,21 +35,17 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
     }
 
     @Override
-    public void validate(final AuthorizableConfigBean authorizableConfigBean)
+    public boolean validate(AuthorizableConfigBean authorizableConfigBean)
             throws AcConfigBeanValidationException {
-        this.authorizableConfigBean = authorizableConfigBean;
-        validate();
-    }
-
-    private boolean validate() throws AcConfigBeanValidationException {
+        boolean success = true;
         if (enabled) {
-            return validateAuthorizableProperties(authorizableConfigBean)
+            success = validateAuthorizableProperties(authorizableConfigBean)
                     && validateMemberOf(authorizableConfigBean)
                     && validateMembers(authorizableConfigBean)
                     && validateAuthorizableId(authorizableConfigBean)
                     && validateIntermediatePath(authorizableConfigBean);
         }
-        return true;
+        return success;
     }
 
     public boolean validateIntermediatePath(
@@ -128,7 +124,6 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
         return true;
     }
 
-    @Override
     public boolean validateMemberOf(
             final AuthorizableConfigBean authorizableConfigBean)
                     throws InvalidGroupNameException {
@@ -197,7 +192,6 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
         return true;
     }
 
-    @Override
     public boolean validateAuthorizableId(
             final AuthorizableConfigBean authorizableConfigBean)
                     throws InvalidGroupNameException {
@@ -215,10 +209,6 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
         return true;
     }
 
-    @Override
-    public void setBean(final AuthorizableConfigBean authorizableConfigBean) {
-        this.authorizableConfigBean = authorizableConfigBean;
-    }
 
     @Override
     public void disable() {

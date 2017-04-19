@@ -35,7 +35,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
 public class YamlMacroProcessorTest {
@@ -44,7 +44,7 @@ public class YamlMacroProcessorTest {
     YamlMacroChildNodeObjectsProviderImpl yamlMacroChildNodeObjectsProvider;
 
     @Mock
-    AcInstallationHistoryPojo acInstallationHistoryPojo;
+    AcInstallationLog installLog;
 
     @Mock
     Session session;
@@ -62,7 +62,7 @@ public class YamlMacroProcessorTest {
 
         List<LinkedHashMap> yamlList = getYamlList("test-loop.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
         assertEquals("Number of groups", 10, groups.size());
@@ -84,7 +84,7 @@ public class YamlMacroProcessorTest {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
         List<LinkedHashMap> yamlList = getYamlList("test-nested-loops.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
 
@@ -98,7 +98,7 @@ public class YamlMacroProcessorTest {
 
         List<LinkedHashMap> yamlList = getYamlList("test-loop.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
         AcesConfig aces = readAceConfigs(yamlList);
         assertEquals("Number of ACEs", 7, aces.size());
@@ -115,7 +115,7 @@ public class YamlMacroProcessorTest {
 
         List<LinkedHashMap> yamlList = getYamlList("test-loop-with-hyphen.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
         AcesConfig aces = readAceConfigs(yamlList);
         assertEquals("Number of ACEs", 7, aces.size());
@@ -130,7 +130,7 @@ public class YamlMacroProcessorTest {
 
         List<LinkedHashMap> yamlList = getYamlList("test-nested-loops.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
         AcesConfig aces = readAceConfigs(yamlList);
         assertEquals("Number of ACEs", 12, aces.size());
@@ -155,7 +155,7 @@ public class YamlMacroProcessorTest {
 
         List<LinkedHashMap> yamlList = getYamlList("test-if.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
         AcesConfig aces = readAceConfigs(yamlList);
 
@@ -179,9 +179,9 @@ public class YamlMacroProcessorTest {
         String contentLocationChildrenFromYamlFile = "/content/test";
 
         doReturn(getExampleValuesForLoopOverChildrenOfPath()).when(yamlMacroChildNodeObjectsProvider)
-                .getValuesForPath(contentLocationChildrenFromYamlFile, acInstallationHistoryPojo, session);
+                .getValuesForPath(contentLocationChildrenFromYamlFile, installLog, session);
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
         // new Yaml().dump(yamlList, new PrintWriter(System.out));
 
@@ -239,7 +239,7 @@ public class YamlMacroProcessorTest {
 
         List<LinkedHashMap> yamlList = getYamlList("test-system-user.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
         AuthorizablesConfig users = readUserConfigs(yamlList);
         assertEquals("Number of users", 1, users.size());
@@ -274,7 +274,7 @@ public class YamlMacroProcessorTest {
 
         List<LinkedHashMap> yamlList = getYamlList("test-variables.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
         GlobalConfiguration globalConfiguration = readGlobalConfig(yamlList);
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
@@ -292,7 +292,7 @@ public class YamlMacroProcessorTest {
 
         List<LinkedHashMap> yamlList = getYamlList("test-variables-ldap.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, acInstallationHistoryPojo, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
         GlobalConfiguration globalConfiguration = readGlobalConfig(yamlList);
         AuthorizablesConfig groups = readGroupConfigs(yamlList);

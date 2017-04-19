@@ -12,11 +12,11 @@ import javax.jcr.Session;
 
 import org.apache.jackrabbit.vault.fs.io.Archive;
 
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
 
 public interface AcToolInstallHookService {
 
-    public AcInstallationHistoryPojo installYamlFilesFromPackage(Archive archive, Session session)
+    public AcInstallationLog installYamlFilesFromPackage(Archive archive, Session session)
             throws Exception;
 
 }

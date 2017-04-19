@@ -197,6 +197,11 @@
                 <instructions>
                     <Embed-Dependency>el-api,jasper-el</Embed-Dependency>
                     <!-- Required to support 6.1 and 6.2 -->
+                    <Export-Package>
+                        biz.netcentric.cq.tools.actool.api,
+                        biz.netcentric.cq.tools.actool.aceservice,
+                        biz.netcentric.cq.tools.actool.installationhistory
+                    </Export-Package>
                     <Import-Package>
                         org.apache.jackrabbit.oak.spi.security.authentication.external;version="[1.0,3)",
                         *

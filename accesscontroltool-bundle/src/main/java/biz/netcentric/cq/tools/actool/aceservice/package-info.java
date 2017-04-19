@@ -7,4 +7,5 @@
  * http://www.eclipse.org/legal/epl-v10.html
  */
 @aQute.bnd.annotation.Version("1.9.99")
+@Deprecated
 package biz.netcentric.cq.tools.actool.aceservice;

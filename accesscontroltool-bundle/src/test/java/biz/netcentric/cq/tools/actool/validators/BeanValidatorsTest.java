@@ -59,6 +59,9 @@ public class BeanValidatorsTest {
     @Mock
     AccessControlManager accessControlManager;
 
+    @Mock
+    AuthorizableValidator authorizableValidator;
+
     @InjectMocks
     ConfigReader yamlConfigReader = new TestYamlConfigReader();
 

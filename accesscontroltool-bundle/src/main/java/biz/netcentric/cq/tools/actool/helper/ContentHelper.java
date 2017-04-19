@@ -47,6 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 public class ContentHelper {
@@ -55,7 +56,7 @@ public class ContentHelper {
     private ContentHelper() {
     }
 
-    public static boolean createInitialContent(final Session session, final AcInstallationHistoryPojo history, String path,
+    public static boolean createInitialContent(final Session session, final AcInstallationLog history, String path,
             Set<AceBean> aceBeanSetFromConfig) throws RepositoryException, PathNotFoundException, ItemExistsException,
             ConstraintViolationException, VersionException, InvalidSerializedDataException, LockException, AccessDeniedException {
 

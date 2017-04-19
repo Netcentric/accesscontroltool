@@ -12,13 +12,13 @@ import java.util.List;
 
 import javax.jcr.Session;
 
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
 
 /** Provides the objects for .
  * 
  * @author ghenzler */
 public interface YamlMacroChildNodeObjectsProvider {
 
-    List<Object> getValuesForPath(String pathOfChildrenOfClause, AcInstallationHistoryPojo history, Session session);
+    List<Object> getValuesForPath(String pathOfChildrenOfClause, AcInstallationLog history, Session session);
 
 }

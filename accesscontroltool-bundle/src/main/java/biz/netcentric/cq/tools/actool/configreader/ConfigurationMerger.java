@@ -14,7 +14,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
 public interface ConfigurationMerger {
@@ -25,13 +25,13 @@ public interface ConfigurationMerger {
      * 
      * @param newestConfigurations map which contains all paths and configuration in YAML format. key is the node path in CRX under which
      *            the respective configuration is stored, entry is the textual configuration
-     * @param history history object
+     * @param installationLog
      * @return The AcConfiguration
      * @throws RepositoryException in case some repository error has occurred
      * @throws AcConfigBeanValidationException in case the given configuration is invalid */
     public abstract AcConfiguration getMergedConfigurations(
             final Map<String, String> newestConfigurations,
-            final AcInstallationHistoryPojo history,
+            final AcInstallationLog installationLog,
             final ConfigReader configReader, Session session) throws RepositoryException,
             AcConfigBeanValidationException;
 

@@ -14,8 +14,8 @@ import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
-import biz.netcentric.cq.tools.actool.installationhistory.HistoryEntry;
+import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import biz.netcentric.cq.tools.actool.history.HistoryEntry;
 
 public class AcToolInstallHook extends OsgiAwareInstallHook {
 
@@ -57,7 +57,7 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
             }
             //
             try {
-                AcInstallationHistoryPojo history;
+                AcInstallationLog history;
                 try {
                     history = acService.installYamlFilesFromPackage(context
                             .getPackage().getArchive(), context.getSession());

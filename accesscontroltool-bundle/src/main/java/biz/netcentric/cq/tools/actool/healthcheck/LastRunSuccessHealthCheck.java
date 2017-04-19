@@ -23,7 +23,7 @@ import org.apache.sling.hc.util.FormattingResultLog;
 import org.apache.sling.jcr.api.SlingRepository;
 
 import biz.netcentric.cq.tools.actool.helper.Constants;
-import biz.netcentric.cq.tools.actool.installationhistory.impl.HistoryUtils;
+import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
 
 /** Sling Health Check that returns WARN if the last installation failed. */
 @SlingHealthCheck(name = "Last Run of AC Tool", tags = "actool")
