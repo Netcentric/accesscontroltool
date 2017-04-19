@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package biz.netcentric.cq.tools.actool.installhook;
+package biz.netcentric.cq.tools.actool.installhook.impl;
 
 import javax.jcr.Session;
 

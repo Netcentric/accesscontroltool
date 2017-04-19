@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
 import biz.netcentric.cq.tools.actool.history.HistoryEntry;
+import biz.netcentric.cq.tools.actool.installhook.impl.AcToolInstallHookService;
+import biz.netcentric.cq.tools.actool.installhook.impl.OsgiAwareInstallHook;
 
 public class AcToolInstallHook extends OsgiAwareInstallHook {
 
@@ -43,14 +45,12 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
 
             // check if AcTool is installed
             log("Installing ACLs through AcToolInstallHook...", context.getOptions());
-            ServiceReference acToolInstallHookService = getServiceReference(
-                    "biz.netcentric.cq.tools.actool.installhook.AcToolInstallHookService");
+            ServiceReference acToolInstallHookService = getServiceReference(AcToolInstallHookService.class.getName());
             if (acToolInstallHookService == null) {
                 throw new PackageException(
                         "Could not get AceService from OSGI service registry. Make sure the ACTool is installed!");
             }
-            AcToolInstallHookService acService = (AcToolInstallHookService) getBundleContext()
-                    .getService(acToolInstallHookService);
+            AcToolInstallHookService acService = (AcToolInstallHookService) getBundleContext().getService(acToolInstallHookService);
             if (acService == null) {
                 throw new PackageException(
                         "Could not instanciate AceService. Make sure the ACTool is installed and check the log for errors");

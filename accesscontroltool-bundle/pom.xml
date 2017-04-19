@@ -199,6 +199,7 @@
                     <!-- Required to support 6.1 and 6.2 -->
                     <Export-Package>
                         biz.netcentric.cq.tools.actool.api,
+                        biz.netcentric.cq.tools.actool.installhook,
                         biz.netcentric.cq.tools.actool.aceservice,
                         biz.netcentric.cq.tools.actool.installationhistory
                     </Export-Package>
