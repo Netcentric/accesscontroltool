@@ -8,8 +8,6 @@
  */
 package biz.netcentric.cq.tools.actool.authorizableutils.impl;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -36,6 +34,7 @@ import org.apache.jackrabbit.api.security.user.AuthorizableExistsException;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
+import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -608,16 +607,21 @@ public class AuthorizableCreatorServiceImpl implements
             Session session)
             throws AuthorizableExistsException, RepositoryException,
             AuthorizableCreatorException {
-        String authorziableId = principalConfigBean.getAuthorizableId();
+        String authorizableId = principalConfigBean.getAuthorizableId();
         String password = principalConfigBean.getPassword();
         boolean isSystemUser = principalConfigBean.isSystemUser();
         String intermediatePath = principalConfigBean.getPath();
 
         User newUser = null;
         if (isSystemUser) {
-            newUser = userManagerCreateSystemUserViaReflection(userManager, authorziableId, intermediatePath, status);
+            // make sure all relative intermediate paths get the prefix suffix (but don't touch absolute paths)
+            String systemPrefix = "system/";
+            if ((intermediatePath != null) && !intermediatePath.startsWith(systemPrefix) && !intermediatePath.startsWith("/")) {
+                intermediatePath = systemPrefix + intermediatePath;
+            }
+            newUser = userManager.createSystemUser(authorizableId, intermediatePath);
         } else {
-            newUser = userManager.createUser(authorziableId, password, new PrincipalImpl(authorziableId), intermediatePath);
+            newUser = userManager.createUser(authorizableId, password, new PrincipalImpl(authorizableId), intermediatePath);
         }
         setAuthorizableProperties(newUser, principalConfigBean, session);
 
@@ -644,32 +648,6 @@ public class AuthorizableCreatorServiceImpl implements
                 }
             }
         }
-    }
-
-    // using reflection with fallback to create a system user in order to be backwards compatible
-    private User userManagerCreateSystemUserViaReflection(UserManager userManager, String userID, String intermediatePath,
-            AcInstallationHistoryPojo status)
-            throws RepositoryException {
-
-        // make sure all relative intermediate paths get the prefix suffix (but don't touch absolute paths)
-        String systemPrefix = "system/";
-        if ((intermediatePath != null) && !intermediatePath.startsWith(systemPrefix) && !intermediatePath.startsWith("/")) {
-            intermediatePath = systemPrefix + intermediatePath;
-        }
-
-        try {
-            Method method = userManager.getClass().getMethod("createSystemUser", String.class, String.class);
-            User user = (User) method.invoke(userManager, userID, intermediatePath);
-
-            return user;
-        } catch (Throwable e) {
-            if (e instanceof InvocationTargetException) {
-                e = ((InvocationTargetException) e).getTargetException();
-            }
-            status.addError(LOG, "Could not create system user " + userID + ".", e);
-        }
-
-        return null;
     }
 
     /** Validates the authorizables in 'membersOf' array of a given authorizable. Validation fails if an authorizable is a user.

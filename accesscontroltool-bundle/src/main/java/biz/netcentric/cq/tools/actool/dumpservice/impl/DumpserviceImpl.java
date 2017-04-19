@@ -56,6 +56,7 @@ import org.apache.jackrabbit.api.security.user.QueryBuilder;
 import org.apache.jackrabbit.api.security.user.QueryBuilder.Direction;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
+import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
@@ -64,7 +65,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.authorizableutils.impl.AuthorizableCreatorServiceImpl;
-import biz.netcentric.cq.tools.actool.authorizableutils.impl.PrincipalImpl;
 import biz.netcentric.cq.tools.actool.comparators.AcePathComparator;
 import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
 import biz.netcentric.cq.tools.actool.comparators.AuthorizableBeanIDComparator;
