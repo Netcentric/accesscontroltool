@@ -87,7 +87,7 @@ This will create 12 groups:
 * content-BRAND2-MKT2-reader
 * content-BRAND2-MKT2-writer
 
-### Loops derived from content structure (since 1.8.x)
+### Loops derived from content structure
 
 For some use cases it is useful to dynamically derive the list of possible values from the content structure. FOR ... IN CHILDREN OF will loop over the children of the provided path (skipping 'jcr:content' nodes) and provide an object with the properties name, path, primaryType, jcr:content (a map of all properties of the respective node) and title (./jcr:content/jcr:title added to root map for convenience).
 
@@ -101,7 +101,7 @@ For some use cases it is useful to dynamically derive the list of possible value
 ```
 
 
-### Conditional entries (since 1.8.x)
+### Conditional entries
 
 When looping over content structures, entries can be applied conditionally using the "IF" keyword:
 
@@ -136,7 +136,7 @@ Expressions are evaluated using javax.el expression language. The following util
 - endsWith(str,fragmentStr) 
 - startsWith(str,fragmentStr) 
 
-### Variables (since 1.9.3)
+### Variables
 
 Sometimes it can be useful to declare variables to reuse values or to give certain strings an expressive name:
 
@@ -157,7 +157,7 @@ Sometimes it can be useful to declare variables to reuse values or to give certa
 
 DEF entries can be used inside and outside of loops and conditional entries.
 
-## Configure permissions for anonymous (since 1.8.2)
+## Configure permissions for anonymous
 
 Normally it is ensured by validation that a configuration's group system is self-contained - this means out-of-the-box groups like `contributor` cannot be used. For registered users in the system this approach works well since either the users are manually assigned to groups (by a user admin) or the membership relationship is maintained by LDAP or SSO extensions. For the `anonymous` user on publish that is not logged in by definition, there is no hook that allows to assign it to a group in the AC Tools configuration. Therefore as an exception, it is allowed to use the user `anonymous` in the `members` attribute of a group configuration.
   
@@ -172,7 +172,7 @@ An exception to this might be dynamic groups created and maintained by authors o
       keepExistingMembershipsForGroupNamesRegEx: external.* # the AC Tool groups can inherit from other external.* groups
 ```
 
-## Automatically purge obsolete groups and users (since 1.9.1)
+## Automatically purge obsolete groups and users
 The root element `obsolete_authorizables` can be used to automatically purge authorizables that are not in use anymore:
 
 ```
@@ -186,11 +186,11 @@ The root element `obsolete_authorizables` can be used to automatically purge aut
 
 The `FOR` and `IF` syntax can be used within `obsolete_authorizables`.
 
-## Health Check (since 1.9.1)
+## Health Check
 
 The AC Tool comes with a Sling Health Check to returns WARN if the last run of the AC Tool was not successful. The health check can be triggered via `/system/console/healthcheck?tags=actool`. Additional tags can be configured using PID `biz.netcentric.cq.tools.actool.healthcheck.LastRunSuccessHealthCheck` and property `hc.tags`. Also see [Sling Health Check Tools Documentation](https://sling.apache.org/documentation/bundles/sling-health-check-tool.html).
 
-## Use Manual ACL Ordering (since 1.9.1)
+## Use Manual ACL Ordering
 
 By default ACEs with denies are sorted up to the top of the list, this follows the best practice to order denies always before allows - this makes by default allows always take precedence over denies. This is because denies should be used sparsely: Normally there is exactly one group that includes all deny-ACEs for to-be-secured content and many groups with allow-ACEs, that selectively allow what has been denied by the "global deny" group.
 
@@ -217,7 +217,7 @@ This example gives the group `myproj-editor` edit rights for all content in fold
 
 ## Intermediate save() calls during ACL installation
 
-For large installations (> 1000 groups) that use MongoDB, the system possibly may get into an invalid state as older versions of OAK (AEM 6.1/6.2 ootb) do not always correctly fire the post commit hook for very large change sets (OAK-5557). To circumvent this issue it is possible since v1.9.2 to configure the OSGi property `intermediateSaves=true` of PID `biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl`. 
+For large installations (> 1000 groups) that use MongoDB, the system possibly may get into an invalid state as older versions of OAK (AEM 6.1/6.2 ootb) do not always correctly fire the post commit hook for very large change sets (OAK-5557). To circumvent this issue it is possible since v1.9.2 to configure the OSGi property `intermediateSaves=true` of PID `biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl`. 
 
 NOTE: This is never necessary when using TarMK and also it should only be used for MongoMK for large installations that do not contain a fix for OAK-5557 yet as the rollback functionality is lost when enabling intermediate saves.
 

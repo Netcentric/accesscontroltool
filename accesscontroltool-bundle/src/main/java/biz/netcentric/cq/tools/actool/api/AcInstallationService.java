@@ -10,7 +10,7 @@ package biz.netcentric.cq.tools.actool.api;
 
 public interface AcInstallationService {
 
-    /** Applies the full configuration as stored at the path configured at PID biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl
+    /** Applies the full configuration as stored at the path configured at PID biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl
      * to the repository.
      * 
      * @return the installation log */

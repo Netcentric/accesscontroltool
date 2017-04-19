@@ -16,7 +16,7 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryP
 @Deprecated
 public interface AceService {
 
-    /** Applies the full configuration as stored at the path configured at PID biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl
+    /** Applies the full configuration as stored at the path configured at PID biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl
      * to the repository.
      * 
      * @return the history */
