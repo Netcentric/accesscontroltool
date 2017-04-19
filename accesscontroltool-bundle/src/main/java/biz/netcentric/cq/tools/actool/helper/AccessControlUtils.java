@@ -9,8 +9,6 @@
 package biz.netcentric.cq.tools.actool.helper;
 
 import java.security.Principal;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -154,38 +152,18 @@ public class AccessControlUtils {
         return null;
     }
 
-
-    /** Converts the given privilege names into a set of privilege objects.
-     * 
-     * @param privNames (may be {@code null}
-     * @param acMgr
-     * @return a set of privileges (never {@code null}, but may be empty set)
-     * @throws RepositoryException */
-    public static Set<Privilege> getPrivilegeSet(String[] privNames,
-            AccessControlManager acMgr) throws RepositoryException {
-        if (privNames == null) {
-            return Collections.emptySet();
-        }
-        final Set privileges = new HashSet(privNames.length);
-        for (final String name : privNames) {
-            final Privilege p = acMgr.privilegeFromName(name);
-            if (p.isAggregate()) {
-                privileges.addAll(Arrays.asList(p.getAggregatePrivileges()));
-            } else {
-                privileges.add(p);
-            }
-        }
-        return privileges;
-    }
-
     /** @param session admin session
      * @param path valid node path in CRX
      * @param principalNames principal names of authorizables to be deleted from ACL of node specified by path
      * @return count ACEs that were removed */
     public static int deleteAllEntriesForPrincipalsFromACL(final Session session,
-            final String path, String[] principalNames)
+            String path, String[] principalNames)
                     throws UnsupportedRepositoryOperationException, RepositoryException {
         final AccessControlManager accessControlManager = session.getAccessControlManager();
+
+        if (StringUtils.isBlank(path)) {
+            path = null; // for repository permissions null needs to be used
+        }
 
         final JackrabbitAccessControlList acl = AccessControlUtils.getModifiableAcl(accessControlManager, path);
         if (acl == null) {
@@ -203,16 +181,19 @@ public class AccessControlUtils {
             String principalNameInCurrentAce = jace.getPrincipal().getName();
             if (ArrayUtils.contains(principalNames, principalNameInCurrentAce)) {
                 acl.removeAccessControlEntry(jace);
-                // bind new policy
-                if (!acl.isEmpty()) {
-                    accessControlManager.setPolicy(path, acl);
-                } else {
-                    accessControlManager.removePolicy(path, acl);
-                }
-
                 countRemoved++;
             }
         }
+
+        if (countRemoved > 0) {
+            // bind new policy
+            if (!acl.isEmpty()) {
+                accessControlManager.setPolicy(path, acl);
+            } else {
+                accessControlManager.removePolicy(path, acl);
+            }
+        }
+
         return countRemoved;
     }
 

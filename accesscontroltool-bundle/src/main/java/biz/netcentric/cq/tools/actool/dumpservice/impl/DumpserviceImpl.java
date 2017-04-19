@@ -391,7 +391,7 @@ public class DumpserviceImpl implements Dumpservice {
         // paths of jcr:root node
         for (Node node : resultNodeSet) {
             try {
-                String path = !"rep:repoPolicy".equals(node.getName())
+                String path = !Constants.REPO_POLICY_NODE.equals(node.getName())
                         ? node.getParent().getPath()
                         : null /*  repo policies are accessed by using a null path */;
 

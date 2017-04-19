@@ -596,16 +596,14 @@ public class AceServiceImpl implements AceService {
             session = repository.loginService(Constants.USER_AC_SERVICE, null);
 
             Set<String> authorizabesFromConfigurations = getAllAuthorizablesFromConfig(session);
-            message = purgeAuthorizables(authorizabesFromConfigurations,
-                    session);
+            message = purgeAuthorizables(authorizabesFromConfigurations, session);
             AcInstallationHistoryPojo history = new AcInstallationHistoryPojo();
             history.addMessage(LOG, "purge method: purgAuthorizablesFromConfig()");
             history.addMessage(LOG, message);
             acHistoryService.persistAcePurgeHistory(history);
-        } catch (RepositoryException e) {
-            LOG.error("RepositoryException: ", e);
         } catch (Exception e) {
-            LOG.error("Exception: ", e);
+            message = "Exception while purging all authorizable from config: " + e;
+            LOG.error(message, e);
         } finally {
             if (session != null) {
                 session.logout();

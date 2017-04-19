@@ -10,8 +10,6 @@ package biz.netcentric.cq.tools.actool.aceservicejmx.impl;
 
 import java.util.Set;
 
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.management.NotCompliantMBeanException;
 
 import org.apache.commons.lang.StringUtils;
@@ -30,7 +28,6 @@ import com.adobe.granite.jmx.annotation.AnnotatedStandardMBean;
 import biz.netcentric.cq.tools.actool.aceservice.AceService;
 import biz.netcentric.cq.tools.actool.aceservicejmx.AceServiceMBean;
 import biz.netcentric.cq.tools.actool.dumpservice.Dumpservice;
-import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
 
 @Service

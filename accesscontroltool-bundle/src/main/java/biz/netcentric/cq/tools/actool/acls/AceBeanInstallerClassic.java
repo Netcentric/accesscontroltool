@@ -36,8 +36,8 @@ import org.slf4j.LoggerFactory;
 
 import com.day.cq.security.util.CqActions;
 
+import biz.netcentric.cq.tools.actool.authorizableutils.impl.PrincipalImpl;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
-import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.RestrictionsHolder;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
@@ -67,17 +67,9 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
 
             LOG.debug("Writing bean to repository {}", bean);
 
-            final Principal currentPrincipal = AcHelper.getPrincipal(session, bean);
+            Principal currentPrincipal = new PrincipalImpl(bean.getPrincipalName());
+            installAce(bean, session, currentPrincipal, history);
 
-            if (currentPrincipal == null) {
-                history.addError(LOG, "Could not find definition for authorizable "
-                        + bean.getPrincipalName() + " in groups config while installing ACE for: "
-                        + bean.getJcrPath() + "! Skipped installation of ACEs for this authorizable!\n");
-                continue;
-
-            } else {
-                installAce(bean, session, currentPrincipal, history);
-            }
         }
 
         history.incCountAclsChanged();
