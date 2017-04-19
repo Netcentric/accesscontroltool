@@ -8,19 +8,16 @@
  */
 package biz.netcentric.cq.tools.actool.authorizableutils;
 
-import java.util.Map;
-import java.util.Set;
-
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 public interface AuthorizableCreatorService {
 
     public void createNewAuthorizables(
-            Map<String, Set<AuthorizableConfigBean>> principalMapFromConfig,
+            AuthorizablesConfig principalMapFromConfig,
             final Session session, AcInstallationHistoryPojo status) throws RepositoryException, AuthorizableCreatorException;
 
 }

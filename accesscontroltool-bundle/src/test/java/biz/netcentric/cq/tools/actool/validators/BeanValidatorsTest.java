@@ -86,8 +86,7 @@ public class BeanValidatorsTest {
         final List<LinkedHashMap> yamlList = ValidatorTestHelper.getYamlList("testconfig.yaml");
         final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl("/home/groups", "/home/users");
         authorizableValidator.disable();
-        groupsFromConfig = yamlConfigReader.getGroupConfigurationBeans(
-                yamlList, authorizableValidator).keySet();
+        groupsFromConfig = yamlConfigReader.getGroupConfigurationBeans(yamlList, authorizableValidator).getAuthorizableIds();
 
         ValidatorTestHelper.createAuthorizableTestBeans(yamlList, yamlConfigReader, authorizableBeanList);
         ValidatorTestHelper.createAceTestBeans(yamlList, yamlConfigReader, groupsFromConfig, aceBeanList, session);

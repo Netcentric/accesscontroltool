@@ -91,7 +91,7 @@ public class RestrictionValidationTest {
         final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl("/home/groups", "/home/users");
         authorizableValidator.disable();
         groupsFromConfig = yamlConfigReader.getGroupConfigurationBeans(
-                yamlList, authorizableValidator).keySet();
+                yamlList, authorizableValidator).getAuthorizableIds();
         ValidatorTestHelper.createAuthorizableTestBeans(yamlList, yamlConfigReader, authorizableBeanList);
         ValidatorTestHelper.createAceTestBeans(yamlList, yamlConfigReader, groupsFromConfig, aceBeanList, session);
     }

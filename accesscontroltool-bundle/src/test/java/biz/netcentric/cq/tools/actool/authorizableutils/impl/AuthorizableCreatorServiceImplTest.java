@@ -119,14 +119,14 @@ public class AuthorizableCreatorServiceImplTest {
 
         globalConfiguration.setKeepExistingMembershipsForGroupNamesRegEx("external.*");
 
-        // just return the value as passed in as third argument
+        // just return the value as passed in as fourth argument
         doAnswer(new Answer<Set<String>>() {
             public Set<String> answer(InvocationOnMock invocation) throws Throwable {
-                return (Set<String>) invocation.getArguments()[2];
+                return (Set<String>) invocation.getArguments()[3];
             }
-        }).when(cut).validateAssignedGroups(userManager, TESTGROUP, configuredGroups);
+        }).when(cut).validateAssignedGroups(userManager, null, TESTGROUP, configuredGroups, status);
 
-        cut.applyGroupMembershipConfigIsMemberOf(TESTGROUP, status, userManager, configuredGroups, groupsInRepo);
+        cut.applyGroupMembershipConfigIsMemberOf(TESTGROUP, status, userManager, null, configuredGroups, groupsInRepo);
         
         verifyZeroInteractions(group2); // in configuredGroups and in groupsInRepo
         verifyZeroInteractions(externalGroup); // matches external.* and hence must not be removed (even though it is not in the
@@ -148,7 +148,7 @@ public class AuthorizableCreatorServiceImplTest {
         history.getAcConfiguration().setGlobalConfiguration(new GlobalConfiguration());
 
         AuthorizableConfigBean authorizableConfigBean = new AuthorizableConfigBean();
-        authorizableConfigBean.setPrincipalID(TESTGROUP);
+        authorizableConfigBean.setAuthorizableId(TESTGROUP);
 
         Set<String> authorizablesInConfig = new HashSet<String>(asList(GROUP1));
 

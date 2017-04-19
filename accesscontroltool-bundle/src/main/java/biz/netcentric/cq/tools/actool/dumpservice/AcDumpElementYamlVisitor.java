@@ -39,7 +39,7 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
     @Override
     public void visit(final AuthorizableConfigBean authorizableConfigBean) {
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_KEY))
-                .append("- " + authorizableConfigBean.getPrincipalID() + ":")
+                .append("- " + authorizableConfigBean.getAuthorizableId() + ":")
                 .append("\n");
         sb.append("\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_FIRST_PROPERTY))

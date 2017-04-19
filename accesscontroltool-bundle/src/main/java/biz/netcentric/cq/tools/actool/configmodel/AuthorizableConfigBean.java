@@ -19,7 +19,7 @@ import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementVisitor;
 
 public class AuthorizableConfigBean implements AcDumpElement {
 
-    private String principalID; // this should really be called authorizableId (as it is in repo)
+    private String authorizableId;
     private String principalName;
 
     private String name; // (non-technical) name as used in profile
@@ -44,12 +44,12 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private boolean isGroup = true;
     private boolean isSystemUser = false;
 
-    public String getPrincipalID() {
-        return principalID;
+    public String getAuthorizableId() {
+        return authorizableId;
     }
 
-    public void setPrincipalID(final String principalID) {
-        this.principalID = principalID;
+    public void setAuthorizableId(final String authorizableId) {
+        this.authorizableId = authorizableId;
     }
 
     public String getPrincipalName() {
@@ -231,7 +231,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        sb.append("\n" + "id: " + principalID + "\n");
+        sb.append("\n" + "id: " + authorizableId + "\n");
         sb.append("name: " + principalName + "\n");
         sb.append("path: " + path + "\n");
         sb.append("isMemberOf: " + getMemberOfString() + "\n");

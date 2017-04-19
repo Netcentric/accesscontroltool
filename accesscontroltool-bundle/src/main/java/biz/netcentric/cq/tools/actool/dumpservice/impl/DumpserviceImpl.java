@@ -564,7 +564,7 @@ public class DumpserviceImpl implements Dumpservice {
             outStream
                     .println(AcHelper
                             .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_KEY)
-                            + "- " + bean.getPrincipalID() + ":");
+                            + "- " + bean.getAuthorizableId() + ":");
             outStream.println();
             outStream
                     .println(AcHelper
@@ -600,7 +600,7 @@ public class DumpserviceImpl implements Dumpservice {
         if (!usersFromACEs.isEmpty()) {
             for (User user : usersFromACEs) {
                 AuthorizableConfigBean newBean = new AuthorizableConfigBean();
-                newBean.setPrincipalID(user.getID());
+                newBean.setAuthorizableId(user.getID());
 
                 String userProfileName = AcHelper.valuesToString(user.getProperty("profile/givenName"))
                         + " " + AcHelper.valuesToString(user.getProperty("profile/familyName"));
@@ -648,7 +648,7 @@ public class DumpserviceImpl implements Dumpservice {
             Group group = (Group) result.next();
             if (group != null) {
                 AuthorizableConfigBean bean = new AuthorizableConfigBean();
-                bean.setPrincipalID(group.getID());
+                bean.setAuthorizableId(group.getID());
 
                 String groupName = StringUtils.defaultIfEmpty(AcHelper.valuesToString(group.getProperty("profile/givenName")),
                         group.getID());

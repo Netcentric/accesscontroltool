@@ -46,7 +46,9 @@ import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorExcep
 import biz.netcentric.cq.tools.actool.authorizableutils.AuthorizableCreatorService;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetriever;
 import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
 import biz.netcentric.cq.tools.actool.configreader.ConfigurationMerger;
@@ -229,13 +231,13 @@ public class AceServiceImpl implements AceService {
     }
 
     private void removeAcesForPathsNotInConfig(AcInstallationHistoryPojo history, Session session, Set<String> principalsInConfig,
-            Map<String, Set<AceBean>> repositoryDumpAceMap, Set<String> acePathsFromConfig)
+            Map<String, Set<AceBean>> repositoryDumpAceMap, AcesConfig aceBeansFromConfig)
             throws UnsupportedRepositoryOperationException, RepositoryException {
 
         int countAcesCleaned = 0;
         int countPathsCleaned = 0;
         Set<String> relevantPathsForCleanup = getRelevantPathsForAceCleanup(principalsInConfig, repositoryDumpAceMap,
-                acePathsFromConfig);
+                aceBeansFromConfig);
 
         for (String relevantPath : relevantPathsForCleanup) {
             // delete ACE if principal *is* in config, but the path *is not* in config
@@ -259,7 +261,7 @@ public class AceServiceImpl implements AceService {
     }
 
     private Set<String> getRelevantPathsForAceCleanup(Set<String> authorizablesInConfig, Map<String, Set<AceBean>> repositoryDumpAceMap,
-            Set<String> acePathsFromConfig) {
+            AcesConfig aceBeansFromConfig) {
         // loop through all ACLs found in the repository
         Set<String> relevantPathsForCleanup = new HashSet<String>();
         for (Map.Entry<String, Set<AceBean>> entry : repositoryDumpAceMap.entrySet()) {
@@ -268,8 +270,8 @@ public class AceServiceImpl implements AceService {
                 String jcrPath = existingAceFromDump.getJcrPath();
                 String principalName = existingAceFromDump.getPrincipalName();
 
-                if (acePathsFromConfig.contains(jcrPath)) {
-                    LOG.debug("Path {} is explicitly listed in config and hence that ACL is handled later, "
+                if (aceBeansFromConfig.containsPath(jcrPath)) {
+                    LOG.trace("Path {} is explicitly listed in config and hence that ACL is handled later, "
                             + "not preceding cleanup needed here", jcrPath);
                     continue;
                 }
@@ -285,15 +287,6 @@ public class AceServiceImpl implements AceService {
         return relevantPathsForCleanup;
     }
 
-    private Set<String> collectJcrPaths(Set<AceBean> aceBeansFromConfig) {
-        Set<String> jcrPathsInAceConfig = new HashSet<String>();
-        for (AceBean aceBean : aceBeansFromConfig) {
-            String path = aceBean.getJcrPath();
-            jcrPathsInAceConfig.add(path);
-        }
-        return jcrPathsInAceConfig;
-    }
-
     boolean isRelevantPath(String path, String[] restrictedToPaths) {
         if (restrictedToPaths == null || restrictedToPaths.length == 0) {
             return true;
@@ -307,58 +300,61 @@ public class AceServiceImpl implements AceService {
         return isRelevant;
     }
 
-    private Set<String> getPrincipalNamesToRemoveAcesFor(Map<String, Set<AuthorizableConfigBean>> authorizablesMapfromConfig) {
-        Set<String> principalsToRemoveAcesFor = collectPrincipals(authorizablesMapfromConfig);
-        Set<String> principalsToBeMigrated = collectPrincipalsToBeMigrated(authorizablesMapfromConfig);
+
+
+    private Set<String> getPrincipalNamesToRemoveAcesFor(AuthorizablesConfig authorizablesBeansfromConfig) {
+        Set<String> principalsToRemoveAcesFor = authorizablesBeansfromConfig.getPrincipalNames();
+        Set<String> principalsToBeMigrated = collectPrincipalsToBeMigrated(authorizablesBeansfromConfig);
+
         Collection<?> invalidPrincipalsInConfig = CollectionUtils.intersection(principalsToRemoveAcesFor, principalsToBeMigrated);
         if (!invalidPrincipalsInConfig.isEmpty()) {
-            String message = "If migrateFrom feature is used, groups that shall be migrated from must not be present in regular configuration (offending groups: "
-                    + invalidPrincipalsInConfig + ")";
-            LOG.error(message);
-            throw new IllegalArgumentException(message);
+            throw new IllegalArgumentException(
+                    "If migrateFrom feature is used, groups that shall be migrated from must not be present in regular configuration (offending groups: "
+                            + invalidPrincipalsInConfig + ")");
         }
+
         principalsToRemoveAcesFor.addAll(principalsToBeMigrated);
         return principalsToRemoveAcesFor;
     }
 
-    private Set<String> collectPrincipalsToBeMigrated(Map<String, Set<AuthorizableConfigBean>> authorizablesMapfromConfig) {
-        Set<String> principalsToBeMigrated = new HashSet<String>();
-        for (String principalStr : authorizablesMapfromConfig.keySet()) {
-            Set<AuthorizableConfigBean> authorizableConfigBeans = authorizablesMapfromConfig.get(principalStr);
-            for (AuthorizableConfigBean authorizableConfigBean : authorizableConfigBeans) {
-                String migrateFrom = authorizableConfigBean.getMigrateFrom();
-                if (StringUtils.isNotBlank(migrateFrom)) {
+    Set<String> collectPrincipalsToBeMigrated(AuthorizablesConfig authorizablesBeansfromConfig) {
+        Set<String> principalsToBeMigrated = new LinkedHashSet<String>();
+        for (AuthorizableConfigBean authorizableConfigBean : authorizablesBeansfromConfig) {
+            String migrateFrom = authorizableConfigBean.getMigrateFrom();
+            if (StringUtils.isNotBlank(migrateFrom)) {
+
+                if (StringUtils.equals(authorizableConfigBean.getPrincipalName(), authorizableConfigBean.getAuthorizableId())) {
+                    // standard case principalName=authorizableId, we can use the migrateFrom property directly
                     principalsToBeMigrated.add(migrateFrom);
+                } else {
+                    // external id case: try to derive the correct principal name
+                    String newPrincipalName = authorizableConfigBean.getPrincipalName();
+                    String oldPrincipalName = newPrincipalName.replace(authorizableConfigBean.getAuthorizableId(), migrateFrom);
+                    if (StringUtils.equals(newPrincipalName, oldPrincipalName)) {
+                        throw new IllegalStateException("Could not derive old principal name from newPrincipalName=" + newPrincipalName
+                                + " and authorizableId=" + authorizableConfigBean.getAuthorizableId() + " (oldPrincipalName="
+                                + oldPrincipalName + " is equal to new principal name)");
+                    }
+                    principalsToBeMigrated.add(oldPrincipalName);
                 }
+
             }
         }
         return principalsToBeMigrated;
-    }
-
-    private Set<String> collectPrincipals(Map<String, Set<AuthorizableConfigBean>> authorizablesMapfromConfig) {
-        Set<String> principals = new HashSet<String>();
-        for (String authorizableId : authorizablesMapfromConfig.keySet()) {
-            Set<AuthorizableConfigBean> authorizableConfigBeans = authorizablesMapfromConfig.get(authorizableId);
-            for (AuthorizableConfigBean authorizableConfigBean : authorizableConfigBeans) {
-                principals.add(authorizableConfigBean.getPrincipalName());
-            }
-        }
-        return principals;
     }
 
     private void installAces(AcInstallationHistoryPojo history,
             AcConfiguration acConfiguration, Map<String, Set<AceBean>> repositoryDumpAceMap, String[] restrictedToPaths, Session session)
             throws Exception {
 
-        Set<AceBean> aceBeansFromConfig = acConfiguration.getAceConfig();
+        AcesConfig aceBeansFromConfig = acConfiguration.getAceConfig();
 
         // --- installation of ACEs from configuration ---
         Map<String, Set<AceBean>> pathBasedAceMapFromConfig = AcHelper
                 .getPathBasedAceMap(aceBeansFromConfig, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE);
 
         Set<String> principalsToRemoveAcesFor = getPrincipalNamesToRemoveAcesFor(acConfiguration.getAuthorizablesConfig());
-        removeAcesForPathsNotInConfig(history, session, principalsToRemoveAcesFor, repositoryDumpAceMap,
-                collectJcrPaths(aceBeansFromConfig));
+        removeAcesForPathsNotInConfig(history, session, principalsToRemoveAcesFor, repositoryDumpAceMap, aceBeansFromConfig);
 
         Map<String, Set<AceBean>> filteredPathBasedAceMapFromConfig = filterForRestrictedPaths(pathBasedAceMapFromConfig,
                 restrictedToPaths, history);
@@ -417,7 +413,7 @@ public class AceServiceImpl implements AceService {
 
     private void installAuthorizables(
             AcInstallationHistoryPojo history,
-            Map<String, Set<AuthorizableConfigBean>> authorizablesMapfromConfig, Session session)
+            AuthorizablesConfig authorizablesMapfromConfig, Session session)
             throws RepositoryException, Exception {
         // --- installation of Authorizables from configuration ---
 
@@ -730,7 +726,7 @@ public class AceServiceImpl implements AceService {
         Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configuredAcConfigurationRootPath,
                 session);
         AcConfiguration acConfiguration = configurationMerger.getMergedConfigurations(newestConfigurations, history, configReader, session);
-        Set<String> allAuthorizablesFromConfig = acConfiguration.getAuthorizablesConfig().keySet();
+        Set<String> allAuthorizablesFromConfig = acConfiguration.getAuthorizablesConfig().getAuthorizableIds();
         return allAuthorizablesFromConfig;
     }
 

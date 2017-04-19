@@ -10,7 +10,6 @@ package biz.netcentric.cq.tools.actool.authorizableutils.impl;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -52,8 +51,7 @@ public class ExternalGroupCreatorServiceImpl {
             final UserManager userManager,
             final AuthorizableConfigBean authorizableConfigBean,
             AcInstallationHistoryPojo status,
-            ValueFactory vf,
-            Map<String, Set<AuthorizableConfigBean>> principalMapFromConfig, Session session)
+            Session session)
             throws AuthorizableExistsException, RepositoryException,
             AuthorizableCreatorException {
 
@@ -63,7 +61,8 @@ public class ExternalGroupCreatorServiceImpl {
 
         ExternalGroup externalGroup = new PrecreatedExternalGroup(authorizableConfigBean);
 
-        ExternalGroupPrecreatorSyncContext externalGroupPrecreatorSyncContext = new ExternalGroupPrecreatorSyncContext(userManager, vf);
+        ExternalGroupPrecreatorSyncContext externalGroupPrecreatorSyncContext = new ExternalGroupPrecreatorSyncContext(userManager,
+                session.getValueFactory());
         Group group = externalGroupPrecreatorSyncContext.createExternalGroup(externalGroup);
 
         return group;
@@ -92,7 +91,7 @@ public class ExternalGroupCreatorServiceImpl {
 
         @Override
         public String getId() {
-            return authorizableConfigBean.getPrincipalID();
+            return authorizableConfigBean.getAuthorizableId();
         }
 
         @Override
