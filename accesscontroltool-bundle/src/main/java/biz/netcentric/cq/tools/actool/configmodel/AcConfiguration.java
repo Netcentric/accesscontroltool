@@ -9,7 +9,6 @@
 package biz.netcentric.cq.tools.actool.configmodel;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /** Root class of the configuration model as it is constructed from the multiple yaml files, it is a fully merged configuration. All loops
@@ -18,11 +17,11 @@ public class AcConfiguration {
 
     private GlobalConfiguration globalConfiguration;
 
-    // to be changed from map to PojoClass in future versions
-    private Map<String, Set<AuthorizableConfigBean>> authorizablesMap;
+    // Authorizables configuration beans in order as they appear in configuration
+    private AuthorizablesConfig authorizablesConfig;
 
-    // to be changed from map to PojoClass in future versions
-    private Map<String, Set<AceBean>> aceMap;
+    // ACE configuration beans in order as they appear in configuration
+    private AcesConfig aceBeansConfig;
 
     private Set<String> obsoleteAuthorizables = new HashSet<String>();
 
@@ -34,20 +33,20 @@ public class AcConfiguration {
         this.globalConfiguration = globalConfiguration;
     }
 
-    public Map<String, Set<AuthorizableConfigBean>> getAuthorizablesConfig() {
-        return authorizablesMap;
+    public AuthorizablesConfig getAuthorizablesConfig() {
+        return authorizablesConfig;
     }
 
-    public void setAuthorizablesConfig(Map<String, Set<AuthorizableConfigBean>> authorizablesMap) {
-        this.authorizablesMap = authorizablesMap;
+    public void setAuthorizablesConfig(AuthorizablesConfig authorizablesSet) {
+        this.authorizablesConfig = authorizablesSet;
     }
 
-    public Map<String, Set<AceBean>> getAceConfig() {
-        return aceMap;
+    public AcesConfig getAceConfig() {
+        return aceBeansConfig;
     }
 
-    public void setAceConfig(Map<String, Set<AceBean>> aceMap) {
-        this.aceMap = aceMap;
+    public void setAceConfig(AcesConfig aceBeansSet) {
+        this.aceBeansConfig = aceBeansSet;
     }
 
     public Set<String> getObsoleteAuthorizables() {

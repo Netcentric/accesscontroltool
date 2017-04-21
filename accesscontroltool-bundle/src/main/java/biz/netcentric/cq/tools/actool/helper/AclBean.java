@@ -18,6 +18,7 @@ import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.security.AccessControlEntry;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 
 public class AclBean implements Comparable<AclBean> {
@@ -95,7 +96,9 @@ public class AclBean implements Comparable<AclBean> {
         if (o == null) {
             return -1;
         }
-        return Collator.getInstance().compare(getParentPath(), o.getParentPath());
+        String comparePath1 = StringUtils.defaultIfEmpty(getParentPath(), "");
+        String comparePath2 = StringUtils.defaultIfEmpty(o.getParentPath(), "");
+        return Collator.getInstance().compare(comparePath1, comparePath2);
 
     }
 

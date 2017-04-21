@@ -22,12 +22,12 @@ public class CompleteAcDump implements AcDumpElement {
     private Set<AuthorizableConfigBean> userSet;
     private String dumpComment;
 
-    private Dumpservice dumpservice;
+    private ConfigDumpService dumpservice;
 
     public CompleteAcDump(AceDumpData aceDumpData,
             final Set<AuthorizableConfigBean> groupSet,
             final Set<AuthorizableConfigBean> userSet, final int mapOrder,
-            final String dumpComment, Dumpservice dumpservice) {
+            final String dumpComment, ConfigDumpService dumpservice) {
         this.aceDumpData = aceDumpData;
         this.groupSet = groupSet;
         this.userSet = userSet;
@@ -85,7 +85,6 @@ public class CompleteAcDump implements AcDumpElement {
             acDumpElementVisitor.visit(new MapKey(mapKey));
 
             for (AceBean aceBean : aceBeanSet) {
-                // aceBean = CqActionsMapping.getAlignedPermissionBean(aceBean);
                 aceBean.accept(acDumpElementVisitor);
             }
         }

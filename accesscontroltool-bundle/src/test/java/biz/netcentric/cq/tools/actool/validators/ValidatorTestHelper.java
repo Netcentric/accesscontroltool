@@ -13,8 +13,6 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
@@ -43,18 +41,13 @@ public class ValidatorTestHelper {
             throws AcConfigBeanValidationException {
         final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl("/home/groups", "/home/users");
         authorizableValidator.disable();
-        final Map<String, Set<AuthorizableConfigBean>> groupsMap = yamlConfigReader
+        final Set<AuthorizableConfigBean> groupsSet = yamlConfigReader
                 .getGroupConfigurationBeans(yamlList, authorizableValidator);
-        final Map<String, Set<AuthorizableConfigBean>> usersMap = yamlConfigReader
+        final Set<AuthorizableConfigBean> usersSet = yamlConfigReader
                 .getUserConfigurationBeans(yamlList, authorizableValidator);
-        for (final Entry<String, Set<AuthorizableConfigBean>> authorizableEntrySet : groupsMap
-                .entrySet()) {
-            authorizableBeanList.addAll(authorizableEntrySet.getValue());
-        }
-        for (final Entry<String, Set<AuthorizableConfigBean>> authorizableEntrySet : usersMap
-                .entrySet()) {
-            authorizableBeanList.addAll(authorizableEntrySet.getValue());
-        }
+        authorizableBeanList.addAll(groupsSet);
+        authorizableBeanList.addAll(usersSet);
+
     }
 
     static String getTestConfigAsString(final String resourceName)
@@ -72,11 +65,10 @@ public class ValidatorTestHelper {
             List<AceBean> aceBeanList, Session session)
             throws RepositoryException, AcConfigBeanValidationException {
 
-        final Map<String, Set<AceBean>> aceMap = yamlConfigReader
-                .getAceConfigurationBeans(yamlList, groupsFromConfig, null, session);
+        final Set<AceBean> aceBeans = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session);
 
-        for (final Entry<String, Set<AceBean>> aceMapEntrySet : aceMap.entrySet()) {
-            aceBeanList.addAll(aceMapEntrySet.getValue());
+        for (AceBean bean : aceBeans) {
+            aceBeanList.add(bean);
         }
     }
 

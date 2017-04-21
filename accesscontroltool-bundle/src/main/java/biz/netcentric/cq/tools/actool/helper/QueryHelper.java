@@ -8,7 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.helper;
 
-import static biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo.msHumanReadable;
+import static biz.netcentric.cq.tools.actool.history.AcInstallationLog.msHumanReadable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -40,9 +40,6 @@ import org.slf4j.LoggerFactory;
 public class QueryHelper {
 
     public static final Logger LOG = LoggerFactory.getLogger(QueryHelper.class);
-
-    private static final String NT_REP_USER = "rep:User";
-    private static final String NT_REP_GROUP = "rep:Group";
 
     /** Method that returns a set containing all rep:policy nodes from repository excluding those contained in paths which are excluded from
      * search
@@ -85,10 +82,15 @@ public class QueryHelper {
             if (session.nodeExists("/rep:policy")) {
                 nodes.add(session.getNode("/rep:policy"));
             }
+            if (session.nodeExists("/" + Constants.REPO_POLICY_NODE)) {
+                nodes.add(session.getNode("/" + Constants.REPO_POLICY_NODE));
+            }
+
             // get the rep:policy node of "/home", if existing
             if (session.nodeExists("/home/rep:policy")) {
                 nodes.add(session.getNode("/home/rep:policy"));
             }
+
             for (String path : paths) {
                 String query = "SELECT * FROM [rep:ACL] WHERE ISDESCENDANTNODE([" + path + "])";
                 nodes.addAll(QueryHelper.getNodes(session, query, Query.JCR_SQL2));
@@ -131,35 +133,6 @@ public class QueryHelper {
             nodes.add(node);
         }
         return nodes;
-    }
-
-    public static Set<String> getUsersFromHome(final Session session)
-            throws InvalidQueryException, RepositoryException {
-        Set<String> users = getPrincipalsFromHome(session, NT_REP_USER);
-        return users;
-    }
-
-    public static Set<String> getGroupsFromHome(final Session session)
-            throws InvalidQueryException, RepositoryException {
-        Set<String> groups = getPrincipalsFromHome(session, NT_REP_GROUP);
-        return groups;
-    }
-
-    private static Set<String> getPrincipalsFromHome(final Session session, String principalNodeType)
-            throws InvalidQueryException, RepositoryException {
-        Set<String> principals = new TreeSet<String>();
-        String queryStringPrincipals = "SELECT * FROM [" + principalNodeType + "]";
-        Query queryPrincipals = session.getWorkspace().getQueryManager()
-                .createQuery(queryStringPrincipals, Query.JCR_SQL2);
-        QueryResult queryResultPrincipals = queryPrincipals.execute();
-        NodeIterator nitPrincipals = queryResultPrincipals.getNodes();
-
-        while (nitPrincipals.hasNext()) {
-            Node node = nitPrincipals.nextNode();
-            String tmp = node.getProperty("rep:principalName").getString();
-            principals.add(tmp);
-        }
-        return principals;
     }
 
     public static Set<AclBean> getAuthorizablesAcls(final Session session,
@@ -207,7 +180,20 @@ public class QueryHelper {
         for (Node allowOrDenyNode : nodeSet) {
             String principalId = allowOrDenyNode.getProperty("rep:principalName").getValue().getString();
             principalIdsToBeFilled.add(principalId);
-            String aclEffectiveOnPath = allowOrDenyNode.getParent().getParent().getPath();
+            Node aclNode = allowOrDenyNode.getParent();
+            String aclEffectiveOnPath;
+            String jcrPathAcl;
+
+            if (!Constants.REPO_POLICY_NODE.equals(aclNode.getName())) {
+                // default
+                aclEffectiveOnPath = aclNode.getParent().getPath();
+                jcrPathAcl = aclNode.getPath();
+            } else {
+                // repo policy
+                aclEffectiveOnPath = null;
+                jcrPathAcl = "/" + Constants.REPO_POLICY_NODE;
+            }
+
             acl = (AccessControlList) aMgr.getPolicies(aclEffectiveOnPath)[0];
             if (acl == null) {
                 LOG.warn("Path " + aclEffectiveOnPath + " unexpectedly does not have a ACL");
@@ -216,7 +202,7 @@ public class QueryHelper {
             AclBean aclBean = new AclBean();
             aclBean.setParentPath(aclEffectiveOnPath);
             aclBean.setAcl((JackrabbitAccessControlList) acl);
-            aclBean.setJcrPath(allowOrDenyNode.getParent().getPath());
+            aclBean.setJcrPath(jcrPathAcl);
             aclSet.add(aclBean);
         }
         return aclSet;

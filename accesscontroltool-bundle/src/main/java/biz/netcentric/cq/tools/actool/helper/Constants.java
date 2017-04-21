@@ -38,4 +38,6 @@ public class Constants {
     public static final String GROUPS_ROOT = "/home/groups";
     public static final String USERS_ROOT = "/home/users";
 
+    public static final String REPO_POLICY_NODE = "rep:repoPolicy";
+
 }

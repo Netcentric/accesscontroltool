@@ -8,7 +8,6 @@
  */
 package biz.netcentric.cq.tools.actool.validators;
 
-import java.util.Map;
 import java.util.Set;
 
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
@@ -43,14 +42,13 @@ public interface ConfigurationsValidator {
 
     /** Checks that no duplicate initialContent property is set
      * 
-     * @param history */
-    public abstract void validateInitialContentForNoDuplicates(
-            Map<String, Set<AceBean>> mergedAceMapFromConfig) throws IllegalArgumentException;
+     * @param aceMapFromAllConfigs */
+    public abstract void validateInitialContentForNoDuplicates(Set<AceBean> aceMapFromAllConfigs) throws IllegalArgumentException;
 
     /** Checks that keepOrder=true must be specified in one file for one given path (to ensure the natural order for an ACL can not span
      * multiple files, include order of multiple files may vary) */
-    public abstract void validateKeepOrder(Map<String, Set<AceBean>> aceMapFromAllConfigs,
-            Map<String, Set<AceBean>> aceMapFromCurrentConfig,
+    public abstract void validateKeepOrder(Set<AceBean> aceMapFromAllConfigs,
+            Set<AceBean> aceBeansFromCurrentConfig,
             String sourceFile);
 
 }

@@ -59,6 +59,9 @@ public class BeanValidatorsTest {
     @Mock
     AccessControlManager accessControlManager;
 
+    @Mock
+    AuthorizableValidator authorizableValidator;
+
     @InjectMocks
     ConfigReader yamlConfigReader = new TestYamlConfigReader();
 
@@ -86,8 +89,7 @@ public class BeanValidatorsTest {
         final List<LinkedHashMap> yamlList = ValidatorTestHelper.getYamlList("testconfig.yaml");
         final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl("/home/groups", "/home/users");
         authorizableValidator.disable();
-        groupsFromConfig = yamlConfigReader.getGroupConfigurationBeans(
-                yamlList, authorizableValidator).keySet();
+        groupsFromConfig = yamlConfigReader.getGroupConfigurationBeans(yamlList, authorizableValidator).getAuthorizableIds();
 
         ValidatorTestHelper.createAuthorizableTestBeans(yamlList, yamlConfigReader, authorizableBeanList);
         ValidatorTestHelper.createAceTestBeans(yamlList, yamlConfigReader, groupsFromConfig, aceBeanList, session);
@@ -106,8 +108,7 @@ public class BeanValidatorsTest {
 
     @Test
     public void testAceBeans() {
-        final AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(
-                groupsFromConfig);
+        final AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(groupsFromConfig);
         for (final AceBean aceBean : aceBeanList) {
             assertEquals("Problem in bean " + aceBean, ((TestAceBean) aceBean).getAssertedExceptionString(),
                     ValidatorTestHelper.getSimpleValidationException(aceBean, aceBeanValidator,
