@@ -20,14 +20,20 @@ Also important status messages are shown here:
     
 ## Operations
 
-### execute()
+### apply()
 
-This will install the configuration files listed on top respecting the [run mode semantics](Configuration.md).    
+This will apply the configuration files listed on top respecting the [run mode semantics](Configuration.md).    
 Before installing a new configuration on an instance a validation of the data stored in the configuration file takes place. In case an issue gets detected the installation does not get performed.
 
 The path of the config files is configured in OSGi - AC Installation Service.
 
 <img src="images/installation-service.png">
+
+### apply(configurationRootPath), applyRestrictedToPaths(paths), applyRestrictedToPaths(configurationRootPath, paths)
+
+Special variants of apply: The parameter `configurationRootPath` allows to provide an alternative configuration location (other from the default as configured in OSGi - AC Installation Service). The parameter  `paths` (comma separated list of paths) allows to restrict the 
+locations where the ACEs are applied (the installation of authorizables in /home are not affected by this). For instance it is possible 
+to provide the `path` `/content/myproj` which will only change ACEs at that location (and not at other paths like e.g. `/etc` even if those are contained in the configuration).
 
 ###  groupBasedDump() and pathBasedDump()
 
@@ -56,7 +62,7 @@ Method | Action
 purgeACL | This method purges the access control list of a (single) node in repository. The node path is entered as parameter before invocation.
 purgeACLs | This method purges the access control list of a node and also the access control lists of all child nodes. The node path is entered as parameter before invocation.
 purgeAuthorizables | This method purges authorizables from home and also deletes all corresponding ACEs from the repository. Several authorizables are entered as comma separated list before invocation.
-purgeAllAuthorizablesFromConfigurations | This method purges all authorizables defined in all configurations files and all their corresponding ACEs from the repository.
+purgeAllAuthorizablesFromConfiguration | This method purges all authorizables defined in all configurations files and all their corresponding ACEs from the repository.
 
 For any of these purge actions a separate purge history (node) containing all logging statements gets persisted in CRX in order to be able to track every of those actions afterwards. Such a purge history node gets saved under the history node of the current ac installation in place. Any of these purge nodes has a timestamp as suffix in the node name.
 
