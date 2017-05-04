@@ -34,9 +34,11 @@ import javax.jcr.security.Privilege;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
+import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,12 +48,15 @@ import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
-import biz.netcentric.cq.tools.actool.helper.SessionUtil;
+import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
 
 @Service
 @Component
 public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements AceBeanInstaller {
+
+    @Reference
+    private SlingRepository slingRepository;
 
     private static final Logger LOG = LoggerFactory.getLogger(AceBeanInstallerIncremental.class);
 
@@ -247,14 +252,14 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
             installLog.incCountActionCacheMiss();
 
             Set<AceBean> aceBeansForActionEntry = null;
-            Session clonedSession = null;
+            Session newSession = null;
             try {
-                // the clone is needed to ensure no pending changes are introduced (even if there would not be real pending changes
+                // a new session is needed to ensure no pending changes are introduced (even if there would not be real pending changes
                 // since we add and remove, but session.hasPendingChanges() is true then)
-                clonedSession = SessionUtil.cloneSession(session);
-                aceBeansForActionEntry = getPrincipalAceBeansForActionAceBean(origAceBean, clonedSession);
+                newSession = slingRepository.loginService(Constants.USER_AC_SERVICE, null);
+                aceBeansForActionEntry = getPrincipalAceBeansForActionAceBean(origAceBean, newSession);
             } finally {
-                clonedSession.logout();
+                newSession.logout();
             }
 
             LOG.debug("Adding to cache: {}={}", cacheKey, aceBeansForActionEntry);
