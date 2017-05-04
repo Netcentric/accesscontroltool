@@ -22,7 +22,7 @@ The AC Tool requires Java 7 and AEM 6.1 or above (use v1.x for older versions)
 
 # Installation
 
-The package is available via [Maven](https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-package/). Install it e.g. via CRX package manager.
+The package is available from [the Maven Central repository](https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-package/). Install it e.g. via CRX package manager.
 
 ```
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
