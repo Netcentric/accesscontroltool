@@ -30,11 +30,11 @@ Examples:
 
 <img src="images/configuration-file-structure.png">
 
-Every configuration file comprises a group section where groups and their membership to other groups get defined and a ACE section where all ACEs in the repository regarding these groups get defined. These ACE definitions are again written under the respective group id. The group of an ACE definition in each configuration file has to match a group which is also defined in the same file. Groups which are contained in the isMemberOf property within a group definition have either to be defined in another configuration file or already be installed in the system on which the installation takes place.
+Every configuration file comprises a group section where groups and their membership to other groups get defined and a ACE section where all ACEs in the repository regarding these groups get defined. The principal name of an ACE definition in each configuration file has to match a group id which is also defined in the same file. Groups which are contained in the `isMemberOf` property within a group definition have either to be defined in another configuration file or already be installed in the system on which the installation takes place.
 
 ## Configuration of groups
 
-Groups are specified in the **group_config** A group record in the configuration file starts with the principal id followed by some indented data records containing properties like name/description and group membership:
+Groups are specified in the **group_config**. A group record in the configuration file starts with the group id followed by some indented data records containing properties like name/description and group membership. The groups created through the AC Tool always have a principal name equal to the given group id:
 
 property | comment | required
 --- | --- | ---
@@ -70,7 +70,7 @@ The property 'migrateFrom' allows to migrate a group name without loosing their 
 
 In general it is best practice to not generate regular users by the AC Tool but use other mechanism (e.g. LDAP) to create users. However, it can be useful to create system users (e.g. for replication agents or OSGi service authentiation) or test users on staging environments.
 
-Users can be configured in the same way as groups in the **user_config** section.
+Users can be configured in the same way as groups in the **user_config** section. A user record in the configuration file starts with the user id followed by some indented data records containing properties. The users created through the AC Tool always have a principal name equal to the given user id:
 
 property | comment | required
 --- | --- | ---
@@ -108,7 +108,9 @@ Group memberships can be set on user entry or group entry or both.
 
 ## Configuration of ACEs
 
-The configurations are done per principal followed by indented settings for each ACE. This data includes
+The configurations are done per principal (given through its name) followed by indented settings for each ACE. Currently only principal names are supported which are equal to one of the created group ids.
+
+This data includes
 
 property | comment | required
 --- | --- | ---
