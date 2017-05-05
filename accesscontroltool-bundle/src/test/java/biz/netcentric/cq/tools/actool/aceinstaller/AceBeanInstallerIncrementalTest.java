@@ -37,7 +37,6 @@ import javax.jcr.Binary;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.SimpleCredentials;
 import javax.jcr.Value;
 import javax.jcr.ValueFormatException;
 import javax.jcr.security.AccessControlManager;
@@ -47,14 +46,15 @@ import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlManager;
 import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
+import org.apache.sling.jcr.api.SlingRepository;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import biz.netcentric.cq.tools.actool.aceinstaller.AceBeanInstallerIncremental;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.configreader.YamlConfigReader;
@@ -80,6 +80,7 @@ public class AceBeanInstallerIncrementalTest {
     AceBean beanWithAction2 = createTestBean(testPath, testPrincipal2, true, "", "read,create,modify,delete");
 
     @Spy
+    @InjectMocks
     AceBeanInstallerIncremental aceBeanInstallerIncremental;
 
     @Spy
@@ -93,6 +94,9 @@ public class AceBeanInstallerIncrementalTest {
 
     @Mock
     JackrabbitAccessControlManager accessControlManager;
+
+    @Mock
+    SlingRepository slingRepository;
 
     @Before
     public void setup() throws RepositoryException {
@@ -122,7 +126,7 @@ public class AceBeanInstallerIncrementalTest {
                 .privilegeFromName("jcr:read");
 
         // easier to mock than the static SessionUtil.clone()
-        doReturn(session).when(session).impersonate(any(SimpleCredentials.class));
+        doReturn(session).when(slingRepository).loginService(anyString(), anyString());
 
         doReturn(true).when(aceBeanInstallerIncremental).definesContent(testPath, session);
         doReturn(new PrincipalImpl(FAKE_PRINCIPAL_ID)).when(aceBeanInstallerIncremental).applyCqActions(any(AceBean.class), eq(session),
@@ -181,8 +185,8 @@ public class AceBeanInstallerIncrementalTest {
     public void testSimplePrivilegesAcesUnchanged() throws Exception {
 
         // make bean1 and bean
-        doReturn(new JackrabbitAccessControlEntry[] { 
-                aceBeanToAce(bean1),  aceBeanToAce(bean2),  aceBeanToAce(bean3)
+        doReturn(new JackrabbitAccessControlEntry[] {
+                aceBeanToAce(bean1), aceBeanToAce(bean2), aceBeanToAce(bean3)
         }).when(jackrabbitAccessControlList).getAccessControlEntries();
 
         aceBeanInstallerIncremental.installAcl(
