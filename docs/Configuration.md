@@ -70,7 +70,7 @@ The property 'migrateFrom' allows to migrate a group name without loosing their 
 
 In general it is best practice to not generate regular users by the AC Tool but use other mechanism (e.g. LDAP) to create users. However, it can be useful to create system users (e.g. for replication agents or OSGi service authentiation) or test users on staging environments.
 
-Users can be configured in the same way as groups in the **user_config** section. A user record in the configuration file starts with the user id followed by some indented data records containing properties. The users created through the AC Tool always have a principal name equal to the given user id:
+Users can be configured in the same way as groups in the **user_config** section. A user record in the configuration file starts with the user id followed by some indented data records containing properties. The users created through the AC Tool usually have a principal name equal to the given user id (except if externalId is provided, then the principal name is derived from that).
 
 property | comment | required
 --- | --- | ---
@@ -108,7 +108,7 @@ Group memberships can be set on user entry or group entry or both.
 
 ## Configuration of ACEs
 
-The configurations are done per principal (given through its name) followed by indented settings for each ACE. Currently only principal names are supported which are equal to one of the created group ids.
+The configurations are done per authorizableId (yaml key) followed by indented settings for each ACE. In the content ACEs, the user is referenced using its principal name, the mapping from configuration-provided authorizableId to principal name is performed by AC Tool (usually they are just equal, but when using `externalId` they differ). 
 
 This data includes
 
