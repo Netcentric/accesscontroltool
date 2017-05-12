@@ -8,6 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -34,11 +35,15 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(YamlMacroProcessorImpl.class);
 
-    private final Pattern forLoopPattern = Pattern.compile("for +(\\w+) +in +(?:\\[([,/\\s\\w\\-]+)\\]|children +of +([^\\s]+))",
+    private final Pattern forLoopPattern = Pattern.compile(
+            "for +(\\w+) +in +(?:\\[([,/\\s\\w\\-]+)\\]|children +of +([^\\s]+)|(\\$\\{[^\\}]+\\}))",
             Pattern.CASE_INSENSITIVE);
     private final Pattern ifPattern = Pattern.compile("if +(\\$\\{[^\\}]+\\})", Pattern.CASE_INSENSITIVE);
 
-    private final Pattern variableDefPattern = Pattern.compile("DEF +([a-z0-9]+)=\"([^\"]*)\"", Pattern.CASE_INSENSITIVE);
+    final Pattern variableDefPattern = Pattern.compile("DEF +([a-z0-9]+)=(?:\\[(.+)\\]|(\"?)([^\"]*)(\\3))",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final String COMMA_SEPARATED_LIST_SPLITTER = "\\s*,\\s*";
 
     YamlMacroElEvaluator elEvaluator = new YamlMacroElEvaluator();
 
@@ -62,11 +67,7 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
 
             Matcher variableDefMatcher = variableDefPattern.matcher(str);
             if (variableDefMatcher.find()) {
-                String varName = variableDefMatcher.group(1);
-                String varValue = variableDefMatcher.group(2);
-                String varValueEvaluated = elEvaluator.evaluateEl(varValue, String.class, variables);
-                variables.put(varName, varValueEvaluated);
-                return null;
+                return evaluateDefStatement(variables, variableDefMatcher);
             }
 
             String result = elEvaluator.evaluateEl(str, String.class, variables);
@@ -116,18 +117,50 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
         }
     }
 
+    private Object evaluateDefStatement(Map<String, Object> variables, Matcher variableDefMatcher) {
+        String varName = variableDefMatcher.group(1);
+        String varValueArr = variableDefMatcher.group(2);
+        String varValueStr = variableDefMatcher.group(4);
+        
+        Object varValueEvaluated;
+        if (varValueStr != null) {
+            varValueEvaluated = elEvaluator.evaluateEl(varValueStr, Object.class, variables);
+        } else if (varValueArr != null) {
+            List<Object> result = new ArrayList<Object>();
+            
+            String[] arrayVals = varValueArr.split(COMMA_SEPARATED_LIST_SPLITTER);
+            for (String arrayVal : arrayVals) {
+                Object arrayValEvaluated = elEvaluator.evaluateEl(arrayVal, Object.class, variables);
+                result.add(arrayValEvaluated);
+            }
+            varValueEvaluated = result;
+        } else {
+            throw new IllegalStateException("None of the def value types were set even though RegEx matched");
+        }
+
+        variables.put(varName, varValueEvaluated);
+        return null;
+    }
+
     private Object evaluateForStatement(Map<String, Object> variables, Object objVal, Matcher forMatcher,
             AcInstallationLog installLog, Session session) {
         String varName = StringUtils.trim(forMatcher.group(1));
         String valueOfInClause = StringUtils.trim(forMatcher.group(2));
         String pathOfChildrenOfClause = StringUtils.trim(forMatcher.group(3));
-        // allow variables in root path also
-        if (StringUtils.isNotBlank(pathOfChildrenOfClause)) {
-            pathOfChildrenOfClause = elEvaluator.evaluateEl(pathOfChildrenOfClause, String.class, variables);
-        }
+        String variableForInClause = StringUtils.trim(forMatcher.group(4));
 
-        final List<?> iterationValues = valueOfInClause != null ? Arrays.asList(valueOfInClause.split("\\s*,\\s*"))
-                : yamlMacroChildNodeObjectsProvider.getValuesForPath(pathOfChildrenOfClause, installLog, session);
+        List<?> iterationValues;
+        if(valueOfInClause != null) {
+            iterationValues = Arrays.asList(valueOfInClause.split(COMMA_SEPARATED_LIST_SPLITTER));
+        } else if(pathOfChildrenOfClause!=null) {
+            // allow variables in root path also
+            pathOfChildrenOfClause = elEvaluator.evaluateEl(pathOfChildrenOfClause, String.class, variables);
+            iterationValues = yamlMacroChildNodeObjectsProvider.getValuesForPath(pathOfChildrenOfClause, installLog, session);
+        } else if(variableForInClause!=null) {
+            iterationValues = elEvaluator.evaluateEl(variableForInClause, List.class, variables);
+        } else {
+            throw new IllegalStateException("None of the loop type variables were set even though RegEx matched");
+        }
 
         List toBeUnfoldedList = unfoldLoop(variables, objVal, varName, iterationValues, installLog, session);
 

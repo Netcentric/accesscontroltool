@@ -11,6 +11,7 @@ package biz.netcentric.cq.tools.actool.configreader;
 import static biz.netcentric.cq.tools.actool.configreader.YamlConfigReaderTest.getYamlList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -21,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -294,10 +296,58 @@ public class YamlMacroProcessorTest {
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
-        GlobalConfiguration globalConfiguration = readGlobalConfig(yamlList);
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
         assertEquals("cn=editor-group,ou=mydepart,ou=Groups,dc=comp,dc=com;IDPNAME",
                 groups.getAuthorizableConfig("aem-only-editor-group").getExternalId());
+
+    }
+
+    @Test
+    public void testLoopWithArrVariable() throws Exception {
+
+        List<LinkedHashMap> yamlList = getYamlList("test-loop-with-variable-evaluating-to-arr.yaml");
+
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+
+        AuthorizablesConfig groups = readGroupConfigs(yamlList);
+        assertEquals("Name of val1", groups.getAuthorizableConfig("content-reader-loop1-val1").getName());
+        assertEquals("Name of val2", groups.getAuthorizableConfig("content-reader-loop1-val2").getName());
+
+        assertEquals("Name of val3", groups.getAuthorizableConfig("content-reader-loop2-val3").getName());
+        assertEquals("Name of val4", groups.getAuthorizableConfig("content-reader-loop2-val4").getName());
+        assertEquals("Name of val1", groups.getAuthorizableConfig("content-reader-loop2-val1").getName());
+
+    }
+
+    @Test
+    public void testDefRegEx() throws Exception {
+
+        Matcher matcher = yamlMacroProcessor.variableDefPattern.matcher("DEF test=\"val\"");
+        
+        assertTrue(matcher.find());
+        assertEquals("test", matcher.group(1));
+        assertEquals(null, matcher.group(2));
+        assertEquals("\"", matcher.group(3));
+        assertEquals("val", matcher.group(4));
+        assertEquals("\"", matcher.group(5));
+        
+        matcher = yamlMacroProcessor.variableDefPattern.matcher("DEF test=val");
+
+        assertTrue(matcher.find());
+        assertEquals("test", matcher.group(1));
+        assertEquals(null, matcher.group(2));
+        assertEquals("", matcher.group(3));
+        assertEquals("val", matcher.group(4));
+        assertEquals("", matcher.group(5));
+
+        matcher = yamlMacroProcessor.variableDefPattern.matcher("DEF test=[val1,val2]");
+
+        assertTrue(matcher.find());
+        assertEquals("test", matcher.group(1));
+        assertEquals("val1,val2", matcher.group(2));
+        assertEquals(null, matcher.group(3));
+        assertEquals(null, matcher.group(4));
+        assertEquals(null, matcher.group(5));
 
     }
 
