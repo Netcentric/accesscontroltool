@@ -163,7 +163,7 @@ Variables can also be declared to be an array and used in a loop:
     - DEF testArr=[val1,val2]
     
     - FOR arrVal IN ${testArr}:
-``
+```
 
 ## Configure permissions for anonymous
 
