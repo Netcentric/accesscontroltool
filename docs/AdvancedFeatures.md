@@ -157,6 +157,14 @@ Sometimes it can be useful to declare variables to reuse values or to give certa
 
 DEF entries can be used inside and outside of loops and conditional entries.
 
+Variables can also be declared to be an array and used in a loop:
+
+```
+    - DEF testArr=[val1,val2]
+    
+    - FOR arrVal IN ${testArr}:
+``
+
 ## Configure permissions for anonymous
 
 Normally it is ensured by validation that a configuration's group system is self-contained - this means out-of-the-box groups like `contributor` cannot be used. For registered users in the system this approach works well since either the users are manually assigned to groups (by a user admin) or the membership relationship is maintained by LDAP or SSO extensions. For the `anonymous` user on publish that is not logged in by definition, there is no hook that allows to assign it to a group in the AC Tools configuration. Therefore as an exception, it is allowed to use the user `anonymous` in the `members` attribute of a group configuration.
