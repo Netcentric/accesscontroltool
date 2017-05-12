@@ -75,8 +75,6 @@ public class AuthorizableInstallerServiceImpl implements
         Set<String> authorizablesFromConfigurations = authorizablesConfigBeans.getAuthorizableIds();
         for (AuthorizableConfigBean authorizableConfigBean : authorizablesConfigBeans) {
 
-            installLog.addVerboseMessage(LOG, "Starting installation of authorizable bean: " + authorizableConfigBean.toString());
-
             installAuthorizableConfigurationBean(session,
                     authorizableConfigBean, installLog, authorizablesFromConfigurations);
         }
