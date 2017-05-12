@@ -9,13 +9,13 @@
 package biz.netcentric.cq.tools.actool.configreader;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 
-import biz.netcentric.cq.tools.actool.configmodel.AceBean;
-import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
@@ -23,20 +23,19 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
 
 public interface ConfigReader {
 
-    public Map<String, Set<AceBean>> getAceConfigurationBeans(
-            final Collection<?> aceConfigData, Set<String> groupsFromConfig,
-            AceBeanValidator aceBeanValidator) throws RepositoryException,
+    public AcesConfig getAceConfigurationBeans(
+            final Collection<?> aceConfigData, AceBeanValidator aceBeanValidator, Session session) throws RepositoryException,
             AcConfigBeanValidationException;
 
-    public Map<String, Set<AuthorizableConfigBean>> getGroupConfigurationBeans(
+    public AuthorizablesConfig getGroupConfigurationBeans(
             final Collection<?> groupConfigData,
             AuthorizableValidator authorizableValidator)
-                    throws AcConfigBeanValidationException;
+            throws AcConfigBeanValidationException;
 
-    public Map<String, Set<AuthorizableConfigBean>> getUserConfigurationBeans(
+    public AuthorizablesConfig getUserConfigurationBeans(
             final Collection<?> userConfigData,
             AuthorizableValidator authorizableValidator)
-                    throws AcConfigBeanValidationException;
+            throws AcConfigBeanValidationException;
 
     public GlobalConfiguration getGlobalConfiguration(final Collection yamlList);
 

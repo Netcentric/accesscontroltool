@@ -26,9 +26,9 @@ import com.day.cq.security.util.CqActions;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElement;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementVisitor;
 
-/** @author jochenkoschorke This class is used to store data of an AcessControlEntry. Objects of this class get created during the reading
- *         of the configuration file in order to set the corresponding ACEs in the system on the one hand and to store data during the
- *         reading of existing ACEs before writing the data back to a dump or configuration file again on the other hand. */
+/** This class is used to store data of an AcessControlEntry. Objects of this class get created during the reading of the configuration file
+ * in order to set the corresponding ACEs in the system on the one hand and to store data during the reading of existing ACEs before writing
+ * the data back to a dump or configuration file again on the other hand. */
 public class AceBean implements AcDumpElement {
 
     public static final Logger LOG = LoggerFactory.getLogger(AceBean.class);
@@ -57,7 +57,7 @@ public class AceBean implements AcDumpElement {
         clone.setPrincipal(principal);
         clone.setPermission(permission);
         clone.setActions(actions);
-        clone.setRestrictions(restrictions);
+        clone.setRestrictions(new ArrayList<Restriction>(restrictions));
         clone.setInitialContent(initialContent);
         clone.setKeepOrder(keepOrder);
 
@@ -88,6 +88,14 @@ public class AceBean implements AcDumpElement {
 
     public String getJcrPath() {
         return jcrPath;
+    }
+
+    public String getJcrPathForPolicyApi() {
+        if (StringUtils.isBlank(jcrPath)) {
+            return null; // repository level permission
+        } else {
+            return jcrPath;
+        }
     }
 
     public void setJcrPath(String jcrPath) {
@@ -127,6 +135,7 @@ public class AceBean implements AcDumpElement {
             }
             restrictions.add(new Restriction(RESTRICTION_NAME_GLOB, oldStyleRepGlob));
         }
+
 
     }
 
@@ -212,14 +221,13 @@ public class AceBean implements AcDumpElement {
 
     @Override
     public String toString() {
-        return "AceBean [jcrPath=" + jcrPath + "\n" + ", actionsStringFromConfig=" + actionsStringFromConfig
-                + "\n"
+        return "AceBean [jcrPath=" + jcrPath + "\n" + ", actionsStringFromConfig=" + actionsStringFromConfig + "\n"
                 + ", privilegesString=" + privilegesString + "\n" + ", principal=" + principal + "\n" + ", permission=" + permission
-                + ", actions="
-                + Arrays.toString(actions) + "\n" + "\n" + ", restrictions="
+                + "\n, actions=" + Arrays.toString(actions) + "\n" + ", restrictions="
                 + restrictions + "\n"
                 + ", initialContent=" + initialContent + "]";
     }
+
 
     @Override
     public int hashCode() {

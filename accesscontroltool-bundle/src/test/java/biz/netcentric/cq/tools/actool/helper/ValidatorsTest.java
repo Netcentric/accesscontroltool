@@ -28,9 +28,9 @@ public class ValidatorsTest {
         assertTrue(Validators.isValidAuthorizableId("Group-1"));
         assertTrue(Validators.isValidAuthorizableId("Group-99"));
         assertTrue(Validators.isValidAuthorizableId("Group..9.9"));
+        assertTrue(Validators.isValidAuthorizableId("group A"));
+        assertTrue(Validators.isValidAuthorizableId("group -A"));
 
-        assertFalse(Validators.isValidAuthorizableId("group A"));
-        assertFalse(Validators.isValidAuthorizableId("group -A"));
         assertFalse(Validators.isValidAuthorizableId("group,A"));
         assertFalse(Validators.isValidAuthorizableId("group:A"));
         assertFalse(Validators.isValidAuthorizableId("group;A"));

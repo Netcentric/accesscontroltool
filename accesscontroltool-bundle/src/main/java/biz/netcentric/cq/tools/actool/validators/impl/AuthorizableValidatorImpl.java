@@ -35,31 +35,27 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
     }
 
     @Override
-    public void validate(final AuthorizableConfigBean authorizableConfigBean)
+    public boolean validate(AuthorizableConfigBean authorizableConfigBean)
             throws AcConfigBeanValidationException {
-        this.authorizableConfigBean = authorizableConfigBean;
-        validate();
-    }
-
-    private boolean validate() throws AcConfigBeanValidationException {
+        boolean success = true;
         if (enabled) {
-            return validateAuthorizableProperties(authorizableConfigBean)
+            success = validateAuthorizableProperties(authorizableConfigBean)
                     && validateMemberOf(authorizableConfigBean)
                     && validateMembers(authorizableConfigBean)
                     && validateAuthorizableId(authorizableConfigBean)
                     && validateIntermediatePath(authorizableConfigBean);
         }
-        return true;
+        return success;
     }
 
     public boolean validateIntermediatePath(
-            final AuthorizableConfigBean tmpPrincipalConfigBean)
+            final AuthorizableConfigBean authorizableConfigBean)
                     throws InvalidAuthorizableException, InvalidIntermediatePathException {
-        boolean isGroup = tmpPrincipalConfigBean.isGroup();
-        String intermediatePath = tmpPrincipalConfigBean.getPath();
-        String currentPrincipalID = tmpPrincipalConfigBean.getPrincipalID();
+        boolean isGroup = authorizableConfigBean.isGroup();
+        String intermediatePath = authorizableConfigBean.getPath();
+        String currentAuthorizableId = authorizableConfigBean.getAuthorizableId();
         final String basicErrorMessage = "Validation error while validating intermediate path of authorizable: "
-                + currentPrincipalID;
+                + currentAuthorizableId;
         // we only care about paths starting with a slash. if there is none, the path is assumed to be relative
         if (intermediatePath.startsWith("/")) {
             if (!intermediatePath.startsWith(groupsPath) && !intermediatePath.startsWith(usersPath)) {
@@ -91,34 +87,34 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
     }
 
     public boolean validateAuthorizableProperties(
-            final AuthorizableConfigBean tmpPrincipalConfigBean)
+            final AuthorizableConfigBean authorizableConfigBean)
                     throws InvalidAuthorizableException {
 
-        if (tmpPrincipalConfigBean.isGroup()) {
-            if (StringUtils.isNotBlank(tmpPrincipalConfigBean.getPassword())) {
-                final String message = "Group " + tmpPrincipalConfigBean.getPrincipalID()
+        if (authorizableConfigBean.isGroup()) {
+            if (StringUtils.isNotBlank(authorizableConfigBean.getPassword())) {
+                final String message = "Group " + authorizableConfigBean.getAuthorizableId()
                         + " may not be configured with password";
                 LOG.error(message);
                 throw new InvalidAuthorizableException(message);
             }
         } else {
-            if (tmpPrincipalConfigBean.isSystemUser()) {
-                if (StringUtils.isNotBlank(tmpPrincipalConfigBean.getPassword())) {
-                    final String message = "System user " + tmpPrincipalConfigBean.getPrincipalID()
+            if (authorizableConfigBean.isSystemUser()) {
+                if (StringUtils.isNotBlank(authorizableConfigBean.getPassword())) {
+                    final String message = "System user " + authorizableConfigBean.getAuthorizableId()
                             + " may not be configured with password";
                     LOG.error(message);
                     throw new InvalidAuthorizableException(message);
                 }
             } else {
-                if (StringUtils.isBlank(tmpPrincipalConfigBean.getPassword())) {
-                    final String message = "Password is required for user " + tmpPrincipalConfigBean.getPrincipalID();
+                if (StringUtils.isBlank(authorizableConfigBean.getPassword())) {
+                    final String message = "Password is required for user " + authorizableConfigBean.getAuthorizableId();
                     LOG.error(message);
                     throw new InvalidAuthorizableException(message);
                 }
             }
 
-            if (StringUtils.isNotBlank(tmpPrincipalConfigBean.getMigrateFrom())) {
-                final String message = "migrateFrom can only be used with groups (found in " + tmpPrincipalConfigBean.getPrincipalID()
+            if (StringUtils.isNotBlank(authorizableConfigBean.getMigrateFrom())) {
+                final String message = "migrateFrom can only be used with groups (found in " + authorizableConfigBean.getAuthorizableId()
                         + ")";
                 LOG.error(message);
                 throw new InvalidAuthorizableException(message);
@@ -128,12 +124,11 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
         return true;
     }
 
-    @Override
     public boolean validateMemberOf(
-            final AuthorizableConfigBean tmpPrincipalConfigBean)
+            final AuthorizableConfigBean authorizableConfigBean)
                     throws InvalidGroupNameException {
-        final String currentPrincipal = tmpPrincipalConfigBean.getPrincipalID();
-        final String currentEntryValue = tmpPrincipalConfigBean
+        final String currentAuthorizable = authorizableConfigBean.getAuthorizableId();
+        final String currentEntryValue = authorizableConfigBean
                 .getMemberOfStringFromConfig();
         if (StringUtils.isNotBlank(currentEntryValue)) {
             if (currentEntryValue != null) {
@@ -148,15 +143,15 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
                     if (!Validators.isValidAuthorizableId(groups[i])) {
                         LOG.error(
                                 "Validation error while reading group property of authorizable:{}, invalid authorizable name: {}",
-                                currentPrincipal, groups[i]);
+                                currentAuthorizable, groups[i]);
                         throw new InvalidGroupNameException(
                                 "Validation error while reading group property of authorizable: "
-                                        + currentPrincipal
+                                        + currentAuthorizable
                                         + ", invalid group name: " + groups[i]);
                     }
                 }
 
-                tmpPrincipalConfigBean.setMemberOf(groups);
+                authorizableConfigBean.setMemberOf(groups);
 
             }
         }
@@ -164,10 +159,10 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
     }
 
     public boolean validateMembers(
-            final AuthorizableConfigBean tmpPrincipalConfigBean)
+            final AuthorizableConfigBean authorizableConfigBean)
                     throws InvalidGroupNameException {
-        final String currentPrincipal = tmpPrincipalConfigBean.getPrincipalID();
-        final String currentEntryValue = tmpPrincipalConfigBean
+        final String currentAuthorizable = authorizableConfigBean.getAuthorizableId();
+        final String currentEntryValue = authorizableConfigBean
                 .getMembersStringFromConfig();
         if (StringUtils.isNotBlank(currentEntryValue)) {
             if (currentEntryValue != null) {
@@ -182,29 +177,28 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
                     if (!Validators.isValidAuthorizableId(groups[i])) {
                         LOG.error(
                                 "Validation error while reading group property of authorizable:{}, invalid authorizable name: {}",
-                                currentPrincipal, groups[i]);
+                                currentAuthorizable, groups[i]);
                         throw new InvalidGroupNameException(
                                 "Validation error while reading group property of authorizable: "
-                                        + currentPrincipal
+                                        + currentAuthorizable
                                         + ", invalid group name: " + groups[i]);
                     }
                 }
 
-                tmpPrincipalConfigBean.setMembers(groups);
+                authorizableConfigBean.setMembers(groups);
 
             }
         }
         return true;
     }
 
-    @Override
     public boolean validateAuthorizableId(
-            final AuthorizableConfigBean tmpPrincipalConfigBean)
+            final AuthorizableConfigBean authorizableConfigBean)
                     throws InvalidGroupNameException {
-        final String authorizableId = tmpPrincipalConfigBean.getPrincipalID();
+        final String authorizableId = authorizableConfigBean.getAuthorizableId();
 
         if (Validators.isValidAuthorizableId(authorizableId)) {
-            tmpPrincipalConfigBean.setPrincipalID(authorizableId);
+            authorizableConfigBean.setAuthorizableId(authorizableId);
         } else {
             final String message = "Validation error while reading group data: invalid group name: "
                     + authorizableId;
@@ -215,10 +209,6 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
         return true;
     }
 
-    @Override
-    public void setBean(final AuthorizableConfigBean authorizableConfigBean) {
-        this.authorizableConfigBean = authorizableConfigBean;
-    }
 
     @Override
     public void disable() {

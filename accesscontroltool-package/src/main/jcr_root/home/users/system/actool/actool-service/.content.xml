@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:rep="internal"
+    jcr:primaryType="rep:SystemUser"
+    jcr:uuid="b34edf5e-5035-3830-b4f8-7aa847c28948"
+    rep:authorizableId="actool-service" 
+    rep:principalName ="actool-service"
+   />

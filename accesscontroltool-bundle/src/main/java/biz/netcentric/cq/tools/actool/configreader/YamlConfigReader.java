@@ -13,7 +13,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
@@ -80,8 +81,8 @@ public class YamlConfigReader implements ConfigReader {
 
     @Override
     @SuppressWarnings("rawtypes")
-    public Map<String, Set<AceBean>> getAceConfigurationBeans(final Collection<?> aceConfigData, final Set<String> groupsFromConfig,
-            final AceBeanValidator aceBeanValidator) throws RepositoryException, AcConfigBeanValidationException {
+    public AcesConfig getAceConfigurationBeans(final Collection<?> aceConfigData,
+            final AceBeanValidator aceBeanValidator, Session session) throws RepositoryException, AcConfigBeanValidationException {
 
         final List<LinkedHashMap> aclList = (List<LinkedHashMap>) getConfigSection(Constants.ACE_CONFIGURATION_KEY, aceConfigData);
 
@@ -91,13 +92,13 @@ public class YamlConfigReader implements ConfigReader {
         }
 
         // group based Map from config file
-        final Map<String, Set<AceBean>> aceMapFromConfig = getPreservedOrderdAceMap(aclList, groupsFromConfig, aceBeanValidator);
+        AcesConfig aceMapFromConfig = getPreservedOrderdAceSet(aclList, aceBeanValidator, session);
         return aceMapFromConfig;
 
     }
 
     @Override
-    public Map<String, Set<AuthorizableConfigBean>> getGroupConfigurationBeans(final Collection yamlList,
+    public AuthorizablesConfig getGroupConfigurationBeans(final Collection yamlList,
             final AuthorizableValidator authorizableValidator) throws AcConfigBeanValidationException {
 
         final List<LinkedHashMap> authorizableList = (List<LinkedHashMap>) getConfigSection(Constants.GROUP_CONFIGURATION_KEY, yamlList);
@@ -107,18 +108,18 @@ public class YamlConfigReader implements ConfigReader {
             return null;
         }
 
-        final Map<String, Set<AuthorizableConfigBean>> principalsMap = getAuthorizablesMap(authorizableList, authorizableValidator, true);
-        return principalsMap;
+        AuthorizablesConfig authorizableBeans = getAuthorizableBeans(authorizableList, authorizableValidator, true);
+        return authorizableBeans;
     }
 
     @Override
-    public Map<String, Set<AuthorizableConfigBean>> getUserConfigurationBeans(final Collection yamlList,
+    public AuthorizablesConfig getUserConfigurationBeans(final Collection yamlList,
             final AuthorizableValidator authorizableValidator) throws AcConfigBeanValidationException {
 
-        final List<LinkedHashMap> authorizableList = (List<LinkedHashMap>) getConfigSection(Constants.USER_CONFIGURATION_KEY, yamlList);
+        List<LinkedHashMap> authorizableList = (List<LinkedHashMap>) getConfigSection(Constants.USER_CONFIGURATION_KEY, yamlList);
 
-        final Map<String, Set<AuthorizableConfigBean>> principalsMap = getAuthorizablesMap(authorizableList, authorizableValidator, false);
-        return principalsMap;
+        AuthorizablesConfig authorizableBeans = getAuthorizableBeans(authorizableList, authorizableValidator, false);
+        return authorizableBeans;
     }
 
     @Override
@@ -163,122 +164,96 @@ public class YamlConfigReader implements ConfigReader {
         return null;
     }
 
-    private Map<String, Set<AuthorizableConfigBean>> getAuthorizablesMap(
+    private AuthorizablesConfig getAuthorizableBeans(
             List<LinkedHashMap> yamlMap, final AuthorizableValidator authorizableValidator, boolean isGroupSection)
             throws AcConfigBeanValidationException {
         final Set<String> alreadyProcessedGroups = new HashSet<String>();
-        final Map<String, Set<AuthorizableConfigBean>> principalMap = new LinkedHashMap<String, Set<AuthorizableConfigBean>>();
+        final AuthorizablesConfig authorizableBeans = new AuthorizablesConfig();
 
         if (yamlMap == null) {
-            return principalMap;
+            return authorizableBeans;
         }
 
         for (final LinkedHashMap currentMap : yamlMap) {
 
-            final String currentPrincipal = (String) currentMap.keySet().iterator().next();
+            final String currentAuthorizableIdFromYaml = (String) currentMap.keySet().iterator().next();
 
-            if (!alreadyProcessedGroups.add(currentPrincipal)) {
-                throw new IllegalArgumentException("There is more than one group definition for group: " + currentPrincipal);
+            if (!alreadyProcessedGroups.add(currentAuthorizableIdFromYaml)) {
+                throw new IllegalArgumentException("There is more than one group definition for group: " + currentAuthorizableIdFromYaml);
             }
-            LOG.debug("Found principal: {} in config", currentPrincipal);
+            LOG.debug("Found principal: {} in config", currentAuthorizableIdFromYaml);
 
-            final LinkedHashSet<AuthorizableConfigBean> tmpSet = new LinkedHashSet<AuthorizableConfigBean>();
-            principalMap.put(currentPrincipal, tmpSet);
+            final List<Map<String, String>> currentAuthorizableData = (List<Map<String, String>>) currentMap.get(currentAuthorizableIdFromYaml);
 
-            final List<Map<String, String>> currentPrincipalData = (List<Map<String, String>>) currentMap.get(currentPrincipal);
+            if ((currentAuthorizableData != null) && !currentAuthorizableData.isEmpty()) {
 
-            if ((currentPrincipalData != null) && !currentPrincipalData.isEmpty()) {
-
-                for (final Map<String, String> currentPrincipalDataMap : currentPrincipalData) {
+                for (final Map<String, String> currentPrincipalDataMap : currentAuthorizableData) {
                     final AuthorizableConfigBean tmpPrincipalConfigBean = getNewAuthorizableConfigBean();
-                    setupAuthorizableBean(tmpPrincipalConfigBean, currentPrincipalDataMap, currentPrincipal, isGroupSection);
+                    setupAuthorizableBean(tmpPrincipalConfigBean, currentPrincipalDataMap, currentAuthorizableIdFromYaml, isGroupSection);
                     if (authorizableValidator != null) {
                         authorizableValidator.validate(tmpPrincipalConfigBean);
                     }
-                    principalMap.get(currentPrincipal).add(tmpPrincipalConfigBean);
+                    authorizableBeans.add(tmpPrincipalConfigBean);
                 }
             }
 
         }
-        return principalMap;
+        return authorizableBeans;
 
     }
 
-    private Map<String, Set<AceBean>> getPreservedOrderdAceMap(
+    private AcesConfig getPreservedOrderdAceSet(
             List<LinkedHashMap> aceYamlList,
-            final Set<String> groupsFromCurrentConfig,
-            final AceBeanValidator aceBeanValidator) throws RepositoryException,
+            final AceBeanValidator aceBeanValidator, Session session) throws RepositoryException,
             AcConfigBeanValidationException {
 
-        final Map<String, Set<AceBean>> aceMap = new LinkedHashMap<String, Set<AceBean>>();
+        final AcesConfig aceSet = new AcesConfig();
 
         if (aceYamlList == null) {
-            return aceMap;
+            return aceSet;
         }
 
-        Session session = null;
-        try {
-            if (repository != null) {
-                session = repository.loginAdministrative(null);
+        for (final Map<String, List<Map<String, ?>>> currentPrincipalAceMap : aceYamlList) {
+
+            final String principalName = currentPrincipalAceMap.keySet().iterator().next();
+
+            final List<Map<String, ?>> aceDefinitions = currentPrincipalAceMap.get(principalName);
+
+            LOG.debug("start reading ACE configuration of authorizable: {}", principalName);
+
+            if ((aceDefinitions == null) || aceDefinitions.isEmpty()) {
+                LOG.warn("No ACE definition(s) found for autorizable: {}",
+                        principalName);
+                continue;
             }
-            for (final Map<String, List<Map<String, ?>>> currentPrincipalAceMap : aceYamlList) {
 
-                final String principalName = currentPrincipalAceMap.keySet().iterator().next();
-
-                final List<Map<String, ?>> aceDefinitions = currentPrincipalAceMap.get(principalName);
-
-                LOG.debug("start reading ACE configuration of authorizable: {}", principalName);
-
-                // if current principal is not yet in map, add new key and empty
-                // set for storing the pricipals ACE beans
-                if (aceMap.get(principalName) == null) {
-                    final Set<AceBean> tmpSet = new LinkedHashSet<AceBean>();
-                    aceMap.put(principalName, tmpSet);
-                }
-
-                if ((aceDefinitions == null) || aceDefinitions.isEmpty()) {
-                    LOG.warn("no ACE definition(s) found for autorizable: {}",
-                            principalName);
-                    continue;
-                }
-
-                // create ACE bean and populate it according to the properties
-                // in the config
-
+            // create ACE bean and populate it according to the properties
+            // in the config
+            for (final Map<String, ?> currentAceDefinition : aceDefinitions) {
+                AceBean newAceBean = getNewAceBean();
+                setupAceBean(principalName, currentAceDefinition, newAceBean);
                 if (aceBeanValidator != null) {
-                    aceBeanValidator.setCurrentAuthorizableName(principalName);
+                    aceBeanValidator.validate(newAceBean, session.getAccessControlManager());
                 }
 
-                for (final Map<String, ?> currentAceDefinition : aceDefinitions) {
-                    AceBean newAceBean = getNewAceBean();
-                    setupAceBean(principalName, currentAceDefinition, newAceBean);
-                    if (aceBeanValidator != null) {
-                        aceBeanValidator.validate(newAceBean, session.getAccessControlManager());
-                    }
+                // --- handle wildcards ---
 
-                    // --- handle wildcards ---
-
-                    if ((newAceBean.getJcrPath() != null)
-                            && newAceBean.getJcrPath().contains("*")
-                            && (null != session)) {
-                        handleWildcards(session, aceMap, principalName,
-                                newAceBean);
-                    } else {
-                        aceMap.get(principalName).add(newAceBean);
-                    }
+                if ((newAceBean.getJcrPath() != null)
+                        && newAceBean.getJcrPath().contains("*")
+                        && (null != session)) {
+                    handleWildcards(session, aceSet, principalName, newAceBean);
+                } else {
+                    aceSet.add(newAceBean);
                 }
+            }
 
-            }
-            return aceMap;
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
         }
+        return aceSet;
+
     }
 
     protected void handleWildcards(final Session session,
-            final Map<String, Set<AceBean>> aceMap, final String principal,
+            final Set<AceBean> aceSet, final String principal,
             final AceBean tmpAclBean) throws InvalidQueryException,
             RepositoryException {
         // perform query using the path containing wildcards
@@ -294,13 +269,12 @@ public class YamlConfigReader implements ConfigReader {
                 final AceBean replacementBean = tmpAclBean.clone();
                 replacementBean.setJcrPath(node.getPath());
 
-                if (!aceMap.get(principal).add(replacementBean)) {
-                    LOG.warn("wildcard replacement: replacing bean: "
-                            + tmpAclBean + ", with bean " + replacementBean
-                            + " failed as the new bean already exists in ACE list");
+                if (aceSet.add(replacementBean)) {
+                    LOG.info("Wildcard replacement: Cloned " + tmpAclBean + " to " + replacementBean);
                 } else {
-                    LOG.info("wildcard replacement: replaced bean: "
-                            + tmpAclBean + ", with bean " + replacementBean);
+                    LOG.warn("Wildcard replacement failed: Cloned "
+                            + tmpAclBean + " to " + replacementBean
+                            + " but bean was already in set");
                 }
             }
         }
@@ -339,7 +313,7 @@ public class YamlConfigReader implements ConfigReader {
         tmpAclBean.setInitialContent(initialContent);
     }
 
-    protected String[] parseActionsString(final String actionsStringFromConfig) {
+    public static String[] parseActionsString(final String actionsStringFromConfig) {
         final String[] empty = {};
         return StringUtils.isNotBlank(actionsStringFromConfig) ? actionsStringFromConfig.split(",") : empty;
     }
@@ -349,7 +323,7 @@ public class YamlConfigReader implements ConfigReader {
             final Map<String, String> currentPrincipalDataMap,
             final String authorizableId,
             boolean isGroupSection) {
-        authorizableConfigBean.setPrincipalID(authorizableId);
+        authorizableConfigBean.setAuthorizableId(authorizableId);
 
         authorizableConfigBean.setName(getMapValueAsString(currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_NAME));
 

@@ -1,7 +1,7 @@
 Access Control Tool for Adobe Experience Manager
 ================================================
 
-The Access Control Tool for Adobe Experience Manager (AC Tool) simplifies the specification and deployment of complex [Access Control Lists in AEM] (http://docs.adobe.com/docs/en/cq/current/administering/security.html#Access%20Control%20Lists%20and%20how%20they%20are%20evaluated).
+The Access Control Tool for Adobe Experience Manager (AC Tool) simplifies the specification and deployment of complex [Access Control Lists in AEM](http://docs.adobe.com/docs/en/cq/current/administering/security.html#Access%20Control%20Lists%20and%20how%20they%20are%20evaluated).
 Instead of [existing solutions](docs/Comparison.md) that build e.g. a content package with actual ACL nodes you can write simple configuration files and deploy them with your content packages.
 
 Features:
@@ -18,11 +18,11 @@ See also our talk at [AdaptTo 2016](https://adapt.to/2016/en/schedule/ac-tool.ht
 
 # Requirements
 
-The AC Tool requires Java 7 and AEM 6.0 SP3 or above (use v1.8.5 for CQ 5.6.1)
+The AC Tool requires Java 7 and AEM 6.1 or above (use v1.x for older versions)
 
 # Installation
 
-The package is available via [Maven](https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-package/). Install it e.g. via CRX package manager.
+The package is available from [the Maven Central repository](https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-package/). Install it e.g. via CRX package manager.
 
 ```
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>

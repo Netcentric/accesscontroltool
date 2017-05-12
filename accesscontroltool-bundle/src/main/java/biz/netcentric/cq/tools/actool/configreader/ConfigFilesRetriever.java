@@ -2,6 +2,8 @@ package biz.netcentric.cq.tools.actool.configreader;
 
 import java.util.Map;
 
+import javax.jcr.Session;
+
 import org.apache.jackrabbit.vault.fs.io.Archive;
 
 /** Retrieves the contents of a AC tool yaml config file from either a package directly (used by install hook) or from the JCR node structure
@@ -14,9 +16,10 @@ public interface ConfigFilesRetriever {
      * mode.
      *
      * @param rootPath the root path in the JCR to start looking for yaml-files
+     * @param session
      * @return map of yaml configurations by their path location
      * @throws Exception if things go wrong */
-    Map<String, String> getConfigFileContentFromNode(String rootPath) throws Exception;
+    Map<String, String> getConfigFileContentFromNode(String rootPath, Session session) throws Exception;
 
     /** Returns yaml configurations from a package.  This will only return configuration entries which apply to the current run mode
      *

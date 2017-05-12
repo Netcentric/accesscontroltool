@@ -33,7 +33,8 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.aceservice.AceService;
 import biz.netcentric.cq.tools.actool.configuploadlistener.UploadListenerService;
-import biz.netcentric.cq.tools.actool.installationhistory.AcHistoryService;
+import biz.netcentric.cq.tools.actool.helper.Constants;
+import biz.netcentric.cq.tools.actool.history.AcHistoryService;
 
 @Component(metatype = true, label = "AC Configuration Upload Listener Service", immediate = true, description = "Listens for ACL configuration uploads and triggers ACL Service.")
 @Properties({
@@ -105,7 +106,7 @@ public class UploadListenerServiceImpl implements UploadListenerService,
     @Activate
     public void activate(@SuppressWarnings("rawtypes") final Map properties)
             throws Exception {
-        this.configurationPath = aceService.getConfigurationRootPath();
+        this.configurationPath = aceService.getConfiguredAcConfigurationRootPath();
         String statusService = PropertiesUtil
                 .toString(
                         properties
@@ -123,7 +124,7 @@ public class UploadListenerServiceImpl implements UploadListenerService,
     private void setEventListener() throws Exception {
         if (StringUtils.isNotBlank(this.configurationPath)) {
             try {
-                adminSession = repository.loginAdministrative(null);
+                adminSession = repository.loginService(Constants.USER_AC_SERVICE, null);
 
                 adminSession
                         .getWorkspace()

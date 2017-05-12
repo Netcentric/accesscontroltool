@@ -39,7 +39,7 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
     @Override
     public void visit(final AuthorizableConfigBean authorizableConfigBean) {
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_KEY))
-                .append("- " + authorizableConfigBean.getPrincipalID() + ":")
+                .append("- " + authorizableConfigBean.getAuthorizableId() + ":")
                 .append("\n");
         sb.append("\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_FIRST_PROPERTY))
@@ -70,15 +70,21 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
                     .append("\n");
         } else if (mapOrder == PRINCIPAL_BASED_SORTING) {
             sb.append(AcHelper.getBlankString(DUMP_INDENTATION_FIRST_PROPERTY))
-                    .append("- path: " + aceBean.getJcrPath()).append("\n");
+                    .append("- path: " + StringUtils.defaultIfEmpty(aceBean.getJcrPath(), "")).append("\n");
         }
+
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
                 .append("permission: " + aceBean.getPermission()).append("\n");
-        sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
-                .append("actions: " + aceBean.getActionsString()).append("\n");
-        sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
-                .append("privileges: " + aceBean.getPrivilegesString())
-                .append("\n");
+
+        if (StringUtils.isNotBlank(aceBean.getActionsString())) {
+            sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
+                    .append("actions: " + aceBean.getActionsString()).append("\n");
+        }
+
+        if (StringUtils.isNotBlank(aceBean.getPrivilegesString())) {
+            sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
+                    .append("privileges: " + aceBean.getPrivilegesString()).append("\n");
+        }
 
         if (aceBean.isKeepOrder()) {
             sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
@@ -127,10 +133,12 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
     @Override
     public void visit(final StructuralDumpElement structuralDumpElement) {
         sb.append("\n");
+        String key = structuralDumpElement.getString();
+        if (StringUtils.isBlank(key) || !key.matches("[A-Za-z0-9\\-_/.]+")) {
+            key = "'" + key + "'";
+        }
         sb.append(AcHelper.getBlankString(structuralDumpElement.getLevel() * 2)
-                + YAML_STRUCTURAL_ELEMENT_PREFIX
-                + structuralDumpElement.getString()
-                + MapKey.YAML_MAP_KEY_SUFFIX);
+                + YAML_STRUCTURAL_ELEMENT_PREFIX + key + MapKey.YAML_MAP_KEY_SUFFIX);
         sb.append("\n");
         sb.append("\n");
     }

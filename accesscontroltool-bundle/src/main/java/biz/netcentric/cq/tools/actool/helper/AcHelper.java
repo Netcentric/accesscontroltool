@@ -8,7 +8,6 @@
  */
 package biz.netcentric.cq.tools.actool.helper;
 
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -18,22 +17,15 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import javax.jcr.AccessDeniedException;
-import javax.jcr.Node;
-import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.Value;
 import javax.jcr.ValueFormatException;
-import javax.jcr.query.InvalidQueryException;
-import javax.jcr.query.Query;
-import javax.jcr.query.QueryResult;
+import javax.jcr.security.AccessControlEntry;
+import javax.jcr.security.AccessControlList;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.jackrabbit.api.JackrabbitSession;
-import org.apache.jackrabbit.api.security.user.Authorizable;
-import org.apache.jackrabbit.api.security.user.UserManager;
+import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
+import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +57,12 @@ public class AcHelper {
 
     public static int PRINCIPAL_BASED_ORDER = 1;
     public static int PATH_BASED_ORDER = 2;
+
+    public static AceBean getAceBean(AccessControlEntry ace, AccessControlList acl) throws RepositoryException {
+        AceWrapper aceWrapper = new AceWrapper((JackrabbitAccessControlEntry) ace, ( (JackrabbitAccessControlList)  acl).getPath());
+        AceBean aceBean = AcHelper.getAceBean(aceWrapper);
+        return aceBean;
+    }
 
     public static AceBean getAceBean(final AceWrapper ace)
             throws ValueFormatException, IllegalStateException,
@@ -99,68 +97,32 @@ public class AcHelper {
         return StringUtils.repeat(" ", nrOfBlanks);
     }
 
-    /** Method that searches a group by nodename or by ldap attribute 'cn' inside the rep:principal property of a group node. Serves as a
-     * fallback, in case a group can't be resolved by principal manager by its name provided in config file after ldap import
-     *
-     * @param session
-     * @param aceBean
-     * @return found Principal or null
-     * @throws InvalidQueryException
-     * @throws RepositoryException */
-    public static Principal getPrincipal(final Session session,
-            final AceBean aceBean) throws InvalidQueryException,
-                    RepositoryException {
-        Principal principal = null;
-        final String principalName = aceBean.getPrincipalName();
+    public static Map<String, Set<AceBean>> getPathBasedAceMap(Set<AceBean> aceBeansFromConfig, int sorting) {
+        final Map<String, Set<AceBean>> pathBasedAceMap = new TreeMap<String, Set<AceBean>>();
 
-        principal = getPrincipalForName(session, principalName);
+        for (final AceBean bean : aceBeansFromConfig) {
 
-        if (principal == null) {
-            final String query = "/jcr:root" + Constants.GROUPS_ROOT
-                    + "//*[(@jcr:primaryType = 'rep:Group') and jcr:like(@rep:principalName, 'cn="
-                    + principalName + "%')]";
-            LOG.debug("Fallback query did not return results for principalName={}, using second fallback query (ldap name): {}",
-                    principalName, query);
-            principal = getPrincipalByQuery(query, session);
+            // if there isn't already a path key in pathBasedAceMap create a
+            // new one and add new Set
+            // with current ACE as first entry
+            if (pathBasedAceMap.get(bean.getJcrPath()) == null) {
+
+                Set<AceBean> aceSet = null;
+                if (sorting == AcHelper.ACE_ORDER_NONE) {
+                    aceSet = new LinkedHashSet<AceBean>();
+                } else if (sorting == AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE) {
+                    aceSet = new TreeSet<AceBean>(new AcePermissionComparator());
+                }
+
+                aceSet.add(bean);
+                pathBasedAceMap.put(bean.getJcrPath(), aceSet);
+                // add current ACE to Set
+            } else {
+                pathBasedAceMap.get(bean.getJcrPath()).add(bean);
+            }
         }
 
-        LOG.debug("Returning {} for principal {}", principal, principalName);
-        return principal;
-    }
-
-    private static Principal getPrincipalForName(final Session session, String principalName) throws AccessDeniedException,
-            UnsupportedRepositoryOperationException, RepositoryException {
-        Principal principal = null;
-        // AEM 6.1 has potentially a delayed visibility of just created groups when using PrincipalManager, therefore using UserManager
-        // Also see https://issues.apache.org/jira/browse/OAK-3228
-        final JackrabbitSession js = (JackrabbitSession) session;
-        final UserManager userManager = js.getUserManager();
-        final Authorizable authorizable = userManager.getAuthorizable(principalName);
-        principal = authorizable != null ? authorizable.getPrincipal() : null;
-        return principal;
-    }
-
-    private static Principal getPrincipalByQuery(final String queryStringGroups, final Session session) throws InvalidQueryException,
-            RepositoryException {
-
-        final Query queryGroups = session.getWorkspace().getQueryManager().createQuery(queryStringGroups, Query.XPATH);
-        final QueryResult queryResultGroups = queryGroups.execute();
-        final NodeIterator nitGroups = queryResultGroups.getNodes();
-        String principalName;
-        if (!nitGroups.hasNext()) {
-            LOG.debug("Executing query '{}' did not have any results", queryStringGroups);
-            return null;
-        }
-        final Node node = nitGroups.nextNode();
-
-        if (node.hasProperty("rep:principalName")) {
-            principalName = node.getProperty("rep:principalName").getString();
-            final Principal principal = getPrincipalForName(session, principalName);
-            return principal;
-        }
-        LOG.debug("Group '{}' did not have a rep:principalName property", node.getPath());
-
-        return null;
+        return pathBasedAceMap;
     }
 
     /** changes a group based ACE map into a path based ACE map
@@ -219,5 +181,6 @@ public class AcHelper {
                     "Unexpectedly received more than one value for a property that is expected to be non-multiple");
         }
     }
+
 
 }

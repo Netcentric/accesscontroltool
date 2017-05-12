@@ -37,29 +37,20 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
     @Reference
     private SlingSettingsService slingSettingsService;
 
-
     @Reference
     private SlingRepository repository;
 
     @Override
-    public Map<String, String> getConfigFileContentFromNode(String rootPath) throws Exception {
+    public Map<String, String> getConfigFileContentFromNode(String rootPath, Session session) throws Exception {
 
-        Session session = null;
-        try {
-            session = repository.loginAdministrative(null);
 
-            Node rootNode = session.getNode(rootPath);
+        Node rootNode = session.getNode(rootPath);
 
-            if (rootNode == null) {
-                throw new IllegalArgumentException("No configuration path configured! please check the configuration of AcService!");
-            }
-            Map<String, String> configurations = getConfigurations(new NodeInJcr(rootNode));
-            return configurations;
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
+        if (rootNode == null) {
+            throw new IllegalArgumentException("No configuration path configured! please check the configuration of AcService!");
         }
+        Map<String, String> configurations = getConfigurations(new NodeInJcr(rootNode));
+        return configurations;
 
     }
 

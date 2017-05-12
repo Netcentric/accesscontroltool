@@ -8,12 +8,12 @@
  */
 package biz.netcentric.cq.tools.actool.helper;
 
-import java.util.Arrays;
-import java.util.HashSet;
+import static biz.netcentric.cq.tools.actool.history.AcInstallationLog.msHumanReadable;
+
 import java.util.Iterator;
 import java.util.Set;
+
 import javax.jcr.AccessDeniedException;
-import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
@@ -28,12 +28,18 @@ import javax.jcr.security.AccessControlException;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.AccessControlPolicy;
 import javax.jcr.version.VersionException;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.StopWatch;
+import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PurgeHelper {
+    public static final Logger LOG = LoggerFactory.getLogger(PurgeHelper.class);
+
 
     public static String purgeACLs(final Session session, final String path)
             throws Exception {
@@ -116,18 +122,8 @@ public class PurgeHelper {
         session.save();
     }
 
-    public static String deleteAcesFromAuthorizable(final Session session,
-            final Set<AclBean> aclSet, final String authorizableId)
-            throws AccessDeniedException, PathNotFoundException,
-            ItemNotFoundException, RepositoryException {
-        return deleteAcesFromAuthorizables(
-                session,
-                new HashSet<String>(Arrays
-                        .asList(new String[] { authorizableId })), aclSet);
-    }
-
-    public static String deleteAcesFromAuthorizables(final Session session,
-            final Set<String> authorizabeIDs, final Set<AclBean> aclBeans)
+    public static String deleteAcesForPrincipalIds(final Session session,
+            final Set<String> principalIds, final Set<AclBean> aclBeans)
             throws UnsupportedRepositoryOperationException,
             RepositoryException, AccessControlException, PathNotFoundException,
             AccessDeniedException, LockException, VersionException {
@@ -139,31 +135,40 @@ public class PurgeHelper {
         long aceCounter = 0;
 
         for (AclBean aclBean : aclBeans) {
-            if (aclBean != null) {
-                for (AccessControlEntry ace : aclBean.getAcl()
-                        .getAccessControlEntries()) {
-                    String authorizableId = ace.getPrincipal().getName();
-                    if (authorizabeIDs.contains(authorizableId)) {
-                        String parentNodePath = aclBean.getParentPath();
-                        String acePath = aclBean.getJcrPath();
-                        aclBean.getAcl().removeAccessControlEntry(ace);
-                        aMgr.setPolicy(aclBean.getParentPath(),
-                                aclBean.getAcl());
-                        AcHelper.LOG.info(
-                                "removed ACE {} from ACL of node: {}", acePath,
-                                parentNodePath);
-                        message.append("removed ACE of principal: "
-                                + authorizableId + " from ACL of node: "
-                                + parentNodePath + "\n");
-                        aceCounter++;
+            if (aclBean == null) {
+                continue;
+            }
+
+            JackrabbitAccessControlList acl = aclBean.getAcl();
+            for (AccessControlEntry ace : acl.getAccessControlEntries()) {
+                String principalId = ace.getPrincipal().getName();
+                if (principalIds.contains(principalId)) {
+                    String parentNodePath = aclBean.getParentPath();
+                    acl.removeAccessControlEntry(ace);
+                    boolean aclEmpty = acl.isEmpty();
+                    if (!aclEmpty) {
+                        aMgr.setPolicy(aclBean.getParentPath(), acl);
+                    } else {
+                        aMgr.removePolicy(aclBean.getParentPath(), acl);
                     }
+
+                    String msg = "Path " + parentNodePath + ": Removed entry for '" + principalId + "' from ACL "
+                            + (aclEmpty ? " (and the now emtpy ACL itself)" : "");
+                    LOG.info(msg);
+                    message.append(msg + "\n");
+                    aceCounter++;
                 }
             }
+
         }
         sw.stop();
-        long executionTime = sw.getTime();
-        message.append("\n\nDeleted: " + aceCounter + " ACEs in repository");
-        message.append("\nExecution time: " + executionTime + " ms");
+        String executionTime = msHumanReadable(sw.getTime());
+        String resultMsg = (aceCounter > 0)
+                ? "Deleted " + aceCounter + " ACEs for " + principalIds.size() + " principals in " + executionTime
+                : "Did not delete any ACEs";
+        message.append(resultMsg + "\n");
+        LOG.debug(resultMsg);
+
         return message.toString();
     }
 }

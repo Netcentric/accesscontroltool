@@ -22,7 +22,8 @@ import org.apache.sling.hc.api.Result;
 import org.apache.sling.hc.util.FormattingResultLog;
 import org.apache.sling.jcr.api.SlingRepository;
 
-import biz.netcentric.cq.tools.actool.installationhistory.impl.HistoryUtils;
+import biz.netcentric.cq.tools.actool.helper.Constants;
+import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
 
 /** Sling Health Check that returns WARN if the last installation failed. */
 @SlingHealthCheck(name = "Last Run of AC Tool", tags = "actool")
@@ -38,7 +39,7 @@ public class LastRunSuccessHealthCheck implements HealthCheck {
         Session session = null;
 
         try {
-            session = repository.loginAdministrative(null);
+            session = repository.loginService(Constants.USER_AC_SERVICE, null);
 
             Node statisticsRootNode = HistoryUtils.getAcHistoryRootNode(session);
             NodeIterator it = statisticsRootNode.getNodes();

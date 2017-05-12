@@ -1,0 +1,32 @@
+#
+# (C) Copyright 2017 Netcentric AG.
+#
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+    
+- group_config:
+
+    - DEF testArr=[val1,val2]
+
+    - FOR arrVal IN ${testArr}:
+    
+        - content-reader-loop1-${arrVal}:
+
+           - name: Name of ${arrVal}
+             isMemberOf: 
+             path: /home/groups/testloop
+
+
+    - DEF testVal="val4"
+    - DEF testArr2=[val3 , ${testVal},${testArr[0]}]
+
+    - FOR arrVal IN ${testArr2}:
+    
+        - content-reader-loop2-${arrVal}:
+
+           - name: Name of ${arrVal}
+             isMemberOf: 
+             path: /home/groups/testloop              

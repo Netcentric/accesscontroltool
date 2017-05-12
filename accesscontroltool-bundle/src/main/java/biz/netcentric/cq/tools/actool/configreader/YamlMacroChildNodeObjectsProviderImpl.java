@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import com.day.cq.commons.jcr.JcrConstants;
 
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
 
 @Service
 @Component
@@ -44,15 +44,13 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
     private SlingRepository repository;
 
     @Override
-    public List<Object> getValuesForPath(String pathOfChildrenOfClause, AcInstallationHistoryPojo history) {
+    public List<Object> getValuesForPath(String pathOfChildrenOfClause, AcInstallationLog history, Session session) {
 
         LOG.debug("FOR Loop: Getting children for " + pathOfChildrenOfClause);
 
         List<Object> results = new ArrayList<Object>();
 
-        Session session = null;
         try {
-            session = repository.loginAdministrative(null);
 
             Node node = session.getNode(pathOfChildrenOfClause);
 
@@ -102,20 +100,14 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
             }
 
         } catch (PathNotFoundException e) {
-            history.addWarning(
+            history.addWarning(LOG,
                     "Path " + pathOfChildrenOfClause + " as configured for source for FOR loop does not exist! (statement skipped)");
 
         } catch (RepositoryException e) {
             throw new IllegalStateException("Could not get children of path " + pathOfChildrenOfClause + ": " + e, e);
-        } finally {
-            if (session != null && session.isLive()) {
-                session.logout();
-            }
         }
 
-        String msg = "Loop for children of " + pathOfChildrenOfClause + " evaluates to " + results.size() + " children";
-        LOG.debug(msg);
-        history.addMessage(msg);
+        history.addMessage(LOG, "Loop for children of " + pathOfChildrenOfClause + " evaluates to " + results.size() + " children");
 
         return results;
     }
