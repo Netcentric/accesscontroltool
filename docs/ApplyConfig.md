@@ -34,7 +34,7 @@ Although it is not necessary that the YAML files are covered by the filter rules
 
 ## JMX
 
-See [JMX execute() method](Jmx.md).
+See [JMX apply() method](Jmx.md).
     
 ## Upload Listener Service
 
