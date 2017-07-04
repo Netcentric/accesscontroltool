@@ -254,10 +254,22 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
             Set<AceBean> aceBeansForActionEntry = null;
             Session newSession = null;
             try {
-                // a new session is needed to ensure no pending changes are introduced (even if there would not be real pending changes
-                // since we add and remove, but session.hasPendingChanges() is true then)
+
                 newSession = slingRepository.loginService(Constants.USER_AC_SERVICE, null);
-                aceBeansForActionEntry = getPrincipalAceBeansForActionAceBean(origAceBean, newSession);
+                Session relevantSessionToUse;
+                if (newSession.nodeExists(origAceBean.getJcrPath())) {
+                    // a new session is needed to ensure no pending changes are introduced (even if there would not be real pending changes
+                    // since we add and remove, but session.hasPendingChanges() is true then).
+                    // The new session is not saved(), its only function is to produce the action->privileges mapping with the ootb class
+                    // CqActions
+                    relevantSessionToUse = newSession;
+                } else {
+                    // if the path was just only created in this session via initialContent
+                    relevantSessionToUse = session;
+                    LOG.warn("Reusing main session for path {} since the node was only just created in that session via 'initialContent'",
+                            origAceBean.getJcrPath());
+                }
+                aceBeansForActionEntry = getPrincipalAceBeansForActionAceBean(origAceBean, relevantSessionToUse);
             } finally {
                 newSession.logout();
             }
