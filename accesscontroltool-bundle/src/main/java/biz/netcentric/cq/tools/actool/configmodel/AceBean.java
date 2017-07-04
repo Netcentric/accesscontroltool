@@ -123,7 +123,7 @@ public class AceBean implements AcDumpElement {
                     LOG.debug("Could not get value from restriction map using key: {}", key);
                     continue;
                 }
-                final String[] values = value.split(",");
+                final String[] values = value.split(" *, *");
 
                 restrictions.add(new Restriction(key, values));
             }
@@ -194,7 +194,7 @@ public class AceBean implements AcDumpElement {
 
     public String[] getPrivileges() {
         if (StringUtils.isNotBlank(privilegesString)) {
-            return privilegesString.split(",");
+            return privilegesString.split(" *, *");
         }
         return null;
     }
