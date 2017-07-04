@@ -44,8 +44,17 @@ public class LastRunSuccessHealthCheck implements HealthCheck {
             Node statisticsRootNode = HistoryUtils.getAcHistoryRootNode(session);
             NodeIterator it = statisticsRootNode.getNodes();
 
-            if (it.hasNext()) {
-                Node lastHistoryNode = it.nextNode();
+            Node lastHistoryNode = null;
+            while (it.hasNext()) {
+                Node nextNode = it.nextNode();
+                if (nextNode.getName().startsWith("history")) {
+                    lastHistoryNode = nextNode;
+                    break;
+                }
+            }
+            
+            if (lastHistoryNode != null) {
+
                 boolean isSuccess = lastHistoryNode.getProperty(HistoryUtils.PROPERTY_SUCCESS).getBoolean() == true;
                 String installedFrom = lastHistoryNode.getProperty(HistoryUtils.PROPERTY_INSTALLED_FROM).getString();
                 Long installationTime = lastHistoryNode.getProperty(HistoryUtils.PROPERTY_TIMESTAMP).getLong();
