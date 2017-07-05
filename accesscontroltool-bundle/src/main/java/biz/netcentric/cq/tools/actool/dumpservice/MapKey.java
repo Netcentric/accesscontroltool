@@ -10,14 +10,19 @@ package biz.netcentric.cq.tools.actool.dumpservice;
 
 public class MapKey implements StructuralDumpElement {
 
-    private String key;
     public static final String YAML_MAP_KEY_PREFIX = "- ";
     public static final String YAML_MAP_KEY_SUFFIX = ":";
 
+    private String key;
+    private String comment;
+
+    public MapKey(final String key, String comment) {
+        this.key = key;
+        this.comment = comment;
+    }
     public MapKey(final String key) {
         this.key = key;
     }
-
     @Override
     public String getString() {
         return this.key;
@@ -26,6 +31,11 @@ public class MapKey implements StructuralDumpElement {
     @Override
     public int getLevel() {
         return 2;
+    }
+
+    @Override
+    public String getComment() {
+        return comment;
     }
 
 }

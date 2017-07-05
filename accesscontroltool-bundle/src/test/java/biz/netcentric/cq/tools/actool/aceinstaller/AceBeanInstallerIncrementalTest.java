@@ -251,7 +251,7 @@ public class AceBeanInstallerIncrementalTest {
     public void testGetPrincipalAceBeansForActionRead() throws Exception {
 
         AceBean bean1Clone = bean1.clone();
-        bean1Clone.setPrincipal(FAKE_PRINCIPAL_ID);
+        bean1Clone.setPrincipalName(FAKE_PRINCIPAL_ID);
 
         // test simple read bean
         doReturn(new JackrabbitAccessControlEntry[] {
@@ -279,9 +279,9 @@ public class AceBeanInstallerIncrementalTest {
 
         // test read,create,modify.delete
         AceBean bean2Clone = bean2.clone();
-        bean2Clone.setPrincipal(FAKE_PRINCIPAL_ID);
+        bean2Clone.setPrincipalName(FAKE_PRINCIPAL_ID);
         AceBean bean2ContentClone = bean2Content.clone();
-        bean2ContentClone.setPrincipal(FAKE_PRINCIPAL_ID);
+        bean2ContentClone.setPrincipalName(FAKE_PRINCIPAL_ID);
 
         doReturn(new JackrabbitAccessControlEntry[] {
                 aceBeanToAce(bean2Clone), aceBeanToAce(bean2ContentClone)
@@ -322,7 +322,8 @@ public class AceBeanInstallerIncrementalTest {
             Restriction... restrictions) {
         AceBean testBean = new AceBean();
         testBean.setJcrPath(path);
-        testBean.setPrincipal(principalName);
+        testBean.setPrincipalName(principalName);
+        testBean.setAuthorizableId(principalName);
         testBean.setPermission(isAllow ? "allow" : "deny");
         testBean.setPrivilegesString(privileges);
         testBean.setActions(YamlConfigReader.parseActionsString(actions));

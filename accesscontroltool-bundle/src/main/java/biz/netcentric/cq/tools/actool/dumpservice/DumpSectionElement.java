@@ -25,4 +25,9 @@ public class DumpSectionElement implements StructuralDumpElement {
     public int getLevel() {
         return 0;
     }
+
+    @Override
+    public String getComment() {
+        return null;
+    }
 }

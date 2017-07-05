@@ -71,7 +71,7 @@ public class AcHelper {
 
         aceBean.setPermission(ace.isAllow() ? "allow" : "deny");
         aceBean.setJcrPath(ace.getJcrPath());
-        aceBean.setPrincipal(ace.getPrincipal().getName());
+        aceBean.setPrincipalName(ace.getPrincipal().getName());
         aceBean.setPrivilegesString(ace.getPrivilegesString());
 
         List<Restriction> restrictions = buildRestrictionsMap(ace);
@@ -144,7 +144,7 @@ public class AcHelper {
             for (final AceBean bean : tmpSet) {
 
                 // set current principal
-                bean.setPrincipal(principal);
+                bean.setPrincipalName(principal);
 
                 // if there isn't already a path key in pathBasedAceMap create a
                 // new one and add new Set

@@ -332,7 +332,7 @@ public class DumpServiceImpl implements ConfigDumpService {
 
                 for (AceBean aceBean : aceBeanSet) {
                     String principalId = aceBean.getPrincipalName();
-                    Authorizable authorizable = um.getAuthorizable(principalId);
+                    Authorizable authorizable = um.getAuthorizable(new PrincipalImpl(principalId));
                     if (!authorizable.isGroup()) {
                         User user = (User) authorizable;
                         usersFromACEs.add(user);
@@ -432,14 +432,8 @@ public class DumpServiceImpl implements ConfigDumpService {
 
         AceDumpData aceDumpData = new AceDumpData();
         UserManager um = ((JackrabbitSession) session).getUserManager();
-        Map<String, Set<AceBean>> aceMap = null;
+        Map<String, Set<AceBean>> aceMap = new TreeMap<String, Set<AceBean>>();
         Map<String, Set<AceBean>> legacyAceMap = new TreeMap<String, Set<AceBean>>();
-
-        if (keyOrder == AcHelper.PRINCIPAL_BASED_ORDER) { // principal based
-            aceMap = new TreeMap<String, Set<AceBean>>();
-        } else if (keyOrder == AcHelper.PATH_BASED_ORDER) { // path based
-            aceMap = new TreeMap<String, Set<AceBean>>();
-        }
 
         Set<AclBean> aclBeanSet = getACLDumpBeans(session);
 
@@ -472,21 +466,20 @@ public class DumpServiceImpl implements ConfigDumpService {
 
                 // if this group exists under home
                 if (authorizable != null) {
+                    tmpAceBean.setAuthorizableId(authorizable.getID());
                     if (authorizable.isGroup() || isIncludeUsers) {
                         addBeanToMap(keyOrder, aclOrdering, aceMap, tmpAceBean);
                     }
                 }
                 // otherwise put in map holding legacy ACEs
                 else {
-                    addBeanToMap(keyOrder, aclOrdering, legacyAceMap,
-                            tmpAceBean);
+                    addBeanToMap(keyOrder, aclOrdering, legacyAceMap, tmpAceBean);
                 }
 
             }
         }
 
         aceDumpData.setAceDump(aceMap);
-        aceDumpData.setLegacyAceDump(legacyAceMap);
 
         return aceDumpData;
 

@@ -27,10 +27,10 @@ public class AcesConfig extends LinkedHashSet<AceBean> {
         return jcrPathsInAceConfig;
     }
 
-    public Set<AceBean> filterByPrincipalName(String principalName) {
+    public Set<AceBean> filterByAuthorizableId(String authId) {
         Set<AceBean> aclsFiltered = new LinkedHashSet<AceBean>();
         for (AceBean bean : this) {
-            if (StringUtils.equals(principalName, bean.getPrincipalName())) {
+            if (StringUtils.equals(authId, bean.getAuthorizableId())) {
                 aclsFiltered.add(bean);
             }
         }

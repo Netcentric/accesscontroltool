@@ -120,7 +120,7 @@ public class YamlConfigurationsValidator implements ConfigurationsValidator {
                 if (aceBean.isKeepOrder() && pathsWithKeepOrderSet.contains(aceBean.getJcrPath())) {
                     throw new IllegalArgumentException(
                             "If keepOrder=true is used, the ACE definitions for one particular path must only be defined in one source file (ACE for "
-                                    + aceBean.getJcrPath() + " and group " + aceBean.getPrincipalName() + " as defined in " + sourceFile
+                                    + aceBean.getJcrPath() + " and group " + aceBean.getAuthorizableId() + " as defined in " + sourceFile
                                     + " was defined before) ");
                 }
             }

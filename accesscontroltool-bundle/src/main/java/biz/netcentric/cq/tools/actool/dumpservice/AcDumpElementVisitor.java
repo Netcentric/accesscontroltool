@@ -20,4 +20,5 @@ public interface AcDumpElementVisitor {
     void visit(CommentingDumpElement commentingDumpElement);
 
     void visit(StructuralDumpElement structuralDumpElement);
+
 }
