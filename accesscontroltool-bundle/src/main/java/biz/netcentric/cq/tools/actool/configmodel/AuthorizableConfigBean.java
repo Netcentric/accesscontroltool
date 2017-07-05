@@ -44,6 +44,8 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private boolean isGroup = true;
     private boolean isSystemUser = false;
 
+    private String disabled;
+
     public String getAuthorizableId() {
         return authorizableId;
     }
@@ -213,9 +215,18 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.members = members;
     }
 
+    public String getDisabled() {
+        return disabled;
+    }
+
+    public void setDisabled(String disabled) {
+        this.disabled = disabled;
+    }
+
     public String getMigrateFrom() {
         return migrateFrom;
     }
+
 
     /** Set a group name, from which the users are taken over to this group. The group given is deleted after the run. This property is only
      * to be used temporarily (usually only included in one released version that travels all environments, once all groups are migrated the

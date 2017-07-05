@@ -77,6 +77,7 @@ property | comment | required
 name, description, path, isMemberOf | Work exactly as for groups | optional
 password | The PW for the user. Obviously this is stored in plain text and should only be used for test users | Required for non-system users, otherwise must not be set
 isSystemUser | Create users as system user (AEM 6.1 and later) | optional
+disabled | Can be set to `true` or an arbitrary reason string to disable a user. If set to `false` the user will be explicitly enabled (calling `User.disable(null)`). If omitted will not change anything regarding enabled/disabled status of user | optional
 profileContent | Allows to provide [enhanced docview xml](https://jackrabbit.apache.org/filevault/apidocs/org/apache/jackrabbit/vault/util/DocViewProperty.html) that will reset the profile to the given structure after each run (since v1.8.2, enhanced docview since v1.9.1) | optional
 preferencesContent | Allows to provide [enhanced docview xml](https://jackrabbit.apache.org/filevault/apidocs/org/apache/jackrabbit/vault/util/DocViewProperty.html) that will reset the preferences node to the given structure after each run (since v1.8.2, enhanced docview since v1.9.1) | optional
 

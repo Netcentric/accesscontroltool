@@ -74,6 +74,8 @@ public class YamlConfigReader implements ConfigReader {
     private static final String USER_CONFIG_PROFILE_CONTENT = "profileContent";
     private static final String USER_CONFIG_PREFERENCES_CONTENT = "preferencesContent";
 
+    private static final String USER_CONFIG_DISABLED = "disabled";
+
     @Reference
     private SlingRepository repository;
 
@@ -369,6 +371,11 @@ public class YamlConfigReader implements ConfigReader {
                 currentPrincipalDataMap, USER_CONFIG_PROFILE_CONTENT));
         authorizableConfigBean.setPreferencesContent(getMapValueAsString(
                 currentPrincipalDataMap, USER_CONFIG_PREFERENCES_CONTENT));
+
+        if (currentPrincipalDataMap.containsKey(USER_CONFIG_DISABLED)) {
+            authorizableConfigBean.setDisabled(getMapValueAsString(currentPrincipalDataMap, USER_CONFIG_DISABLED));
+        }
+
     }
 
     protected String getMapValueAsString(
