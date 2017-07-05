@@ -66,6 +66,14 @@ public class ContentHelper {
         } else {
 
             try {
+
+                String parentPath = StringUtils.substringBeforeLast(path, "/");
+                if (!session.nodeExists(parentPath)) {
+                    history.incMissingParentPathsForInitialContent();
+                    history.addVerboseMessage(LOG, "Parent path " + parentPath + " missing for initial content at " + path);
+                    return false;
+                }
+
                 importContent(session, path, initialContent);
                 history.addMessage(LOG, "Created initial content for path " + path);
                 return true;

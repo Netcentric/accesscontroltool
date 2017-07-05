@@ -58,6 +58,8 @@ public class AcInstallationLog implements InstallationLog, AcInstallationHistory
     private int countActionCacheHit = 0;
     private int countActionCacheMiss = 0;
 
+    private int missingParentPathsForInitialContent = 0;
+
     private DateFormat timestampFormat = new SimpleDateFormat("HH:mm:ss.SSS");
 
     public enum Rendition {
@@ -366,6 +368,20 @@ public class AcInstallationLog implements InstallationLog, AcInstallationHistory
     @Override
     public int getCountActionCacheHit() {
         return countActionCacheHit;
+    }
+
+    public void incMissingParentPathsForInitialContent() {
+        missingParentPathsForInitialContent++;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see biz.netcentric.cq.tools.actool.history.AcInstallationLo#getMissingParentPathsForInitialConten()
+     */
+    @Override
+    public int getMissingParentPathsForInitialContent() {
+        return missingParentPathsForInitialContent;
     }
 
 }
