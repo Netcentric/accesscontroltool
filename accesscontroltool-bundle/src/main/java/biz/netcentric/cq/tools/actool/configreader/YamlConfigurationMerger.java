@@ -142,7 +142,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
                 authorizableIdsFromAllConfigs.addAll(authorizableIdsFromCurrentConfig);
             }
 
-            // --- authorizables config section
+            // --- ace_config section
             final AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(authorizableIdsFromAllConfigs);
             final Set<AceBean> currentAceBeansFromConfig = configReader.getAceConfigurationBeans(yamlRootList, aceBeanValidator, session);
 

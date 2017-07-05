@@ -142,7 +142,6 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
 
         for (int i = currentPositionConfig; i < configuredAceEntries.size(); i++) {
             AceBean aceBeanToAppend = configuredAceEntries.get(i);
-            // LOG.info("installing aceBeanToAppend=" + aceBeanToAppend);
 
             installPrivileges(aceBeanToAppend, new PrincipalImpl(aceBeanToAppend.getPrincipalName()), acl, session, acMgr);
             diffLog.append("    APPENDED (from Config)  " + toAceCompareString(aceBeanToAppend, acMgr) + "\n");
@@ -244,7 +243,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
             Set<AceBean> principalCorrectedAceBeansForActions = new LinkedHashSet<AceBean>();
             for (AceBean aceBean : cachedAceBeansForActions) {
                 AceBean clone = aceBean.clone();
-                clone.setPrincipal(origAceBean.getPrincipalName());
+                clone.setPrincipalName(origAceBean.getPrincipalName());
                 principalCorrectedAceBeansForActions.add(clone);
             }
             return principalCorrectedAceBeansForActions;
@@ -288,7 +287,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
             }
 
             AceBean privilegesAceBeanForAction = AcHelper.getAceBean(newAce, newAcl);
-            privilegesAceBeanForAction.setPrincipal(origAceBean.getPrincipalName());
+            privilegesAceBeanForAction.setPrincipalName(origAceBean.getPrincipalName());
 
             // handle restrictions
             if (isFirst) {
@@ -334,7 +333,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
         if (LOG.isDebugEnabled()) {
             StringBuilder buf = new StringBuilder();
             buf.append("CqActions at path " + origAceBean.getJcrPath()
-                    + " with principal=" + origAceBean.getPrincipalName() + "/" + principal.getName() + " produced \n");
+                    + " with authorizableId=" + origAceBean.getAuthorizableId() + "/" + principal.getName() + " produced \n");
             for (AceBean aceBean : aceBeansForActionEntry) {
                 buf.append("   " + toAceCompareString(aceBean, acMgr) + "\n");
             }

@@ -215,15 +215,14 @@ public class YamlConfigReader implements ConfigReader {
 
         for (final Map<String, List<Map<String, ?>>> currentPrincipalAceMap : aceYamlList) {
 
-            final String principalName = currentPrincipalAceMap.keySet().iterator().next();
+            final String authorizableId = currentPrincipalAceMap.keySet().iterator().next();
 
-            final List<Map<String, ?>> aceDefinitions = currentPrincipalAceMap.get(principalName);
+            final List<Map<String, ?>> aceDefinitions = currentPrincipalAceMap.get(authorizableId);
 
-            LOG.debug("start reading ACE configuration of authorizable: {}", principalName);
+            LOG.debug("Start reading ACE configuration of authorizable: {}", authorizableId);
 
             if ((aceDefinitions == null) || aceDefinitions.isEmpty()) {
-                LOG.warn("No ACE definition(s) found for autorizable: {}",
-                        principalName);
+                LOG.warn("No ACE definition(s) found for authorizable: {}", authorizableId);
                 continue;
             }
 
@@ -231,7 +230,7 @@ public class YamlConfigReader implements ConfigReader {
             // in the config
             for (final Map<String, ?> currentAceDefinition : aceDefinitions) {
                 AceBean newAceBean = getNewAceBean();
-                setupAceBean(principalName, currentAceDefinition, newAceBean);
+                setupAceBean(authorizableId, currentAceDefinition, newAceBean);
                 if (aceBeanValidator != null) {
                     aceBeanValidator.validate(newAceBean, session.getAccessControlManager());
                 }
@@ -241,7 +240,7 @@ public class YamlConfigReader implements ConfigReader {
                 if ((newAceBean.getJcrPath() != null)
                         && newAceBean.getJcrPath().contains("*")
                         && (null != session)) {
-                    handleWildcards(session, aceSet, principalName, newAceBean);
+                    handleWildcards(session, aceSet, authorizableId, newAceBean);
                 } else {
                     aceSet.add(newAceBean);
                 }
@@ -288,29 +287,32 @@ public class YamlConfigReader implements ConfigReader {
         return new AuthorizableConfigBean();
     }
 
-    protected void setupAceBean(final String principal,
-            final Map<String, ?> currentAceDefinition, final AceBean tmpAclBean) {
-        tmpAclBean.setPrincipal(principal);
-        tmpAclBean.setJcrPath(getMapValueAsString(currentAceDefinition,
+    protected void setupAceBean(final String authorizableId,
+            final Map<String, ?> currentAceDefinition, final AceBean aclBean) {
+
+        aclBean.setAuthorizableId(authorizableId);
+        aclBean.setPrincipalName(authorizableId); // to ensure it is set, later corrected if necessary in
+                                                  // AcConfiguration.ensureAceBeansHaveCorrectPrincipalNameSet()
+
+        aclBean.setJcrPath(getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_PROPERTY_PATH));
-        tmpAclBean.setActionsStringFromConfig(getMapValueAsString(
-                currentAceDefinition, ACE_CONFIG_PROPERTY_ACTIONS));
-        tmpAclBean.setPrivilegesString(getMapValueAsString(
+
+        aclBean.setPrivilegesString(getMapValueAsString(
                 currentAceDefinition, ACE_CONFIG_PROPERTY_PRIVILEGES));
-        tmpAclBean.setPermission(getMapValueAsString(
+        aclBean.setPermission(getMapValueAsString(
                 currentAceDefinition, ACE_CONFIG_PROPERTY_PERMISSION));
 
-        tmpAclBean.setRestrictions(currentAceDefinition.get(ACE_CONFIG_PROPERTY_RESTRICTIONS),
+        aclBean.setRestrictions(currentAceDefinition.get(ACE_CONFIG_PROPERTY_RESTRICTIONS),
                 (String) currentAceDefinition.get(ACE_CONFIG_PROPERTY_GLOB));
-        tmpAclBean.setActions(parseActionsString(getMapValueAsString(currentAceDefinition,
+        aclBean.setActions(parseActionsString(getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_PROPERTY_ACTIONS)));
 
-        tmpAclBean.setKeepOrder(Boolean.valueOf(getMapValueAsString(currentAceDefinition,
+        aclBean.setKeepOrder(Boolean.valueOf(getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_PROPERTY_KEEP_ORDER)));
 
         String initialContent = getMapValueAsString(currentAceDefinition,
                 ACE_CONFIG_INITIAL_CONTENT);
-        tmpAclBean.setInitialContent(initialContent);
+        aclBean.setInitialContent(initialContent);
     }
 
     public static String[] parseActionsString(final String actionsStringFromConfig) {

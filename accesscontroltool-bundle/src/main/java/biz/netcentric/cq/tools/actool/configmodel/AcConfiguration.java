@@ -47,6 +47,20 @@ public class AcConfiguration {
 
     public void setAceConfig(AcesConfig aceBeansSet) {
         this.aceBeansConfig = aceBeansSet;
+        ensureAceBeansHaveCorrectPrincipalNameSet(aceBeansSet);
+    }
+
+    // this is required as the configuration contains authorizableIds, but the JCR contains principal names. The mapping is available via
+    // authorizablesConfig
+    private void ensureAceBeansHaveCorrectPrincipalNameSet(AcesConfig aceBeansSet) {
+        if (authorizablesConfig == null) {
+            throw new IllegalStateException("authorizablesConfig must be set before setAceConfig() is called");
+        }
+        for (AceBean aceBean : aceBeansSet) {
+            String authorizableId = aceBean.getAuthorizableId();
+            String principalName = authorizablesConfig.getPrincipalNameForAuthorizableId(authorizableId);
+            aceBean.setPrincipalName(principalName);
+        }
     }
 
     public Set<String> getObsoleteAuthorizables() {

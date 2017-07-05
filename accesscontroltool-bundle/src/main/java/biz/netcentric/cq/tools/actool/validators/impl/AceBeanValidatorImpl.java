@@ -50,7 +50,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
     private AceBean aceBean;
     private Set<String> authorizableIdsFromCurrentConfig;
 
-    private String previousPrincipal;
+    private String previousAuthorizableId;
 
     public AceBeanValidatorImpl(Set<String> authorizableIdsFromCurrentConfig) {
         this.authorizableIdsFromCurrentConfig = authorizableIdsFromCurrentConfig;
@@ -75,15 +75,12 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
 
         maintainBeanCounter();
 
-        // mandatory properties per AceBean
-        boolean isActionDefined = false;
-        boolean isPrivilegeDefined = false;
-
         validateAuthorizableId();
         validateAcePath();
 
-        isActionDefined = validateActions();
-        isPrivilegeDefined = validatePrivileges(aclManager);
+        // either actions or privileges are required
+        boolean isActionDefined = validateActions();
+        boolean isPrivilegeDefined = validatePrivileges(aclManager);
 
         validatePermission(this.aceBean);
 
@@ -94,7 +91,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
 
         if (!isActionOrPrivilegeDefined && !hasInitialContent) {
             final String errorMessage = getBeanDescription(this.currentBeanCounter,
-                    this.aceBean.getPrincipalName())
+                    this.aceBean.getAuthorizableId())
                     + ", no actions or privileges defined"
                     + "! Installation aborted!";
             LOG.error(errorMessage);
@@ -107,12 +104,12 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
     }
 
     private void maintainBeanCounter() {
-        if (StringUtils.equals(aceBean.getPrincipalName(), previousPrincipal)) {
+        if (StringUtils.equals(aceBean.getAuthorizableId(), previousAuthorizableId)) {
             this.currentBeanCounter++;
         } else {
             this.currentBeanCounter = 1;
         }
-        previousPrincipal = aceBean.getPrincipalName();
+        previousAuthorizableId = aceBean.getAuthorizableId();
     }
 
     private boolean validateRestrictions(final AceBean tmpAceBean, final AccessControlManager aclManager)
@@ -123,8 +120,6 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
         if (restrictions.isEmpty()) {
             return true;
         }
-
-        final String principal = tmpAceBean.getPrincipalName();
 
         final Set<String> restrictionNamesFromAceBean = new HashSet<String>();
         for (Restriction restriction : restrictions) {
@@ -137,7 +132,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
             restrictionNamesFromAceBean.removeAll(allowedRestrictionNames);
             valid = false;
             final String errorMessage = getBeanDescription(this.currentBeanCounter,
-                    principal)
+                    tmpAceBean.getAuthorizableId())
                     + ",  this repository doesn't support following restriction(s): "
                     + restrictionNamesFromAceBean;
             throw new InvalidRestrictionsException(errorMessage);
@@ -181,9 +176,8 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
         if (Validators.isValidPermission(permission)) {
             tmpAclBean.setPermission(permission);
         } else {
-            final String principal = tmpAclBean.getPrincipalName();
             final String errorMessage = getBeanDescription(this.currentBeanCounter,
-                    principal) + ", invalid permission: '" + permission + "'";
+                    tmpAclBean.getAuthorizableId()) + ", invalid permission: '" + permission + "'";
             LOG.error(errorMessage);
             throw new InvalidPermissionException(errorMessage);
         }
@@ -191,13 +185,13 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
     }
 
     private boolean validateActions() throws InvalidActionException, TooManyActionsException, DoubledDefinedActionException {
-        final String principal = aceBean.getPrincipalName();
+        final String principal = aceBean.getAuthorizableId();
 
-        if (!StringUtils.isNotBlank(aceBean.getActionsStringFromConfig())) {
+        final String[] actions = aceBean.getActions();
+
+        if (actions == null || actions.length == 0) {
             return false;
         }
-
-        final String[] actions = aceBean.getActionsStringFromConfig().split(",");
 
         if (actions.length > CqActions.ACTIONS.length) {
             final String errorMessage = getBeanDescription(this.currentBeanCounter,
@@ -234,7 +228,6 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
     public boolean validatePrivileges(AccessControlManager aclManager)
             throws InvalidJcrPrivilegeException, DoubledDefinedJcrPrivilegeException {
         final String currentEntryValue = aceBean.getPrivilegesString();
-        final String principal = aceBean.getPrincipalName();
 
         if (!StringUtils.isNotBlank(currentEntryValue)) {
             return false;
@@ -249,14 +242,14 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
 
             if (!Validators.isValidJcrPrivilege(privileges[i], aclManager)) {
                 final String errorMessage = getBeanDescription(
-                        this.currentBeanCounter, principal)
+                        this.currentBeanCounter, aceBean.getAuthorizableId())
                         + ",  invalid jcr privilege: " + privileges[i];
                 LOG.error(errorMessage);
                 throw new InvalidJcrPrivilegeException(errorMessage);
             }
             if (!privilegesSet.add(privileges[i])) {
                 final String errorMessage = getBeanDescription(
-                        this.currentBeanCounter, principal)
+                        this.currentBeanCounter, aceBean.getAuthorizableId())
                         + ", doubled defined jcr privilege: " + privileges[i];
                 LOG.error(errorMessage);
                 throw new DoubledDefinedJcrPrivilegeException(errorMessage);
@@ -271,13 +264,12 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
     private boolean validateAcePath() throws InvalidPathException {
         boolean isPathDefined = false;
         final String currentEntryValue = aceBean.getJcrPath();
-        final String principal = aceBean.getPrincipalName();
         if (Validators.isValidNodePath(currentEntryValue)) {
             aceBean.setJcrPath(currentEntryValue);
             isPathDefined = true;
         } else {
             final String errorMessage = getBeanDescription(this.currentBeanCounter,
-                    principal) + ", invalid path: " + currentEntryValue;
+                    aceBean.getAuthorizableId()) + ", invalid path: " + currentEntryValue;
             LOG.error(errorMessage);
             throw new InvalidPathException(errorMessage);
         }
@@ -287,24 +279,24 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
 
     private boolean validateAuthorizableId() throws NoGroupDefinedException, InvalidGroupNameException {
         boolean valid = true;
-        final String principal = aceBean.getPrincipalName();
+        final String authorizableId = aceBean.getAuthorizableId();
         // validate authorizable name format
-        if (Validators.isValidAuthorizableId(principal)) {
+        if (Validators.isValidAuthorizableId(authorizableId)) {
 
             // validate if authorizable is contained in config
-            if (!authorizableIdsFromCurrentConfig.contains(principal)) {
+            if (!authorizableIdsFromCurrentConfig.contains(authorizableId)) {
                 final String message = getBeanDescription(this.currentBeanCounter,
-                        principal) + " is not defined in group configuration";
+                        authorizableId) + " is not defined in group configuration";
                 throw new NoGroupDefinedException(message);
             }
-            aceBean.setPrincipal(principal);
+            aceBean.setAuthorizableId(authorizableId);
         } else {
             valid = false;
             final String errorMessage = getBeanDescription(this.currentBeanCounter,
-                    principal)
-                    + principal
+                    authorizableId)
+                    + authorizableId
                     + ", invalid authorizable name: "
-                    + principal;
+                    + authorizableId;
             LOG.error(errorMessage);
             throw new InvalidGroupNameException(errorMessage);
 
@@ -312,9 +304,8 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
         return valid;
     }
 
-    private String getBeanDescription(final long beanCounter,
-            final String principalName) {
-        return "Validation error while reading ACE definition nr." + beanCounter + " of authorizable " + principalName;
+    private String getBeanDescription(long beanCounter, String authorizableId) {
+        return "Validation error while reading ACE definition nr." + beanCounter + " of authorizable " + authorizableId;
     }
 
 
