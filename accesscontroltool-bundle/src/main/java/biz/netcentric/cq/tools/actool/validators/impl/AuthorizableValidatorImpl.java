@@ -97,6 +97,14 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
                 LOG.error(message);
                 throw new InvalidAuthorizableException(message);
             }
+
+            if (StringUtils.isNotBlank(authorizableConfigBean.getDisabled())) {
+                final String message = "Groups cannot be disabled - property 'disable' is used on "
+                        + authorizableConfigBean.getAuthorizableId();
+                LOG.error(message);
+                throw new InvalidAuthorizableException(message);
+            }
+
         } else {
             if (authorizableConfigBean.isSystemUser()) {
                 if (StringUtils.isNotBlank(authorizableConfigBean.getPassword())) {

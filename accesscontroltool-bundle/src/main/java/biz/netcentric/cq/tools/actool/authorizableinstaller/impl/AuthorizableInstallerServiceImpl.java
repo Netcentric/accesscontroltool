@@ -105,7 +105,7 @@ public class AuthorizableInstallerServiceImpl implements
         else {
 
             // update name for both groups and users
-            setAuthorizableProperties(authorizableToInstall, authorizableConfigBean, session);
+            setAuthorizableProperties(authorizableToInstall, authorizableConfigBean, session, installLog);
             // update password for users
             if (!authorizableToInstall.isGroup() && !authorizableConfigBean.isSystemUser()
                     && StringUtils.isNotBlank(authorizableConfigBean.getPassword())) {
@@ -560,12 +560,12 @@ public class AuthorizableInstallerServiceImpl implements
 
         addMembersToReferencingAuthorizables(newGroup, principalConfigBean, userManager, session, installLog);
 
-        setAuthorizableProperties(newGroup, principalConfigBean, session);
+        setAuthorizableProperties(newGroup, principalConfigBean, session, installLog);
         return newGroup;
     }
 
     private void setAuthorizableProperties(Authorizable authorizable, AuthorizableConfigBean principalConfigBean,
-            Session session)
+            Session session, AcInstallationLog installationLog)
             throws RepositoryException {
 
         String profileContent = principalConfigBean.getProfileContent();
@@ -596,6 +596,28 @@ public class AuthorizableInstallerServiceImpl implements
         if (StringUtils.isNotBlank(description)) {
             authorizable.setProperty("profile/aboutMe", vf.createValue(description));
         }
+
+        String disabled = principalConfigBean.getDisabled();
+        if (StringUtils.isNotBlank(disabled)) {
+            if (authorizable.isGroup()) {
+                throw new IllegalStateException("Property disabled can only be set on users");
+            }
+            // if disabled is set to false, use "reason null" as this will enable the user when calling User.disable()
+            String disabledReason = StringUtils.equalsIgnoreCase(disabled, "false") ? null
+                    : (StringUtils.equalsIgnoreCase(disabled, "true") ? "User disabled by AC Tool" : /* use text directly */ disabled);
+            User user = (User) authorizable;
+            boolean currentlyDisabled = user.isDisabled();
+            boolean toBeDisabled = disabledReason != null;
+            if (currentlyDisabled && !toBeDisabled) {
+                installationLog.addMessage(LOG, "Enabling user " + user.getID());
+            } else if (!currentlyDisabled && toBeDisabled) {
+                installationLog.addMessage(LOG, "Disabling user " + user.getID() + " with reason: " + disabledReason);
+            }
+            if(currentlyDisabled || toBeDisabled) {
+                user.disable(disabledReason);
+            }
+            
+        }
     }
 
     private Authorizable createNewUser(
@@ -621,7 +643,7 @@ public class AuthorizableInstallerServiceImpl implements
         } else {
             newUser = userManager.createUser(authorizableId, password, new PrincipalImpl(authorizableId), intermediatePath);
         }
-        setAuthorizableProperties(newUser, principalConfigBean, session);
+        setAuthorizableProperties(newUser, principalConfigBean, session, installLog);
 
         addMembersToReferencingAuthorizables(newUser, principalConfigBean, userManager, session, installLog);
 
