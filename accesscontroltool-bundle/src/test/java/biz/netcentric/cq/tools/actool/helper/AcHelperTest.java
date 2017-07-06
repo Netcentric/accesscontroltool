@@ -45,56 +45,56 @@ public class AcHelperTest {
         // ACEs from groups contained in config
 
         aceBeanGroupA_1_content_deny = new AceBean();
-        aceBeanGroupA_1_content_deny.setPrincipal("group-A");
+        aceBeanGroupA_1_content_deny.setPrincipalName("group-A");
         aceBeanGroupA_1_content_deny.setActions(new String[] { "read", "replicate" });
         aceBeanGroupA_1_content_deny.setPermission("deny");
         aceBeanGroupA_1_content_deny.setJcrPath("/content");
         aceBeanGroupA_1_content_deny.setPrivilegesString("");
 
         aceBeanGroupA_2_content_allow = new AceBean();
-        aceBeanGroupA_2_content_allow.setPrincipal("group-A");
+        aceBeanGroupA_2_content_allow.setPrincipalName("group-A");
         aceBeanGroupA_2_content_allow.setActions(new String[] { "read,modify" });
         aceBeanGroupA_2_content_allow.setPermission("allow");
         aceBeanGroupA_2_content_allow.setJcrPath("/content");
         aceBeanGroupA_2_content_allow.setPrivilegesString("");
 
         aceBeanGroupA_3_contentisp_deny = new AceBean();
-        aceBeanGroupA_3_contentisp_deny.setPrincipal("group-A");
+        aceBeanGroupA_3_contentisp_deny.setPrincipalName("group-A");
         aceBeanGroupA_3_contentisp_deny.setActions(new String[] { "read,modify" });
         aceBeanGroupA_3_contentisp_deny.setPermission("deny");
         aceBeanGroupA_3_contentisp_deny.setJcrPath("/content/isp");
         aceBeanGroupA_3_contentisp_deny.setPrivilegesString("");
 
         aceBeanGroupB_1_content_allow = new AceBean();
-        aceBeanGroupB_1_content_allow.setPrincipal("group-B");
+        aceBeanGroupB_1_content_allow.setPrincipalName("group-B");
         aceBeanGroupB_1_content_allow.setActions(new String[] { "read" });
         aceBeanGroupB_1_content_allow.setPermission("allow");
         aceBeanGroupB_1_content_allow.setJcrPath("/content");
         aceBeanGroupB_1_content_allow.setPrivilegesString("");
 
         aceBeanGroupB_2_content_deny = new AceBean();
-        aceBeanGroupB_2_content_deny.setPrincipal("group-B");
+        aceBeanGroupB_2_content_deny.setPrincipalName("group-B");
         aceBeanGroupB_2_content_deny.setActions(new String[] { "read,delete" });
         aceBeanGroupB_2_content_deny.setPermission("deny");
         aceBeanGroupB_2_content_deny.setJcrPath("/content");
         aceBeanGroupB_2_content_deny.setPrivilegesString("");
 
         aceBeanGroupB_3_contentisp_allow = new AceBean();
-        aceBeanGroupB_3_contentisp_allow.setPrincipal("group-B");
+        aceBeanGroupB_3_contentisp_allow.setPrincipalName("group-B");
         aceBeanGroupB_3_contentisp_allow.setActions(new String[] { "read,delete" });
         aceBeanGroupB_3_contentisp_allow.setPermission("allow");
         aceBeanGroupB_3_contentisp_allow.setJcrPath("/content/isp");
         aceBeanGroupB_3_contentisp_allow.setPrivilegesString("");
 
         aceBeanGroupC_1_content_allow = new AceBean();
-        aceBeanGroupC_1_content_allow.setPrincipal("group-C");
+        aceBeanGroupC_1_content_allow.setPrincipalName("group-C");
         aceBeanGroupC_1_content_allow.setActions(new String[] { "read" });
         aceBeanGroupC_1_content_allow.setPermission("allow");
         aceBeanGroupC_1_content_allow.setJcrPath("/content");
         aceBeanGroupC_1_content_allow.setPrivilegesString("");
 
         aceBeanGroupC_2_content_deny_keepOrder = new AceBean();
-        aceBeanGroupC_2_content_deny_keepOrder.setPrincipal("group-C");
+        aceBeanGroupC_2_content_deny_keepOrder.setPrincipalName("group-C");
         aceBeanGroupC_2_content_deny_keepOrder.setActions(new String[] { "read" });
         aceBeanGroupC_2_content_deny_keepOrder.setPermission("deny");
         aceBeanGroupC_2_content_deny_keepOrder.setJcrPath("/content");
@@ -102,7 +102,7 @@ public class AcHelperTest {
         aceBeanGroupC_2_content_deny_keepOrder.setKeepOrder(true);
 
         aceBeanGroupC_3_content_deny = new AceBean();
-        aceBeanGroupC_3_content_deny.setPrincipal("group-C");
+        aceBeanGroupC_3_content_deny.setPrincipalName("group-C");
         aceBeanGroupC_3_content_deny.setActions(new String[] { "modify" });
         aceBeanGroupC_3_content_deny.setPermission("deny");
         aceBeanGroupC_3_content_deny.setJcrPath("/content");
@@ -258,7 +258,7 @@ public class AcHelperTest {
             Set<AceBean> set = structure.get(key);
             for (AceBean aceBean : set) {
                 sb.append(rightPad(key + ":", 15) + " ( " + rightPad(aceBean.getJcrPath(), 15)
-                        + " " + rightPad(aceBean.getPrincipalName(), 10)
+                        + " " + rightPad(aceBean.getAuthorizableId(), 10)
                         + " " + rightPad(aceBean.getPermission(), 5) +
                         "  " + Integer.toHexString(aceBean.hashCode()) + ")\n");
             }

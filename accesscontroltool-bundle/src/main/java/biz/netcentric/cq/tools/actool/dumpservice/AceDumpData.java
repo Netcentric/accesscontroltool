@@ -36,11 +36,6 @@ public class AceDumpData {
         this.aceDump = aceDump;
     }
 
-    public Map<String, Set<AceBean>> getLegacyAceDump() {
-        return legacyAceDump;
-    }
 
-    public void setLegacyAceDump(Map<String, Set<AceBean>> legacyAceDump) {
-        this.legacyAceDump = legacyAceDump;
-    }
+
 }

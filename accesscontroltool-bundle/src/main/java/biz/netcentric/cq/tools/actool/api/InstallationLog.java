@@ -28,4 +28,6 @@ public interface InstallationLog extends AcInstallationHistoryPojo {
 
     int getCountActionCacheHit();
 
+    int getMissingParentPathsForInitialContent();
+
 }

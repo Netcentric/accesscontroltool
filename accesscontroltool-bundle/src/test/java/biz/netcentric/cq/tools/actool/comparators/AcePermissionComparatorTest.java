@@ -103,7 +103,7 @@ public class AcePermissionComparatorTest {
     private String toComparableString(Set<AceBean> beans) {
         List<String> ids = new ArrayList<String>();
         for (AceBean bean : beans) {
-            ids.add(bean.getPrincipalName());
+            ids.add(bean.getAuthorizableId());
         }
         return StringUtils.join(ids, "-");
 
@@ -111,7 +111,7 @@ public class AcePermissionComparatorTest {
 
     private AceBean getAceBean(String id, String permission, boolean keepOrder) {
         AceBean aceBean = new AceBean();
-        aceBean.setPrincipal(id);
+        aceBean.setAuthorizableId(id);
         aceBean.setPermission(permission);
         aceBean.setKeepOrder(keepOrder);
         return aceBean;

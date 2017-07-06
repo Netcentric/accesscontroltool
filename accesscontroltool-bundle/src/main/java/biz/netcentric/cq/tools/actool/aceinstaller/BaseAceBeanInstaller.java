@@ -94,6 +94,11 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
             }
         }
 
+        if (history.getMissingParentPathsForInitialContent() > 0) {
+            history.addWarning(LOG, "There were " + history.getMissingParentPathsForInitialContent()
+                    + " parent paths missing for creation of intial content (those paths were skipped, see verbose log for details)");
+        }
+
         history.addMessage(LOG, "Finished installation of " + paths.size() + " ACLs in "
                 + msHumanReadable(stopWatch.getTime())
                 + " (changed ACLs=" + history.getCountAclsChanged() + " unchanged ACLs=" + history.getCountAclsUnchanged()

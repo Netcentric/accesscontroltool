@@ -19,9 +19,6 @@ import biz.netcentric.cq.tools.actool.helper.AcHelper;
 
 public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
 
-    private final static int PRINCIPAL_BASED_SORTING = 1;
-    private final static int PATH_BASED_SORTING = 2;
-
     public static final int DUMP_INDENTATION_KEY = 4;
     public static final int DUMP_INDENTATION_FIRST_PROPERTY = 7;
     public static final int DUMP_INDENTATION_PROPERTY = 9;
@@ -64,11 +61,13 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
     @Override
     public void visit(final AceBean aceBean) {
 
-        if (mapOrder == PATH_BASED_SORTING) {
-            sb.append(AcHelper.getBlankString(DUMP_INDENTATION_FIRST_PROPERTY))
-                    .append("- principal: " + aceBean.getPrincipalName())
-                    .append("\n");
-        } else if (mapOrder == PRINCIPAL_BASED_SORTING) {
+        if (mapOrder == AcHelper.PATH_BASED_ORDER) {
+            sb.append(AcHelper.getBlankString(DUMP_INDENTATION_FIRST_PROPERTY)).append("- principal: " + aceBean.getPrincipalName());
+            if (!StringUtils.equals(aceBean.getPrincipalName(), aceBean.getAuthorizableId())) {
+                sb.append(" # authorizableId: ").append(aceBean.getAuthorizableId());
+            }
+            sb.append("\n");
+        } else if (mapOrder == AcHelper.PRINCIPAL_BASED_ORDER) {
             sb.append(AcHelper.getBlankString(DUMP_INDENTATION_FIRST_PROPERTY))
                     .append("- path: " + StringUtils.defaultIfEmpty(aceBean.getJcrPath(), "")).append("\n");
         }
@@ -139,7 +138,18 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
         }
         sb.append(AcHelper.getBlankString(structuralDumpElement.getLevel() * 2)
                 + YAML_STRUCTURAL_ELEMENT_PREFIX + key + MapKey.YAML_MAP_KEY_SUFFIX);
+
+        String comment = structuralDumpElement.getComment();
+        if (StringUtils.isNotBlank(comment)) {
+            sb.append(" # " + comment);
+        }
+
         sb.append("\n");
         sb.append("\n");
     }
+
+    public int getMapOrder() {
+        return mapOrder;
+    }
+
 }

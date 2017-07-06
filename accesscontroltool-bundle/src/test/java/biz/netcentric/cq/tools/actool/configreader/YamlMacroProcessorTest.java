@@ -104,9 +104,9 @@ public class YamlMacroProcessorTest {
 
         AcesConfig aces = readAceConfigs(yamlList);
         assertEquals("Number of ACEs", 7, aces.size());
-        final Set<AceBean> group1 = aces.filterByPrincipalName("content-BRAND-MKT1-reader");
+        final Set<AceBean> group1 = aces.filterByAuthorizableId("content-BRAND-MKT1-reader");
         assertEquals("Number of ACEs for groupA", 1, group1.size());
-        final Set<AceBean> group2 = aces.filterByPrincipalName("content-BRAND-MKT2-writer");
+        final Set<AceBean> group2 = aces.filterByAuthorizableId("content-BRAND-MKT2-writer");
         assertEquals("Number of ACEs for groupB", 2, group2.size());
     }
 
@@ -121,9 +121,9 @@ public class YamlMacroProcessorTest {
 
         AcesConfig aces = readAceConfigs(yamlList);
         assertEquals("Number of ACEs", 7, aces.size());
-        final Set<AceBean> group1 = aces.filterByPrincipalName("content-BRAND-MKT-1-reader");
+        final Set<AceBean> group1 = aces.filterByAuthorizableId("content-BRAND-MKT-1-reader");
         assertEquals("Number of ACEs for groupA", 1, group1.size());
-        final Set<AceBean> group2 = aces.filterByPrincipalName("content-BRAND-MKT-2-writer");
+        final Set<AceBean> group2 = aces.filterByAuthorizableId("content-BRAND-MKT-2-writer");
         assertEquals("Number of ACEs for groupB", 2, group2.size());
     }
 
@@ -136,19 +136,19 @@ public class YamlMacroProcessorTest {
 
         AcesConfig aces = readAceConfigs(yamlList);
         assertEquals("Number of ACEs", 12, aces.size());
-        assertFalse(aces.filterByPrincipalName("content-BRAND1-reader").isEmpty());
-        assertFalse(aces.filterByPrincipalName("content-BRAND1-writer").isEmpty());
-        assertFalse(aces.filterByPrincipalName("content-BRAND2-reader").isEmpty());
-        assertFalse(aces.filterByPrincipalName("content-BRAND2-writer").isEmpty());
-        assertFalse(aces.filterByPrincipalName("content-BRAND1-MKT1-reader").isEmpty());
-        assertFalse(aces.filterByPrincipalName("content-BRAND1-MKT1-writer").isEmpty());
-        assertFalse(aces.filterByPrincipalName("content-BRAND2-MKT1-reader").isEmpty());
-        assertFalse(aces.filterByPrincipalName("content-BRAND2-MKT1-writer").isEmpty());
-        assertFalse(aces.filterByPrincipalName("content-BRAND1-MKT2-reader").isEmpty());
-        assertFalse(aces.filterByPrincipalName("content-BRAND1-MKT2-writer").isEmpty());
-        assertFalse(aces.filterByPrincipalName("content-BRAND2-MKT2-reader").isEmpty());
-        assertFalse(aces.filterByPrincipalName("content-BRAND2-MKT2-writer").isEmpty());
-        AceBean b1m1r = aces.filterByPrincipalName("content-BRAND1-MKT1-reader").iterator().next();
+        assertFalse(aces.filterByAuthorizableId("content-BRAND1-reader").isEmpty());
+        assertFalse(aces.filterByAuthorizableId("content-BRAND1-writer").isEmpty());
+        assertFalse(aces.filterByAuthorizableId("content-BRAND2-reader").isEmpty());
+        assertFalse(aces.filterByAuthorizableId("content-BRAND2-writer").isEmpty());
+        assertFalse(aces.filterByAuthorizableId("content-BRAND1-MKT1-reader").isEmpty());
+        assertFalse(aces.filterByAuthorizableId("content-BRAND1-MKT1-writer").isEmpty());
+        assertFalse(aces.filterByAuthorizableId("content-BRAND2-MKT1-reader").isEmpty());
+        assertFalse(aces.filterByAuthorizableId("content-BRAND2-MKT1-writer").isEmpty());
+        assertFalse(aces.filterByAuthorizableId("content-BRAND1-MKT2-reader").isEmpty());
+        assertFalse(aces.filterByAuthorizableId("content-BRAND1-MKT2-writer").isEmpty());
+        assertFalse(aces.filterByAuthorizableId("content-BRAND2-MKT2-reader").isEmpty());
+        assertFalse(aces.filterByAuthorizableId("content-BRAND2-MKT2-writer").isEmpty());
+        AceBean b1m1r = aces.filterByAuthorizableId("content-BRAND1-MKT1-reader").iterator().next();
         assertEquals("JCR path", "/content/BRAND1/MKT1", b1m1r.getJcrPath());
     }
 
@@ -162,9 +162,9 @@ public class YamlMacroProcessorTest {
         AcesConfig aces = readAceConfigs(yamlList);
 
         assertEquals("Number of Groups in ACE Section", 3, aces.size());
-        final Set<AceBean> group1 = aces.filterByPrincipalName("content-reader");
+        final Set<AceBean> group1 = aces.filterByAuthorizableId("content-reader");
         assertEquals("Number of ACEs for groupA", 1, group1.size());
-        final Set<AceBean> group2 = aces.filterByPrincipalName("content-writer");
+        final Set<AceBean> group2 = aces.filterByAuthorizableId("content-writer");
         assertEquals("Number of ACEs for groupB", 2, group2.size());
 
         AuthorizablesConfig groups = readGroupConfigs(yamlList);

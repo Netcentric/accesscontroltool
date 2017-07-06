@@ -43,4 +43,15 @@ public class AuthorizablesConfig extends LinkedHashSet<AuthorizableConfigBean> {
         return principals;
     }
 
+    public String getPrincipalNameForAuthorizableId(String authorizableId) {
+        String principalName = null;
+        for (AuthorizableConfigBean authorizableConfigBean : this) {
+            if (StringUtils.equals(authorizableConfigBean.getAuthorizableId(), authorizableId)) {
+                principalName = authorizableConfigBean.getPrincipalName();
+                break;
+            }
+        }
+        return principalName;
+    }
+
 }
