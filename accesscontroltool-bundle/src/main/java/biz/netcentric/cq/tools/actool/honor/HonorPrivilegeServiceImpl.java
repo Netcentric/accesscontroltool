@@ -52,8 +52,7 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 				// OakVersion0001: Cannot change property jcr:mixinTypes on checked in node
 				if (("/").equals(path)) { 
 					String message = "Honor privilege on root folder ignored.";
-					LOG.warn(message);
-					history.addMessage(LOG, message);
+					history.addWarning(LOG, message);
 				} else {
 					String group = entry.getKey();
 					acls.addAll(this.findRecursiveACLs(session, group, path, history));
@@ -114,7 +113,6 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 			}
 		} catch (PathNotFoundException e) {
 			String msg = "Honour path " + path + " not found: ignoring.";
-			LOG.warn(msg);
 			history.addWarning(LOG, msg);
 		}
 		
