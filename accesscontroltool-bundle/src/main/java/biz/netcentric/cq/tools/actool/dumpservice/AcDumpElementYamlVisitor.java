@@ -19,9 +19,6 @@ import biz.netcentric.cq.tools.actool.helper.AcHelper;
 
 public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
 
-    private final static int PRINCIPAL_BASED_SORTING = 1;
-    private final static int PATH_BASED_SORTING = 2;
-
     public static final int DUMP_INDENTATION_KEY = 4;
     public static final int DUMP_INDENTATION_FIRST_PROPERTY = 7;
     public static final int DUMP_INDENTATION_PROPERTY = 9;
@@ -39,11 +36,11 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
     @Override
     public void visit(final AuthorizableConfigBean authorizableConfigBean) {
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_KEY))
-                .append("- " + authorizableConfigBean.getPrincipalID() + ":")
+                .append("- " + authorizableConfigBean.getAuthorizableId() + ":")
                 .append("\n");
         sb.append("\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_FIRST_PROPERTY))
-                .append("- name: ").append("\n");
+                .append("- name: '").append(authorizableConfigBean.getName()).append("'\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
                 .append("memberOf: "
                         + authorizableConfigBean.getMemberOfString())
@@ -51,31 +48,42 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
                 .append("path: " + authorizableConfigBean.getPath())
                 .append("\n");
-        sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
-                .append("isGroup: " + "'" + authorizableConfigBean.isGroup()
-                        + "'")
-                .append("\n");
+
+        if (StringUtils.isNotBlank(authorizableConfigBean.getExternalId())) {
+            sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
+                    .append("externalId: " + authorizableConfigBean.getExternalId())
+                    .append("\n");
+        }
+
         sb.append("\n");
     }
 
     @Override
     public void visit(final AceBean aceBean) {
 
-        if (mapOrder == PATH_BASED_SORTING) {
+        if (mapOrder == AcHelper.PATH_BASED_ORDER) {
+            sb.append(AcHelper.getBlankString(DUMP_INDENTATION_FIRST_PROPERTY)).append("- principal: " + aceBean.getPrincipalName());
+            if (!StringUtils.equals(aceBean.getPrincipalName(), aceBean.getAuthorizableId())) {
+                sb.append(" # authorizableId: ").append(aceBean.getAuthorizableId());
+            }
+            sb.append("\n");
+        } else if (mapOrder == AcHelper.PRINCIPAL_BASED_ORDER) {
             sb.append(AcHelper.getBlankString(DUMP_INDENTATION_FIRST_PROPERTY))
-                    .append("- principal: " + aceBean.getPrincipalName())
-                    .append("\n");
-        } else if (mapOrder == PRINCIPAL_BASED_SORTING) {
-            sb.append(AcHelper.getBlankString(DUMP_INDENTATION_FIRST_PROPERTY))
-                    .append("- path: " + aceBean.getJcrPath()).append("\n");
+                    .append("- path: " + StringUtils.defaultIfEmpty(aceBean.getJcrPath(), "")).append("\n");
         }
+
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
                 .append("permission: " + aceBean.getPermission()).append("\n");
-        sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
-                .append("actions: " + aceBean.getActionsString()).append("\n");
-        sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
-                .append("privileges: " + aceBean.getPrivilegesString())
-                .append("\n");
+
+        if (StringUtils.isNotBlank(aceBean.getActionsString())) {
+            sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
+                    .append("actions: " + aceBean.getActionsString()).append("\n");
+        }
+
+        if (StringUtils.isNotBlank(aceBean.getPrivilegesString())) {
+            sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
+                    .append("privileges: " + aceBean.getPrivilegesString()).append("\n");
+        }
 
         if (aceBean.isKeepOrder()) {
             sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
@@ -124,11 +132,24 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
     @Override
     public void visit(final StructuralDumpElement structuralDumpElement) {
         sb.append("\n");
+        String key = structuralDumpElement.getString();
+        if (StringUtils.isBlank(key) || !key.matches("[A-Za-z0-9\\-_/.]+")) {
+            key = "'" + key + "'";
+        }
         sb.append(AcHelper.getBlankString(structuralDumpElement.getLevel() * 2)
-                + YAML_STRUCTURAL_ELEMENT_PREFIX
-                + structuralDumpElement.getString()
-                + MapKey.YAML_MAP_KEY_SUFFIX);
+                + YAML_STRUCTURAL_ELEMENT_PREFIX + key + MapKey.YAML_MAP_KEY_SUFFIX);
+
+        String comment = structuralDumpElement.getComment();
+        if (StringUtils.isNotBlank(comment)) {
+            sb.append(" # " + comment);
+        }
+
         sb.append("\n");
         sb.append("\n");
     }
+
+    public int getMapOrder() {
+        return mapOrder;
+    }
+
 }

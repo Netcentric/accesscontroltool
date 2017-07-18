@@ -14,7 +14,7 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 
-import biz.netcentric.cq.tools.actool.installationhistory.impl.HistoryUtils;
+import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
 
 public class HistoryRenderer {
 

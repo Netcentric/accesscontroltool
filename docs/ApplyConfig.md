@@ -34,7 +34,7 @@ Although it is not necessary that the YAML files are covered by the filter rules
 
 ## JMX
 
-See [JMX execute() method](Jmx.md).
+See [JMX apply() method](Jmx.md).
     
 ## Upload Listener Service
 
@@ -51,9 +51,9 @@ It can be enabled/disabled in the OSGi console (AC Configuration Upload Listener
 
 ## Curl calls
 
-Trigger the 'execute' method of the AC service
+Trigger the 'apply' method of the AC service
 
 ```
-curl -sS --retry 1 -u ${CQ_ADMINUSER}:${CQ_ADMINPW} -X POST "http://${CQ_SERVER}:${CQ_PORT}/system/console/jmx/biz.netcentric.cq.tools.actool:id='ac+installation'/op/execute/"
+curl -sS --retry 1 -u ${CQ_ADMINUSER}:${CQ_ADMINPW} -X POST "http://${CQ_SERVER}:${CQ_PORT}/system/console/jmx/biz.netcentric.cq.tools:type=ACTool/op/apply/"
 ```
 

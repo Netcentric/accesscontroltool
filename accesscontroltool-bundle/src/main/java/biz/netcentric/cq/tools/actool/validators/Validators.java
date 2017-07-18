@@ -28,14 +28,14 @@ public class Validators {
     private static final Logger LOG = LoggerFactory.getLogger(Validators.class);
 
     private static final Pattern GROUP_ID_PATTERN = Pattern
-            .compile("([a-zA-Z0-9-_.]+)");
+            .compile("([a-zA-Z0-9-_. ]+)");
 
     public static boolean isValidNodePath(final String path) {
         if (StringUtils.isBlank(path)) {
-            return false;
+            return true; // repository level permissions are created with 'left-out' path property
         }
-        // TO DO: proper validation
-        if ((path == null) || (path.equals(""))) {
+
+        if (!path.startsWith("/")) {
             return false;
         }
         return true;

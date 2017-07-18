@@ -26,20 +26,21 @@ import com.day.cq.security.util.CqActions;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElement;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementVisitor;
 
-/** @author jochenkoschorke This class is used to store data of an AcessControlEntry. Objects of this class get created during the reading
- *         of the configuration file in order to set the corresponding ACEs in the system on the one hand and to store data during the
- *         reading of existing ACEs before writing the data back to a dump or configuration file again on the other hand. */
+/** This class is used to store data of an AcessControlEntry. Objects of this class get created during the reading of the configuration file
+ * in order to set the corresponding ACEs in the system on the one hand and to store data during the reading of existing ACEs before writing
+ * the data back to a dump or configuration file again on the other hand. */
 public class AceBean implements AcDumpElement {
 
     public static final Logger LOG = LoggerFactory.getLogger(AceBean.class);
 
+    private String principalName; // as found in jcr for ACE settings
+    private String authorizableId; // as configured in yaml file
+
     private String jcrPath;
     private String actionsStringFromConfig;
     private String privilegesString;
-    private String principal;
     private String permission;
     private String[] actions;
-    private String assertedExceptionString;
     private List<Restriction> restrictions = new ArrayList<Restriction>();
 
     private boolean keepOrder = false; // default is to reorder denies before allows
@@ -48,30 +49,22 @@ public class AceBean implements AcDumpElement {
 
     public static final String RESTRICTION_NAME_GLOB = "rep:glob";
 
+    @Override
     public AceBean clone() {
 
         AceBean clone = new AceBean();
         clone.setJcrPath(jcrPath);
-        clone.setActionsStringFromConfig(actionsStringFromConfig);
         clone.setPrivilegesString(privilegesString);
-        clone.setPrincipal(principal);
+        clone.setAuthorizableId(authorizableId);
+        clone.setPrincipalName(principalName);
         clone.setPermission(permission);
         clone.setActions(actions);
-        clone.setAssertedExceptionString(assertedExceptionString);
-        clone.setRestrictions(restrictions);
+        clone.setRestrictions(new ArrayList<Restriction>(restrictions));
         clone.setInitialContent(initialContent);
         clone.setKeepOrder(keepOrder);
 
         return clone;
 
-    }
-
-    public String getAssertedExceptionString() {
-        return assertedExceptionString;
-    }
-
-    public void setAssertedExceptionString(final String assertedException) {
-        assertedExceptionString = assertedException;
     }
 
     public String getPermission() {
@@ -88,15 +81,31 @@ public class AceBean implements AcDumpElement {
     }
 
     public String getPrincipalName() {
-        return principal;
+        return principalName;
     }
 
-    public void setPrincipal(String principal) {
-        this.principal = principal;
+    public void setPrincipalName(String principalName) {
+        this.principalName = principalName;
+    }
+
+    public String getAuthorizableId() {
+         return authorizableId;
+    }
+
+    public void setAuthorizableId(String authorizableId) {
+        this.authorizableId = authorizableId;
     }
 
     public String getJcrPath() {
         return jcrPath;
+    }
+
+    public String getJcrPathForPolicyApi() {
+        if (StringUtils.isBlank(jcrPath)) {
+            return null; // repository level permission
+        } else {
+            return jcrPath;
+        }
     }
 
     public void setJcrPath(String jcrPath) {
@@ -124,7 +133,7 @@ public class AceBean implements AcDumpElement {
                     LOG.debug("Could not get value from restriction map using key: {}", key);
                     continue;
                 }
-                final String[] values = value.split(",");
+                final String[] values = value.split(" *, *");
 
                 restrictions.add(new Restriction(key, values));
             }
@@ -136,6 +145,7 @@ public class AceBean implements AcDumpElement {
             }
             restrictions.add(new Restriction(RESTRICTION_NAME_GLOB, oldStyleRepGlob));
         }
+
 
     }
 
@@ -172,16 +182,8 @@ public class AceBean implements AcDumpElement {
         return "";
     }
 
-    public String getActionsStringFromConfig() {
-        return actionsStringFromConfig;
-    }
-
     public void setActions(String[] actions) {
         this.actions = actions;
-    }
-
-    public void setActionsStringFromConfig(String actionsString) {
-        actionsStringFromConfig = actionsString;
     }
 
     public String[] getActions() {
@@ -194,7 +196,7 @@ public class AceBean implements AcDumpElement {
 
     public String[] getPrivileges() {
         if (StringUtils.isNotBlank(privilegesString)) {
-            return privilegesString.split(",");
+            return privilegesString.split(" *, *");
         }
         return null;
     }
@@ -221,14 +223,14 @@ public class AceBean implements AcDumpElement {
 
     @Override
     public String toString() {
-        return "AceBean [jcrPath=" + jcrPath + "\n" + ", actionsStringFromConfig=" + actionsStringFromConfig
-                + "\n"
-                + ", privilegesString=" + privilegesString + "\n" + ", principal=" + principal + "\n" + ", permission=" + permission
-                + ", actions="
-                + Arrays.toString(actions) + "\n" + ", assertedExceptionString=" + assertedExceptionString + "\n" + ", restrictions="
+        return "AceBean [jcrPath=" + jcrPath + "\n" + ", actionsStringFromConfig=" + actionsStringFromConfig + "\n"
+                + ", privilegesString=" + privilegesString + "\n" + ", principal=" + principalName + "\n, authorizableId=" + authorizableId
+                + "\n" + ", permission=" + permission
+                + "\n, actions=" + Arrays.toString(actions) + "\n" + ", restrictions="
                 + restrictions + "\n"
                 + ", initialContent=" + initialContent + "]";
     }
+
 
     @Override
     public int hashCode() {
@@ -236,11 +238,10 @@ public class AceBean implements AcDumpElement {
         int result = 1;
         result = (prime * result) + Arrays.hashCode(actions);
         result = (prime * result) + ((actionsStringFromConfig == null) ? 0 : actionsStringFromConfig.hashCode());
-        result = (prime * result) + ((assertedExceptionString == null) ? 0 : assertedExceptionString.hashCode());
         result = (prime * result) + ((initialContent == null) ? 0 : initialContent.hashCode());
         result = (prime * result) + ((jcrPath == null) ? 0 : jcrPath.hashCode());
         result = (prime * result) + ((permission == null) ? 0 : permission.hashCode());
-        result = (prime * result) + ((principal == null) ? 0 : principal.hashCode());
+        result = (prime * result) + ((principalName == null) ? 0 : principalName.hashCode());
         result = (prime * result) + ((privilegesString == null) ? 0 : privilegesString.hashCode());
         result = (prime * result) + ((restrictions == null) ? 0 : restrictions.hashCode());
         return result;
@@ -268,13 +269,6 @@ public class AceBean implements AcDumpElement {
         } else if (!actionsStringFromConfig.equals(other.actionsStringFromConfig)) {
             return false;
         }
-        if (assertedExceptionString == null) {
-            if (other.assertedExceptionString != null) {
-                return false;
-            }
-        } else if (!assertedExceptionString.equals(other.assertedExceptionString)) {
-            return false;
-        }
         if (initialContent == null) {
             if (other.initialContent != null) {
                 return false;
@@ -296,11 +290,11 @@ public class AceBean implements AcDumpElement {
         } else if (!permission.equals(other.permission)) {
             return false;
         }
-        if (principal == null) {
-            if (other.principal != null) {
+        if (principalName == null) {
+            if (other.principalName != null) {
                 return false;
             }
-        } else if (!principal.equals(other.principal)) {
+        } else if (!principalName.equals(other.principalName)) {
             return false;
         }
         if (privilegesString == null) {

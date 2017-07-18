@@ -8,6 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -17,6 +18,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.jcr.Session;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
@@ -24,7 +27,7 @@ import org.apache.felix.scr.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
 
 @Service
 @Component
@@ -32,9 +35,15 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(YamlMacroProcessorImpl.class);
 
-    private final Pattern forLoopPattern = Pattern.compile("for +(\\w+) +in +(?:\\[([,/\\s\\w\\-]+)\\]|children +of +([^\\s]+))",
+    private final Pattern forLoopPattern = Pattern.compile(
+            "for +(\\w+) +in +(?:\\[([,/\\s\\w\\-]+)\\]|children +of +([^\\s]+)|(\\$\\{[^\\}]+\\}))",
             Pattern.CASE_INSENSITIVE);
     private final Pattern ifPattern = Pattern.compile("if +(\\$\\{[^\\}]+\\})", Pattern.CASE_INSENSITIVE);
+
+    final Pattern variableDefPattern = Pattern.compile("DEF +([a-z0-9]+)=(?:\\[(.+)\\]|(\"?)([^\"]*)(\\3))",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final String COMMA_SEPARATED_LIST_SPLITTER = "\\s*,\\s*";
 
     YamlMacroElEvaluator elEvaluator = new YamlMacroElEvaluator();
 
@@ -42,19 +51,24 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
     YamlMacroChildNodeObjectsProvider yamlMacroChildNodeObjectsProvider;
 
     @Override
-    public List<LinkedHashMap> processMacros(List<LinkedHashMap> yamlList, AcInstallationHistoryPojo history) {
-        return (List<LinkedHashMap>) transform(yamlList, history);
+    public List<LinkedHashMap> processMacros(List<LinkedHashMap> yamlList, AcInstallationLog installLog, Session session) {
+        return (List<LinkedHashMap>) transform(yamlList, installLog, session);
     }
 
-    private Object transform(Object o, AcInstallationHistoryPojo history) {
-        return transform(o, new HashMap<String, Object>(), history);
+    private Object transform(Object o, AcInstallationLog installLog, Session session) {
+        return transform(o, new HashMap<String, Object>(), installLog, session);
     }
 
-    private Object transform(Object o, Map<String, Object> variables, AcInstallationHistoryPojo history) {
+    private Object transform(Object o, Map<String, Object> variables, AcInstallationLog installLog, Session session) {
         if (o == null) {
             return null;
         } else if (o instanceof String) {
             String str = (String) o;
+
+            Matcher variableDefMatcher = variableDefPattern.matcher(str);
+            if (variableDefMatcher.find()) {
+                return evaluateDefStatement(variables, variableDefMatcher);
+            }
 
             String result = elEvaluator.evaluateEl(str, String.class, variables);
             return result;
@@ -66,7 +80,7 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
             List list = (List) o;
             List transformedList = new LinkedList();
             for (Object val : list) {
-                Object transformedObject = transform(val, variables, history);
+                Object transformedObject = transform(val, variables, installLog, session);
                 addToListWithPotentialUnfolding(transformedList, transformedObject);
             }
             return transformedList;
@@ -79,19 +93,21 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
                 Matcher forMatcher = forLoopPattern.matcher(key.toString());
                 if (forMatcher.matches()) {
                     // map is skipped and value returned directly
-                    return evaluateForStatement(variables, objVal, forMatcher, history);
+                    return evaluateForStatement(variables, objVal, forMatcher, installLog, session);
                 }
 
                 Matcher ifMatcher = ifPattern.matcher(key.toString());
                 if (ifMatcher.matches()) {
                     // map is skipped and value returned directly
-                    return evaluateIfStatement(variables, objVal, ifMatcher, history);
+                    return evaluateIfStatement(variables, objVal, ifMatcher, installLog, session);
                 }
 
                 // default: transform both key and value
-                Object transformedKey = transform(key, variables, history);
-                Object transformedVal = transform(objVal, variables, history);
-                resultMap.put(transformedKey, transformedVal);
+                Object transformedKey = transform(key, variables, installLog, session);
+                Object transformedVal = transform(objVal, variables, installLog, session);
+                if (transformedVal != null) {
+                    resultMap.put(transformedKey, transformedVal);
+                }
 
             }
             return resultMap;
@@ -101,37 +117,71 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
         }
     }
 
+    private Object evaluateDefStatement(Map<String, Object> variables, Matcher variableDefMatcher) {
+        String varName = variableDefMatcher.group(1);
+        String varValueArr = variableDefMatcher.group(2);
+        String varValueStr = variableDefMatcher.group(4);
+        
+        Object varValueEvaluated;
+        if (varValueStr != null) {
+            varValueEvaluated = elEvaluator.evaluateEl(varValueStr, Object.class, variables);
+        } else if (varValueArr != null) {
+            List<Object> result = new ArrayList<Object>();
+            
+            String[] arrayVals = varValueArr.split(COMMA_SEPARATED_LIST_SPLITTER);
+            for (String arrayVal : arrayVals) {
+                Object arrayValEvaluated = elEvaluator.evaluateEl(arrayVal, Object.class, variables);
+                result.add(arrayValEvaluated);
+            }
+            varValueEvaluated = result;
+        } else {
+            throw new IllegalStateException("None of the def value types were set even though RegEx matched");
+        }
+
+        variables.put(varName, varValueEvaluated);
+        return null;
+    }
+
     private Object evaluateForStatement(Map<String, Object> variables, Object objVal, Matcher forMatcher,
-            AcInstallationHistoryPojo history) {
+            AcInstallationLog installLog, Session session) {
         String varName = StringUtils.trim(forMatcher.group(1));
         String valueOfInClause = StringUtils.trim(forMatcher.group(2));
         String pathOfChildrenOfClause = StringUtils.trim(forMatcher.group(3));
-        // allow variables in root path also
-        if (StringUtils.isNotBlank(pathOfChildrenOfClause)) {
+        String variableForInClause = StringUtils.trim(forMatcher.group(4));
+
+        List<?> iterationValues;
+        if(valueOfInClause != null) {
+            iterationValues = Arrays.asList(valueOfInClause.split(COMMA_SEPARATED_LIST_SPLITTER));
+        } else if(pathOfChildrenOfClause!=null) {
+            // allow variables in root path also
             pathOfChildrenOfClause = elEvaluator.evaluateEl(pathOfChildrenOfClause, String.class, variables);
+            iterationValues = yamlMacroChildNodeObjectsProvider.getValuesForPath(pathOfChildrenOfClause, installLog, session);
+        } else if(variableForInClause!=null) {
+            iterationValues = elEvaluator.evaluateEl(variableForInClause, List.class, variables);
+        } else {
+            throw new IllegalStateException("None of the loop type variables were set even though RegEx matched");
         }
 
-        final List<?> iterationValues = valueOfInClause != null ? Arrays.asList(valueOfInClause.split("\\s*,\\s*"))
-                : yamlMacroChildNodeObjectsProvider.getValuesForPath(pathOfChildrenOfClause, history);
-
-        List toBeUnfoldedList = unfoldLoop(variables, objVal, varName, iterationValues, history);
+        List toBeUnfoldedList = unfoldLoop(variables, objVal, varName, iterationValues, installLog, session);
 
         return toBeUnfoldedList;
     }
 
     private Object evaluateIfStatement(Map<String, Object> variables, Object objVal, Matcher ifMatcher,
-            AcInstallationHistoryPojo history) {
+            AcInstallationLog installLog, Session session) {
         String condition = ifMatcher.group(1).trim();
 
         boolean expressionIsTrue = elEvaluator.evaluateEl(condition, Boolean.class, variables);
 
-        List toBeUnfoldedList = unfoldIf(variables, objVal, expressionIsTrue, history);
+        List toBeUnfoldedList = unfoldIf(variables, objVal, expressionIsTrue, installLog, session);
 
         return toBeUnfoldedList;
     }
 
     private void addToListWithPotentialUnfolding(List transformedList, Object transformedObject) {
-        if (transformedObject instanceof ToBeUnfoldedList) {
+        if (transformedObject == null) {
+            return; // this happens for vars with DEF - those are evaluated already, entry must be left out
+        } else if (transformedObject instanceof ToBeUnfoldedList) {
             // add entries individually (for for loops)
             ToBeUnfoldedList toBeUnfoldedList = (ToBeUnfoldedList) transformedObject;
             for (Object object : toBeUnfoldedList) {
@@ -144,38 +194,38 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
     }
 
     private List unfoldLoop(Map<String, Object> variables, Object val, String varName, List<?> varValues,
-            AcInstallationHistoryPojo history) {
+            AcInstallationLog installLog, Session session) {
         List resultList = new ToBeUnfoldedList();
 
         for (Object varValue : varValues) {
             Map<String, Object> variablesAtThisScope = new HashMap<String, Object>(variables);
             variablesAtThisScope.put(varName, varValue);
-            unfold(val, resultList, variablesAtThisScope, history);
+            unfold(val, resultList, variablesAtThisScope, installLog, session);
 
         }
         return resultList;
     }
 
     private List unfoldIf(Map<String, Object> variables, Object val, boolean expressionIsTrue,
-            AcInstallationHistoryPojo history) {
+            AcInstallationLog installLog, Session session) {
         List resultList = new ToBeUnfoldedList();
         if (expressionIsTrue) {
-            unfold(val, resultList, variables, history);
+            unfold(val, resultList, variables, installLog, session);
         } // otherwise return empty list
 
         return resultList;
     }
 
     private void unfold(Object val, List resultList, Map<String, Object> variablesAtThisScope,
-            AcInstallationHistoryPojo history) {
+            AcInstallationLog installLog, Session session) {
         if (val instanceof List) {
             List origList = (List) val;
             for (Object origListItem : origList) {
-                Object transformedListItem = transform(origListItem, variablesAtThisScope, history);
+                Object transformedListItem = transform(origListItem, variablesAtThisScope, installLog, session);
                 addToListWithPotentialUnfolding(resultList, transformedListItem);
             }
         } else {
-            Object transformedListItem = transform(val, variablesAtThisScope, history);
+            Object transformedListItem = transform(val, variablesAtThisScope, installLog, session);
             addToListWithPotentialUnfolding(resultList, transformedListItem);
         }
     }

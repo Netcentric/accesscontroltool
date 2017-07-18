@@ -10,13 +10,15 @@ package biz.netcentric.cq.tools.actool.configreader;
 
 import java.util.List;
 
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import javax.jcr.Session;
+
+import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
 
 /** Provides the objects for .
  * 
  * @author ghenzler */
 public interface YamlMacroChildNodeObjectsProvider {
 
-    List<Object> getValuesForPath(String pathOfChildrenOfClause, AcInstallationHistoryPojo history);
+    List<Object> getValuesForPath(String pathOfChildrenOfClause, AcInstallationLog history, Session session);
 
 }

@@ -30,16 +30,17 @@ Examples:
 
 <img src="images/configuration-file-structure.png">
 
-Every configuration file comprises a group section where groups and their membership to other groups get defined and a ACE section where all ACEs in the repository regarding these groups get defined. These ACE definitions are again written under the respective group id. The group of an ACE definition in each configuration file has to match a group which is also defined in the same file. Groups which are contained in the isMemberOf property within a group definition have either to be defined in another configuration file or already be installed in the system on which the installation takes place.
+Every configuration file comprises a group section where groups and their membership to other groups get defined and a ACE section where all ACEs in the repository regarding these groups get defined. The principal name of an ACE definition in each configuration file has to match a group id which is also defined in the same file. Groups which are contained in the `isMemberOf` property within a group definition have either to be defined in another configuration file or already be installed in the system on which the installation takes place.
 
 ## Configuration of groups
 
-Groups are specified in the **group_config** A group record in the configuration file starts with the principal id followed by some indented data records containing properties like name/description and group membership:
+Groups are specified in the **group_config**. A group record in the configuration file starts with the group id followed by some indented data records containing properties like name/description and group membership. The groups created through the AC Tool always have a principal name equal to the given group id:
 
 property | comment | required
 --- | --- | ---
 name | Name of the group as shown in UI | optional, if empty group id is taken
 description | Description of the group | optional
+externalId | Required for AC setups since AEM 6.2 SP1 that synchronize groups from LDAP to AEM. The value has to be in format LDAP-DN;IDP-NAME where LDAP-DN is the full distinguished name and IDP-NAME is configured in OSGI config PID org.apache.jackrabbit.oak.security.authentication.ldap.impl.LdapIdentityProvider property "provider-name". Example: `externalId: "cn=group-name,ou=mydepart,ou=Groups,dc=comp,dc=com;IDPNAME"`. Since v1.9.3 | optional
 path | Path of the group either relative or absolute | optional
 isMemberOf | comma separated list of groups this groups is a member of | optional
 members | comma separated list of groups that are member of this group (allows to specify the relationshipo from the other side, however prefer `isMemberOf` over members if possible) | optional
@@ -69,13 +70,14 @@ The property 'migrateFrom' allows to migrate a group name without loosing their 
 
 In general it is best practice to not generate regular users by the AC Tool but use other mechanism (e.g. LDAP) to create users. However, it can be useful to create system users (e.g. for replication agents or OSGi service authentiation) or test users on staging environments.
 
-Users can be configured in the same way as groups in the **user_config** section.
+Users can be configured in the same way as groups in the **user_config** section. A user record in the configuration file starts with the user id followed by some indented data records containing properties. The users created through the AC Tool usually have a principal name equal to the given user id (except if externalId is provided, then the principal name is derived from that).
 
 property | comment | required
 --- | --- | ---
 name, description, path, isMemberOf | Work exactly as for groups | optional
 password | The PW for the user. Obviously this is stored in plain text and should only be used for test users | Required for non-system users, otherwise must not be set
 isSystemUser | Create users as system user (AEM 6.1 and later) | optional
+disabled | Can be set to `true` or an arbitrary reason string to disable a user. If set to `false` the user will be explicitly enabled (calling `User.disable(null)`). If omitted will not change anything regarding enabled/disabled status of user | optional
 profileContent | Allows to provide [enhanced docview xml](https://jackrabbit.apache.org/filevault/apidocs/org/apache/jackrabbit/vault/util/DocViewProperty.html) that will reset the profile to the given structure after each run (since v1.8.2, enhanced docview since v1.9.1) | optional
 preferencesContent | Allows to provide [enhanced docview xml](https://jackrabbit.apache.org/filevault/apidocs/org/apache/jackrabbit/vault/util/DocViewProperty.html) that will reset the preferences node to the given structure after each run (since v1.8.2, enhanced docview since v1.9.1) | optional
 
@@ -107,11 +109,13 @@ Group memberships can be set on user entry or group entry or both.
 
 ## Configuration of ACEs
 
-The configurations are done per principal (currently on group ids are supported due to [issue #141](https://github.com/Netcentric/accesscontroltool/issues/141)) followed by indented settings for each ACE. This data includes
+The configurations are done per authorizableId (yaml key) followed by indented settings for each ACE. In the content ACEs, the user is referenced using its principal name, the mapping from configuration-provided authorizableId to principal name is performed by AC Tool (usually they are just equal, but when using `externalId` they differ). 
+
+This data includes
 
 property | comment | required
 --- | --- | ---
-path | a node path. Wildcards `*` are possible. e.g. assuming we have the language trees de and en then `/content/*/test` would match: `/content/de/test` and `/content/en/test` (mandatory). If an asterisk is contained then the path has to be written inside single quotes (`'...'`) since this symbol is a functional character in YAML. | yes
+path | A node path. Wildcards `*` are possible. e.g. assuming we have the language trees de and en then `/content/*/test` would match: `/content/de/test` and `/content/en/test` (mandatory). If an asterisk is contained then the path has to be written inside single quotes (`'...'`) since this symbol is a functional character in YAML. If path is not supplied the entry is used as repository level permission. | no
 permission | the permission (either `allow` or `deny`) | yes
 actions | the actions (`read,modify,create,delete,acl_read,acl_edit,replicate`). Reference: [Actions](http://docs.adobe.com/docs/en/cq/current/administering/security.html#Actions) | either actions or privileges need to be present; also a mix of both is possible
 privileges | the privileges (`jcr:read, rep:write, jcr:all, crx:replicate, jcr:addChildNodes, jcr:lifecycleManagement, jcr:lockManagement, jcr:modifyAccessControl, jcr:modifyProperties, jcr:namespaceManagement, jcr:nodeTypeDefinitionManagement, jcr:nodeTypeManagement, jcr:readAccessControl, jcr:removeChildNodes, jcr:removeNode, jcr:retentionManagement, jcr:versionManagement, jcr:workspaceManagement, jcr:write, rep:privilegeManagement`). References: [Oak Privileges](http://jackrabbit.apache.org/oak/docs/security/privilege.html) [JCR Privileges](http://www.day.com/specs/jcr/2.0/16_Access_Control_Management.html#16.2.3%20Standard%20Privileges) | either actions or privileges need to be present; also a mix of both is possible
@@ -196,15 +200,14 @@ Certain configuration aspects are global and can be configured on top level (sin
 ```
 - global_config:
       minRequiredVersion: 1.8.5
-      allowExternalGroupNamesRegEx: external.*
+      keepExistingMembershipsForGroupNamesRegEx: external.*
 
 ```
 
 Property | Description
 --- | ---
 minRequiredVersion | This configuration requires at least the given version of ACL tool. If an older version is found the configuration file is not processed.
-allowExternalGroupNamesRegEx | By default group memberships are set to what is specified in configuration file. There are cases where you have groups managed outside of AC tool (e.g. managed by a workflow). Using this option you can assign your external group to a group that is defined in AC Tool configuration. E.g. your AC Tool group "admin" could be member of "external-myworkflow". This setting is a regular expression.
-
+keepExistingMembershipsForGroupNamesRegEx | By default group relationships reset to exactly what is specified in configuration. There are cases where you have relationships between groups managed outside of AC tool (e.g. managed by a workflow). Using this option you can assign your external group to a group that is defined in AC Tool configuration. E.g. your AC Tool group "admin" could be member of "external-myworkflow". This setting is a regular expression.
 
 ## Validation
 

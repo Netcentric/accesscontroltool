@@ -34,8 +34,11 @@ public class Constants {
             HONOR_PRIVILEGE_KEY));
 
     public static final String USER_ANONYMOUS = "anonymous";
+    public static final String USER_AC_SERVICE = "actool";
 
     public static final String GROUPS_ROOT = "/home/groups";
     public static final String USERS_ROOT = "/home/users";
+
+    public static final String REPO_POLICY_NODE = "rep:repoPolicy";
 
 }

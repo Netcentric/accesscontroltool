@@ -83,11 +83,11 @@ public class YamlConfigurationsValidator implements ConfigurationsValidator {
     }
 
     @Override
-    public void validateInitialContentForNoDuplicates(Map<String, Set<AceBean>> mergedAceMapFromConfig)
+    public void validateInitialContentForNoDuplicates(Set<AceBean> aceBeansFromConfig)
             throws IllegalArgumentException {
 
         Map<String, Set<AceBean>> pathBasedAceMapFromConfig = AcHelper
-                .getPathBasedAceMap(mergedAceMapFromConfig, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE);
+                .getPathBasedAceMap(aceBeansFromConfig, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE);
 
         for (String path : pathBasedAceMapFromConfig.keySet()) {
             Set<AceBean> aceBeanSet = pathBasedAceMapFromConfig.get(path);
@@ -105,27 +105,23 @@ public class YamlConfigurationsValidator implements ConfigurationsValidator {
     }
 
     @Override
-    public void validateKeepOrder(Map<String, Set<AceBean>> aceMapFromAllConfigs, Map<String, Set<AceBean>> aceMapFromCurrentConfig,
+    public void validateKeepOrder(Set<AceBean> aceBeansFromAllConfigs, Set<AceBean> aceBeansFromCurrentConfig,
             String sourceFile) {
 
         Set<String> pathsWithKeepOrderSet = new LinkedHashSet<String>();
-        for (Set<AceBean> aceBeans : aceMapFromAllConfigs.values()) {
-            for (AceBean aceBean : aceBeans) {
-                if (aceBean.isKeepOrder()) {
-                    pathsWithKeepOrderSet.add(aceBean.getJcrPath());
-                }
+        for (AceBean aceBean : aceBeansFromAllConfigs) {
+            if (aceBean.isKeepOrder()) {
+                pathsWithKeepOrderSet.add(aceBean.getJcrPath());
             }
         }
 
-        if (aceMapFromCurrentConfig != null) {
-            for (Set<AceBean> aceBeans : aceMapFromCurrentConfig.values()) {
-                for (AceBean aceBean : aceBeans) {
-                    if (aceBean.isKeepOrder() && pathsWithKeepOrderSet.contains(aceBean.getJcrPath())) {
-                        throw new IllegalArgumentException(
-                                "If keepOrder=true is used, the ACE definitions for one particular path must only be defined in one source file (ACE for "
-                                        + aceBean.getJcrPath() + " and group " + aceBean.getPrincipalName() + " as defined in " + sourceFile
-                                        + " was defined before) ");
-                    }
+        if (aceBeansFromCurrentConfig != null) {
+            for (AceBean aceBean : aceBeansFromCurrentConfig) {
+                if (aceBean.isKeepOrder() && pathsWithKeepOrderSet.contains(aceBean.getJcrPath())) {
+                    throw new IllegalArgumentException(
+                            "If keepOrder=true is used, the ACE definitions for one particular path must only be defined in one source file (ACE for "
+                                    + aceBean.getJcrPath() + " and group " + aceBean.getAuthorizableId() + " as defined in " + sourceFile
+                                    + " was defined before) ");
                 }
             }
         }

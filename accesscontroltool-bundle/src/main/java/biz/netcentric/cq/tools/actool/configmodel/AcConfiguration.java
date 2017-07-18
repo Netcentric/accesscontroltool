@@ -9,7 +9,6 @@
 package biz.netcentric.cq.tools.actool.configmodel;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -19,20 +18,20 @@ import java.util.SortedSet;
 public class AcConfiguration {
 
 	private Map<String, SortedSet<String>> honorPrivilegePaths;
-	
+
     private GlobalConfiguration globalConfiguration;
 
-    // to be changed from map to PojoClass in future versions
-    private Map<String, Set<AuthorizableConfigBean>> authorizablesMap;
+    // Authorizables configuration beans in order as they appear in configuration
+    private AuthorizablesConfig authorizablesConfig;
 
-    // to be changed from map to PojoClass in future versions
-    private Map<String, Set<AceBean>> aceMap;
+    // ACE configuration beans in order as they appear in configuration
+    private AcesConfig aceBeansConfig;
 
-	private Set<String> obsoleteAuthorizables = new HashSet<String>();    
-    
+	private Set<String> obsoleteAuthorizables = new HashSet<String>();
+
 	/**
-	 * Returns a Map of principals/groups and the honored paths of each principle. 
-	 * 
+	 * Returns a Map of principals/groups and the honored paths of each principle.
+	 *
 	 * @return Map of honored paths
 	 */
     public Map<String, SortedSet<String>> getHonorPrivilegePaths() {
@@ -51,20 +50,34 @@ public class AcConfiguration {
         this.globalConfiguration = globalConfiguration;
     }
 
-    public Map<String, Set<AuthorizableConfigBean>> getAuthorizablesConfig() {
-        return authorizablesMap;
+    public AuthorizablesConfig getAuthorizablesConfig() {
+        return authorizablesConfig;
     }
 
-    public void setAuthorizablesConfig(Map<String, Set<AuthorizableConfigBean>> authorizablesMap) {
-        this.authorizablesMap = authorizablesMap;
+    public void setAuthorizablesConfig(AuthorizablesConfig authorizablesSet) {
+        this.authorizablesConfig = authorizablesSet;
     }
 
-    public Map<String, Set<AceBean>> getAceConfig() {
-        return aceMap;
+    public AcesConfig getAceConfig() {
+        return aceBeansConfig;
     }
 
-    public void setAceConfig(Map<String, Set<AceBean>> aceMap) {
-        this.aceMap = aceMap;
+    public void setAceConfig(AcesConfig aceBeansSet) {
+        this.aceBeansConfig = aceBeansSet;
+        ensureAceBeansHaveCorrectPrincipalNameSet(aceBeansSet);
+    }
+
+    // this is required as the configuration contains authorizableIds, but the JCR contains principal names. The mapping is available via
+    // authorizablesConfig
+    private void ensureAceBeansHaveCorrectPrincipalNameSet(AcesConfig aceBeansSet) {
+        if (authorizablesConfig == null) {
+            throw new IllegalStateException("authorizablesConfig must be set before setAceConfig() is called");
+        }
+        for (AceBean aceBean : aceBeansSet) {
+            String authorizableId = aceBean.getAuthorizableId();
+            String principalName = authorizablesConfig.getPrincipalNameForAuthorizableId(authorizableId);
+            aceBean.setPrincipalName(principalName);
+        }
     }
 
     public Set<String> getObsoleteAuthorizables() {

@@ -1,3 +1,11 @@
+/*
+ * (C) Copyright 2017 Netcentric AG.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package biz.netcentric.cq.tools.actool.validators;
 
 import static org.junit.Assert.assertEquals;
@@ -29,13 +37,15 @@ import org.mockito.Mock;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
-import biz.netcentric.cq.tools.actool.configreader.YamlConfigReader;
+import biz.netcentric.cq.tools.actool.configreader.TestAceBean;
+import biz.netcentric.cq.tools.actool.configreader.TestYamlConfigReader;
+import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
 import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
 
 /** Contains unit tests checking support of different restrictions
- * 
+ *
  * @author jochenkoschorkej */
 public class RestrictionValidationTest {
 
@@ -52,7 +62,7 @@ public class RestrictionValidationTest {
     AccessControlManager accessControlManager;
 
     @InjectMocks
-    ConfigReader yamlConfigReader = new YamlConfigReader();
+    ConfigReader yamlConfigReader = new TestYamlConfigReader();
 
     List<LinkedHashMap> aclList;
     Set<String> groupsFromConfig;
@@ -64,7 +74,7 @@ public class RestrictionValidationTest {
             AcConfigBeanValidationException {
 
         initMocks(this);
-        doReturn(session).when(repository).loginAdministrative(null);
+        doReturn(session).when(repository).loginService(Constants.USER_AC_SERVICE, null);
 
         accessControlPolicy = mock(AccessControlList.class,
                 withSettings().extraInterfaces(JackrabbitAccessControlList.class));
@@ -81,9 +91,9 @@ public class RestrictionValidationTest {
         final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl("/home/groups", "/home/users");
         authorizableValidator.disable();
         groupsFromConfig = yamlConfigReader.getGroupConfigurationBeans(
-                yamlList, authorizableValidator).keySet();
+                yamlList, authorizableValidator).getAuthorizableIds();
         ValidatorTestHelper.createAuthorizableTestBeans(yamlList, yamlConfigReader, authorizableBeanList);
-        ValidatorTestHelper.createAceTestBeans(yamlList, yamlConfigReader, groupsFromConfig, aceBeanList);
+        ValidatorTestHelper.createAceTestBeans(yamlList, yamlConfigReader, groupsFromConfig, aceBeanList, session);
     }
 
     @Test
@@ -112,8 +122,9 @@ public class RestrictionValidationTest {
         final AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(
                 groupsFromConfig);
         for (final AceBean aceBean : aceBeanList) {
-            assertEquals("Problem in bean " + aceBean, aceBean.getAssertedExceptionString(),
+            assertEquals("Problem in bean " + aceBean, ((TestAceBean) aceBean).getAssertedExceptionString(),
                     ValidatorTestHelper.getSimpleValidationException(aceBean, aceBeanValidator, accessControlManager));
+
         }
     }
 

@@ -9,16 +9,15 @@
 package biz.netcentric.cq.tools.actool.configreader;
 
 import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 
-import biz.netcentric.cq.tools.actool.configmodel.AceBean;
-import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
@@ -26,25 +25,24 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
 
 public interface ConfigReader {
 
-    Map<String, Set<AceBean>> getAceConfigurationBeans(
-            final Collection<?> aceConfigData, Set<String> groupsFromConfig,
-            AceBeanValidator aceBeanValidator) throws RepositoryException,
+    public AcesConfig getAceConfigurationBeans(
+            final Collection<?> aceConfigData, AceBeanValidator aceBeanValidator, Session session) throws RepositoryException,
             AcConfigBeanValidationException;
 
-    Map<String, Set<AuthorizableConfigBean>> getGroupConfigurationBeans(
+    public AuthorizablesConfig getGroupConfigurationBeans(
             final Collection<?> groupConfigData,
             AuthorizableValidator authorizableValidator)
-                    throws AcConfigBeanValidationException;
+            throws AcConfigBeanValidationException;
 
-    Map<String, Set<AuthorizableConfigBean>> getUserConfigurationBeans(
+    public AuthorizablesConfig getUserConfigurationBeans(
             final Collection<?> userConfigData,
             AuthorizableValidator authorizableValidator)
-                    throws AcConfigBeanValidationException;
+            throws AcConfigBeanValidationException;
 
-    Map<String, SortedSet<String>> getHonorPaths(final Collection yamlList);    
-    
-    GlobalConfiguration getGlobalConfiguration(final Collection yamlList);
+    Map<String, SortedSet<String>> getHonorPaths(final Collection yamlList);
 
-    Set<String> getObsoluteAuthorizables(Collection yamlList);
+    public GlobalConfiguration getGlobalConfiguration(final Collection yamlList);
+
+    public Set<String> getObsoluteAuthorizables(Collection yamlList);
 
 }

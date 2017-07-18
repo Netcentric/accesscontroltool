@@ -12,20 +12,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElement;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementVisitor;
-import biz.netcentric.cq.tools.actool.helper.Constants;
 
 public class AuthorizableConfigBean implements AcDumpElement {
 
-    private String principalID;
+    private String authorizableId;
     private String principalName;
+
+    private String name; // (non-technical) name as used in profile
     private String description;
 
-    private String[] memberOf;
+    private String[] isMemberOf;
     private String memberOfStringFromConfig;
 
     private String[] members;
@@ -34,20 +34,24 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private String path;
     private String password;
 
+    private String externalId;
+
     private String profileContent;
     private String preferencesContent;
-    
+
     private String migrateFrom;
 
     private boolean isGroup = true;
     private boolean isSystemUser = false;
 
-    public String getPrincipalID() {
-        return principalID;
+    private String disabled;
+
+    public String getAuthorizableId() {
+        return authorizableId;
     }
 
-    public void setPrincipalID(final String principalID) {
-        this.principalID = principalID;
+    public void setAuthorizableId(final String authorizableId) {
+        this.authorizableId = authorizableId;
     }
 
     public String getPrincipalName() {
@@ -58,6 +62,13 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.principalName = principalName;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public String getPath() {
         return path;
@@ -82,7 +93,15 @@ public class AuthorizableConfigBean implements AcDumpElement {
     public void setPassword(final String password) {
         this.password = password;
     }
-    
+
+    public String getExternalId() {
+        return externalId;
+    }
+
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
+    }
+
     public String getProfileContent() {
         return profileContent;
     }
@@ -124,11 +143,11 @@ public class AuthorizableConfigBean implements AcDumpElement {
     }
 
     public String[] getMemberOf() {
-        return memberOf;
+        return isMemberOf;
     }
 
     public boolean isMemberOfOtherGroups() {
-        return memberOf != null;
+        return isMemberOf != null;
     }
 
     public String getMemberOfStringFromConfig() {
@@ -136,38 +155,38 @@ public class AuthorizableConfigBean implements AcDumpElement {
     }
 
     public String getMemberOfString() {
-        if (memberOf == null) {
+        if (isMemberOf == null) {
             return "";
         }
 
         final StringBuilder memberOfString = new StringBuilder();
 
-        for (final String group : memberOf) {
+        for (final String group : isMemberOf) {
             memberOfString.append(group).append(",");
         }
         return StringUtils.chop(memberOfString.toString());
     }
 
     public void setMemberOf(final String[] memberOf) {
-        this.memberOf = memberOf;
+        this.isMemberOf = memberOf;
     }
 
     public void setMemberOf(final List<String> memberOf) {
         if ((memberOf != null) && !memberOf.isEmpty()) {
-            this.memberOf = memberOf.toArray(new String[memberOf.size()]);
+            this.isMemberOf = memberOf.toArray(new String[memberOf.size()]);
         }
     }
 
-    public void addMemberOf(final String member) {
-        if (memberOf == null) {
-            memberOf = new String[] { member };
+    public void addIsMemberOf(final String member) {
+        if (isMemberOf == null) {
+            isMemberOf = new String[] { member };
             return;
         }
         final List<String> memberList = new ArrayList<String>();
-        memberList.addAll(Arrays.asList(memberOf));
+        memberList.addAll(Arrays.asList(isMemberOf));
         if (!memberList.contains(member)) {
             memberList.add(member);
-            memberOf = memberList.toArray(new String[memberList.size()]);
+            isMemberOf = memberList.toArray(new String[memberList.size()]);
         }
     }
 
@@ -196,29 +215,34 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.members = members;
     }
 
+    public String getDisabled() {
+        return disabled;
+    }
+
+    public void setDisabled(String disabled) {
+        this.disabled = disabled;
+    }
 
     public String getMigrateFrom() {
         return migrateFrom;
     }
 
+
     /** Set a group name, from which the users are taken over to this group. The group given is deleted after the run. This property is only
      * to be used temporarily (usually only included in one released version that travels all environments, once all groups are migrated the
      * config should be removed). If not set (the default) nothing happens. If the property points to a group that does not exist (anymore),
      * the property is ignored.
-     * 
+     *
      * @param migrateFrom */
     public void setMigrateFrom(String migrateFrom) {
         this.migrateFrom = migrateFrom;
     }
 
-    public boolean membersContainsAnonymous() {
-        return ArrayUtils.contains(members, Constants.USER_ANONYMOUS);
-    }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        sb.append("\n" + "id: " + principalID + "\n");
+        sb.append("\n" + "id: " + authorizableId + "\n");
         sb.append("name: " + principalName + "\n");
         sb.append("path: " + path + "\n");
         sb.append("isMemberOf: " + getMemberOfString() + "\n");
@@ -229,17 +253,5 @@ public class AuthorizableConfigBean implements AcDumpElement {
     @Override
     public void accept(final AcDumpElementVisitor acDumpElementVisitor) {
         acDumpElementVisitor.visit(this);
-    }
-
-    // --- only for junit test (TODO: check if test can be refactored to not require
-
-    private String assertedExceptionString = null;
-
-    public String getAssertedExceptionString() {
-        return assertedExceptionString;
-    }
-
-    public void setAssertedExceptionString(final String assertedException) {
-        assertedExceptionString = assertedException;
     }
 }

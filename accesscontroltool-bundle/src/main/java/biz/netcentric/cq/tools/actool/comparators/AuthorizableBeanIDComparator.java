@@ -18,11 +18,11 @@ public class AuthorizableBeanIDComparator implements
     @Override
     public int compare(AuthorizableConfigBean bean1,
             AuthorizableConfigBean bean2) {
-        if (bean1.getPrincipalID().compareTo(bean2.getPrincipalID()) > 1) {
+        if (bean1.getAuthorizableId().compareTo(bean2.getAuthorizableId()) > 1) {
             return 1;
-        } else if (bean1.getPrincipalID().compareTo(bean2.getPrincipalID()) < 1) {
+        } else if (bean1.getAuthorizableId().compareTo(bean2.getAuthorizableId()) < 1) {
             return -1;
-        } else if (bean1.getPrincipalID().compareTo(bean2.getPrincipalID()) == 0) {
+        } else if (bean1.getAuthorizableId().compareTo(bean2.getAuthorizableId()) == 0) {
             return 1;
         }
         return 1;

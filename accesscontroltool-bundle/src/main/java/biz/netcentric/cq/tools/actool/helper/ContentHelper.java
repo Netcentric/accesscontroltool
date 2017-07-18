@@ -47,6 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 public class ContentHelper {
@@ -55,7 +56,7 @@ public class ContentHelper {
     private ContentHelper() {
     }
 
-    public static boolean createInitialContent(final Session session, final AcInstallationHistoryPojo history, String path,
+    public static boolean createInitialContent(final Session session, final AcInstallationLog history, String path,
             Set<AceBean> aceBeanSetFromConfig) throws RepositoryException, PathNotFoundException, ItemExistsException,
             ConstraintViolationException, VersionException, InvalidSerializedDataException, LockException, AccessDeniedException {
 
@@ -65,13 +66,19 @@ public class ContentHelper {
         } else {
 
             try {
+
+                String parentPath = StringUtils.substringBeforeLast(path, "/");
+                if (!session.nodeExists(parentPath)) {
+                    history.incMissingParentPathsForInitialContent();
+                    history.addVerboseMessage(LOG, "Parent path " + parentPath + " missing for initial content at " + path);
+                    return false;
+                }
+
                 importContent(session, path, initialContent);
-                history.addMessage("Created initial content for path " + path);
+                history.addMessage(LOG, "Created initial content for path " + path);
                 return true;
             } catch (Exception e) {
-                String msg = "Failed creating initial content for path " + path + ": " + e;
-                history.addWarning(msg);
-                LOG.warn(msg);
+                history.addWarning(LOG, "Failed creating initial content for path " + path + ": " + e);
                 LOG.debug("Exception: " + e, e); // log stack trace only debug
                 return false;
             }

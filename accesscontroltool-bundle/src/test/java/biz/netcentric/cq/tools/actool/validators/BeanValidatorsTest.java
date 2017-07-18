@@ -37,7 +37,10 @@ import org.mockito.Mock;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
-import biz.netcentric.cq.tools.actool.configreader.YamlConfigReader;
+import biz.netcentric.cq.tools.actool.configreader.TestAceBean;
+import biz.netcentric.cq.tools.actool.configreader.TestAuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configreader.TestYamlConfigReader;
+import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
 import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
@@ -56,8 +59,11 @@ public class BeanValidatorsTest {
     @Mock
     AccessControlManager accessControlManager;
 
+    @Mock
+    AuthorizableValidator authorizableValidator;
+
     @InjectMocks
-    ConfigReader yamlConfigReader = new YamlConfigReader();
+    ConfigReader yamlConfigReader = new TestYamlConfigReader();
 
     List<LinkedHashMap> aclList;
     Set<String> groupsFromConfig;
@@ -69,7 +75,7 @@ public class BeanValidatorsTest {
             AcConfigBeanValidationException {
 
         initMocks(this);
-        doReturn(session).when(repository).loginAdministrative(null);
+        doReturn(session).when(repository).loginService(Constants.USER_AC_SERVICE, null);
 
         accessControlPolicy = mock(AccessControlList.class,
                 withSettings().extraInterfaces(JackrabbitAccessControlList.class));
@@ -83,11 +89,10 @@ public class BeanValidatorsTest {
         final List<LinkedHashMap> yamlList = ValidatorTestHelper.getYamlList("testconfig.yaml");
         final AuthorizableValidator authorizableValidator = new AuthorizableValidatorImpl("/home/groups", "/home/users");
         authorizableValidator.disable();
-        groupsFromConfig = yamlConfigReader.getGroupConfigurationBeans(
-                yamlList, authorizableValidator).keySet();
+        groupsFromConfig = yamlConfigReader.getGroupConfigurationBeans(yamlList, authorizableValidator).getAuthorizableIds();
 
         ValidatorTestHelper.createAuthorizableTestBeans(yamlList, yamlConfigReader, authorizableBeanList);
-        ValidatorTestHelper.createAceTestBeans(yamlList, yamlConfigReader, groupsFromConfig, aceBeanList);
+        ValidatorTestHelper.createAceTestBeans(yamlList, yamlConfigReader, groupsFromConfig, aceBeanList, session);
     }
 
     @Test
@@ -97,17 +102,17 @@ public class BeanValidatorsTest {
             assertEquals(
                     ValidatorTestHelper.getSimpleValidationException(authorizableBean,
                             authorizableValidator),
-                    authorizableBean.getAssertedExceptionString());
+                    ((TestAuthorizableConfigBean) authorizableBean).getAssertedExceptionString());
         }
     }
 
     @Test
     public void testAceBeans() {
-        final AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(
-                groupsFromConfig);
+        final AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(groupsFromConfig);
         for (final AceBean aceBean : aceBeanList) {
-            assertEquals("Problem in bean " + aceBean, aceBean.getAssertedExceptionString(),
-                    ValidatorTestHelper.getSimpleValidationException(aceBean, aceBeanValidator, accessControlManager));
+            assertEquals("Problem in bean " + aceBean, ((TestAceBean) aceBean).getAssertedExceptionString(),
+                    ValidatorTestHelper.getSimpleValidationException(aceBean, aceBeanValidator,
+                            accessControlManager));
         }
     }
 

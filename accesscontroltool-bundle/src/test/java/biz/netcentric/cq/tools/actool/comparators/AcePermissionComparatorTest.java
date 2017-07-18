@@ -1,3 +1,11 @@
+/*
+ * (C) Copyright 2017 Netcentric AG.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package biz.netcentric.cq.tools.actool.comparators;
 
 import static org.junit.Assert.assertEquals;
@@ -95,7 +103,7 @@ public class AcePermissionComparatorTest {
     private String toComparableString(Set<AceBean> beans) {
         List<String> ids = new ArrayList<String>();
         for (AceBean bean : beans) {
-            ids.add(bean.getPrincipalName());
+            ids.add(bean.getAuthorizableId());
         }
         return StringUtils.join(ids, "-");
 
@@ -103,7 +111,7 @@ public class AcePermissionComparatorTest {
 
     private AceBean getAceBean(String id, String permission, boolean keepOrder) {
         AceBean aceBean = new AceBean();
-        aceBean.setPrincipal(id);
+        aceBean.setAuthorizableId(id);
         aceBean.setPermission(permission);
         aceBean.setKeepOrder(keepOrder);
         return aceBean;

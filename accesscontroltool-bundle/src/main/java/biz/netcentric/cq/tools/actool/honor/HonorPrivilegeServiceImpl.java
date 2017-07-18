@@ -1,8 +1,16 @@
 package biz.netcentric.cq.tools.actool.honor;
 
-import biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl;
-import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.security.AccessControlEntry;
+
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
@@ -12,15 +20,8 @@ import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.security.AccessControlEntry;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
+import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
+import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
 
 
 /**
@@ -33,14 +34,13 @@ import java.util.SortedSet;
 @Component
 public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 
-	private static final Logger LOG = LoggerFactory.getLogger(AceServiceImpl.class);
+	private static final Logger LOG = LoggerFactory.getLogger(HonorPrivilegeServiceImpl.class);
 
 	@Reference
 	private SlingRepository repository;
 
 	@Override
-	public Set<PathACL> takePrivilegeSnapshot(Map<String, SortedSet<String>> pathsByGroup, 
-			AcInstallationHistoryPojo history) throws RepositoryException {
+	public Set<PathACL> takePrivilegeSnapshot(Map<String, SortedSet<String>> pathsByGroup, AcInstallationLog history) throws RepositoryException {
 
 		Set<PathACL> result = new HashSet<>();
 		Session session = repository.loginAdministrative(null);
@@ -53,14 +53,14 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 				if (("/").equals(path)) { 
 					String message = "Honor privilege on root folder ignored.";
 					LOG.warn(message);
-					history.addMessage(message);
+					history.addMessage(LOG, message);
 				} else {
 					String group = entry.getKey();
 					acls.addAll(this.findRecursiveACLs(session, group, path, history));
 				}
 			}
             if (acls.isEmpty()) {
-                history.addWarning("No custom ACLs found for group " + entry.getKey());
+                history.addWarning(LOG, "No custom ACLs found for group " + entry.getKey());
             }
 
             result.addAll(acls);
@@ -74,7 +74,7 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 	 * snapshot.
 	 */
 	@Override
-	public void restorePrivilegeSnapshot(Set<PathACL> snapshotACL,  AcInstallationHistoryPojo history) 
+	public void restorePrivilegeSnapshot(Set<PathACL> snapshotACL,  AcInstallationLog history)
 			throws RepositoryException {
 		Session session = null;
 		
@@ -85,7 +85,7 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 			}
 			if (!snapshotACL.isEmpty()) {
 				session.save();
-                history.addMessage("Honour privileges successfully restored.");
+                history.addMessage(LOG,"Honour privileges successfully restored.");
             }
 		} finally {
 			if (session != null) {
@@ -94,8 +94,7 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 		}
 	}
 
-	private Set<PathACL> findRecursiveACLs(Session session, String group, String path, 
-			AcInstallationHistoryPojo history) throws RepositoryException {
+	private Set<PathACL> findRecursiveACLs(Session session, String group, String path, AcInstallationLog history) throws RepositoryException {
 		Set<PathACL> result = new HashSet<>();
 
 
@@ -116,7 +115,7 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 		} catch (PathNotFoundException e) {
 			String msg = "Honour path " + path + " not found: ignoring.";
 			LOG.warn(msg);
-			history.addWarning(msg);
+			history.addWarning(LOG, msg);
 		}
 		
 		return result;
