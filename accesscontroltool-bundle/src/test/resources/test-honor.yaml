@@ -7,9 +7,12 @@
 # http://www.eclipse.org/legal/epl-v10.html
 #
 
-- honor_privilege:
-
-  - groupA:
-      - path/1
-      - path/2
+- group_config:
+    - content-writer:
+        - name:
+          isMemberOf:
+          path: /home/groups/folder2
+          honorPrivilege:
+            - path/1
+            - path/2
 

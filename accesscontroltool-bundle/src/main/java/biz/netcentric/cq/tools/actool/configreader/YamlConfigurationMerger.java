@@ -106,19 +106,6 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             }
             configurationsValidator.validateSectionIdentifiers(sectionIdentifiers, sourceFile);
 
-            // --- Honor privilege section
-
-            Map<String, SortedSet<String>> honoredPathsByGroup = configReader.getHonorPaths(yamlRootList);
-            for (String group : honoredPathsByGroup.keySet()) {
-            	if (honorPrivilegePaths.containsKey(group)) {
-            		honorPrivilegePaths.get(group).addAll(honoredPathsByGroup.get(group));
-            	} else {
-            		SortedSet paths = new TreeSet<String>();
-            		paths.addAll(honoredPathsByGroup.get(group));
-            		honorPrivilegePaths.put(group, paths);
-            	}
-            }
-
             // --- global configuration section
             try {
                 globalConfiguration.merge(configReader.getGlobalConfiguration(yamlRootList));
@@ -186,7 +173,6 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         acConfiguration.setAuthorizablesConfig(mergedAuthorizablesBeansfromConfig);
         acConfiguration.setAceConfig(mergedAceBeansFromConfig);
         acConfiguration.setObsoleteAuthorizables(obsoleteAuthorizables);
-        acConfiguration.setHonorPrivilegePaths(honorPrivilegePaths);
 
         history.setMergedAndProcessedConfig(
                 "# Merged configuration of " + configFileContentByFilename.size() + " files \n" + yamlParser.dump(acConfiguration));

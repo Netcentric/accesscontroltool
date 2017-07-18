@@ -39,8 +39,6 @@ public interface ConfigReader {
             AuthorizableValidator authorizableValidator)
             throws AcConfigBeanValidationException;
 
-    Map<String, SortedSet<String>> getHonorPaths(final Collection yamlList);
-
     public GlobalConfiguration getGlobalConfiguration(final Collection yamlList);
 
     public Set<String> getObsoluteAuthorizables(Collection yamlList);

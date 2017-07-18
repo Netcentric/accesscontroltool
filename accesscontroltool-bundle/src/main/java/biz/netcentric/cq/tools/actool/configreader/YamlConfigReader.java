@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,6 +61,7 @@ public class YamlConfigReader implements ConfigReader {
     protected static final String ACE_CONFIG_PROPERTY_KEEP_ORDER = "keepOrder";
     protected static final String ACE_CONFIG_INITIAL_CONTENT = "initialContent";
 
+    private static final String GROUP_CONFIG_PROPERTY_HONOR_PRIVILEGE = "honorPrivilege";
     private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF = "isMemberOf";
     private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY = "memberOf";
     private static final String GROUP_CONFIG_PROPERTY_MEMBERS = "members";
@@ -102,23 +102,7 @@ public class YamlConfigReader implements ConfigReader {
         return aceMapFromConfig;
 
     }
-    public Map<String, SortedSet<String>> getHonorPaths(final Collection yamlList) {
 
-        Map<String, SortedSet<String>> result = new HashMap<String, SortedSet<String>>();
-
-        List<Map> sections = (List<Map>) this.getConfigSection(Constants.HONOR_PRIVILEGE_KEY, yamlList);
-
-        if (sections != null) {
-            for (Map<String, List<String>> groups : sections) {
-                for (String group : groups.keySet()) {
-                    SortedSet paths = new TreeSet<String>();
-                    paths.addAll(groups.get(group));
-                    result.put(group, paths);
-                }
-            }
-        }
-        return result;
-    }
     @Override
     public AuthorizablesConfig getGroupConfigurationBeans(final Collection yamlList,
             final AuthorizableValidator authorizableValidator) throws AcConfigBeanValidationException {
@@ -389,13 +373,28 @@ public class YamlConfigReader implements ConfigReader {
 
         authorizableConfigBean.setProfileContent(getMapValueAsString(
                 currentPrincipalDataMap, USER_CONFIG_PROFILE_CONTENT));
+
         authorizableConfigBean.setPreferencesContent(getMapValueAsString(
                 currentPrincipalDataMap, USER_CONFIG_PREFERENCES_CONTENT));
+
+
+        authorizableConfigBean.setHonorPaths(getMapValueAsStringArray(currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_HONOR_PRIVILEGE));
 
         if (currentPrincipalDataMap.containsKey(USER_CONFIG_DISABLED)) {
             authorizableConfigBean.setDisabled(getMapValueAsString(currentPrincipalDataMap, USER_CONFIG_DISABLED));
         }
 
+    }
+
+    private String[] getMapValueAsStringArray(final Map<String, ?> currentAceDefinition, final String propertyName) {
+        String[] result;
+        String value = this.getMapValueAsString(currentAceDefinition, propertyName);
+        if (StringUtils.isEmpty(value)) {
+            result = new String[0];
+        } else {
+            result = value.replaceAll("\\[|\\]", "").trim().split(",");
+        }
+        return result;
     }
 
     protected String getMapValueAsString(

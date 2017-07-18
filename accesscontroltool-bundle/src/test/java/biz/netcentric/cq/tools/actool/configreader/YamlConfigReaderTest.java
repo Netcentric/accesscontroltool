@@ -36,6 +36,7 @@ import org.yaml.snakeyaml.Yaml;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
 public class YamlConfigReaderTest {
@@ -53,8 +54,9 @@ public class YamlConfigReaderTest {
     public void testHonorPrivilege() throws IOException, AcConfigBeanValidationException, RepositoryException {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
         final List<LinkedHashMap> yamlList = getYamlList("test-honor.yaml");
-        Map<String, SortedSet<String>> honors = yamlConfigReader.getHonorPaths(yamlList);
-        assertTrue(honors.get("groupA").size() == 2);
+
+        AuthorizablesConfig config = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
+        assertTrue(config.getAuthorizableConfig("content-writer").getHonorPaths().length == 2);
     }
 
     @Test

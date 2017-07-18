@@ -20,6 +20,8 @@ import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
 
@@ -40,26 +42,27 @@ public class HonorPrivilegeServiceImpl implements HonorPrivilegeService {
 	private SlingRepository repository;
 
 	@Override
-	public Set<PathACL> takePrivilegeSnapshot(Map<String, SortedSet<String>> pathsByGroup, AcInstallationLog history) throws RepositoryException {
+	public Set<PathACL> takePrivilegeSnapshot(AuthorizablesConfig authConf, AcInstallationLog history) throws RepositoryException {
 
-		Set<PathACL> result = new HashSet<>();
 		Session session = repository.loginAdministrative(null);
+		Set<PathACL> result = new HashSet<>();
 
-		for (Map.Entry<String, SortedSet<String>> entry : pathsByGroup.entrySet()) {
-			Set<PathACL> acls = new HashSet<>();
-			for (String path : entry.getValue()) {
+		for (AuthorizableConfigBean conf : authConf) {
+		    Set<PathACL> acls = new HashSet<>();
+			for (String honorPath : conf.getHonorPaths()) {
+
 				// Attempting to serialise the root node permissions provokes the following error:
 				// OakVersion0001: Cannot change property jcr:mixinTypes on checked in node
-				if (("/").equals(path)) { 
+				if (("/").equals(honorPath)) {
 					String message = "Honor privilege on root folder ignored.";
 					history.addWarning(LOG, message);
-				} else {
-					String group = entry.getKey();
-					acls.addAll(this.findRecursiveACLs(session, group, path, history));
+				} else if (!honorPath.trim().equals("")) {
+					String group = conf.getAuthorizableId();
+					acls.addAll(this.findRecursiveACLs(session, conf.getAuthorizableId(), honorPath, history));
 				}
 			}
             if (acls.isEmpty()) {
-                history.addWarning(LOG, "No custom ACLs found for group " + entry.getKey());
+                history.addWarning(LOG, "No custom ACLs found for group " + conf.getAuthorizableId());
             }
 
             result.addAll(acls);

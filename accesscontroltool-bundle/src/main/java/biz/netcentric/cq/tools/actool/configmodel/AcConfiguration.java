@@ -17,8 +17,6 @@ import java.util.SortedSet;
  * and variables have been processed. */
 public class AcConfiguration {
 
-	private Map<String, SortedSet<String>> honorPrivilegePaths;
-
     private GlobalConfiguration globalConfiguration;
 
     // Authorizables configuration beans in order as they appear in configuration
@@ -29,18 +27,6 @@ public class AcConfiguration {
 
 	private Set<String> obsoleteAuthorizables = new HashSet<String>();
 
-	/**
-	 * Returns a Map of principals/groups and the honored paths of each principle.
-	 *
-	 * @return Map of honored paths
-	 */
-    public Map<String, SortedSet<String>> getHonorPrivilegePaths() {
-		return honorPrivilegePaths;
-	}
-
-	public void setHonorPrivilegePaths(Map<String, SortedSet<String>> honorPrivilegePaths) {
-		this.honorPrivilegePaths = honorPrivilegePaths;
-	}
 
     public GlobalConfiguration getGlobalConfiguration() {
         return globalConfiguration;

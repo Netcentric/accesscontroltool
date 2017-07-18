@@ -207,14 +207,9 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                         configReader, session);
                 installLog.setAcConfiguration(acConfiguration);
 
-                // Save current privileges for the paths marked as honor_privilege
-                Set<PathACL> honoredPathACLs = this.honorService
-                        .takePrivilegeSnapshot(acConfiguration.getHonorPrivilegePaths(), installLog);
+                acConfiguration.getAuthorizablesConfig();
 
                 installMergedConfigurations(installLog, acConfiguration, restrictedToPaths, session);
-
-                // Re-apply the saved ACLs from the honoured paths
-                this.honorService.restorePrivilegeSnapshot(honoredPathACLs, installLog);
 
                 removeObsoleteAuthorizables(installLog, acConfiguration.getObsoleteAuthorizables(), session);
 
@@ -238,7 +233,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
     }
 
-
     private void installAcConfiguration(
             AcConfiguration acConfiguration, AcInstallationLog installLog,
             Map<String, Set<AceBean>> repositoryDumpAceMap, String[] restrictedToPaths, Session session) throws Exception {
@@ -249,9 +243,17 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             throw new IllegalArgumentException(message);
         }
 
-        installAuthorizables(installLog, acConfiguration.getAuthorizablesConfig(), session);
+        // Save current privileges for the paths marked as honor_privilege
+        Set<PathACL> honoredPathACLs = this.honorService
+                .takePrivilegeSnapshot(acConfiguration.getAuthorizablesConfig(), installLog);
 
+
+        installAuthorizables(installLog, acConfiguration.getAuthorizablesConfig(), session);
         installAces(installLog, acConfiguration, repositoryDumpAceMap, restrictedToPaths, session);
+
+
+        // Re-apply the saved ACLs from the honoured paths
+        this.honorService.restorePrivilegeSnapshot(honoredPathACLs, installLog);
     }
 
     private void removeAcesForPathsNotInConfig(AcInstallationLog installLog, Session session, Set<String> principalsInConfig,

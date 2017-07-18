@@ -6,6 +6,7 @@ import java.util.SortedSet;
 
 import javax.jcr.RepositoryException;
 
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
@@ -25,12 +26,12 @@ public interface HonorPrivilegeService {
 	 * takes the form of a set of {@link  biz.netcentric.cq.tools.actool.honor.PathACL} instances which can later be 
 	 * restored via restorePrivelegeSnapshot.
 	 * 
-	 * @param pathsByGroup the paths to include in the snapshot for each group
+	 * @param authConf The configuration for the authorizables, containing the honor paths.
 	 * @param history the installation history
 	 * @return An installable snapshot of the privileges on a series of paths for the association of groups and paths
 	 * @throws RepositoryException in case of an error in the repository
 	 */
-	Set<PathACL> takePrivilegeSnapshot(Map<String, SortedSet<String>> pathsByGroup, AcInstallationLog history)
+	Set<PathACL> takePrivilegeSnapshot(AuthorizablesConfig authConf, AcInstallationLog history)
 			throws RepositoryException; 
 	
 	/**
