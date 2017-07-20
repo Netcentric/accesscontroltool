@@ -12,6 +12,7 @@ import static biz.netcentric.cq.tools.actool.history.AcInstallationLog.msHumanRe
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;

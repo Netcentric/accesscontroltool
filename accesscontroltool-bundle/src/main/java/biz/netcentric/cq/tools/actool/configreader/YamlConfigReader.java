@@ -10,12 +10,15 @@ package biz.netcentric.cq.tools.actool.configreader;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import javax.jcr.Node;
@@ -58,6 +61,7 @@ public class YamlConfigReader implements ConfigReader {
     protected static final String ACE_CONFIG_PROPERTY_KEEP_ORDER = "keepOrder";
     protected static final String ACE_CONFIG_INITIAL_CONTENT = "initialContent";
 
+    private static final String GROUP_CONFIG_PROPERTY_HONOR_PRIVILEGE = "honorPrivilege";
     private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF = "isMemberOf";
     private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY = "memberOf";
     private static final String GROUP_CONFIG_PROPERTY_MEMBERS = "members";
@@ -369,13 +373,28 @@ public class YamlConfigReader implements ConfigReader {
 
         authorizableConfigBean.setProfileContent(getMapValueAsString(
                 currentPrincipalDataMap, USER_CONFIG_PROFILE_CONTENT));
+
         authorizableConfigBean.setPreferencesContent(getMapValueAsString(
                 currentPrincipalDataMap, USER_CONFIG_PREFERENCES_CONTENT));
+
+
+        authorizableConfigBean.setHonorPaths(getMapValueAsStringArray(currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_HONOR_PRIVILEGE));
 
         if (currentPrincipalDataMap.containsKey(USER_CONFIG_DISABLED)) {
             authorizableConfigBean.setDisabled(getMapValueAsString(currentPrincipalDataMap, USER_CONFIG_DISABLED));
         }
 
+    }
+
+    private String[] getMapValueAsStringArray(final Map<String, ?> currentAceDefinition, final String propertyName) {
+        String[] result;
+        String value = this.getMapValueAsString(currentAceDefinition, propertyName);
+        if (StringUtils.isEmpty(value)) {
+            result = new String[0];
+        } else {
+            result = value.replaceAll("\\[|\\]", "").trim().split("\\s*,\\s*");
+        }
+        return result;
     }
 
     protected String getMapValueAsString(

@@ -25,6 +25,9 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private String name; // (non-technical) name as used in profile
     private String description;
 
+
+    private String[] honorPaths;
+
     private String[] isMemberOf;
     private String memberOfStringFromConfig;
 
@@ -144,6 +147,14 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     public String[] getMemberOf() {
         return isMemberOf;
+    }
+
+    public String[] getHonorPaths() {
+        return honorPaths;
+    }
+
+    public void setHonorPaths(String[] honorPaths) {
+        this.honorPaths = honorPaths;
     }
 
     public boolean isMemberOfOtherGroups() {

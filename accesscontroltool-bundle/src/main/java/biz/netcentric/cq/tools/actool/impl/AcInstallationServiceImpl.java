@@ -26,6 +26,8 @@ import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
 
+import biz.netcentric.cq.tools.actool.honor.HonorPrivilegeService;
+import biz.netcentric.cq.tools.actool.honor.PathACL;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.StopWatch;
@@ -107,6 +109,9 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
     @Reference
     private ConfigurationAdmin configAdmin;
+
+    @Reference
+    private HonorPrivilegeService honorService;
 
     @Property(label = "Configuration storage path", description = "CRX path where ACE configuration gets stored", name = AcInstallationServiceImpl.PROPERTY_CONFIGURATION_PATH, value = "")
     private String configuredAcConfigurationRootPath;
@@ -237,9 +242,19 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             throw new IllegalArgumentException(message);
         }
 
+        Set<PathACL> honoredPathACLs = this.honorService
+                .takePrivilegeSnapshot(acConfiguration.getAuthorizablesConfig(), installLog);
+
         installAuthorizables(installLog, acConfiguration.getAuthorizablesConfig(), session);
 
         installAces(installLog, acConfiguration, repositoryDumpAceMap, restrictedToPaths, session);
+
+
+        if (honoredPathACLs.isEmpty()) {
+            installLog.addMessage(LOG, "No honor path ACEs found, so nothing to restore.");
+        } else {
+            this.honorService.restorePrivilegeSnapshot(honoredPathACLs, installLog);
+        }
     }
 
     private void removeAcesForPathsNotInConfig(AcInstallationLog installLog, Session session, Set<String> principalsInConfig,

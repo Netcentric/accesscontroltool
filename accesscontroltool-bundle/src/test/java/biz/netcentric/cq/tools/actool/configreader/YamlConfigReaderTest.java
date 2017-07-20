@@ -11,6 +11,7 @@ package biz.netcentric.cq.tools.actool.configreader;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
@@ -19,7 +20,9 @@ import java.io.StringWriter;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -33,6 +36,7 @@ import org.yaml.snakeyaml.Yaml;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
 public class YamlConfigReaderTest {
@@ -43,6 +47,16 @@ public class YamlConfigReaderTest {
     @Before
     public void setup() {
         initMocks(this);
+    }
+
+
+    @Test
+    public void testHonorPrivilege() throws IOException, AcConfigBeanValidationException, RepositoryException {
+        final ConfigReader yamlConfigReader = new YamlConfigReader();
+        final List<LinkedHashMap> yamlList = getYamlList("test-honor.yaml");
+
+        AuthorizablesConfig config = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
+        assertTrue(config.getAuthorizableConfig("content-writer").getHonorPaths().length == 2);
     }
 
     @Test
