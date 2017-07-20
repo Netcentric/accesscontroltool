@@ -62,11 +62,11 @@
     <!-- ====================================================================== -->
     <properties>
         <crx.host>localhost</crx.host>
-        <crx.port>6200</crx.port>
+        <crx.port>4502</crx.port>
         <crx.username>admin</crx.username>
         <crx.password>admin</crx.password>
         <publish.crx.host>localhost</publish.crx.host>
-        <publish.crx.port>6201</publish.crx.port>
+        <publish.crx.port>4503</publish.crx.port>
         <publish.crx.username>admin</publish.crx.username>
         <publish.crx.password>admin</publish.crx.password>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
