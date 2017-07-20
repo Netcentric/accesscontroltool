@@ -22,6 +22,7 @@ public class Constants {
     public static final String GROUP_CONFIGURATION_KEY = "group_config";
     public static final String USER_CONFIGURATION_KEY = "user_config";
     public static final String ACE_CONFIGURATION_KEY = "ace_config";
+
     public static final String OBSOLETE_AUTHORIZABLES_KEY = "obsolete_authorizables";
 
     public static final Set<String> VALID_CONFIG_SECTION_IDENTIFIERS = new HashSet<String>(Arrays.asList(

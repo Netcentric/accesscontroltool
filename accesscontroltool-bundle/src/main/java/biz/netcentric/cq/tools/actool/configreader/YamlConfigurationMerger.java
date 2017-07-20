@@ -20,8 +20,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -80,7 +78,6 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         final Set<String> authorizableIdsFromAllConfigs = new HashSet<String>(); // needed for detection of doubled defined groups in
                                                                                  // configurations
         final Set<String> obsoleteAuthorizables = new HashSet<String>();
-        final Map<String, SortedSet<String>> honorPrivilegePaths = new HashMap<String, SortedSet<String>>();
 
         final Yaml yamlParser = new Yaml();
 

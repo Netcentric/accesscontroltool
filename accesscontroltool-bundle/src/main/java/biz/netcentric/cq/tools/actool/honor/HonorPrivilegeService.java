@@ -8,15 +8,11 @@
  */
 package biz.netcentric.cq.tools.actool.honor;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-
-import javax.jcr.RepositoryException;
-
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+
+import javax.jcr.RepositoryException;
+import java.util.Set;
 
 
 /**

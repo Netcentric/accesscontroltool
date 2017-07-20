@@ -9,9 +9,7 @@
 package biz.netcentric.cq.tools.actool.configreader;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;

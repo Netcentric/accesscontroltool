@@ -9,9 +9,7 @@
 package biz.netcentric.cq.tools.actool.configmodel;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 
 /** Root class of the configuration model as it is constructed from the multiple yaml files, it is a fully merged configuration. All loops
  * and variables have been processed. */
@@ -25,8 +23,7 @@ public class AcConfiguration {
     // ACE configuration beans in order as they appear in configuration
     private AcesConfig aceBeansConfig;
 
-	private Set<String> obsoleteAuthorizables = new HashSet<String>();
-
+    private Set<String> obsoleteAuthorizables = new HashSet<String>();
 
     public GlobalConfiguration getGlobalConfiguration() {
         return globalConfiguration;

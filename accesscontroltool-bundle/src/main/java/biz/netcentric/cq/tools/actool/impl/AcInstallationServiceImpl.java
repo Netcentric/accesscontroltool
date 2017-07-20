@@ -8,27 +8,34 @@
  */
 package biz.netcentric.cq.tools.actool.impl;
 
-import biz.netcentric.cq.tools.actool.aceinstaller.AceBeanInstaller;
-import biz.netcentric.cq.tools.actool.aceservice.AceService;
-import biz.netcentric.cq.tools.actool.api.AcInstallationService;
-import biz.netcentric.cq.tools.actool.api.InstallationLog;
-import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
-import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableInstallerService;
-import biz.netcentric.cq.tools.actool.configmodel.*;
-import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetriever;
-import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
-import biz.netcentric.cq.tools.actool.configreader.ConfigurationMerger;
-import biz.netcentric.cq.tools.actool.dumpservice.ConfigDumpService;
-import biz.netcentric.cq.tools.actool.helper.*;
-import biz.netcentric.cq.tools.actool.history.AcHistoryService;
-import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import static biz.netcentric.cq.tools.actool.history.AcInstallationLog.msHumanReadable;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.UnsupportedRepositoryOperationException;
+import javax.jcr.ValueFormatException;
+
 import biz.netcentric.cq.tools.actool.honor.HonorPrivilegeService;
 import biz.netcentric.cq.tools.actool.honor.PathACL;
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.StopWatch;
-import org.apache.felix.scr.annotations.*;
+import org.apache.felix.scr.annotations.Activate;
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.commons.osgi.PropertiesUtil;
@@ -38,21 +45,41 @@ import org.osgi.service.cm.ConfigurationAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.UnsupportedRepositoryOperationException;
-import javax.jcr.ValueFormatException;
-import java.util.*;
-
-import static biz.netcentric.cq.tools.actool.history.AcInstallationLog.msHumanReadable;
+import biz.netcentric.cq.tools.actool.aceinstaller.AceBeanInstaller;
+import biz.netcentric.cq.tools.actool.aceservice.AceService;
+import biz.netcentric.cq.tools.actool.api.AcInstallationService;
+import biz.netcentric.cq.tools.actool.api.InstallationLog;
+import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
+import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableInstallerService;
+import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
+import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
+import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetriever;
+import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
+import biz.netcentric.cq.tools.actool.configreader.ConfigurationMerger;
+import biz.netcentric.cq.tools.actool.dumpservice.ConfigDumpService;
+import biz.netcentric.cq.tools.actool.helper.AcHelper;
+import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
+import biz.netcentric.cq.tools.actool.helper.AclBean;
+import biz.netcentric.cq.tools.actool.helper.Constants;
+import biz.netcentric.cq.tools.actool.helper.PurgeHelper;
+import biz.netcentric.cq.tools.actool.helper.QueryHelper;
+import biz.netcentric.cq.tools.actool.history.AcHistoryService;
+import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 @Service
 @Component(metatype = true, label = "AC Installation Service", description = "Service that installs groups & ACEs according to textual configuration files")
 public class AcInstallationServiceImpl implements AcInstallationService, AcInstallationServiceInternal, AceService {
+    private static final Logger LOG = LoggerFactory.getLogger(AcInstallationServiceImpl.class);
+
+    private static final String LEGACY_CONFIG_PID = "biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl";
+
     static final String PROPERTY_CONFIGURATION_PATH = "AceService.configurationPath";
     static final String PROPERTY_INTERMEDIATE_SAVES = "intermediateSaves";
-    private static final Logger LOG = LoggerFactory.getLogger(AcInstallationServiceImpl.class);
-    private static final String LEGACY_CONFIG_PID = "biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl";
+
     @Reference
     AuthorizableInstallerService authorizableCreatorService;
 
@@ -61,10 +88,13 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
     @Reference(target = "(component.name=biz.netcentric.cq.tools.actool.aceinstaller.AceBeanInstallerIncremental)")
     AceBeanInstaller aceBeanInstallerIncremental;
-    @Reference
-    AcHistoryService acHistoryService;
+
     @Reference
     private SlingRepository repository;
+
+    @Reference
+    AcHistoryService acHistoryService;
+
     @Reference
     private ConfigDumpService dumpservice;
 
@@ -154,12 +184,10 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         return installLog;
     }
 
-    /**
-     * Common entry point for JMX and install hook.
-     */
+    /** Common entry point for JMX and install hook. */
     @Override
     public void installConfigurationFiles(AcInstallationLog installLog, Map<String, String> configurationFileContentsByFilename,
-                                          String[] restrictedToPaths, Session session)
+            String[] restrictedToPaths, Session session)
             throws Exception {
 
         String origThreadName = Thread.currentThread().getName();
@@ -178,8 +206,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 AcConfiguration acConfiguration = configurationMerger.getMergedConfigurations(configurationFileContentsByFilename, installLog,
                         configReader, session);
                 installLog.setAcConfiguration(acConfiguration);
-
-                acConfiguration.getAuthorizablesConfig();
 
                 installMergedConfigurations(installLog, acConfiguration, restrictedToPaths, session);
 
@@ -205,6 +231,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
     }
 
+
     private void installAcConfiguration(
             AcConfiguration acConfiguration, AcInstallationLog installLog,
             Map<String, Set<AceBean>> repositoryDumpAceMap, String[] restrictedToPaths, Session session) throws Exception {
@@ -219,6 +246,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 .takePrivilegeSnapshot(acConfiguration.getAuthorizablesConfig(), installLog);
 
         installAuthorizables(installLog, acConfiguration.getAuthorizablesConfig(), session);
+
         installAces(installLog, acConfiguration, repositoryDumpAceMap, restrictedToPaths, session);
 
 
@@ -230,7 +258,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     private void removeAcesForPathsNotInConfig(AcInstallationLog installLog, Session session, Set<String> principalsInConfig,
-                                               Map<String, Set<AceBean>> repositoryDumpAceMap, AcesConfig aceBeansFromConfig)
+            Map<String, Set<AceBean>> repositoryDumpAceMap, AcesConfig aceBeansFromConfig)
             throws UnsupportedRepositoryOperationException, RepositoryException {
 
         int countAcesCleaned = 0;
@@ -260,7 +288,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     private Set<String> getRelevantPathsForAceCleanup(Set<String> authorizablesInConfig, Map<String, Set<AceBean>> repositoryDumpAceMap,
-                                                      AcesConfig aceBeansFromConfig) {
+            AcesConfig aceBeansFromConfig) {
         // loop through all ACLs found in the repository
         Set<String> relevantPathsForCleanup = new HashSet<String>();
         for (Map.Entry<String, Set<AceBean>> entry : repositoryDumpAceMap.entrySet()) {
@@ -298,6 +326,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         }
         return isRelevant;
     }
+
 
 
     private Set<String> getPrincipalNamesToRemoveAcesFor(AuthorizablesConfig authorizablesBeansfromConfig) {
@@ -342,7 +371,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     private void installAces(AcInstallationLog installLog,
-                             AcConfiguration acConfiguration, Map<String, Set<AceBean>> repositoryDumpAceMap, String[] restrictedToPaths, Session session)
+            AcConfiguration acConfiguration, Map<String, Set<AceBean>> repositoryDumpAceMap, String[] restrictedToPaths, Session session)
             throws Exception {
 
         AcesConfig aceBeansFromConfig = acConfiguration.getAceConfig();
@@ -380,7 +409,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     private Map<String, Set<AceBean>> filterForRestrictedPaths(Map<String, Set<AceBean>> pathBasedAceMapFromConfig,
-                                                               String[] restrictedToPaths, AcInstallationLog installLog) {
+            String[] restrictedToPaths, AcInstallationLog installLog) {
         if (restrictedToPaths == null || restrictedToPaths.length == 0) {
             return pathBasedAceMapFromConfig;
         }
@@ -466,7 +495,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
             if (obsoleteAuthorizables.isEmpty()) {
                 installLog.addMessage(LOG, "All configured " + obsoleteAuthorizablesAlreadyPurged.size()
-                        + " obsolete authorizables have already been purged.");
+                                + " obsolete authorizables have already been purged.");
                 return;
             }
 
