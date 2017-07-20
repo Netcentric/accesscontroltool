@@ -1,3 +1,11 @@
+/*
+ * (C) Copyright 2015 Netcentric AG.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package biz.netcentric.cq.tools.actool.honor;
 
 import java.util.Map;
@@ -16,14 +24,14 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryP
  * restoring of serialised privileges. This allows users to maintain hand changed permissions on selected paths during
  * restoration.
  *   
- * @author jon.entwistle
+ * @author netcentric
  *
  */
 public interface HonorPrivilegeService {
 	
 	/**
 	 * Takes a snapshot of the privileges on a series of paths for the association of groups and paths. The snapshot 
-	 * takes the form of a set of {@link  biz.netcentric.cq.tools.actool.honor.PathACL} instances which can later be 
+	 * takes the form of a set of {@link  biz.netcentric.cq.tools.actool.honor.PathACL} instances which can later be
 	 * restored via restorePrivelegeSnapshot.
 	 * 
 	 * @param authConf The configuration for the authorizables, containing the honor paths.

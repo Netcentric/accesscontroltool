@@ -392,7 +392,7 @@ public class YamlConfigReader implements ConfigReader {
         if (StringUtils.isEmpty(value)) {
             result = new String[0];
         } else {
-            result = value.replaceAll("\\[|\\]", "").trim().split(",");
+            result = value.replaceAll("\\[|\\]", "").trim().split("\\s*,\\s*");
         }
         return result;
     }
