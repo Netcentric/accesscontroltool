@@ -140,12 +140,12 @@
         <dependency>
           <groupId>org.apache.tomcat</groupId>
           <artifactId>el-api</artifactId>
-          <version>6.0.41</version>
+          <version>6.0.53</version>
         </dependency>
         <dependency>
           <groupId>org.apache.tomcat</groupId>
           <artifactId>jasper-el</artifactId>
-          <version>6.0.41</version>
+          <version>6.0.53</version>
         </dependency> 
         
         <dependency>
