@@ -738,17 +738,17 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     /* --- deprecated methods --- */
     @Override
     public AcInstallationHistoryPojo execute() {
-        return execute();
+        return apply();
     }
 
     @Override
     public AcInstallationHistoryPojo execute(String configurationRootPath) {
-        return execute(configurationRootPath);
+        return apply(configurationRootPath);
     }
 
     @Override
     public AcInstallationHistoryPojo execute(String[] restrictedToPaths) {
-        return execute(restrictedToPaths);
+        return apply(restrictedToPaths);
     }
 
     @Override
