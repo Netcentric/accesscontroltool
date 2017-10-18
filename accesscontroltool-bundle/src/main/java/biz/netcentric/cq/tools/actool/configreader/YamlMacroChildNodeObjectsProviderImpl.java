@@ -18,6 +18,7 @@ import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
+import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -80,7 +81,11 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
                         if (prop.isMultiple()) {
                             jcrContentSubNode.put(prop.getName(), valuesToStringArr(prop.getValues()));
                         } else {
-                            String strVal = prop.getValue().getString();
+                            Value value = prop.getValue();
+                            if (isIrrelevantType(value)) {
+                                continue;
+                            }
+                            String strVal = value.getString();
                             jcrContentSubNode.put(prop.getName(), strVal);
 
                             // add the title also to root map to simplify access
@@ -112,12 +117,22 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
         return results;
     }
 
+    private boolean isIrrelevantType(Value value) {
+        return value.getType() == PropertyType.BINARY
+                || value.getType() == PropertyType.REFERENCE
+                || value.getType() == PropertyType.WEAKREFERENCE;
+    }
+
     private String[] valuesToStringArr(Value[] values) throws ValueFormatException, RepositoryException {
-        String[] strVals = new String[values.length];
+        List<String> strVals = new ArrayList<String>();
         for (int i = 0; i < values.length; i++) {
-            strVals[i] = values[i].getString();
+            Value value = values[i];
+            if (isIrrelevantType(value)) {
+                continue;
+            }
+            strVals.add(value.getString());
         }
-        return strVals;
+        return strVals.toArray(new String[strVals.size()]);
     }
 
 }

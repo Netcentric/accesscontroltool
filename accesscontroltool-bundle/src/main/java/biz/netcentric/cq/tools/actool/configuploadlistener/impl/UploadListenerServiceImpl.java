@@ -22,8 +22,8 @@ import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Properties;
-import org.apache.felix.scr.annotations.PropertyOption;
 import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.PropertyOption;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.commons.osgi.PropertiesUtil;
@@ -31,10 +31,10 @@ import org.apache.sling.jcr.api.SlingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.aceservice.AceService;
+import biz.netcentric.cq.tools.actool.api.AcInstallationService;
 import biz.netcentric.cq.tools.actool.configuploadlistener.UploadListenerService;
 import biz.netcentric.cq.tools.actool.helper.Constants;
-import biz.netcentric.cq.tools.actool.history.AcHistoryService;
+import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl;
 
 @Component(metatype = true, label = "AC Configuration Upload Listener Service", immediate = true, description = "Listens for ACL configuration uploads and triggers ACL Service.")
 @Properties({
@@ -43,16 +43,13 @@ import biz.netcentric.cq.tools.actool.history.AcHistoryService;
         @PropertyOption(name = "disabled", value = "disabled"),
         @PropertyOption(name = "enabled", value = "enabled") }) })
 @Service(value = UploadListenerService.class)
-public class UploadListenerServiceImpl implements UploadListenerService,
-        EventListener {
+public class UploadListenerServiceImpl implements UploadListenerService, EventListener {
+    private static final Logger LOG = LoggerFactory.getLogger(UploadListenerServiceImpl.class);
 
     static final String ACE_UPLOAD_LISTENER_SET_STATUS_SERVICE = "AceUploadListener.setStatusService";
 
     private String configurationPath;
     private boolean enabled;
-
-    private static final Logger LOG = LoggerFactory
-            .getLogger(UploadListenerServiceImpl.class);
 
     private Session adminSession;
 
@@ -60,10 +57,7 @@ public class UploadListenerServiceImpl implements UploadListenerService,
     SlingRepository repository;
 
     @Reference
-    AceService aceService;
-
-    @Reference
-    AcHistoryService acHistoryService;
+    AcInstallationService acInstallationService;
 
     @Override
     public void onEvent(EventIterator events) {
@@ -87,8 +81,8 @@ public class UploadListenerServiceImpl implements UploadListenerService,
                         LOG.warn("Unexpected event: {}", event);    
                     }
                     if (node != null && node.hasProperty("jcr:content/jcr:data")) {
-                        LOG.info("Detected new or changed node at {}.",  node.getPath());
-                        ++changes;
+                        LOG.info("Detected new or changed node at {}", node.getPath());
+                        changes++;
                     } else {
                         LOG.debug("Node {} associated with event does not have configuration data.", event.getPath());
                     }
@@ -98,7 +92,7 @@ public class UploadListenerServiceImpl implements UploadListenerService,
             }
             if (changes > 0) {
                 LOG.info("There are {} new or changed files. Triggering reload of configuration.", changes);
-                aceService.execute();
+                acInstallationService.apply();
             }
         }
     }
@@ -106,68 +100,65 @@ public class UploadListenerServiceImpl implements UploadListenerService,
     @Activate
     public void activate(@SuppressWarnings("rawtypes") final Map properties)
             throws Exception {
-        this.configurationPath = aceService.getConfiguredAcConfigurationRootPath();
-        String statusService = PropertiesUtil
-                .toString(
-                        properties
-                                .get(UploadListenerServiceImpl.ACE_UPLOAD_LISTENER_SET_STATUS_SERVICE),
-                        "");
+        this.configurationPath = ((AcInstallationServiceImpl) acInstallationService).getConfiguredAcConfigurationRootPath();
+        String statusService = PropertiesUtil.toString(properties.get(UploadListenerServiceImpl.ACE_UPLOAD_LISTENER_SET_STATUS_SERVICE),
+                "");
         if (StringUtils.equals(statusService, "enabled")) {
             this.enabled = true;
         } else {
             this.enabled = false;
         }
 
-        setEventListener();
+        if (!this.enabled) {
+            LOG.debug("UploadListenerServiceImpl is not active, not registering listener");
+            return;
+        } else if (StringUtils.isBlank(this.configurationPath)) {
+            LOG.warn("UploadListenerServiceImpl requires PID "
+                    + "biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl/'AceService.configurationPath' to be configured");
+            return;
+        } else {
+            setupEventListener();
+        }
     }
 
-    private void setEventListener() throws Exception {
-        if (StringUtils.isNotBlank(this.configurationPath)) {
-            try {
-                adminSession = repository.loginService(Constants.USER_AC_SERVICE, null);
+    private void setupEventListener() throws Exception {
+        try {
+            adminSession = repository.loginService(Constants.USER_AC_SERVICE, null);
 
-                adminSession
-                        .getWorkspace()
-                        .getObservationManager()
-                        .addEventListener(
+            adminSession
+                    .getWorkspace()
+                    .getObservationManager()
+                    .addEventListener(
 
-                                this, // handler
+                            this, // handler
 
-                                // Event.PROPERTY_ADDED|Event.NODE_ADDED,
-                                // //binary combination of event types
-                                Event.NODE_ADDED | Event.PROPERTY_CHANGED,
-                                this.configurationPath, // path
+                            // Event.PROPERTY_ADDED|Event.NODE_ADDED,
+                            // //binary combination of event types
+                            Event.NODE_ADDED | Event.PROPERTY_CHANGED,
+                            this.configurationPath, // path
 
-                                true, // is Deep?
+                            true, // is Deep?
 
-                                null, // uuids filter
+                            null, // uuids filter
 
-                                null, // nodetypes filter
-                                false);
-                LOG.info(
-                        "added EventListener for ACE configuration root path: {}",
-                        this.configurationPath);
-            } catch (RepositoryException e) {
-                LOG.error("RepositoryException in UploadListenerService:{}", e);
-            }
-        } else {
-            LOG.warn("no root ACE configuration path configured in AceService");
+                            null, // nodetypes filter
+                            false);
+            LOG.info("Registered event listener for AC configuration root path: {}", this.configurationPath);
+        } catch (RepositoryException e) {
+            LOG.error("Exception while registering listener in UploadListenerService: " + e, e);
         }
     }
 
     @Deactivate
     public void deactivate() {
         if (adminSession != null) {
+            try {
+                adminSession.getWorkspace().getObservationManager().removeEventListener(this);
+                LOG.info("Unregistered event listener for AC configuration root path: {}", this.configurationPath);
+            } catch (Exception e) {
+                LOG.error("Exception while unregistering listener in UploadListenerService: " + e, e);
+            }
             adminSession.logout();
-        }
-    }
-
-    public void setPath(String path) {
-        this.configurationPath = path;
-        try {
-            setEventListener();
-        } catch (Exception e) {
-            LOG.error("Exception in UploadListenerService: {}", e);
         }
     }
 
