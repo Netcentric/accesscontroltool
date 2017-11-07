@@ -71,34 +71,15 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
                 childNodeObjectForEl.put("path", childNode.getPath());
                 childNodeObjectForEl.put("primaryType", childNode.getPrimaryNodeType().toString());
 
-                try {
+                if (childNode.hasNode(JcrConstants.JCR_CONTENT)) {
                     Node jcrContentNode = childNode.getNode(JcrConstants.JCR_CONTENT);
 
-                    PropertyIterator propertiesIt = jcrContentNode.getProperties();
-                    Map<String, Object> jcrContentSubNode = new HashMap<String, Object>();
-                    while (propertiesIt.hasNext()) {
-                        Property prop = (Property) propertiesIt.next();
-                        if (prop.isMultiple()) {
-                            jcrContentSubNode.put(prop.getName(), valuesToStringArr(prop.getValues()));
-                        } else {
-                            Value value = prop.getValue();
-                            if (isIrrelevantType(value)) {
-                                continue;
-                            }
-                            String strVal = value.getString();
-                            jcrContentSubNode.put(prop.getName(), strVal);
-
-                            // add the title also to root map to simplify access
-                            if (JcrConstants.JCR_TITLE.equals(prop.getName())) {
-                                childNodeObjectForEl.put("title", strVal);
-                            }
-                        }
-
+                    if (jcrContentNode.hasProperty(JcrConstants.JCR_TITLE)) {
+                        childNodeObjectForEl.put("title", jcrContentNode.getProperty(JcrConstants.JCR_TITLE).getString());
                     }
-                    childNodeObjectForEl.put(JcrConstants.JCR_CONTENT, jcrContentSubNode);
 
-                } catch (PathNotFoundException epnf) {
-                    LOG.debug("Node " + node.getPath() + " does not have a jcr content node (legitimate for folders)");
+                    Map<String, Object> jcrContentSubNode = getValuesForNode(jcrContentNode);
+                    childNodeObjectForEl.put(JcrConstants.JCR_CONTENT, jcrContentSubNode);
                 }
 
                 results.add(childNodeObjectForEl);
@@ -115,6 +96,32 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
         history.addMessage(LOG, "Loop for children of " + pathOfChildrenOfClause + " evaluates to " + results.size() + " children");
 
         return results;
+    }
+
+    private Map<String, Object> getValuesForNode(Node node) throws RepositoryException {
+        PropertyIterator propertiesIt = node.getProperties();
+        Map<String, Object> values = new HashMap<String, Object>();
+        while (propertiesIt.hasNext()) {
+            Property prop = (Property) propertiesIt.next();
+            if (prop.isMultiple()) {
+                values.put(prop.getName(), valuesToStringArr(prop.getValues()));
+            } else {
+                Value value = prop.getValue();
+                if (isIrrelevantType(value)) {
+                    continue;
+                }
+                String strVal = value.getString();
+                values.put(prop.getName(), strVal);
+            }
+        }
+
+        NodeIterator iterator = node.getNodes();
+        while (iterator.hasNext()) {
+            Node child = iterator.nextNode();
+            values.put(child.getName(), getValuesForNode(child));
+        }
+
+        return values;
     }
 
     private boolean isIrrelevantType(Value value) {
