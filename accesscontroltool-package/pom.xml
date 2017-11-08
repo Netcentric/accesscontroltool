@@ -31,7 +31,6 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>accesscontroltool-bundle</artifactId>
             <version>${project.version}</version>
-            <type>bundle</type>
         </dependency>      
     </dependencies>
     <build>
