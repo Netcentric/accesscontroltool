@@ -26,4 +26,6 @@ public interface AcHistoryService {
 
     public String showHistory(int n);
 
+    public boolean wasLastPersistHistoryCallSuccessful();
+
 }
