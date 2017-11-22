@@ -94,7 +94,6 @@ public class AuthorizableInstallerServiceImpl implements
         LOG.debug("- start installation of authorizable: {}", authorizableId);
 
         UserManager userManager = AccessControlUtils.getUserManagerAutoSaveDisabled(session);
-        ValueFactory vf = session.getValueFactory();
 
         // if current authorizable from config doesn't exist yet
         Authorizable authorizableToInstall = userManager.getAuthorizable(authorizableId);
@@ -119,114 +118,10 @@ public class AuthorizableInstallerServiceImpl implements
 
         }
 
-        applyGroupMembershipConfigMembers(authorizableConfigBean, installLog, authorizableId, userManager, authorizablesFromConfigurations);
-
         if (StringUtils.isNotBlank(authorizableConfigBean.getMigrateFrom()) && authorizableConfigBean.isGroup()) {
             migrateFromOldGroup(authorizableConfigBean, userManager, installLog);
         }
 
-    }
-
-    /** This is only relevant for members that point to groups/users not contained in configuration.
-     * {@link biz.netcentric.cq.tools.actool.configreader.YamlConfigurationMerger#ensureIsMemberOfIsUsedWherePossible()} ensures that
-     * regular relationships between groups contained in config are kept in isMemberOf */
-    @SuppressWarnings("unchecked")
-    void applyGroupMembershipConfigMembers(AuthorizableConfigBean authorizableConfigBean, AcInstallationLog installLog,
-            String principalId, UserManager userManager, Set<String> authorizablesFromConfigurations) throws RepositoryException {
-        if (authorizableConfigBean.isGroup()) {
-            String[] membersInConfigArr = authorizableConfigBean.getMembers();
-
-            Group installedGroup = (Group) userManager.getAuthorizable(principalId);
-
-            Set<String> membersInConfig = membersInConfigArr != null ? new HashSet<String>(Arrays.asList(membersInConfigArr))
-                    : new HashSet<String>();
-            Set<String> relevantMembersInRepo = getDeclaredMembers(installedGroup);
-
-            // ensure authorizables from config itself that are added via isMemberOf are not deleted
-            relevantMembersInRepo = new HashSet<String>(CollectionUtils.subtract(relevantMembersInRepo, authorizablesFromConfigurations));
-            // ensure regular users are never removed
-            relevantMembersInRepo = removeRegularUsers(relevantMembersInRepo, userManager);
-            // take configuration 'allowExternalGroupNamesRegEx' into account (and remove matching groups from further handling)
-            relevantMembersInRepo = removeExternalGroupsThatAreUntouchedByConfiguration(relevantMembersInRepo, installLog);
-
-            Set<String> membersToAdd = new HashSet<String>(CollectionUtils.subtract(membersInConfig, relevantMembersInRepo));
-            Set<String> membersToRemove = new HashSet<String>(CollectionUtils.subtract(relevantMembersInRepo, membersInConfig));
-
-            if (!membersToAdd.isEmpty()) {
-                installLog.addVerboseMessage(LOG,
-                        "Adding " + membersToAdd.size() + " external members to group " + authorizableConfigBean.getAuthorizableId());
-                for (String member : membersToAdd) {
-                    Authorizable memberGroup = userManager.getAuthorizable(member);
-                    if (memberGroup == null) {
-                        throw new IllegalStateException(
-                                "Member " + member + " does not exist and cannot be added as external member to group "
-                                        + authorizableConfigBean.getAuthorizableId());
-                    }
-                    installedGroup.addMember(memberGroup);
-                    installLog.addVerboseMessage(LOG,
-                            "Adding " + member + " as external member to group " + authorizableConfigBean.getAuthorizableId());
-                }
-
-            }
-
-            if (!membersToRemove.isEmpty()) {
-                installLog.addVerboseMessage(LOG,
-                        "Removing " + membersToRemove.size() + " external members to group " + authorizableConfigBean.getAuthorizableId());
-                for (String member : membersToRemove) {
-                    Authorizable memberGroup = userManager.getAuthorizable(member);
-                    installedGroup.removeMember(memberGroup);
-                    installLog.addVerboseMessage(LOG,
-                            "Removing " + member + " as external member to group " + authorizableConfigBean.getAuthorizableId());
-                }
-            }
-        }
-    }
-
-    private Set<String> removeRegularUsers(Set<String> allMembersFromRepo, UserManager userManager) throws RepositoryException {
-
-        Set<String> relevantMembers = new HashSet<String>(allMembersFromRepo);
-        Iterator<String> relevantMembersIt = relevantMembers.iterator();
-        while (relevantMembersIt.hasNext()) {
-            String memberId = relevantMembersIt.next();
-            Authorizable member = userManager.getAuthorizable(memberId);
-
-            if (member != null && !member.isGroup() // if user
-                    && !member.getPath().startsWith(Constants.USERS_ROOT + "/system/") // but not system user
-                    && !member.getID().equals(Constants.USER_ANONYMOUS) // and not anonymous
-            ) {
-                // not relevant for further handling
-                relevantMembersIt.remove();
-            }
-        }
-
-        return relevantMembers;
-    }
-
-    private Set<String> removeExternalGroupsThatAreUntouchedByConfiguration(Set<String> relevantMembersInRepo,
-            AcInstallationLog installLog) {
-        Set<String> relevantMembers = new HashSet<String>(relevantMembersInRepo);
-        Pattern keepExistingMembershipsForGroupNamesRegEx = installLog.getAcConfiguration().getGlobalConfiguration().getKeepExistingMembershipsForGroupNamesRegEx();
-        if (keepExistingMembershipsForGroupNamesRegEx != null) {
-            Iterator<String> relevantMembersIt = relevantMembers.iterator();
-            while (relevantMembersIt.hasNext()) {
-                String member = relevantMembersIt.next();
-                if (keepExistingMembershipsForGroupNamesRegEx.matcher(member).matches()) {
-                    relevantMembersIt.remove();
-                }
-            }
-        }
-
-        return relevantMembers;
-
-    }
-
-    private Set<String> getDeclaredMembers(Group installedGroup) throws RepositoryException {
-        Set<String> membersInRepo = new HashSet<String>();
-        Iterator<Authorizable> currentMemberInRepo = installedGroup.getDeclaredMembers();
-        while (currentMemberInRepo.hasNext()) {
-            membersInRepo.add(currentMemberInRepo.next().getID());
-        }
-        return membersInRepo;
     }
 
     private void migrateFromOldGroup(AuthorizableConfigBean authorizableConfigBean, UserManager userManager,
@@ -331,7 +226,6 @@ public class AuthorizableInstallerServiceImpl implements
             existingAuthorizable.remove();
 
             // create group again using values form config
-            ValueFactory vf = session.getValueFactory();
             Authorizable newAuthorizable = createNewAuthorizable(principalConfigBean, installLog, userManager, session);
 
             int countMovedMembersOfGroup = 0;
