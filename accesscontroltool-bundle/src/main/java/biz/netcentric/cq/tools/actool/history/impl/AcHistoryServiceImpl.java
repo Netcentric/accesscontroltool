@@ -90,9 +90,6 @@ public class AcHistoryServiceImpl implements AcHistoryService {
             }
             session.save();
 
-            if (((System.currentTimeMillis() / 1000) % 2) == 0) {
-                throw new IllegalStateException("Could not persist history test");
-            }
             wasLastPersistHistoryCallSuccessful = true;
         } catch (Exception e) {
             wasLastPersistHistoryCallSuccessful = false;
