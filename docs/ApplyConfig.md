@@ -35,6 +35,16 @@ Although it is not necessary that the YAML files are covered by the filter rules
 ## JMX
 
 See [JMX apply() method](Jmx.md).
+
+Different options on you can access JMX are listed [here](https://helpx.adobe.com/experience-manager/kb/workflow-monitor-via-jmx.html).
+
+### Curl calls
+
+Trigger the 'apply' method of the AC JMX service through HTTP Post
+
+```
+curl -sS --retry 1 -u ${CQ_ADMINUSER}:${CQ_ADMINPW} -X POST "http://${CQ_SERVER}:${CQ_PORT}/system/console/jmx/biz.netcentric.cq.tools:type=ACTool/op/apply/"
+```
     
 ## Upload Listener Service
 
@@ -49,11 +59,5 @@ It can be enabled/disabled in the OSGi console (AC Configuration Upload Listener
 <img src="images/installation-service.png">
 
 
-## Curl calls
 
-Trigger the 'apply' method of the AC service
-
-```
-curl -sS --retry 1 -u ${CQ_ADMINUSER}:${CQ_ADMINPW} -X POST "http://${CQ_SERVER}:${CQ_PORT}/system/console/jmx/biz.netcentric.cq.tools:type=ACTool/op/apply/"
-```
 
