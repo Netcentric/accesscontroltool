@@ -69,6 +69,8 @@ public class YamlConfigReader implements ConfigReader {
 
     private static final String GROUP_CONFIG_PROPERTY_MIGRATE_FROM = "migrateFrom";
 
+    private static final String GROUP_CONFIG_PROPERTY_RESTRICT_ACES_REGEX = "restrictAcesRegex";
+
     private static final String USER_CONFIG_PROPERTY_IS_SYSTEM_USER = "isSystemUser";
 
     private static final String USER_CONFIG_PROFILE_CONTENT = "profileContent";
@@ -359,6 +361,9 @@ public class YamlConfigReader implements ConfigReader {
 
         authorizableConfigBean.setMigrateFrom(getMapValueAsString(currentPrincipalDataMap,
                 GROUP_CONFIG_PROPERTY_MIGRATE_FROM));
+
+        authorizableConfigBean.setRestrictAcesRegex(getMapValueAsString(currentPrincipalDataMap,
+                GROUP_CONFIG_PROPERTY_RESTRICT_ACES_REGEX));
 
         authorizableConfigBean.setIsGroup(isGroupSection);
         authorizableConfigBean.setIsSystemUser(Boolean.valueOf(getMapValueAsString(currentPrincipalDataMap,

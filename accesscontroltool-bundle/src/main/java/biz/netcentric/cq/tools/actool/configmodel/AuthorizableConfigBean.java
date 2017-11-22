@@ -41,6 +41,8 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     private String migrateFrom;
 
+    private String restrictAcesRegex;
+
     private boolean isGroup = true;
     private boolean isSystemUser = false;
 
@@ -238,6 +240,13 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.migrateFrom = migrateFrom;
     }
 
+    public String getRestrictAcesRegex() {
+        return restrictAcesRegex;
+    }
+
+    public void setRestrictAcesRegex(String restrictAcesRegex) {
+        this.restrictAcesRegex = restrictAcesRegex;
+    }
 
     @Override
     public String toString() {
