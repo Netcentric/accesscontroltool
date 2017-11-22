@@ -9,9 +9,10 @@ The following steps are performed:
 If at any point during the installation an exception occurs, no changes get persisted in the system. This prevents ending up having a undefined state in the repository.
 
 During the installation a history containing the most important events gets created and persisted in CRX for later examination.
+The following section explain how you can trigger the installation of ACLs.
 
     
-### Installation Hook
+## Installation Hook
 
 You can automatically install ACEs and authorizables defined in YAML files within a package using the Content Package Install Hook mechanism.
 If you use the content-package-maven-plugin enable the installation hook via: 
