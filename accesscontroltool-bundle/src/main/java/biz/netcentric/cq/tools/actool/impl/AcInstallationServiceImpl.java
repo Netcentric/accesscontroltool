@@ -243,7 +243,8 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     private void removeAcesForPathsNotInConfig(AcInstallationLog installLog, Session session, Set<String> principalsInConfig,
-            Map<String, Set<AceBean>> repositoryDumpAceMap, AcesConfig aceBeansFromConfig)
+            Map<String, Set<AceBean>> repositoryDumpAceMap, AcesConfig aceBeansFromConfig,
+            AuthorizablesConfig authorizablesConfig)
             throws UnsupportedRepositoryOperationException, RepositoryException {
 
         int countAcesCleaned = 0;
@@ -254,7 +255,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         for (String relevantPath : relevantPathsForCleanup) {
             // delete ACE if principal *is* in config, but the path *is not* in config
             int countRemoved = AccessControlUtils.deleteAllEntriesForPrincipalsFromACL(session,
-                    relevantPath, principalsInConfig.toArray(new String[principalsInConfig.size()]));
+                    relevantPath, principalsInConfig.toArray(new String[principalsInConfig.size()]), authorizablesConfig);
 
             installLog.addMessage(LOG, "Cleaned (deleted) " + countRemoved + " ACEs of path " + relevantPath
                     + " from all ACEs for configured authorizables");
@@ -366,7 +367,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 .getPathBasedAceMap(aceBeansFromConfig, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE);
 
         Set<String> principalsToRemoveAcesFor = getPrincipalNamesToRemoveAcesFor(acConfiguration.getAuthorizablesConfig());
-        removeAcesForPathsNotInConfig(installLog, session, principalsToRemoveAcesFor, repositoryDumpAceMap, aceBeansFromConfig);
+        removeAcesForPathsNotInConfig(installLog, session, principalsToRemoveAcesFor, repositoryDumpAceMap, aceBeansFromConfig, acConfiguration.getAuthorizablesConfig());
 
         Map<String, Set<AceBean>> filteredPathBasedAceMapFromConfig = filterForRestrictedPaths(pathBasedAceMapFromConfig,
                 restrictedToPaths, installLog);
