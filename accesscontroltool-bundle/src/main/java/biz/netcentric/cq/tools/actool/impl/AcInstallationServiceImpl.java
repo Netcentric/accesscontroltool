@@ -435,7 +435,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
         try {
             // only save session if no exceptions occurred
-            authorizableCreatorService.createNewAuthorizables(authorizablesMapfromConfig, session, installLog);
+            authorizableCreatorService.installAuthorizables(authorizablesMapfromConfig, session, installLog);
 
             if (intermediateSaves) {
                 if (session.hasPendingChanges()) {
