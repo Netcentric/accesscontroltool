@@ -52,16 +52,17 @@ public class AcHistoryServiceImpl implements AcHistoryService {
 
     private int nrOfSavedHistories;
 
+    // to be used by health check to be able to warn if the history could not be persisted
+    private boolean wasLastPersistHistoryCallSuccessful = true;
+
     @Reference
     private SlingRepository repository;
 
     @Activate
     public void activate(@SuppressWarnings("rawtypes") final Map properties)
             throws Exception {
-        this.nrOfSavedHistories = PropertiesUtil.toInteger(
-                properties.get("AceService.nrOfSavedHistories"),
+        nrOfSavedHistories = PropertiesUtil.toInteger(properties.get("AceService.nrOfSavedHistories"),
                 NR_OF_HISTORIES_TO_SAVE_DEFAULT);
-
     }
 
     @Override
@@ -76,7 +77,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         try {
 
             session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            Node historyNode = HistoryUtils.persistHistory(session, installLog, this.nrOfSavedHistories);
+            Node historyNode = HistoryUtils.persistHistory(session, installLog, nrOfSavedHistories);
 
             String mergedAndProcessedConfig = installLog.getMergedAndProcessedConfig();
             if (StringUtils.isNotBlank(mergedAndProcessedConfig)) {
@@ -88,8 +89,11 @@ public class AcHistoryServiceImpl implements AcHistoryService {
                 persistInstalledConfigurations(session, historyNode, installLog);
             }
             session.save();
-        } catch (RepositoryException e) {
-            LOG.error("RepositoryException: ", e);
+
+            wasLastPersistHistoryCallSuccessful = true;
+        } catch (Exception e) {
+            wasLastPersistHistoryCallSuccessful = false;
+            LOG.error("Could not persist history: " + e, e);
         } finally {
             if (session != null) {
                 session.logout();
@@ -159,16 +163,16 @@ public class AcHistoryServiceImpl implements AcHistoryService {
             if (configFileContentsByName == null) {
                 return;
             }
-            
+
             String commonPrefix = StringUtils.getCommonPrefix(configFileContentsByName.keySet().toArray(new String[configFileContentsByName.size()]));
-            
+
             for (String fullConfigFilePath : configFileContentsByName.keySet()) {
                 File targetPathFile = new File(
                         INSTALLED_CONFIGS_NODE_NAME + "/" + StringUtils.substringAfter(fullConfigFilePath, commonPrefix));
                 File targetPathParentDir = targetPathFile.getParentFile();
                 Node configFolder = JcrUtils.getOrCreateByPath(historyNode,
                         targetPathParentDir != null ? targetPathParentDir.getPath() : targetPathFile.getPath(), false,
-                        JcrConstants.NT_FOLDER, JcrConstants.NT_FOLDER, false);
+                                JcrConstants.NT_FOLDER, JcrConstants.NT_FOLDER, false);
                 ByteArrayInputStream configFileInputStream = new ByteArrayInputStream( configFileContentsByName.get(fullConfigFilePath).getBytes() );
                 JcrUtils.putFile(configFolder, targetPathFile.getName(), "text/yaml", configFileInputStream);
             }
@@ -180,6 +184,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         }
     }
 
+    @Override
     public String showHistory(int n) {
         Session session = null;
         String history = "";
@@ -194,7 +199,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
             while (it.hasNext()) {
                 Node historyNode = it.nextNode();
 
-                if (historyNode != null && cnt == n) {
+                if ((historyNode != null) && (cnt == n)) {
                     history = getLogTxt(session, historyNode.getName());
                 }
                 cnt++;
@@ -267,5 +272,10 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         installLog.addMessage(LOG, "Saved history in node: " + purgeHistoryNode.getPath());
         HistoryUtils.setHistoryNodeProperties(purgeHistoryNode, installLog);
         return historyNode;
+    }
+
+    @Override
+    public boolean wasLastPersistHistoryCallSuccessful() {
+        return wasLastPersistHistoryCallSuccessful;
     }
 }

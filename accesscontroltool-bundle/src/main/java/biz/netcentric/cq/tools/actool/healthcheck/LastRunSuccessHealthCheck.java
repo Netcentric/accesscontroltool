@@ -23,6 +23,7 @@ import org.apache.sling.hc.util.FormattingResultLog;
 import org.apache.sling.jcr.api.SlingRepository;
 
 import biz.netcentric.cq.tools.actool.helper.Constants;
+import biz.netcentric.cq.tools.actool.history.AcHistoryService;
 import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
 
 /** Sling Health Check that returns WARN if the last installation failed. */
@@ -32,9 +33,17 @@ public class LastRunSuccessHealthCheck implements HealthCheck {
     @Reference
     private SlingRepository repository;
 
+    @Reference
+    AcHistoryService historyService;
+
     @Override
     public Result execute() {
         final FormattingResultLog resultLog = new FormattingResultLog();
+
+        if (!historyService.wasLastPersistHistoryCallSuccessful()) {
+            resultLog.warn("Last execution of AC Tool could not persist its history. Check the log file for details.");
+            resultLog.info("Details about persisted history:");
+        }
 
         Session session = null;
 
@@ -52,7 +61,7 @@ public class LastRunSuccessHealthCheck implements HealthCheck {
                     break;
                 }
             }
-            
+
             if (lastHistoryNode != null) {
 
                 boolean isSuccess = lastHistoryNode.getProperty(HistoryUtils.PROPERTY_SUCCESS).getBoolean() == true;
@@ -68,6 +77,7 @@ public class LastRunSuccessHealthCheck implements HealthCheck {
             } else {
                 resultLog.info("No AC Tool History entries exist");
             }
+
         } catch (RepositoryException e) {
             return new Result(Result.Status.HEALTH_CHECK_ERROR, "Error while retrieving last AC Tool runs", e);
         } finally {
