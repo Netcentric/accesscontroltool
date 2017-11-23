@@ -74,7 +74,8 @@ Users can be configured in the same way as groups in the **user_config** section
 
 property | comment | required
 --- | --- | ---
-name, description, path, isMemberOf | Work exactly as for groups | optional
+name | Works mostly like for groups, except that the string is split up in first and last name using the last space found in string. For instance "Johann Sebastian Bach" will result in first name "Johann Sebastian" and last name "Bach". For names where the split has to be explicitly configured, use a comma: "Van der Broek, Sebastian" will result in first name "Sebastian" and last name "Van der Broek" | optional
+description, path, isMemberOf | Work exactly as for groups | optional
 password | The PW for the user. Obviously this is stored in plain text and should only be used for test users | Required for non-system users, otherwise must not be set
 isSystemUser | Create users as system user (AEM 6.1 and later) | optional
 disabled | Can be set to `true` or an arbitrary reason string to disable a user. If set to `false` the user will be explicitly enabled (calling `User.disable(null)`). If omitted will not change anything regarding enabled/disabled status of user | optional

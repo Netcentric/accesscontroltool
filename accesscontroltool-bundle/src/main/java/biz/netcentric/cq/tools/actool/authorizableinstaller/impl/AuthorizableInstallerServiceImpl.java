@@ -331,7 +331,6 @@ public class AuthorizableInstallerServiceImpl implements
             existingAuthorizable.remove();
 
             // create group again using values form config
-            ValueFactory vf = session.getValueFactory();
             Authorizable newAuthorizable = createNewAuthorizable(principalConfigBean, installLog, userManager, session);
 
             int countMovedMembersOfGroup = 0;
@@ -564,7 +563,7 @@ public class AuthorizableInstallerServiceImpl implements
         return newGroup;
     }
 
-    private void setAuthorizableProperties(Authorizable authorizable, AuthorizableConfigBean principalConfigBean,
+    void setAuthorizableProperties(Authorizable authorizable, AuthorizableConfigBean principalConfigBean,
             Session session, AcInstallationLog installationLog)
             throws RepositoryException {
 
@@ -585,8 +584,16 @@ public class AuthorizableInstallerServiceImpl implements
             if (authorizable.isGroup()) {
                 authorizable.setProperty("profile/givenName", vf.createValue(name));
             } else {
-                String givenName = StringUtils.substringBeforeLast(name, " ");
-                String familyName = StringUtils.substringAfterLast(name, " ");
+                String givenName;
+                String familyName;
+                if(name.contains(",")) {
+                    String[] nameParts = name.split("\\s*,\\s*", 2);
+                    familyName = nameParts[0];
+                    givenName = nameParts[1];
+                } else {
+                    givenName = StringUtils.substringBeforeLast(name, " ");
+                    familyName = StringUtils.substringAfterLast(name, " ");
+                }
                 authorizable.setProperty("profile/givenName", vf.createValue(givenName));
                 authorizable.setProperty("profile/familyName", vf.createValue(familyName));
             }
