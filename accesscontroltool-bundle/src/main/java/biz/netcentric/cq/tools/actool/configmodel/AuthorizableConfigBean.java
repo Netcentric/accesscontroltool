@@ -41,6 +41,8 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     private String migrateFrom;
 
+    private String unmanagedAcePathsRegex;
+
     private boolean isGroup = true;
     private boolean isSystemUser = false;
 
@@ -238,6 +240,13 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.migrateFrom = migrateFrom;
     }
 
+    public String getUnmanagedAcePathsRegex() {
+        return unmanagedAcePathsRegex;
+    }
+
+    public void setUnmanagedAcePathsRegex(String unmanagedAcePathsRegex) {
+        this.unmanagedAcePathsRegex = unmanagedAcePathsRegex;
+    }
 
     @Override
     public String toString() {

@@ -11,6 +11,7 @@ package biz.netcentric.cq.tools.actool.helper;
 import java.security.Principal;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.PathNotFoundException;
@@ -33,6 +34,9 @@ import org.apache.jackrabbit.api.security.JackrabbitAccessControlManager;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 
 /** This class provides common access control related utilities. Mostly a copy of org.apache.jackrabbit.commons.AccessControlUtils. */
 public class AccessControlUtils {
@@ -158,6 +162,17 @@ public class AccessControlUtils {
      * @return count ACEs that were removed */
     public static int deleteAllEntriesForPrincipalsFromACL(final Session session,
             String path, String[] principalNames)
+            throws UnsupportedRepositoryOperationException, RepositoryException {
+        return deleteAllEntriesForPrincipalsFromACL(session, path, principalNames, null);
+    }
+
+    /** @return count ACEs that were removed
+     * @param session admin session
+     * @param path valid node path in CRX
+     * @param principalNames principal names of authorizables to be deleted from ACL of node specified by path
+     * @param authorizablesConfig authorizables from the configuration  */
+    public static int deleteAllEntriesForPrincipalsFromACL(final Session session,
+            String path, String[] principalNames, AuthorizablesConfig authorizablesConfig)
                     throws UnsupportedRepositoryOperationException, RepositoryException {
         final AccessControlManager accessControlManager = session.getAccessControlManager();
 
@@ -179,7 +194,8 @@ public class AccessControlUtils {
             final JackrabbitAccessControlEntry jace = (JackrabbitAccessControlEntry) ace;
 
             String principalNameInCurrentAce = jace.getPrincipal().getName();
-            if (ArrayUtils.contains(principalNames, principalNameInCurrentAce)) {
+
+            if (shouldBeRemoved(principalNames, principalNameInCurrentAce, path, authorizablesConfig)) {
                 acl.removeAccessControlEntry(jace);
                 countRemoved++;
             }
@@ -265,5 +281,27 @@ public class AccessControlUtils {
         }
 
         return userManager;
+    }
+
+    private static boolean shouldBeRemoved(String[] principalNames, Object principalNameInCurrentAce, String path,
+            AuthorizablesConfig authorizablesConfig) {
+        boolean result = false;
+
+        int indexOf = ArrayUtils.indexOf(principalNames, principalNameInCurrentAce);
+        if (indexOf != ArrayUtils.INDEX_NOT_FOUND) {
+            result = true;
+
+            if (authorizablesConfig != null) {
+                String principalName = principalNames[indexOf];
+                AuthorizableConfigBean configForCurrentAce = authorizablesConfig.getAuthorizableConfig(principalName);
+                String restrictAcesRegex = configForCurrentAce.getUnmanagedAcePathsRegex();
+                if (StringUtils.isNotBlank(restrictAcesRegex) && StringUtils.isNotBlank(path)) {
+                    Pattern pattern = Pattern.compile(restrictAcesRegex);
+                    result = !pattern.matcher(path).matches();
+                }
+            }
+        }
+
+        return result;
     }
 }
