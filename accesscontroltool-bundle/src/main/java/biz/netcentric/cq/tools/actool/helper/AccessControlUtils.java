@@ -294,10 +294,10 @@ public class AccessControlUtils {
             if (authorizablesConfig != null) {
                 String principalName = principalNames[indexOf];
                 AuthorizableConfigBean configForCurrentAce = authorizablesConfig.getAuthorizableConfig(principalName);
-                String restrictAcesRegex = configForCurrentAce.getRestrictAcesRegex();
+                String restrictAcesRegex = configForCurrentAce.getUnmanagedAcePathsRegex();
                 if (StringUtils.isNotBlank(restrictAcesRegex) && StringUtils.isNotBlank(path)) {
                     Pattern pattern = Pattern.compile(restrictAcesRegex);
-                    result = pattern.matcher(path).matches();
+                    result = !pattern.matcher(path).matches();
                 }
             }
         }
