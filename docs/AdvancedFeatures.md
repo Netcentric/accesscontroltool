@@ -169,14 +169,14 @@ Variables can also be declared to be an array and used in a loop:
 
 To configure permissions for out-of-the-box anonymous user, it's best to create a custom group and add user `anonymous` to the `members` attribute of that group. The ACEs added to the custom group will then be effective for anonyomous users.
   
-## Configure memberships to Dynamic Groups
+## Configure memberships of/towards externally managed groups
 
-The AC Tool manages relationships between authorizables of the configuration (the normal case, not adjustable), but also relationships to authorizables that are not contained in the configuration (that means if you add `isMemberOf: contributor` it will be added, if you remove `contributor` for the next run it will be removed). This is the case even though only one side of the relationship is contained in the AC Tool configuration. To not manage certain relationships, the following configuration can be used to not touch relationships:
+The AC Tool manages relationships between authorizables of the configuration (the normal case, not adjustable), but also relationships to authorizables that are not contained in the configuration (that means if you add `isMemberOf: contributor` this group id will be added to the `contributur`'s `members` list; if you remove `contributor` this group membership will be removed with the next run). This is the case even though only one side of the relationship is contained in the AC Tool configuration. To not manage (currently means only to not remove) certain relationships, the following configuration can be used:
 
 ```
 - global_config:
-      defaultUnmanagedExternalIsMemberOfRegex: externalToBeUsedInIsMemberOf.*
-      defaultUnmanagedExternalMembersRegex: externalToBeUsedInMemers.*
+      defaultUnmanagedExternalIsMemberOfRegex: <regular expression matching against the externally managed groups' members property values. Since only AC managed groups are anyhow considered, you should only use a pattern which matches against an AC managed groups's authorizable, since other members are in any case ignored.
+      defaultUnmanagedExternalMembersRegex: <regular expression matching against the AC managed groups' members property values> 
       keepExistingMembershipsForGroupNamesRegEx: external.* # DEPRECATED but still supported, effects both isMemberOf and members 
 ```
 
