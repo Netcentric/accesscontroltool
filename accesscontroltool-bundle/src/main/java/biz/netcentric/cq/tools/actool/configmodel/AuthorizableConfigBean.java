@@ -259,6 +259,16 @@ public class AuthorizableConfigBean implements AcDumpElement {
         return sb.toString();
     }
 
+    public boolean managesPath(String path) {
+        if (StringUtils.isNotBlank(unmanagedAcePathsRegex)
+                && StringUtils.isNotBlank(path) /* not supporting repository permissions here */) {
+            boolean pathIsManaged = !path.matches(unmanagedAcePathsRegex);
+            return pathIsManaged;
+        } else {
+            return true; // default
+        }
+    }
+
     @Override
     public void accept(final AcDumpElementVisitor acDumpElementVisitor) {
         acDumpElementVisitor.visit(this);

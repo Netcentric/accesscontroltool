@@ -86,7 +86,9 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
                     new AcePermissionComparator());
             orderedAceBeanSetFromConfig.addAll(aceBeanSetFromConfig);
 
-            installAcl(orderedAceBeanSetFromConfig, path, principalsToRemoveAcesFor, session, history);
+            Set<String> principalsToRemoveAcesForAtThisPath = history.getAcConfiguration().getAuthorizablesConfig()
+                    .removeUnmanagedPrincipalNamesAtPath(path, principalsToRemoveAcesFor);
+            installAcl(orderedAceBeanSetFromConfig, path, principalsToRemoveAcesForAtThisPath, session, history);
 
             if (intermediateSaves && session.hasPendingChanges()) {
                 history.addVerboseMessage(LOG, "Saved session for path " + path);
