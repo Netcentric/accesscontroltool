@@ -44,7 +44,8 @@ externalId | Required for AC setups since AEM 6.2 SP1 that synchronize groups fr
 path | Path of the group either relative or absolute | optional
 isMemberOf | comma separated list of groups this groups is a member of | optional
 members | comma separated list of groups that are member of this group (allows to specify the relationshipo from the other side, however prefer `isMemberOf` over members if possible) | optional
-migrateFrom | a group name assigned member users are taken over from, since v1.7 | optional
+migrateFrom | a group name assigned member users are taken over from | optional
+unmanaged* Properties | Only use sparsely and with care, see [Advanced Features](AdvancedFeatures.md)   | optional
 
 Example:
 
@@ -74,7 +75,8 @@ Users can be configured in the same way as groups in the **user_config** section
 
 property | comment | required
 --- | --- | ---
-name, description, path, isMemberOf | Work exactly as for groups | optional
+name | Works mostly like for groups, except that the string is split up in first and last name using the last space found in string. For instance "Johann Sebastian Bach" will result in first name "Johann Sebastian" and last name "Bach". For names where the split has to be explicitly configured, use a comma: "Van der Broek, Sebastian" will result in first name "Sebastian" and last name "Van der Broek" | optional
+description, path, isMemberOf | Work exactly as for groups | optional
 password | The PW for the user. Obviously this is stored in plain text and should only be used for test users | Required for non-system users, otherwise must not be set
 isSystemUser | Create users as system user (AEM 6.1 and later) | optional
 disabled | Can be set to `true` or an arbitrary reason string to disable a user. If set to `false` the user will be explicitly enabled (calling `User.disable(null)`). If omitted will not change anything regarding enabled/disabled status of user | optional
@@ -117,7 +119,7 @@ property | comment | required
 --- | --- | ---
 path | A node path. Wildcards `*` are possible. e.g. assuming we have the language trees de and en then `/content/*/test` would match: `/content/de/test` and `/content/en/test` (mandatory). If an asterisk is contained then the path has to be written inside single quotes (`'...'`) since this symbol is a functional character in YAML. If path is not supplied the entry is used as repository level permission. | no
 permission | the permission (either `allow` or `deny`) | yes
-actions | the actions (`read,modify,create,delete,acl_read,acl_edit,replicate`). Reference: [Actions](http://docs.adobe.com/docs/en/cq/current/administering/security.html#Actions) | either actions or privileges need to be present; also a mix of both is possible
+actions | the actions (`read,modify,create,delete,acl_read,acl_edit,replicate`). Reference: [Actions](https://helpx.adobe.com/experience-manager/6-3/sites/administering/using/security.html#Actions) | either actions or privileges need to be present; also a mix of both is possible
 privileges | the privileges (`jcr:read, rep:write, jcr:all, crx:replicate, jcr:addChildNodes, jcr:lifecycleManagement, jcr:lockManagement, jcr:modifyAccessControl, jcr:modifyProperties, jcr:namespaceManagement, jcr:nodeTypeDefinitionManagement, jcr:nodeTypeManagement, jcr:readAccessControl, jcr:removeChildNodes, jcr:removeNode, jcr:retentionManagement, jcr:versionManagement, jcr:workspaceManagement, jcr:write, rep:privilegeManagement`). References: [Oak Privileges](http://jackrabbit.apache.org/oak/docs/security/privilege.html) [JCR Privileges](http://www.day.com/specs/jcr/2.0/16_Access_Control_Management.html#16.2.3%20Standard%20Privileges) | either actions or privileges need to be present; also a mix of both is possible
 repGlob |A [repGlob expression](https://jackrabbit.apache.org/api/2.8/org/apache/jackrabbit/core/security/authorization/GlobPattern.html) like "/jcr:*". Please note that repGlobs do not play well together with actions. Use privileges instead (e.g. "jcr:read" instead of read action). See [issue #48](https://github.com/Netcentric/accesscontroltool/issues/48). If the globbing expression starts with an asterisk, it has to be put between quotes. Using `repGlob` is a shortcut for `rep:glob` in sub element `restrictions` | no
 restrictions|An associative array of restriction entries. Each entry uses the restriction name as key (e.g. `rep:glob`) and a literal as value. Values for multi-valued restrictions (like e.g. `rep:ntNames`) are also given as YAML string literals with commas separating each value (not using YAML arrays, in line with how isMemberOf is configured). Arbitrary restrictions are supported as long as they are supported by the underlying repository on which the installation takes place (validated before installation starts). For an overview of supported restrictions in different Oak versions see: [Oak Restriction Management](http://jackrabbit.apache.org/oak/docs/security/authorization/restriction.html). Available from version 1.9.0.| no
@@ -195,19 +197,18 @@ All important steps performed by the service as well as all error/warning messag
 
 ## Global Configuration 
 
-Certain configuration aspects are global and can be configured on top level (since v1.8.5).
+Certain configuration aspects are global and can be configured on top level:
 
 ```
 - global_config:
       minRequiredVersion: 1.8.5
-      keepExistingMembershipsForGroupNamesRegEx: external.*
 
 ```
 
 Property | Description
 --- | ---
 minRequiredVersion | This configuration requires at least the given version of ACL tool. If an older version is found the configuration file is not processed.
-keepExistingMembershipsForGroupNamesRegEx | By default group relationships reset to exactly what is specified in configuration. There are cases where you have relationships between groups managed outside of AC tool (e.g. managed by a workflow). Using this option you can assign your external group to a group that is defined in AC Tool configuration. E.g. your AC Tool group "admin" could be member of "external-myworkflow". This setting is a regular expression.
+... | See [Advanced Features](AdvancedFeatures.md) for more global options.
 
 ## Validation
 

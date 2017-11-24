@@ -15,14 +15,6 @@
          path: /home/groups/g
          
          
-    # invalid group name 
-    - groupÄ:
-
-       - name: 
-         isMemberOf: 
-         path: /home/groups/g
-         assertedException: InvalidGroupNameException
-         
     - group_B:
 
        - isMemberOf:
@@ -83,13 +75,7 @@
          path: /home/groups/
          assertedException: InvalidIntermediatePathException
          
-    # invalid isMemberOf-name name
-    - group_O:
-
-       - isMemberOf: group_Ö
-         path: /home/groups/g
-         assertedException: InvalidGroupNameException
-         
+    
 - user_config:  
        
     - user_A:

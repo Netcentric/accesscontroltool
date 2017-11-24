@@ -21,7 +21,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFactory;
-import javax.jcr.ValueFormatException;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -67,7 +66,7 @@ public class AuthorizableInstallerServiceImpl implements
     ExternalGroupInstallerServiceImpl externalGroupCreatorService;
 
     @Override
-    public void createNewAuthorizables(
+    public void installAuthorizables(
             AuthorizablesConfig authorizablesConfigBeans,
             final Session session, AcInstallationLog installLog)
             throws RepositoryException, AuthorizableCreatorException {
@@ -115,7 +114,7 @@ public class AuthorizableInstallerServiceImpl implements
             // move authorizable if path changed (retaining existing members)
             handleRecreationOfAuthorizableIfNecessary(session, authorizableConfigBean, installLog, userManager);
 
-            applyGroupMembershipConfigIsMemberOf(installLog, authorizableConfigBean, userManager, session);
+            applyGroupMembershipConfigIsMemberOf(installLog, authorizableConfigBean, userManager, session, authorizablesFromConfigurations);
 
         }
 
@@ -146,8 +145,9 @@ public class AuthorizableInstallerServiceImpl implements
             relevantMembersInRepo = new HashSet<String>(CollectionUtils.subtract(relevantMembersInRepo, authorizablesFromConfigurations));
             // ensure regular users are never removed
             relevantMembersInRepo = removeRegularUsers(relevantMembersInRepo, userManager);
-            // take configuration 'allowExternalGroupNamesRegEx' into account (and remove matching groups from further handling)
-            relevantMembersInRepo = removeExternalGroupsThatAreUntouchedByConfiguration(relevantMembersInRepo, installLog);
+            // take configuration 'defaultUnmanagedExternalMembersRegex' into account (and remove matching groups from further handling)
+            relevantMembersInRepo = removeExternalMembersUnmanagedByConfiguration(authorizableConfigBean, relevantMembersInRepo,
+                    installLog);
 
             Set<String> membersToAdd = new HashSet<String>(CollectionUtils.subtract(membersInConfig, relevantMembersInRepo));
             Set<String> membersToRemove = new HashSet<String>(CollectionUtils.subtract(relevantMembersInRepo, membersInConfig));
@@ -202,18 +202,28 @@ public class AuthorizableInstallerServiceImpl implements
         return relevantMembers;
     }
 
-    private Set<String> removeExternalGroupsThatAreUntouchedByConfiguration(Set<String> relevantMembersInRepo,
-            AcInstallationLog installLog) {
+    private Set<String> removeExternalMembersUnmanagedByConfiguration(AuthorizableConfigBean authorizableConfigBean,
+            Set<String> relevantMembersInRepo, AcInstallationLog installLog) {
         Set<String> relevantMembers = new HashSet<String>(relevantMembersInRepo);
-        Pattern keepExistingMembershipsForGroupNamesRegEx = installLog.getAcConfiguration().getGlobalConfiguration().getKeepExistingMembershipsForGroupNamesRegEx();
-        if (keepExistingMembershipsForGroupNamesRegEx != null) {
+        Pattern unmanagedExternalMembersRegex = installLog.getAcConfiguration().getGlobalConfiguration()
+                .getDefaultUnmanagedExternalMembersRegex();
+
+        Set<String> unmanagedMembers = new HashSet<String>();
+        if (unmanagedExternalMembersRegex != null) {
             Iterator<String> relevantMembersIt = relevantMembers.iterator();
             while (relevantMembersIt.hasNext()) {
                 String member = relevantMembersIt.next();
-                if (keepExistingMembershipsForGroupNamesRegEx.matcher(member).matches()) {
+                if (unmanagedExternalMembersRegex.matcher(member).matches()) {
+                    unmanagedMembers.add(member);
                     relevantMembersIt.remove();
                 }
             }
+        }
+
+        if (!unmanagedMembers.isEmpty()) {
+            installLog.addVerboseMessage(LOG,
+                    "Not removing members " + unmanagedMembers + " from " + authorizableConfigBean.getAuthorizableId()
+                            + " because of unmanagedExternalMembersRegex=" + unmanagedExternalMembersRegex);
         }
 
         return relevantMembers;
@@ -331,7 +341,6 @@ public class AuthorizableInstallerServiceImpl implements
             existingAuthorizable.remove();
 
             // create group again using values form config
-            ValueFactory vf = session.getValueFactory();
             Authorizable newAuthorizable = createNewAuthorizable(principalConfigBean, installLog, userManager, session);
 
             int countMovedMembersOfGroup = 0;
@@ -380,10 +389,8 @@ public class AuthorizableInstallerServiceImpl implements
     }
 
     private void applyGroupMembershipConfigIsMemberOf(AcInstallationLog installLog,
-            AuthorizableConfigBean authorizableConfigBean, UserManager userManager, Session session)
-            throws RepositoryException, ValueFormatException,
-            UnsupportedRepositoryOperationException,
-            AuthorizableExistsException, AuthorizableCreatorException {
+            AuthorizableConfigBean authorizableConfigBean, UserManager userManager, Session session,
+            Set<String> authorizablesFromConfigurations) throws RepositoryException, AuthorizableCreatorException {
         String[] memberOf = authorizableConfigBean.getMemberOf();
         String authorizableId = authorizableConfigBean.getAuthorizableId();
 
@@ -392,7 +399,7 @@ public class AuthorizableInstallerServiceImpl implements
         Set<String> membershipGroupsFromRepository = getMembershipGroupsFromRepository(currentGroupFromRepository);
 
         applyGroupMembershipConfigIsMemberOf(authorizableId, installLog, userManager, session, membershipGroupsFromConfig,
-                membershipGroupsFromRepository);
+                membershipGroupsFromRepository, authorizablesFromConfigurations);
     }
 
     private Authorizable createNewAuthorizable(
@@ -453,10 +460,9 @@ public class AuthorizableInstallerServiceImpl implements
     void applyGroupMembershipConfigIsMemberOf(String authorizableId,
             AcInstallationLog installLog, UserManager userManager, Session session,
             Set<String> membershipGroupsFromConfig,
-            Set<String> membershipGroupsFromRepository)
+            Set<String> membershipGroupsFromRepository, Set<String> authorizablesFromConfigurations)
             throws RepositoryException, AuthorizableExistsException,
             AuthorizableCreatorException {
-        LOG.debug("mergeMemberOfGroups() for {}", authorizableId);
 
         // membership to everyone cannot be removed or added => take it out from both lists
         membershipGroupsFromConfig.remove(PRINCIPAL_EVERYONE);
@@ -477,23 +483,26 @@ public class AuthorizableInstallerServiceImpl implements
 
         Collection<String> toBeRemovedMembers = CollectionUtils.subtract(membershipGroupsFromRepository,
                 validatedMembershipGroupsFromConfig);
-        Set<String> toBeSkippedFromRemovalMembers = new HashSet<String>();
+        Set<String> unmanagedMembers = new HashSet<String>();
 
-        Pattern ignoredMembershipsPattern = installLog.getAcConfiguration().getGlobalConfiguration().getKeepExistingMembershipsForGroupNamesRegEx();
+        Pattern unmanagedExternalIsMemberOfRegex = installLog.getAcConfiguration().getGlobalConfiguration()
+                .getDefaultUnmanagedExternalIsMemberOfRegex();
 
         Iterator<String> toBeRemovedMembersIt = toBeRemovedMembers.iterator();
         while (toBeRemovedMembersIt.hasNext()) {
             String groupId = toBeRemovedMembersIt.next();
-            if ((ignoredMembershipsPattern != null) && ignoredMembershipsPattern.matcher(groupId).find()) {
-                toBeSkippedFromRemovalMembers.add(groupId);
+            if (!authorizablesFromConfigurations.contains(groupId) /* generally only consider groups that are not in config as unmanaged */
+                    && (unmanagedExternalIsMemberOfRegex != null) && unmanagedExternalIsMemberOfRegex.matcher(groupId).matches()) {
+                unmanagedMembers.add(groupId);
                 toBeRemovedMembersIt.remove();
             }
         }
         installLog.addVerboseMessage(LOG, "Authorizable " + authorizableId + " will be removed from members of " + toBeRemovedMembers);
 
-        if (!toBeSkippedFromRemovalMembers.isEmpty()) {
+        if (!unmanagedMembers.isEmpty()) {
             installLog.addVerboseMessage(LOG, "Authorizable " + authorizableId + " remains member of groups "
-                    + toBeSkippedFromRemovalMembers + " (due to configured ignoredMembershipsPattern=" + ignoredMembershipsPattern + ")");
+                    + unmanagedMembers + " (due to configured unmanagedExternalIsMemberOfRegex="
+                    + unmanagedExternalIsMemberOfRegex + ")");
 
         }
 
@@ -564,7 +573,7 @@ public class AuthorizableInstallerServiceImpl implements
         return newGroup;
     }
 
-    private void setAuthorizableProperties(Authorizable authorizable, AuthorizableConfigBean principalConfigBean,
+    void setAuthorizableProperties(Authorizable authorizable, AuthorizableConfigBean principalConfigBean,
             Session session, AcInstallationLog installationLog)
             throws RepositoryException {
 
@@ -585,8 +594,16 @@ public class AuthorizableInstallerServiceImpl implements
             if (authorizable.isGroup()) {
                 authorizable.setProperty("profile/givenName", vf.createValue(name));
             } else {
-                String givenName = StringUtils.substringBeforeLast(name, " ");
-                String familyName = StringUtils.substringAfterLast(name, " ");
+                String givenName;
+                String familyName;
+                if(name.contains(",")) {
+                    String[] nameParts = name.split("\\s*,\\s*", 2);
+                    familyName = nameParts[0];
+                    givenName = nameParts[1];
+                } else {
+                    givenName = StringUtils.substringBeforeLast(name, " ");
+                    familyName = StringUtils.substringAfterLast(name, " ");
+                }
                 authorizable.setProperty("profile/givenName", vf.createValue(givenName));
                 authorizable.setProperty("profile/familyName", vf.createValue(familyName));
             }

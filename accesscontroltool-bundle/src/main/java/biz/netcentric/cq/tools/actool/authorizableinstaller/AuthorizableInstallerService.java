@@ -16,7 +16,7 @@ import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
 
 public interface AuthorizableInstallerService {
 
-    public void createNewAuthorizables(
+    public void installAuthorizables(
             AuthorizablesConfig principalMapFromConfig,
             final Session session, AcInstallationLog installLog) throws RepositoryException, AuthorizableCreatorException;
 

@@ -10,8 +10,11 @@ package biz.netcentric.cq.tools.actool.authorizableinstaller.impl;
 
 import static java.util.Arrays.asList;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -23,28 +26,35 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.ValueFactory;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Matchers;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
-import biz.netcentric.cq.tools.actool.authorizableinstaller.impl.AuthorizableInstallerServiceImpl;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
 
 @RunWith(MockitoJUnitRunner.class)
-public class AuthorizableCreatorServiceImplTest {
+public class AuthorizableInstallerServiceImplTest {
 
     public static final String TESTGROUP = "testGroup";
 
@@ -68,6 +78,10 @@ public class AuthorizableCreatorServiceImplTest {
     @Mock
     private UserManager userManager;
 
+    @Mock
+    private Session session;
+    @Mock
+    private ValueFactory valueFactory;
 
     @Mock
     private Group testGroup;
@@ -93,6 +107,17 @@ public class AuthorizableCreatorServiceImplTest {
     @Before
     public void setup() throws RepositoryException {
 
+        doReturn(valueFactory).when(session).getValueFactory();
+        Mockito.when(valueFactory.createValue(anyString())).thenAnswer(new Answer<Value>() {
+            @Override
+            public Value answer(InvocationOnMock invocation) throws Throwable {
+                Value mock = mock(Value.class);
+                Object val = invocation.getArguments()[0];
+                doReturn(val).when(mock).getString();
+                return mock;
+            }
+        });
+
         status.setAcConfiguration(acConfiguration);
         acConfiguration.setGlobalConfiguration(globalConfiguration);
 
@@ -114,11 +139,11 @@ public class AuthorizableCreatorServiceImplTest {
     }
     
     @Test
-    public void testApplyGroupMembershipConfigMemberOf() throws Exception {
+    public void testApplyGroupMembershipConfigIsMemberOf() throws Exception {
         HashSet<String> configuredGroups = new HashSet<String>(Arrays.asList(GROUP1, GROUP2));
         HashSet<String> groupsInRepo = new HashSet<String>(Arrays.asList(GROUP2, GROUP3, EXTERNALGROUP));
 
-        globalConfiguration.setKeepExistingMembershipsForGroupNamesRegEx("external.*");
+        globalConfiguration.setDefaultUnmanagedExternalIsMemberOfRegex("external.*");
 
         // just return the value as passed in as fourth argument
         doAnswer(new Answer<Set<String>>() {
@@ -127,7 +152,9 @@ public class AuthorizableCreatorServiceImplTest {
             }
         }).when(cut).validateAssignedGroups(userManager, null, TESTGROUP, configuredGroups, status);
 
-        cut.applyGroupMembershipConfigIsMemberOf(TESTGROUP, status, userManager, null, configuredGroups, groupsInRepo);
+        Set<String> authorizablesInConfig = new HashSet<String>(asList(GROUP1));
+        cut.applyGroupMembershipConfigIsMemberOf(TESTGROUP, status, userManager, null, configuredGroups, groupsInRepo,
+                authorizablesInConfig);
         
         verifyZeroInteractions(group2); // in configuredGroups and in groupsInRepo
         verifyZeroInteractions(externalGroup); // matches external.* and hence must not be removed (even though it is not in the
@@ -191,8 +218,8 @@ public class AuthorizableCreatorServiceImplTest {
         verify(testGroup).removeMember(group2);
         reset(testGroup);
 
-        // test authorizable in config not removed if allowExternalGroupNamesRegEx is configured
-        history.getAcConfiguration().getGlobalConfiguration().setKeepExistingMembershipsForGroupNamesRegEx("group2.*");
+        // test authorizable in config not removed if defaultUnmanagedExternalMembersRegex is configured
+        history.getAcConfiguration().getGlobalConfiguration().setDefaultUnmanagedExternalMembersRegex("group2.*");
         authorizableConfigBean.setMembers(new String[] {});
         doReturn(asList(group1, group2).iterator()).when(testGroup).getDeclaredMembers();
         cut.applyGroupMembershipConfigMembers(authorizableConfigBean, history, TESTGROUP, userManager, authorizablesInConfig);
@@ -202,5 +229,59 @@ public class AuthorizableCreatorServiceImplTest {
         reset(testGroup);
 
     }
+    
+    
+    @Test
+    public void testSetAuthorizableProperties() throws Exception {
+        
+        AuthorizableConfigBean authorizableConfig = new AuthorizableConfigBean();
+        authorizableConfig.setIsGroup(false);
 
+        authorizableConfig.setName("John Doe");
+        authorizableConfig.setDescription("Test Description");
+
+        cut.setAuthorizableProperties(regularUser1, authorizableConfig, session, status);
+
+        verify(regularUser1).setProperty(eq("profile/givenName"), Matchers.argThat(new ValueMatcher("John")));
+        verify(regularUser1).setProperty(eq("profile/familyName"), Matchers.argThat(new ValueMatcher("Doe")));
+        verify(regularUser1).setProperty(eq("profile/aboutMe"), Matchers.argThat(new ValueMatcher("Test Description")));
+
+        authorizableConfig.setName("Van der Broek, Sebastian");
+        cut.setAuthorizableProperties(regularUser1, authorizableConfig, session, status);
+        verify(regularUser1).setProperty(eq("profile/givenName"), Matchers.argThat(new ValueMatcher("Sebastian")));
+        verify(regularUser1).setProperty(eq("profile/familyName"), Matchers.argThat(new ValueMatcher("Van der Broek")));
+
+        authorizableConfig.setName("Johann Sebastian Bach");
+        cut.setAuthorizableProperties(regularUser1, authorizableConfig, session, status);
+        verify(regularUser1).setProperty(eq("profile/givenName"), Matchers.argThat(new ValueMatcher("Johann Sebastian")));
+        verify(regularUser1).setProperty(eq("profile/familyName"), Matchers.argThat(new ValueMatcher("Bach")));
+
+    }
+
+    private final class ValueMatcher extends BaseMatcher<Value> {
+        private String expectedVal;
+
+        public ValueMatcher(String expectedVal) {
+            this.expectedVal = expectedVal;
+        }
+
+        @Override
+        public boolean matches(Object actualVal) {
+            if (!(actualVal instanceof Value)) {
+                return false;
+            } else {
+                try {
+                    return StringUtils.equals(((Value) actualVal).getString(), expectedVal);
+                } catch (IllegalStateException | RepositoryException e) {
+                    return false;
+                }
+            }
+
+        }
+
+        @Override
+        public void describeTo(Description desc) {
+            desc.appendText(" is " + expectedVal);
+        }
+    }
 }

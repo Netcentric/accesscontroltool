@@ -27,9 +27,6 @@ public class Validators {
 
     private static final Logger LOG = LoggerFactory.getLogger(Validators.class);
 
-    private static final Pattern GROUP_ID_PATTERN = Pattern
-            .compile("([a-zA-Z0-9-_. ]+)");
-
     public static boolean isValidNodePath(final String path) {
         if (StringUtils.isBlank(path)) {
             return true; // repository level permissions are created with 'left-out' path property
@@ -41,17 +38,16 @@ public class Validators {
         return true;
     }
 
-    public static boolean isValidAuthorizableId(final String name) {
-        if (StringUtils.isBlank(name)) {
+    /**
+     * Validates in the same way as <a href="https://github.com/apache/jackrabbit-oak/blob/7999b5cbce87295b502ea4d1622e729f5b96701d/oak-core/src/main/java/org/apache/jackrabbit/oak/security/user/UserManagerImpl.java#L421">Oak's UserManagerImpl</a>.
+     * @param id the authorizable id to validate
+     * @return {@code true} in case the given id is a valid authorizable id, otherwise {@code false}
+     */
+    public static boolean isValidAuthorizableId(final String id) {
+        if (StringUtils.isBlank(id)) {
             return false;
         }
-        boolean isValid = false;
-
-        Matcher matcher = GROUP_ID_PATTERN.matcher(name);
-        if (matcher.matches()) {
-            isValid = true;
-        }
-        return isValid;
+        return true;
     }
 
     public static boolean isValidRegex(String expression) {

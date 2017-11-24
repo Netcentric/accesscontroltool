@@ -27,6 +27,15 @@ public class AuthorizablesConfig extends LinkedHashSet<AuthorizableConfigBean> {
         return null;
     }
 
+    public AuthorizableConfigBean getAuthorizableConfigByPrincipalName(String principalName) {
+        for (AuthorizableConfigBean authorizableConfigBean : this) {
+            if (StringUtils.equals(authorizableConfigBean.getPrincipalName(), principalName)) {
+                return authorizableConfigBean;
+            }
+        }
+        return null;
+    }
+
     public Set<String> getAuthorizableIds() {
         Set<String> authorizableIdsFromConfigurations = new LinkedHashSet<String>();
         for (AuthorizableConfigBean authorizableConfigBean : this) {
@@ -52,6 +61,19 @@ public class AuthorizablesConfig extends LinkedHashSet<AuthorizableConfigBean> {
             }
         }
         return principalName;
+    }
+
+    public Set<String> removeUnmanagedPrincipalNamesAtPath(String path, Set<String> principals) {
+
+        Set<String> filteredPrincipals = new HashSet<String>();
+        for (String principal : principals) {
+            AuthorizableConfigBean authorizableConfig = getAuthorizableConfigByPrincipalName(principal);
+            if (authorizableConfig.managesPath(path)) {
+                filteredPrincipals.add(principal);
+            }
+        }
+
+        return filteredPrincipals;
     }
 
 }
