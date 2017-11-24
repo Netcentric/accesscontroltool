@@ -21,12 +21,19 @@ public class GlobalConfiguration {
     public static final String KEY_MIN_REQUIRED_VERSION = "minRequiredVersion";
     public static final String KEY_INSTALL_ACLS_INCREMENTALLY = "installAclsIncrementally";
 
-    public static final String KEY_KEEP_EXISTING_MEMBERSHIPS_FOR_GROUP_NAMES_REGEX = "keepExistingMembershipsForGroupNamesRegEx";
     public static final String KEY_ALLOW_EXTERNAL_GROUP_NAMES_REGEX_OBSOLETE = "allowExternalGroupNamesRegEx";
 
-    private Pattern keepExistingMembershipsForGroupNamesRegEx;
+    public static final String KEY_DEFAULT_UNMANAGED_EXTERNAL_ISMEMBEROF_REGEX = "defaultUnmanagedExternalIsMemberOfRegex";
+    public static final String KEY_DEFAULT_UNMANAGED_EXTERNAL_MEMBERS_REGEX = "defaultUnmanagedExternalMembersRegex";
+
+    @Deprecated
+    public static final String KEY_KEEP_EXISTING_MEMBERSHIPS_FOR_GROUP_NAMES_REGEX = "keepExistingMembershipsForGroupNamesRegEx";
+
     private String minRequiredVersion;
     private boolean installAclsIncrementally = true;
+
+    private Pattern defaultUnmanagedExternalIsMemberOfRegex;
+    private Pattern defaultUnmanagedExternalMembersRegex;
 
     public GlobalConfiguration() {
     }
@@ -41,7 +48,23 @@ public class GlobalConfiguration {
                 
             }
             
-            setKeepExistingMembershipsForGroupNamesRegEx((String) globalConfigMap.get(KEY_KEEP_EXISTING_MEMBERSHIPS_FOR_GROUP_NAMES_REGEX));
+            setDefaultUnmanagedExternalIsMemberOfRegex((String) globalConfigMap.get(KEY_DEFAULT_UNMANAGED_EXTERNAL_ISMEMBEROF_REGEX));
+            setDefaultUnmanagedExternalMembersRegex((String) globalConfigMap.get(KEY_DEFAULT_UNMANAGED_EXTERNAL_MEMBERS_REGEX));
+
+            String keepExistingMembershipsForGroupNamesRegEx = (String) globalConfigMap
+                    .get(KEY_KEEP_EXISTING_MEMBERSHIPS_FOR_GROUP_NAMES_REGEX);
+            if (StringUtils.isNotBlank(keepExistingMembershipsForGroupNamesRegEx)) {
+                if (defaultUnmanagedExternalIsMemberOfRegex == null && defaultUnmanagedExternalMembersRegex == null) {
+                    setDefaultUnmanagedExternalIsMemberOfRegex(keepExistingMembershipsForGroupNamesRegEx);
+                    setDefaultUnmanagedExternalMembersRegex(keepExistingMembershipsForGroupNamesRegEx);
+                } else {
+                    throw new IllegalArgumentException("Deprecated " + KEY_KEEP_EXISTING_MEMBERSHIPS_FOR_GROUP_NAMES_REGEX
+                            + " cannot be used together with " + KEY_DEFAULT_UNMANAGED_EXTERNAL_ISMEMBEROF_REGEX + " or "
+                            + KEY_DEFAULT_UNMANAGED_EXTERNAL_MEMBERS_REGEX);
+                }
+            }
+
+
             setMinRequiredVersion((String) globalConfigMap.get(KEY_MIN_REQUIRED_VERSION));
             if (globalConfigMap.containsKey(KEY_INSTALL_ACLS_INCREMENTALLY)) {
                 setInstallAclsIncrementally(Boolean.valueOf(globalConfigMap.get(KEY_INSTALL_ACLS_INCREMENTALLY).toString()));
@@ -52,14 +75,21 @@ public class GlobalConfiguration {
 
     public void merge(GlobalConfiguration otherGlobalConfig) {
 
-        if (otherGlobalConfig.getKeepExistingMembershipsForGroupNamesRegEx() != null) {
-            if (keepExistingMembershipsForGroupNamesRegEx == null) {
-                keepExistingMembershipsForGroupNamesRegEx = otherGlobalConfig.getKeepExistingMembershipsForGroupNamesRegEx();
+        if (otherGlobalConfig.getDefaultUnmanagedExternalIsMemberOfRegex() != null) {
+            if (defaultUnmanagedExternalIsMemberOfRegex == null) {
+                defaultUnmanagedExternalIsMemberOfRegex = otherGlobalConfig.getDefaultUnmanagedExternalIsMemberOfRegex();
             } else {
-                throw new IllegalArgumentException("Duplicate config for " + KEY_KEEP_EXISTING_MEMBERSHIPS_FOR_GROUP_NAMES_REGEX);
+                throw new IllegalArgumentException("Duplicate config for " + KEY_DEFAULT_UNMANAGED_EXTERNAL_ISMEMBEROF_REGEX);
             }
         }
-        
+        if (otherGlobalConfig.getDefaultUnmanagedExternalMembersRegex() != null) {
+            if (defaultUnmanagedExternalMembersRegex == null) {
+                defaultUnmanagedExternalMembersRegex = otherGlobalConfig.getDefaultUnmanagedExternalMembersRegex();
+            } else {
+                throw new IllegalArgumentException("Duplicate config for " + KEY_DEFAULT_UNMANAGED_EXTERNAL_MEMBERS_REGEX);
+            }
+        }
+
         if (otherGlobalConfig.getMinRequiredVersion() != null) {
             if (minRequiredVersion == null) {
                 minRequiredVersion = otherGlobalConfig.getMinRequiredVersion();
@@ -76,15 +106,6 @@ public class GlobalConfiguration {
 
     }
 
-    public Pattern getKeepExistingMembershipsForGroupNamesRegEx() {
-        return keepExistingMembershipsForGroupNamesRegEx;
-    }
-
-    public void setKeepExistingMembershipsForGroupNamesRegEx(String allowExternalGroupNamesRegEx) {
-        this.keepExistingMembershipsForGroupNamesRegEx = StringUtils.isNotBlank(allowExternalGroupNamesRegEx)
-                ? Pattern.compile(allowExternalGroupNamesRegEx) : null;
-    }
-
     public String getMinRequiredVersion() {
         return minRequiredVersion;
     }
@@ -99,6 +120,27 @@ public class GlobalConfiguration {
 
     public void setInstallAclsIncrementally(boolean installAclsIncrementally) {
         this.installAclsIncrementally = installAclsIncrementally;
+    }
+
+    public Pattern getDefaultUnmanagedExternalIsMemberOfRegex() {
+        return defaultUnmanagedExternalIsMemberOfRegex;
+    }
+
+    public void setDefaultUnmanagedExternalIsMemberOfRegex(String defaultUnmanagedExternalIsMemberOfRegex) {
+        this.defaultUnmanagedExternalIsMemberOfRegex = stringToRegex(defaultUnmanagedExternalIsMemberOfRegex);
+    }
+
+
+    public Pattern getDefaultUnmanagedExternalMembersRegex() {
+        return defaultUnmanagedExternalMembersRegex;
+    }
+
+    public void setDefaultUnmanagedExternalMembersRegex(String defaultUnmanagedExternalMembersRegex) {
+        this.defaultUnmanagedExternalMembersRegex = stringToRegex(defaultUnmanagedExternalMembersRegex);
+    }
+
+    private Pattern stringToRegex(String regex) {
+        return StringUtils.isNotBlank(regex) ? Pattern.compile(regex) : null;
     }
 
 }

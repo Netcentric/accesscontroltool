@@ -139,11 +139,11 @@ public class AuthorizableInstallerServiceImplTest {
     }
     
     @Test
-    public void testApplyGroupMembershipConfigMemberOf() throws Exception {
+    public void testApplyGroupMembershipConfigIsMemberOf() throws Exception {
         HashSet<String> configuredGroups = new HashSet<String>(Arrays.asList(GROUP1, GROUP2));
         HashSet<String> groupsInRepo = new HashSet<String>(Arrays.asList(GROUP2, GROUP3, EXTERNALGROUP));
 
-        globalConfiguration.setKeepExistingMembershipsForGroupNamesRegEx("external.*");
+        globalConfiguration.setDefaultUnmanagedExternalIsMemberOfRegex("external.*");
 
         // just return the value as passed in as fourth argument
         doAnswer(new Answer<Set<String>>() {
@@ -152,7 +152,9 @@ public class AuthorizableInstallerServiceImplTest {
             }
         }).when(cut).validateAssignedGroups(userManager, null, TESTGROUP, configuredGroups, status);
 
-        cut.applyGroupMembershipConfigIsMemberOf(TESTGROUP, status, userManager, null, configuredGroups, groupsInRepo);
+        Set<String> authorizablesInConfig = new HashSet<String>(asList(GROUP1));
+        cut.applyGroupMembershipConfigIsMemberOf(TESTGROUP, status, userManager, null, configuredGroups, groupsInRepo,
+                authorizablesInConfig);
         
         verifyZeroInteractions(group2); // in configuredGroups and in groupsInRepo
         verifyZeroInteractions(externalGroup); // matches external.* and hence must not be removed (even though it is not in the
@@ -216,8 +218,8 @@ public class AuthorizableInstallerServiceImplTest {
         verify(testGroup).removeMember(group2);
         reset(testGroup);
 
-        // test authorizable in config not removed if allowExternalGroupNamesRegEx is configured
-        history.getAcConfiguration().getGlobalConfiguration().setKeepExistingMembershipsForGroupNamesRegEx("group2.*");
+        // test authorizable in config not removed if defaultUnmanagedExternalMembersRegex is configured
+        history.getAcConfiguration().getGlobalConfiguration().setDefaultUnmanagedExternalMembersRegex("group2.*");
         authorizableConfigBean.setMembers(new String[] {});
         doReturn(asList(group1, group2).iterator()).when(testGroup).getDeclaredMembers();
         cut.applyGroupMembershipConfigMembers(authorizableConfigBean, history, TESTGROUP, userManager, authorizablesInConfig);
