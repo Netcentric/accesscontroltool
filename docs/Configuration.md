@@ -197,19 +197,18 @@ All important steps performed by the service as well as all error/warning messag
 
 ## Global Configuration 
 
-Certain configuration aspects are global and can be configured on top level (since v1.8.5).
+Certain configuration aspects are global and can be configured on top level:
 
 ```
 - global_config:
       minRequiredVersion: 1.8.5
-      keepExistingMembershipsForGroupNamesRegEx: external.*
 
 ```
 
 Property | Description
 --- | ---
 minRequiredVersion | This configuration requires at least the given version of ACL tool. If an older version is found the configuration file is not processed.
-keepExistingMembershipsForGroupNamesRegEx | By default group relationships reset to exactly what is specified in configuration. There are cases where you have relationships between groups managed outside of AC tool (e.g. managed by a workflow). Using this option you can assign your external group to a group that is defined in AC Tool configuration. E.g. your AC Tool group "admin" could be member of "external-myworkflow". This setting is a regular expression.
+... | See [Advanced Features](AdvancedFeatures.md) for more global options.
 
 ## Validation
 
