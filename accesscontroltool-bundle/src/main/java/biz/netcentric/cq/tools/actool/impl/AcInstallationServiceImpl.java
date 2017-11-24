@@ -263,15 +263,16 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             if (countRemoved > 0) {
                 countPathsCleaned++;
                 installLog.addMessage(LOG,
-                        "Cleaned " + countRemoved + " ACEs of path " + relevantPath + " from all ACEs for configured authorizables");
+                        "For paths not contained in the configuration: Cleaned " + countRemoved + " ACEs of path " + relevantPath + " from all ACEs for configured authorizables");
             }
             countAcesCleaned += countRemoved;
         }
 
         if (countAcesCleaned > 0) {
-            installLog.addMessage(LOG, "Cleaned " + countAcesCleaned + " ACEs from " + countPathsCleaned
-                    + " paths in repository (ACEs that belong to users in the AC Config, "
-                    + "but resided at paths that are not contained in AC Config)");
+            installLog.addMessage(LOG,
+                    "For paths not contained in the configuration: Cleaned " + countAcesCleaned + " ACEs from " + countPathsCleaned
+                            + " paths in repository (ACEs that belong to users in the AC Config, "
+                            + "but resided at paths that are not contained in AC Config)");
         }
 
     }
