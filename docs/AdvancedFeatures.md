@@ -167,18 +167,33 @@ Variables can also be declared to be an array and used in a loop:
 
 ## Configure permissions for anonymous
 
-Normally it is ensured by validation that a configuration's group system is self-contained - this means out-of-the-box groups like `contributor` cannot be used. For registered users in the system this approach works well since either the users are manually assigned to groups (by a user admin) or the membership relationship is maintained by LDAP or SSO extensions. For the `anonymous` user on publish that is not logged in by definition, there is no hook that allows to assign it to a group in the AC Tools configuration. Therefore as an exception, it is allowed to use the user `anonymous` in the `members` attribute of a group configuration.
+To configure permissions for out-of-the-box anonymous user, it's best to create a custom group and add user `anonymous` to the `members` attribute of that group. The ACEs added to the custom group will then be effective for anonyomous users.
   
 ## Configure memberships to Dynamic Groups
 
-If a group configured via the AC Tool is a member of a group which is not part of the configuration, this membership is removed by the installation process. This behaviour makes sense to ensure the configuration to be self-contained and prevent unwanted "injection" of permissions into the configuration system as described by the yaml files. Therefore wherever possible groups and their dependent groups should be added to the AC Tool configuration.
-
-An exception to this might be dynamic groups created and maintained by authors or end-users. As such groups and their memberships are not static they cannot be added easily to the configuration. For this use-case the global configuration "keepExistingMembershipsForGroupNamesRegEx" can be set to a regular expression that matches all group names, that may keep member AC Tool groups as member:
+The AC Tool manages relationships between authorizables of the configuration (the normal case, not adjustable), but also relationships to authorizables that are not contained in the configuration (that means if you add `isMemberOf: contributor` it will be added, if you remove `contributor` for the next run it will be removed). This is the case even though only one side of the relationship is contained in the AC Tool configuration. To not manage certain relationships, the following configuration can be used to not touch relationships:
 
 ```
 - global_config:
-      keepExistingMembershipsForGroupNamesRegEx: external.* # the AC Tool groups can inherit from other external.* groups
+      defaultUnmanagedExternalIsMemberOfRegex: externalToBeUsedInIsMemberOf.*
+      defaultUnmanagedExternalMembersRegex: externalToBeUsedInMemers.*
+      keepExistingMembershipsForGroupNamesRegEx: external.* # DEPRECATED but still supported, effects both isMemberOf and members 
 ```
+
+That way relationships that are created programmatically or manually can be left intact and the AC Tool does not remove them. Also this allows to have two configuration sets at different root paths.
+
+## Limiting where the AC Tool creates and removes ACEs
+
+The property `unmanagedAcePathsRegx` for authorizable configurations (users or groups) can be used to ensure certain paths are not managed by the AC Tool:
+
+```
+    - testgroup:
+
+        - name: "Test Group"
+          unmanagedAcePathsRegex: /content/dam/.*
+```
+
+That way for `testgroup`, ACE in `/content/dam/` will be left as they are for this particular group.
 
 ## Automatically purge obsolete groups and users
 The root element `obsolete_authorizables` can be used to automatically purge authorizables that are not in use anymore:

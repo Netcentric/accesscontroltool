@@ -252,14 +252,18 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 aceBeansFromConfig);
 
         for (String relevantPath : relevantPathsForCleanup) {
+
+            Set<String> principalsToRemoveAcesForAtThisPath = installLog.getAcConfiguration().getAuthorizablesConfig()
+                    .removeUnmanagedPrincipalNamesAtPath(relevantPath, principalsInConfig);
+
             // delete ACE if principal *is* in config, but the path *is not* in config
             int countRemoved = AccessControlUtils.deleteAllEntriesForPrincipalsFromACL(session,
-                    relevantPath, principalsInConfig.toArray(new String[principalsInConfig.size()]));
+                    relevantPath, principalsToRemoveAcesForAtThisPath.toArray(new String[principalsToRemoveAcesForAtThisPath.size()]));
 
-            installLog.addMessage(LOG, "Cleaned (deleted) " + countRemoved + " ACEs of path " + relevantPath
-                    + " from all ACEs for configured authorizables");
             if (countRemoved > 0) {
                 countPathsCleaned++;
+                installLog.addMessage(LOG,
+                        "Cleaned " + countRemoved + " ACEs of path " + relevantPath + " from all ACEs for configured authorizables");
             }
             countAcesCleaned += countRemoved;
         }

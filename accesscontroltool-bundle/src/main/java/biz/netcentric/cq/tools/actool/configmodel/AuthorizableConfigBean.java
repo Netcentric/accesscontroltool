@@ -41,6 +41,8 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     private String migrateFrom;
 
+    private String unmanagedAcePathsRegex;
+
     private boolean isGroup = true;
     private boolean isSystemUser = false;
 
@@ -238,6 +240,13 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.migrateFrom = migrateFrom;
     }
 
+    public String getUnmanagedAcePathsRegex() {
+        return unmanagedAcePathsRegex;
+    }
+
+    public void setUnmanagedAcePathsRegex(String unmanagedAcePathsRegex) {
+        this.unmanagedAcePathsRegex = unmanagedAcePathsRegex;
+    }
 
     @Override
     public String toString() {
@@ -248,6 +257,16 @@ public class AuthorizableConfigBean implements AcDumpElement {
         sb.append("isMemberOf: " + getMemberOfString() + "\n");
         sb.append("members: " + getMembersString() + "\n");
         return sb.toString();
+    }
+
+    public boolean managesPath(String path) {
+        if (StringUtils.isNotBlank(unmanagedAcePathsRegex)
+                && StringUtils.isNotBlank(path) /* not supporting repository permissions here */) {
+            boolean pathIsManaged = !path.matches(unmanagedAcePathsRegex);
+            return pathIsManaged;
+        } else {
+            return true; // default
+        }
     }
 
     @Override

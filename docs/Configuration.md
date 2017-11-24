@@ -44,7 +44,8 @@ externalId | Required for AC setups since AEM 6.2 SP1 that synchronize groups fr
 path | Path of the group either relative or absolute | optional
 isMemberOf | comma separated list of groups this groups is a member of | optional
 members | comma separated list of groups that are member of this group (allows to specify the relationshipo from the other side, however prefer `isMemberOf` over members if possible) | optional
-migrateFrom | a group name assigned member users are taken over from, since v1.7 | optional
+migrateFrom | a group name assigned member users are taken over from | optional
+unmanaged* Properties | Only use sparsely and with care, see [Advanced Features](AdvancedFeatures.md)   | optional
 
 Example:
 
