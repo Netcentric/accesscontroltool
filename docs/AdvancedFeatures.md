@@ -175,7 +175,7 @@ The AC Tool manages relationships between authorizables of the configuration (th
 
 ```
 - global_config:
-      defaultUnmanagedExternalIsMemberOfRegex: <regular expression matching against the externally managed groups' members property values. Since only AC managed groups are anyhow considered, you should only use a pattern which matches against an AC managed groups's authorizable, since other members are in any case ignored.
+      defaultUnmanagedExternalIsMemberOfRegex: <regular expression matching against the externally managed group's authorizable id. The members property of matching external groups are not modified at all (i.e. pointers towards AC managed groups are not removed).
       defaultUnmanagedExternalMembersRegex: <regular expression matching against the AC managed groups' members property values> 
       keepExistingMembershipsForGroupNamesRegEx: external.* # DEPRECATED but still supported, effects both isMemberOf and members 
 ```
