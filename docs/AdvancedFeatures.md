@@ -185,7 +185,7 @@ That way relationships that are created programmatically or manually can be left
 ### Examples ###
 
 * `defaultUnmanagedExternalMembersRegex: .*` allow arbitrary groups to inherit from ACTool managed groups and do not remove this membership
-* `defaultUnmanagedExternalIsMemberOfRegex: contributor` allow the contributor group to list an ACTool managed group as a member (i.e. ACTool managed group inherits from Contributor and keep that relation even though this relationship hasn't been established through a YAML file). This is very dangerous and is rarely necessary to set!
+* `defaultUnmanagedExternalIsMemberOfRegex: contributor` allow the contributor group to list an ACTool managed group as a member (i.e. ACTool managed group inherits from `contributor`) and keep that relation even though this relationship hasn't been established through a YAML file. This is very dangerous and is rarely necessary to set! So please use with care.
 
 ## Limiting where the AC Tool creates and removes ACEs
 
