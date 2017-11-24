@@ -175,12 +175,17 @@ The AC Tool manages relationships between authorizables of the configuration (th
 
 ```
 - global_config:
-      defaultUnmanagedExternalIsMemberOfRegex: <regular expression matching against the externally managed group's authorizable id. The members property of matching external groups are not modified at all (i.e. pointers towards AC managed groups are not removed).
-      defaultUnmanagedExternalMembersRegex: <regular expression matching against the AC managed groups' members property values> 
-      keepExistingMembershipsForGroupNamesRegEx: external.* # DEPRECATED but still supported, effects both isMemberOf and members 
+      defaultUnmanagedExternalIsMemberOfRegex: <regular expression matching against the externally managed group's authorizable id. The members property of matching external groups are not modified at all (i.e. pointers towards ACTool managed groups are not removed).
+      defaultUnmanagedExternalMembersRegex: <regular expression matching against the ACTool managed groups' members property values> 
+      keepExistingMembershipsForGroupNamesRegEx: <regular expression> # DEPRECATED but still supported, sets the value for both configurations from above at the same time 
 ```
 
 That way relationships that are created programmatically or manually can be left intact and the AC Tool does not remove them. Also this allows to have two configuration sets at different root paths.
+
+### Examples ###
+
+* `defaultUnmanagedExternalMembersRegex: .*` allow arbitrary groups to inherit from ACTool managed groups and do not remove this membership
+* `defaultUnmanagedExternalIsMemberOfRegex: contributor` allow the contributor group to list an ACTool managed group as a member (i.e. ACTool managed group inherits from Contributor and keep that relation even though this relationship hasn't been established through a YAML file). This is very dangerous and is rarely necessary to set!
 
 ## Limiting where the AC Tool creates and removes ACEs
 
