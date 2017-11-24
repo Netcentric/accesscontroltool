@@ -243,8 +243,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     private void removeAcesForPathsNotInConfig(AcInstallationLog installLog, Session session, Set<String> principalsInConfig,
-            Map<String, Set<AceBean>> repositoryDumpAceMap, AcesConfig aceBeansFromConfig,
-            AuthorizablesConfig authorizablesConfig)
+            Map<String, Set<AceBean>> repositoryDumpAceMap, AcesConfig aceBeansFromConfig)
             throws UnsupportedRepositoryOperationException, RepositoryException {
 
         int countAcesCleaned = 0;
@@ -371,7 +370,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 .getPathBasedAceMap(aceBeansFromConfig, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE);
 
         Set<String> principalsToRemoveAcesFor = getPrincipalNamesToRemoveAcesFor(acConfiguration.getAuthorizablesConfig());
-        removeAcesForPathsNotInConfig(installLog, session, principalsToRemoveAcesFor, repositoryDumpAceMap, aceBeansFromConfig, acConfiguration.getAuthorizablesConfig());
+        removeAcesForPathsNotInConfig(installLog, session, principalsToRemoveAcesFor, repositoryDumpAceMap, aceBeansFromConfig);
 
         Map<String, Set<AceBean>> filteredPathBasedAceMapFromConfig = filterForRestrictedPaths(pathBasedAceMapFromConfig,
                 restrictedToPaths, installLog);
