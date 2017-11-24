@@ -167,7 +167,7 @@ Variables can also be declared to be an array and used in a loop:
 
 ## Configure permissions for anonymous
 
-To configure permissions for out-of-the-box anonymous user, it's best to create a custom group and add user `anonymous` to the `members` attribute of that group. The ACEs added to the custom group will then be effective for anonyomous users.
+To configure permissions for out-of-the-box anonymous user, it's best to create a custom group and add user `anonymous` to the `members` attribute of that group. The ACEs added to the custom group will then be effective for anonyomous user.
   
 ## Configure memberships of/towards externally managed groups
 
