@@ -18,16 +18,23 @@ public interface InstallationLog extends AcInstallationHistoryPojo {
 
     String getVerboseMessageHistory();
 
+    // all the following statistics end up in messages, so there should be really no need to expose that
+    @Deprecated
     int getCountAclsUnchanged();
 
+    @Deprecated
     int getCountAclsChanged();
 
+    @Deprecated
     int getCountAclsPathDoesNotExist();
 
+    @Deprecated
     int getCountActionCacheMiss();
 
+    @Deprecated
     int getCountActionCacheHit();
 
+    @Deprecated
     int getMissingParentPathsForInitialContent();
 
 }

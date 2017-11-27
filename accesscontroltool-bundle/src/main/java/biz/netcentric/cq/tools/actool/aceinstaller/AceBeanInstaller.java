@@ -13,8 +13,9 @@ import java.util.Set;
 
 import javax.jcr.Session;
 
+import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
-import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 /** Installs AceBeans to content paths. */
 public interface AceBeanInstaller {
@@ -28,7 +29,7 @@ public interface AceBeanInstaller {
      * @param installationLog the installation log
      * @param authorizablesToRemoveAcesFor
      * @param intermediateSaves whether the session should be saved after each path (for each ACL) */
-    void installPathBasedACEs(final Map<String, Set<AceBean>> pathBasedAceMapFromConfig, final Session session,
-            final AcInstallationLog installationLog, Set<String> authorizablesToRemoveAcesFor, boolean intermediateSaves) throws Exception;
+    void installPathBasedACEs(final Map<String, Set<AceBean>> pathBasedAceMapFromConfig, final AcConfiguration acConfiguration, final Session session,
+            final InstallationLogger installationLog, Set<String> authorizablesToRemoveAcesFor, boolean intermediateSaves) throws Exception;
 
 }

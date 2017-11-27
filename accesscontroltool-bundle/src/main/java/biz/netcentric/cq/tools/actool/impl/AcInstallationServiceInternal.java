@@ -14,7 +14,7 @@ import java.util.Set;
 import javax.jcr.Session;
 
 import biz.netcentric.cq.tools.actool.api.AcInstallationService;
-import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 
 public interface AcInstallationServiceInternal extends AcInstallationService {
 
@@ -25,7 +25,7 @@ public interface AcInstallationServiceInternal extends AcInstallationService {
      * @param restrictedToPaths only apply ACLs to root paths as given
      * @param a jcr session
      * @throws Exception */
-    public void installConfigurationFiles(AcInstallationLog history,
+    public void installConfigurationFiles(PersistableInstallationLogger history,
             Map<String, String> configurationFileContentsByFilename, String[] restrictedToPaths, Session session)
             throws Exception;
 

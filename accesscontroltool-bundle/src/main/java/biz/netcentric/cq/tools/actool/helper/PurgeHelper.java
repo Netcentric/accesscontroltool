@@ -8,7 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.helper;
 
-import static biz.netcentric.cq.tools.actool.history.AcInstallationLog.msHumanReadable;
+import static biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger.msHumanReadable;
 
 import java.util.Iterator;
 import java.util.Set;

@@ -11,13 +11,15 @@ package biz.netcentric.cq.tools.actool.authorizableinstaller;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
-import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 public interface AuthorizableInstallerService {
 
     public void installAuthorizables(
+            AcConfiguration acConfiguration, 
             AuthorizablesConfig principalMapFromConfig,
-            final Session session, AcInstallationLog installLog) throws RepositoryException, AuthorizableCreatorException;
+            final Session session, InstallationLogger installLog) throws RepositoryException, AuthorizableCreatorException;
 
 }

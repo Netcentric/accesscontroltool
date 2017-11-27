@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import com.day.cq.commons.jcr.JcrConstants;
 
-import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 @Service
 @Component
@@ -45,7 +45,7 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
     private SlingRepository repository;
 
     @Override
-    public List<Object> getValuesForPath(String pathOfChildrenOfClause, AcInstallationLog history, Session session) {
+    public List<Object> getValuesForPath(String pathOfChildrenOfClause, InstallationLogger history, Session session) {
 
         LOG.debug("FOR Loop: Getting children for " + pathOfChildrenOfClause);
 
