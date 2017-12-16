@@ -37,6 +37,9 @@ import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adobe.granite.crypto.CryptoException;
+import com.adobe.granite.crypto.CryptoSupport;
+
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableInstallerService;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
@@ -65,11 +68,14 @@ public class AuthorizableInstallerServiceImpl implements
     @Reference(cardinality = ReferenceCardinality.OPTIONAL_UNARY)
     ExternalGroupInstallerServiceImpl externalGroupCreatorService;
 
+    @Reference
+    CryptoSupport cryptoSupport;
+
     @Override
     public void installAuthorizables(
             AuthorizablesConfig authorizablesConfigBeans,
             final Session session, AcInstallationLog installLog)
-            throws RepositoryException, AuthorizableCreatorException {
+            throws RepositoryException, AuthorizableCreatorException, CryptoException {
 
         Set<String> authorizablesFromConfigurations = authorizablesConfigBeans.getAuthorizableIds();
         for (AuthorizableConfigBean authorizableConfigBean : authorizablesConfigBeans) {
@@ -87,7 +93,7 @@ public class AuthorizableInstallerServiceImpl implements
             AcInstallationLog installLog, Set<String> authorizablesFromConfigurations)
             throws AccessDeniedException,
             UnsupportedRepositoryOperationException, RepositoryException,
-            AuthorizableExistsException, AuthorizableCreatorException {
+            AuthorizableExistsException, AuthorizableCreatorException, CryptoException {
 
         String authorizableId = authorizableConfigBean.getAuthorizableId();
         LOG.debug("- start installation of authorizable: {}", authorizableId);
@@ -108,7 +114,7 @@ public class AuthorizableInstallerServiceImpl implements
             // update password for users
             if (!authorizableToInstall.isGroup() && !authorizableConfigBean.isSystemUser()
                     && StringUtils.isNotBlank(authorizableConfigBean.getPassword())) {
-                ((User) authorizableToInstall).changePassword(authorizableConfigBean.getPassword());
+                setUserPassword(authorizableConfigBean, (User) authorizableToInstall);
             }
 
             // move authorizable if path changed (retaining existing members)
@@ -125,6 +131,16 @@ public class AuthorizableInstallerServiceImpl implements
         }
 
     }
+
+    void setUserPassword(final AuthorizableConfigBean authorizableConfigBean,
+                             final User authorizableToInstall) throws RepositoryException, CryptoException {
+        String password = authorizableConfigBean.getPassword();
+        if (password.matches("\\{.+}")) {
+            password = cryptoSupport.unprotect(password);
+        }
+        authorizableToInstall.changePassword(password);
+    }
+
 
     /** This is only relevant for members that point to groups/users not contained in configuration.
      * {@link biz.netcentric.cq.tools.actool.configreader.YamlConfigurationMerger#ensureIsMemberOfIsUsedWherePossible()} ensures that

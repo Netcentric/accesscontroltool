@@ -11,13 +11,16 @@ package biz.netcentric.cq.tools.actool.authorizableinstaller;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import com.adobe.granite.crypto.CryptoException;
+
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
 
 public interface AuthorizableInstallerService {
 
-    public void installAuthorizables(
+    void installAuthorizables(
             AuthorizablesConfig principalMapFromConfig,
-            final Session session, AcInstallationLog installLog) throws RepositoryException, AuthorizableCreatorException;
+            final Session session, AcInstallationLog installLog)
+            throws RepositoryException, AuthorizableCreatorException, CryptoException;
 
 }
