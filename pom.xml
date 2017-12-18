@@ -110,7 +110,7 @@
             <dependency>
                 <groupId>com.adobe.granite</groupId>
                 <artifactId>com.adobe.granite.crypto</artifactId>
-                <version>3.0.18-CQ610-B0004</version>
+                <version>3.0.0</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
