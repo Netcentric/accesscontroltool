@@ -77,7 +77,7 @@ property | comment | required
 --- | --- | ---
 name | Works mostly like for groups, except that the string is split up in first and last name using the last space found in string. For instance "Johann Sebastian Bach" will result in first name "Johann Sebastian" and last name "Bach". For names where the split has to be explicitly configured, use a comma: "Van der Broek, Sebastian" will result in first name "Sebastian" and last name "Van der Broek" | optional
 description, path, isMemberOf | Work exactly as for groups | optional
-password | The PW for the user. Obviously this is stored in plain text and should only be used for test users | Required for non-system users, otherwise must not be set
+password | The PW for the user. Can be stored in plain text (only to be used for test users). If a password value is enclosed in brackets, then it will be automatically decrypted using com.adobe.granite.crypto.CryptoSupport. `/system/console/crypto` on target instance can be used to get encrypted password. Encrypted password (together with braces) should also be enclosed in double quotes. | Required for non-system users, otherwise must not be set
 isSystemUser | Create users as system user (AEM 6.1 and later) | optional
 disabled | Can be set to `true` or an arbitrary reason string to disable a user. If set to `false` the user will be explicitly enabled (calling `User.disable(null)`). If omitted will not change anything regarding enabled/disabled status of user | optional
 profileContent | Allows to provide [enhanced docview xml](https://jackrabbit.apache.org/filevault/apidocs/org/apache/jackrabbit/vault/util/DocViewProperty.html) that will reset the profile to the given structure after each run (since v1.8.2, enhanced docview since v1.9.1) | optional
@@ -91,6 +91,10 @@ Example:
   - editor:
     - isMemberOf: myeditors
       password: secret
+      
+  - replicationReceiver:
+    - name: "Replication receiver"
+      password: "{someEncryptedValue}"
       
   - poweruser:
     - name: "Power User"
