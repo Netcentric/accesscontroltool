@@ -104,6 +104,10 @@
             <artifactId>cq-commons</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.adobe.granite</groupId>
+            <artifactId>com.adobe.granite.crypto</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>1.13</version>
