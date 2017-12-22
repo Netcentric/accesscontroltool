@@ -37,7 +37,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
-import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
 public class YamlMacroProcessorTest {
@@ -46,7 +46,7 @@ public class YamlMacroProcessorTest {
     YamlMacroChildNodeObjectsProviderImpl yamlMacroChildNodeObjectsProvider;
 
     @Mock
-    AcInstallationLog installLog;
+    InstallationLogger installLog;
 
     @Mock
     Session session;

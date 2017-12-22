@@ -37,7 +37,7 @@ import com.day.cq.commons.jcr.JcrConstants;
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
-import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 
 @Service
 @Component(metatype = true, label = "AC History Service", immediate = true, description = "Service that writes & fetches Ac installation histories")
@@ -66,7 +66,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
     }
 
     @Override
-    public void persistHistory(AcInstallationLog installLog) {
+    public void persistHistory(PersistableInstallationLogger installLog) {
 
         if (nrOfSavedHistories == 0) {
             installLog.addVerboseMessage(LOG, "History hasn't been persisted, configured number of histories is " + nrOfSavedHistories);
@@ -156,7 +156,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         return history;
     }
 
-    private void persistInstalledConfigurations(final Session session, final Node historyNode, AcInstallationLog installLog) {
+    private void persistInstalledConfigurations(final Session session, final Node historyNode, PersistableInstallationLogger installLog) {
         try {
 
             Map<String, String> configFileContentsByName = installLog.getConfigFileContentsByName();
@@ -215,7 +215,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
     }
 
     @Override
-    public void persistAcePurgeHistory(AcInstallationLog installLog) {
+    public void persistAcePurgeHistory(PersistableInstallationLogger installLog) {
         Session session = null;
 
         try {
@@ -244,7 +244,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
     }
 
     private static Node persistPurgeAceHistory(final Session session,
-            AcInstallationLog installLog, final Node historyNode)
+            PersistableInstallationLogger installLog, final Node historyNode)
                     throws RepositoryException {
 
         Node purgeHistoryNode = historyNode.addNode(

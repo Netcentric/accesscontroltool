@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
-import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 
 public class HistoryUtils {
     private static final Logger LOG = LoggerFactory.getLogger(HistoryUtils.class);
@@ -70,7 +70,7 @@ public class HistoryUtils {
      * @return the node being created
      */
     public static Node persistHistory(final Session session,
-            AcInstallationLog installLog, final int nrOfHistoriesToSave)
+            PersistableInstallationLogger installLog, final int nrOfHistoriesToSave)
             throws RepositoryException {
 
         Node acHistoryRootNode = getAcHistoryRootNode(session);
@@ -108,7 +108,7 @@ public class HistoryUtils {
     }
 
     public static void setHistoryNodeProperties(final Node historyNode,
-            AcInstallationLog installLog) throws ValueFormatException,
+            PersistableInstallationLogger installLog) throws ValueFormatException,
             VersionException, LockException, ConstraintViolationException,
             RepositoryException {
 

@@ -40,7 +40,7 @@ import com.day.cq.security.util.CqActions;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.RestrictionsHolder;
-import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 /** The way ACEs were installed in version one is still available and can be configured in "global_config" section by setting
  * "installAclsIncrementally=false". */
@@ -54,7 +54,7 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
      * 
      * @throws RepositoryException */
     protected void installAcl(Set<AceBean> aceBeanSetFromConfig, String path, Set<String> principalsToRemoveAcesFor, Session session,
-            AcInstallationLog installLog) throws RepositoryException {
+            InstallationLogger installLog) throws RepositoryException {
 
         // Remove all config contained authorizables from ACL of this path
         int countRemoved = AccessControlUtils.deleteAllEntriesForPrincipalsFromACL(session,
@@ -80,7 +80,7 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
     *
     * @throws NoSuchMethodException */
    private void installAce(AceBean aceBean, final Session session, Principal principal,
-            AcInstallationLog installLog) throws RepositoryException {
+            InstallationLogger installLog) throws RepositoryException {
 
         if (aceBean.isInitialContentOnlyConfig()) {
             return;
@@ -126,7 +126,7 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
      *         AccessControlList (comprising the entres being installed for the actions).
      * @throws RepositoryException */
     private JackrabbitAccessControlList installActions(AceBean aceBean, Principal principal, JackrabbitAccessControlList acl,
-            Session session, AccessControlManager acMgr, AcInstallationLog installLog) throws RepositoryException {
+            Session session, AccessControlManager acMgr, InstallationLogger installLog) throws RepositoryException {
         final Map<String, Boolean> actionMap = aceBean.getActionMap();
         if (actionMap.isEmpty()) {
             return acl;

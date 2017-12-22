@@ -10,14 +10,20 @@ package biz.netcentric.cq.tools.actool.api;
 
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
+/**
+ * Access to log messages being emitted
+ *
+ */
 public interface InstallationLog extends AcInstallationHistoryPojo {
 
+    // This is only set for the installhook mechanism
     String getCrxPackageName();
 
     String getMessageHistory();
 
     String getVerboseMessageHistory();
-
+    
+    // TODO: move to separate interface InstallationResult which extends this interface
     int getCountAclsUnchanged();
 
     int getCountAclsChanged();

@@ -8,7 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.impl;
 
-import static biz.netcentric.cq.tools.actool.history.AcInstallationLog.msHumanReadable;
+import static biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger.msHumanReadable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -65,7 +65,8 @@ import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.PurgeHelper;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
-import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import biz.netcentric.cq.tools.actool.history.InstallationLogger;
+import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 @Service
@@ -152,7 +153,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     @Override
     public InstallationLog apply(String configurationRootPath, String[] restrictedToPaths) {
 
-        AcInstallationLog installLog = new AcInstallationLog();
+        PersistableInstallationLogger installLog = new PersistableInstallationLogger();
 
         Session session = null;
         try {
@@ -179,9 +180,10 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         return installLog;
     }
 
-    /** Common entry point for JMX and install hook. */
+    /** Common entry point for JMX and install hook, 
+     * TODO: should not be exported as using non-API class PersistableInstllationLogger */
     @Override
-    public void installConfigurationFiles(AcInstallationLog installLog, Map<String, String> configurationFileContentsByFilename,
+    public void installConfigurationFiles(PersistableInstallationLogger installLog, Map<String, String> configurationFileContentsByFilename,
             String[] restrictedToPaths, Session session)
             throws Exception {
 
@@ -200,7 +202,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
                 AcConfiguration acConfiguration = configurationMerger.getMergedConfigurations(configurationFileContentsByFilename, installLog,
                         configReader, session);
-                installLog.setAcConfiguration(acConfiguration);
 
                 installMergedConfigurations(installLog, acConfiguration, restrictedToPaths, session);
 
@@ -209,9 +210,11 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             }
             sw.stop();
             long executionTime = sw.getTime();
+            // TODO: log rather via installLog
             LOG.info("Successfully applied AC Tool configuration in " + msHumanReadable(executionTime));
             installLog.setExecutionTime(executionTime);
         } catch (Exception e) {
+            // TODO: separate exception
             installLog.addError(e.toString()); // ensure exception is added to installLog before it's persisted in log in finally clause
             throw e; // handling is different depending on JMX or install hook case
         } finally {
@@ -228,7 +231,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
 
     private void installAcConfiguration(
-            AcConfiguration acConfiguration, AcInstallationLog installLog,
+            AcConfiguration acConfiguration, InstallationLogger installLog,
             Map<String, Set<AceBean>> repositoryDumpAceMap, String[] restrictedToPaths, Session session) throws Exception {
 
         if (acConfiguration.getAceConfig() == null) {
@@ -237,23 +240,23 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             throw new IllegalArgumentException(message);
         }
 
-        installAuthorizables(installLog, acConfiguration.getAuthorizablesConfig(), session);
+        installAuthorizables(installLog, acConfiguration, session);
 
         installAces(installLog, acConfiguration, repositoryDumpAceMap, restrictedToPaths, session);
     }
 
-    private void removeAcesForPathsNotInConfig(AcInstallationLog installLog, Session session, Set<String> principalsInConfig,
-            Map<String, Set<AceBean>> repositoryDumpAceMap, AcesConfig aceBeansFromConfig)
+    private void removeAcesForPathsNotInConfig(InstallationLogger installLog, Session session, Set<String> principalsInConfig,
+            Map<String, Set<AceBean>> repositoryDumpAceMap, AcConfiguration acConfiguration)
             throws UnsupportedRepositoryOperationException, RepositoryException {
 
         int countAcesCleaned = 0;
         int countPathsCleaned = 0;
         Set<String> relevantPathsForCleanup = getRelevantPathsForAceCleanup(principalsInConfig, repositoryDumpAceMap,
-                aceBeansFromConfig);
+                acConfiguration.getAceConfig());
 
         for (String relevantPath : relevantPathsForCleanup) {
-
-            Set<String> principalsToRemoveAcesForAtThisPath = installLog.getAcConfiguration().getAuthorizablesConfig()
+            // TODO: why is acconfiguration retrieved from log?
+            Set<String> principalsToRemoveAcesForAtThisPath = acConfiguration.getAuthorizablesConfig()
                     .removeUnmanagedPrincipalNamesAtPath(relevantPath, principalsInConfig);
 
             // delete ACE if principal *is* in config, but the path *is not* in config
@@ -360,18 +363,16 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         return principalsToBeMigrated;
     }
 
-    private void installAces(AcInstallationLog installLog,
+    private void installAces(InstallationLogger installLog,
             AcConfiguration acConfiguration, Map<String, Set<AceBean>> repositoryDumpAceMap, String[] restrictedToPaths, Session session)
             throws Exception {
 
-        AcesConfig aceBeansFromConfig = acConfiguration.getAceConfig();
-
         // --- installation of ACEs from configuration ---
         Map<String, Set<AceBean>> pathBasedAceMapFromConfig = AcHelper
-                .getPathBasedAceMap(aceBeansFromConfig, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE);
+                .getPathBasedAceMap(acConfiguration.getAceConfig(), AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE);
 
         Set<String> principalsToRemoveAcesFor = getPrincipalNamesToRemoveAcesFor(acConfiguration.getAuthorizablesConfig());
-        removeAcesForPathsNotInConfig(installLog, session, principalsToRemoveAcesFor, repositoryDumpAceMap, aceBeansFromConfig);
+        removeAcesForPathsNotInConfig(installLog, session, principalsToRemoveAcesFor, repositoryDumpAceMap, acConfiguration);
 
         Map<String, Set<AceBean>> filteredPathBasedAceMapFromConfig = filterForRestrictedPaths(pathBasedAceMapFromConfig,
                 restrictedToPaths, installLog);
@@ -384,7 +385,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 + filteredPathBasedAceMapFromConfig.size()
                 + " paths in content nodes using strategy " + aceBeanInstaller.getClass().getSimpleName() + "...");
 
-        aceBeanInstaller.installPathBasedACEs(filteredPathBasedAceMapFromConfig, session, installLog, principalsToRemoveAcesFor,
+        aceBeanInstaller.installPathBasedACEs(filteredPathBasedAceMapFromConfig, acConfiguration, session, installLog, principalsToRemoveAcesFor,
                 intermediateSaves);
 
         // if everything went fine (no exceptions), save the session
@@ -399,7 +400,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     private Map<String, Set<AceBean>> filterForRestrictedPaths(Map<String, Set<AceBean>> pathBasedAceMapFromConfig,
-            String[] restrictedToPaths, AcInstallationLog installLog) {
+            String[] restrictedToPaths, InstallationLogger installLog) {
         if (restrictedToPaths == null || restrictedToPaths.length == 0) {
             return pathBasedAceMapFromConfig;
         }
@@ -428,19 +429,19 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         return count;
     }
 
-    private void installAuthorizables(AcInstallationLog installLog, AuthorizablesConfig authorizablesMapfromConfig, Session session)
+    private void installAuthorizables(InstallationLogger installLog, AcConfiguration acConfiguration, Session session)
             throws RepositoryException, Exception {
         // --- installation of Authorizables from configuration ---
 
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
 
-
-        installLog.addMessage(LOG, "*** Starting installation of " + authorizablesMapfromConfig.size() + " authorizables...");
+        AuthorizablesConfig authorizablesConfig = acConfiguration.getAuthorizablesConfig();
+        installLog.addMessage(LOG, "*** Starting installation of " + authorizablesConfig.size() + " authorizables...");
 
         try {
             // only save session if no exceptions occurred
-            authorizableCreatorService.installAuthorizables(authorizablesMapfromConfig, session, installLog);
+            authorizableCreatorService.installAuthorizables(acConfiguration, authorizablesConfig, session, installLog);
 
             if (intermediateSaves) {
                 if (session.hasPendingChanges()) {
@@ -460,7 +461,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 + msHumanReadable(stopWatch.getTime()));
     }
 
-    private void removeObsoleteAuthorizables(AcInstallationLog installLog, Set<String> obsoleteAuthorizables, Session session) {
+    private void removeObsoleteAuthorizables(InstallationLogger installLog, Set<String> obsoleteAuthorizables, Session session) {
 
         try {
 
@@ -504,7 +505,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     private void installMergedConfigurations(
-            AcInstallationLog installLog,
+            InstallationLogger installLog,
             AcConfiguration acConfiguration, String[] restrictedToPaths, Session session) throws ValueFormatException,
             RepositoryException, Exception {
 
@@ -564,7 +565,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         }
         if (flag) {
             message = "Deleted AccessControlList of node: " + path;
-            AcInstallationLog installLog = new AcInstallationLog();
+            PersistableInstallationLogger installLog = new PersistableInstallationLogger();
             installLog.addMessage(LOG, "purge method: purgeACL()");
             installLog.addMessage(LOG, message);
             acHistoryService.persistAcePurgeHistory(installLog);
@@ -581,7 +582,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         try {
             session = repository.loginService(Constants.USER_AC_SERVICE, null);
             message = PurgeHelper.purgeACLs(session, path);
-            AcInstallationLog installLog = new AcInstallationLog();
+            PersistableInstallationLogger installLog = new PersistableInstallationLogger();
             installLog.addMessage(LOG, "purge method: purgeACLs()");
             installLog.addMessage(LOG, message);
             acHistoryService.persistAcePurgeHistory(installLog);
@@ -610,7 +611,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
             Set<String> authorizabesFromConfigurations = getAllAuthorizablesFromConfig(session);
             message = purgeAuthorizables(authorizabesFromConfigurations, session);
-            AcInstallationLog installLog = new AcInstallationLog();
+            PersistableInstallationLogger installLog = new PersistableInstallationLogger();
             installLog.addMessage(LOG, "purge method: purgAuthorizablesFromConfig()");
             installLog.addMessage(LOG, message);
             acHistoryService.persistAcePurgeHistory(installLog);
@@ -633,7 +634,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             session = repository.loginService(Constants.USER_AC_SERVICE, null);
             Set<String> authorizablesSet = new HashSet<String>(Arrays.asList(authorizableIds));
             message = purgeAuthorizables(authorizablesSet, session);
-            AcInstallationLog installLog = new AcInstallationLog();
+            PersistableInstallationLogger installLog = new PersistableInstallationLogger();
             installLog.addMessage(LOG, "purge method: purgeAuthorizables()");
             installLog.addMessage(LOG, message);
             acHistoryService.persistAcePurgeHistory(installLog);
@@ -673,7 +674,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             session.save();
 
             sw.stop();
-            String executionTime = AcInstallationLog.msHumanReadable(sw.getTime());
+            String executionTime = PersistableInstallationLogger.msHumanReadable(sw.getTime());
             message.append("Purged " + authorizableIds.size() + " authorizables in " + executionTime + "\n");
 
         } catch (Exception e) {
@@ -727,7 +728,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
     public Set<String> getAllAuthorizablesFromConfig(Session session)
             throws Exception {
-        AcInstallationLog history = new AcInstallationLog();
+        PersistableInstallationLogger history = new PersistableInstallationLogger();
         Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configuredAcConfigurationRootPath,
                 session);
         AcConfiguration acConfiguration = configurationMerger.getMergedConfigurations(newestConfigurations, history, configReader, session);
