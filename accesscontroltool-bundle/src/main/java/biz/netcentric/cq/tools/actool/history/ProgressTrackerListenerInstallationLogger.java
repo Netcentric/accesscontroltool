@@ -1,7 +1,7 @@
 package biz.netcentric.cq.tools.actool.history;
 
 import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
-import org.slf4j.Logger;
+import org.apache.jackrabbit.vault.packaging.PackageException;
 
 public class ProgressTrackerListenerInstallationLogger extends PersistableInstallationLogger {
 
@@ -14,7 +14,7 @@ public class ProgressTrackerListenerInstallationLogger extends PersistableInstal
 
     @Override
     protected void addWarning(String warning) {
-        listener.onMessage(ProgressTrackerListener.Mode.TEXT, warning, "");
+        listener.onMessage(ProgressTrackerListener.Mode.TEXT, MSG_IDENTIFIER_WARNING + warning, "");
         super.addWarning(warning);
     }
 
@@ -26,23 +26,25 @@ public class ProgressTrackerListenerInstallationLogger extends PersistableInstal
 
     @Override
     public void addError(String error) {
-        listener.onError(ProgressTrackerListener.Mode.TEXT, error, null);
+        listener.onError(ProgressTrackerListener.Mode.TEXT, MSG_IDENTIFIER_ERROR + error, null);
         super.addError(error);
     }
 
     @Override
-    public void addError(Logger log, String error, Throwable e) {
-        if (e instanceof Exception) {
-            listener.onError(ProgressTrackerListener.Mode.TEXT, error, (Exception)e);
-            super.addError(error + " / e=" + e);
+    public void addError(String error, Throwable t) {
+        Exception e;
+        if (t instanceof Exception) {
+            e = (Exception) t;
         } else {
-            super.addError(log, error, e);
+            e = new PackageException("Unexpected low-level error during AC Tool installation: " + t.getMessage(), t);
         }
+        listener.onError(ProgressTrackerListener.Mode.TEXT, error, e);
+        super.addError(error, e);
     }
 
     @Override
     protected void addVerboseMessage(String message) {
-        listener.onMessage(ProgressTrackerListener.Mode.TEXT, message, "");
+        // no logging of verbose log in installation log (verbose log can be looked up via JMX)
         super.addVerboseMessage(message);
     }
 

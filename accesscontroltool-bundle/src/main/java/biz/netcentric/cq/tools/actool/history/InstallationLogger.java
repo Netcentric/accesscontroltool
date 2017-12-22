@@ -15,6 +15,8 @@ public interface InstallationLogger extends InstallationLog {
 
     void addError(Logger log, String error);
 
+    void addError(String error, Throwable e);
+
     void addError(Logger log, String error, Throwable e);
 
     void addMessage(Logger log, String message);

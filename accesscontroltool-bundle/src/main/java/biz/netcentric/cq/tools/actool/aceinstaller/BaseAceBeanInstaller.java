@@ -103,11 +103,11 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
                     + " parent paths missing for creation of intial content (those paths were skipped, see verbose log for details)");
         }
 
-        history.addMessage(LOG, "Finished installation of " + paths.size() + " ACLs in "
-                + msHumanReadable(stopWatch.getTime())
-                + " (changed ACLs=" + history.getCountAclsChanged() + " unchanged ACLs=" + history.getCountAclsUnchanged()
-                + " path does not exist=" + history.getCountAclsPathDoesNotExist() + " action cache hit/miss="
+        history.addMessage(LOG, "ACL Update Statistics: Changed=" + history.getCountAclsChanged() + " Unchanged=" + history.getCountAclsUnchanged()
+                + " Path not found=" + history.getCountAclsPathDoesNotExist() + " (action cache hit/miss="
                 + history.getCountActionCacheHit() + "/" + history.getCountActionCacheMiss() + ")");
+        history.addMessage(LOG, "*** Finished installation of " + paths.size() + " ACLs in "
+                + msHumanReadable(stopWatch.getTime()));
     }
 
     /** Installs a full set of ACE beans that form an ACL for the path

@@ -112,7 +112,7 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
             throw new IllegalStateException("Could not get children of path " + pathOfChildrenOfClause + ": " + e, e);
         }
 
-        history.addMessage(LOG, "Loop for children of " + pathOfChildrenOfClause + " evaluates to " + results.size() + " children");
+        history.addVerboseMessage(LOG, "Loop for children of " + pathOfChildrenOfClause + " evaluates to " + results.size() + " children");
 
         return results;
     }

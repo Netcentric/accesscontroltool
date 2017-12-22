@@ -23,13 +23,12 @@ import org.slf4j.Logger;
 
 import biz.netcentric.cq.tools.actool.api.InstallationLog;
 import biz.netcentric.cq.tools.actool.comparators.HistoryEntryComparator;
-import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 public class PersistableInstallationLogger implements InstallationLogger, InstallationLog, AcInstallationHistoryPojo {
 
-    private static final String MSG_IDENTIFIER_EXCEPTION = "EXCEPTION:";
-    private static final String MSG_IDENTIFIER_WARNING = "WARNING:";
+    protected static final String MSG_IDENTIFIER_ERROR = "ERROR: ";
+    protected static final String MSG_IDENTIFIER_WARNING = "WARNING: ";
 
     private Set<HistoryEntry> warnings = new HashSet<HistoryEntry>();
     private Set<HistoryEntry> messages = new HashSet<HistoryEntry>();
@@ -117,8 +116,7 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
 
     protected void addWarning(String warning) {
         warnings.add(new HistoryEntry(msgIndex, new Timestamp(
-                    new Date().getTime()), MSG_IDENTIFIER_WARNING + " "
-                    + warning));
+                new Date().getTime()), MSG_IDENTIFIER_WARNING + warning));
         msgIndex++;
     }
 
@@ -137,19 +135,23 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
     @Override
     public void addError(Logger log, String error, Throwable e) {
         log.error(error, e);
-        addError(error + " / e=" + e);
+        addError(error, e);
     }
+
     @Override
     public void addError(Logger log, String error) {
         log.error(error);
         addError(error);
     }
 
+    public void addError(final String error, Throwable e) {
+        addError(error + " / e=" + e);
+    }
+
     @Override
     public void addError(final String error) {
         errors.add(new HistoryEntry(msgIndex, new Timestamp(
-                    new Date().getTime()), MSG_IDENTIFIER_EXCEPTION + " "
-                            + error));
+                new Date().getTime()), MSG_IDENTIFIER_ERROR + error));
         success = false;
         msgIndex++;
     }
@@ -344,5 +346,6 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
     public int getMissingParentPathsForInitialContent() {
         return missingParentPathsForInitialContent;
     }
+
 
 }

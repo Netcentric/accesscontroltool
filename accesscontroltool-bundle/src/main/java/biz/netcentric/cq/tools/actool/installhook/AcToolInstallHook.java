@@ -69,17 +69,10 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
                 }
 
                 if (!history.isSuccess()) {
-                    for (HistoryEntry entry : history.getErrors()) {
-                        log(entry.toString(), context.getOptions());
-                    }
-                    throw new PackageException(
-                            "Could not install configurations. Check log for detailed error message!");
+                    throw new PackageException("AC Tool installation failed with "
+                            +history.getErrors().size()+ " errors. Check log for detailed error message(s)!");
                 } else {
-                    // convert to correct (HTML) linebreaks for the package manager
-                    //String log = .replaceAll("\\\n", "<br />");
-                    log(history.toString(), context.getOptions());
-                    log("Installed ACLs successfully through AcToolInstallHook!",
-                            context.getOptions());
+                    log("Installed ACLs successfully through AcToolInstallHook!", context.getOptions());
                 }
             } finally {
                 getBundleContext().ungetService(acToolInstallHookService);
