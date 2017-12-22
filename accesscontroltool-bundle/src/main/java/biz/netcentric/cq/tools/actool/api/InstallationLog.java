@@ -10,31 +10,30 @@ package biz.netcentric.cq.tools.actool.api;
 
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
+/**
+ * Access to log messages being emitted
+ *
+ */
 public interface InstallationLog extends AcInstallationHistoryPojo {
 
+    // This is only set for the installhook mechanism
     String getCrxPackageName();
 
     String getMessageHistory();
 
     String getVerboseMessageHistory();
-
-    // all the following statistics end up in messages, so there should be really no need to expose that
-    @Deprecated
+    
+    // TODO: move to separate interface InstallationResult which extends this interface
     int getCountAclsUnchanged();
 
-    @Deprecated
     int getCountAclsChanged();
 
-    @Deprecated
     int getCountAclsPathDoesNotExist();
 
-    @Deprecated
     int getCountActionCacheMiss();
 
-    @Deprecated
     int getCountActionCacheHit();
 
-    @Deprecated
     int getMissingParentPathsForInitialContent();
 
 }
