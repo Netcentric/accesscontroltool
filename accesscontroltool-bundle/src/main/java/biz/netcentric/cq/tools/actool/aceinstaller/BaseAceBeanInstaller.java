@@ -8,7 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.aceinstaller;
 
-import static biz.netcentric.cq.tools.actool.history.AcInstallationLog.msHumanReadable;
+import static biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger.msHumanReadable;
 
 import java.security.Principal;
 import java.util.Arrays;
@@ -33,12 +33,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
+import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.ContentHelper;
 import biz.netcentric.cq.tools.actool.helper.RestrictionsHolder;
-import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 /** Base Class */
 public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
@@ -48,8 +49,9 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
     @Override
     public void installPathBasedACEs(
             final Map<String, Set<AceBean>> pathBasedAceMapFromConfig,
+            final AcConfiguration acConfiguration,
             final Session session,
-            final AcInstallationLog history, Set<String> principalsToRemoveAcesFor,
+            final InstallationLogger history, Set<String> principalsToRemoveAcesFor,
             boolean intermediateSaves) throws Exception {
 
         StopWatch stopWatch = new StopWatch();
@@ -86,7 +88,7 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
                     new AcePermissionComparator());
             orderedAceBeanSetFromConfig.addAll(aceBeanSetFromConfig);
 
-            Set<String> principalsToRemoveAcesForAtThisPath = history.getAcConfiguration().getAuthorizablesConfig()
+            Set<String> principalsToRemoveAcesForAtThisPath = acConfiguration.getAuthorizablesConfig()
                     .removeUnmanagedPrincipalNamesAtPath(path, principalsToRemoveAcesFor);
             installAcl(orderedAceBeanSetFromConfig, path, principalsToRemoveAcesForAtThisPath, session, history);
 
@@ -101,18 +103,18 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
                     + " parent paths missing for creation of intial content (those paths were skipped, see verbose log for details)");
         }
 
-        history.addMessage(LOG, "Finished installation of " + paths.size() + " ACLs in "
-                + msHumanReadable(stopWatch.getTime())
-                + " (changed ACLs=" + history.getCountAclsChanged() + " unchanged ACLs=" + history.getCountAclsUnchanged()
-                + " path does not exist=" + history.getCountAclsPathDoesNotExist() + " action cache hit/miss="
+        history.addMessage(LOG, "ACL Update Statistics: Changed=" + history.getCountAclsChanged() + " Unchanged=" + history.getCountAclsUnchanged()
+                + " Path not found=" + history.getCountAclsPathDoesNotExist() + " (action cache hit/miss="
                 + history.getCountActionCacheHit() + "/" + history.getCountActionCacheMiss() + ")");
+        history.addMessage(LOG, "*** Finished installation of " + paths.size() + " ACLs in "
+                + msHumanReadable(stopWatch.getTime()));
     }
 
     /** Installs a full set of ACE beans that form an ACL for the path
      * 
      * @throws RepositoryException */
     protected abstract void installAcl(Set<AceBean> aceBeanSetFromConfig, String path, Set<String> authorizablesToRemoveAcesFor,
-            Session session, AcInstallationLog history) throws RepositoryException;
+            Session session, InstallationLogger history) throws RepositoryException;
     
 
     protected boolean installPrivileges(AceBean aceBean, Principal principal, JackrabbitAccessControlList acl, Session session,

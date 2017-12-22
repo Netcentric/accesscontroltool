@@ -13,13 +13,13 @@ import java.util.List;
 
 import javax.jcr.Session;
 
-import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 /** Processes FOR and IF statements in yaml files.
  * 
  * @author ghenzler */
 public interface YamlMacroProcessor {
 
-    List<LinkedHashMap> processMacros(List<LinkedHashMap> yamlList, AcInstallationLog history, Session session);
+    List<LinkedHashMap> processMacros(List<LinkedHashMap> yamlList, InstallationLogger history, Session session);
 
 }

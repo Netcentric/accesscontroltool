@@ -49,7 +49,7 @@ import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.Constants;
-import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 @Service
 @Component
@@ -66,7 +66,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
      * 
      * @throws RepositoryException */
     protected void installAcl(Set<AceBean> aceBeanSetFromConfig, String path, Set<String> principalsInConfiguration, Session session,
-            AcInstallationLog installLog) throws RepositoryException {
+            InstallationLogger installLog) throws RepositoryException {
 
         boolean hadPendingChanges = session.hasPendingChanges();
 
@@ -210,7 +210,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
     }
 
     private Set<AceBean> transformActionsIntoPrivileges(Set<AceBean> aceBeanSetFromConfig, Session session,
-            AcInstallationLog installLog) throws RepositoryException {
+            InstallationLogger installLog) throws RepositoryException {
 
 
         Set<AceBean> aceBeanSetWithPrivilegesOnly = new LinkedHashSet<AceBean>();
@@ -230,7 +230,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
     }
 
     private Set<AceBean> getPrincipalAceBeansForActionAceBeanCached(AceBean origAceBean, Session session,
-            AcInstallationLog installLog) throws RepositoryException {
+            InstallationLogger installLog) throws RepositoryException {
         
         String cacheKey = (definesContent(origAceBean.getJcrPathForPolicyApi(), session) ? "definesContent" : "simple")
                 + "-" + origAceBean.getPermission() + "-" + getRestrictionsComparable(origAceBean.getRestrictions()) + "-"

@@ -10,13 +10,14 @@ package biz.netcentric.cq.tools.actool.installhook.impl;
 
 import javax.jcr.Session;
 
+import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.fs.io.Archive;
 
-import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 
 public interface AcToolInstallHookService {
 
-    public AcInstallationLog installYamlFilesFromPackage(Archive archive, Session session)
+    public PersistableInstallationLogger installYamlFilesFromPackage(Archive archive, Session session, ProgressTrackerListener progressTrackerListener)
             throws Exception;
 
 }

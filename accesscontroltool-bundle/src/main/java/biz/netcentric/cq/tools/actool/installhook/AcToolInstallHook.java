@@ -14,7 +14,7 @@ import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.history.HistoryEntry;
 import biz.netcentric.cq.tools.actool.installhook.impl.AcToolInstallHookService;
 import biz.netcentric.cq.tools.actool.installhook.impl.OsgiAwareInstallHook;
@@ -57,10 +57,10 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
             }
             //
             try {
-                AcInstallationLog history;
+                PersistableInstallationLogger history;
                 try {
                     history = acService.installYamlFilesFromPackage(context
-                            .getPackage().getArchive(), context.getSession());
+                            .getPackage().getArchive(), context.getSession(), context.getOptions().getListener());
 
                 } catch (Exception e) {
                     log("Exception while installing configurations: " + e,
@@ -69,17 +69,10 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
                 }
 
                 if (!history.isSuccess()) {
-                    for (HistoryEntry entry : history.getErrors()) {
-                        log(entry.toString(), context.getOptions());
-                    }
-                    throw new PackageException(
-                            "Could not install configurations. Check log for detailed error message!");
+                    throw new PackageException("AC Tool installation failed with "
+                            +history.getErrors().size()+ " errors. Check log for detailed error message(s)!");
                 } else {
-                    // convert to correct (HTML) linebreaks for the package manager
-                    String log = history.toString().replaceAll("\\\n", "<br />");
-                    log(log, context.getOptions());
-                    log("Installed ACLs successfully through AcToolInstallHook!",
-                            context.getOptions());
+                    log("Installed ACLs successfully through AcToolInstallHook!", context.getOptions());
                 }
             } finally {
                 getBundleContext().ungetService(acToolInstallHookService);

@@ -58,7 +58,8 @@ import org.mockito.stubbing.Answer;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.configreader.YamlConfigReader;
-import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import biz.netcentric.cq.tools.actool.history.InstallationLogger;
+import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 
 public class AceBeanInstallerIncrementalTest {
 
@@ -84,7 +85,7 @@ public class AceBeanInstallerIncrementalTest {
     AceBeanInstallerIncremental aceBeanInstallerIncremental;
 
     @Spy
-    AcInstallationLog installLog;
+    PersistableInstallationLogger installLog;
 
     @Mock
     JackrabbitAccessControlList jackrabbitAccessControlList;

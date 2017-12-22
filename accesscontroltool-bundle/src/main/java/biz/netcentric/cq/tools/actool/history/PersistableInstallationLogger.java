@@ -23,13 +23,12 @@ import org.slf4j.Logger;
 
 import biz.netcentric.cq.tools.actool.api.InstallationLog;
 import biz.netcentric.cq.tools.actool.comparators.HistoryEntryComparator;
-import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
-public class AcInstallationLog implements InstallationLog, AcInstallationHistoryPojo {
+public class PersistableInstallationLogger implements InstallationLogger, InstallationLog, AcInstallationHistoryPojo {
 
-    private static final String MSG_IDENTIFIER_EXCEPTION = "EXCEPTION:";
-    private static final String MSG_IDENTIFIER_WARNING = "WARNING:";
+    protected static final String MSG_IDENTIFIER_ERROR = "ERROR: ";
+    protected static final String MSG_IDENTIFIER_WARNING = "WARNING: ";
 
     private Set<HistoryEntry> warnings = new HashSet<HistoryEntry>();
     private Set<HistoryEntry> messages = new HashSet<HistoryEntry>();
@@ -38,13 +37,11 @@ public class AcInstallationLog implements InstallationLog, AcInstallationHistory
     private Set<HistoryEntry> verboseMessages = new HashSet<HistoryEntry>();
 
     private boolean success = true;
-    private Date installationDate;
+    private final Date installationDate;
     private long executionTime;
     private long msgIndex = 0;
-    Rendition rendition;
 
     private String mergedAndProcessedConfig;
-    private AcConfiguration acConfiguration;
 
     private Map<String, String> configFileContentsByName;
 
@@ -62,26 +59,12 @@ public class AcInstallationLog implements InstallationLog, AcInstallationHistory
 
     private DateFormat timestampFormat = new SimpleDateFormat("HH:mm:ss.SSS");
 
-    public enum Rendition {
-        HTML, TXT;
-    }
-
-    public AcInstallationLog() {
-        rendition = Rendition.TXT;
-        setInstallationDate(new Date());
-    }
-
-    public AcInstallationLog(Rendition rendition) {
-        this.rendition = rendition;
-        setInstallationDate(new Date());
+    public PersistableInstallationLogger() {
+        installationDate = new Date();
     }
 
     public Date getInstallationDate() {
         return installationDate;
-    }
-
-    public void setInstallationDate(final Date installationDate) {
-        this.installationDate = installationDate;
     }
 
     public long getExecutionTime() {
@@ -105,14 +88,6 @@ public class AcInstallationLog implements InstallationLog, AcInstallationHistory
         this.mergedAndProcessedConfig = mergedAndProcessedConfig;
     }
 
-    public AcConfiguration getAcConfiguration() {
-        return acConfiguration;
-    }
-
-    public void setAcConfiguration(AcConfiguration acConfiguration) {
-        this.acConfiguration = acConfiguration;
-    }
-
     public Map<String, String> getConfigFileContentsByName() {
         return configFileContentsByName;
     }
@@ -133,66 +108,61 @@ public class AcInstallationLog implements InstallationLog, AcInstallationHistory
         this.crxPackageName = crxPackageName;
     }
 
+    @Override
     public void addWarning(Logger log, String warning) {
         log.warn(warning);
         addWarning(warning);
     }
 
-    private void addWarning(String warning) {
-        if (rendition.equals(Rendition.HTML)) {
-            warnings.add(new HistoryEntry(msgIndex, new Timestamp(
-                    new Date().getTime()), "<font color='orange'><b>"
-                    + MSG_IDENTIFIER_WARNING + " " + warning + "</b></font>"));
-        } else if (rendition.equals(Rendition.TXT)) {
-            warnings.add(new HistoryEntry(msgIndex, new Timestamp(
-                    new Date().getTime()), MSG_IDENTIFIER_WARNING + " "
-                    + warning));
-        }
+    protected void addWarning(String warning) {
+        warnings.add(new HistoryEntry(msgIndex, new Timestamp(
+                new Date().getTime()), MSG_IDENTIFIER_WARNING + warning));
         msgIndex++;
     }
 
+    @Override
     public void addMessage(Logger log, String message) {
         log.info(message);
         addMessage(message);
     }
 
-    private void addMessage(String message) {
+    protected void addMessage(String message) {
         messages.add(new HistoryEntry(msgIndex, new Timestamp(new Date()
                 .getTime()), " " + message));
         msgIndex++;
     }
 
+    @Override
     public void addError(Logger log, String error, Throwable e) {
         log.error(error, e);
-        addError(error + " / e=" + e);
+        addError(error, e);
     }
+
+    @Override
     public void addError(Logger log, String error) {
         log.error(error);
         addError(error);
     }
 
-    public void addError(final String error) {
-        if (rendition.equals(Rendition.HTML)) {
-            errors.add(new HistoryEntry(msgIndex, new Timestamp(
-                    new Date().getTime()), "<font color='red'><b>"
-                            + MSG_IDENTIFIER_EXCEPTION + "</b>" + " " + error
-                    + "</b></font>"));
-        } else if (rendition.equals(Rendition.TXT)) {
-            errors.add(new HistoryEntry(msgIndex, new Timestamp(
-                    new Date().getTime()), MSG_IDENTIFIER_EXCEPTION + " "
-                            + error));
+    public void addError(final String error, Throwable e) {
+        addError(error + " / e=" + e);
+    }
 
-        }
+    @Override
+    public void addError(final String error) {
+        errors.add(new HistoryEntry(msgIndex, new Timestamp(
+                new Date().getTime()), MSG_IDENTIFIER_ERROR + error));
         success = false;
         msgIndex++;
     }
 
+    @Override
     public void addVerboseMessage(Logger log, String message) {
         log.debug(message);
         addVerboseMessage(message);
     }
 
-    private void addVerboseMessage(String message) {
+    protected void addVerboseMessage(String message) {
         verboseMessages.add(new HistoryEntry(msgIndex, new Timestamp(
                 new Date().getTime()), " " + message));
         msgIndex++;
@@ -218,25 +188,12 @@ public class AcInstallationLog implements InstallationLog, AcInstallationHistory
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("\n" + "Installation triggered: "
-                + installationDate.toString() + "\n");
-
         sb.append("\n" + getMessageHistory() + "\n");
 
         sb.append("\n" + "Execution time: " + msHumanReadable(executionTime) + "\n");
 
-        if (rendition.equals(Rendition.HTML)) {
-            if (success) {
-                sb.append(HtmlConstants.FONT_COLOR_SUCCESS_HTML_OPEN);
-            } else {
-                sb.append(HtmlConstants.FONT_COLOR_NO_SUCCESS_HTML_OPEN);
-            }
-        }
         sb.append("\n" + "Success: " + success);
 
-        if (rendition.equals(Rendition.HTML)) {
-            sb.append(HtmlConstants.FONT_COLOR_SUCCESS_HTML_CLOSE);
-        }
         return sb.toString();
     }
 
@@ -310,6 +267,7 @@ public class AcInstallationLog implements InstallationLog, AcInstallationHistory
         return result;
     }
 
+    @Override
     public void incCountAclsNoChange() {
         countAclsNoChange++;
     }
@@ -322,6 +280,7 @@ public class AcInstallationLog implements InstallationLog, AcInstallationHistory
         return countAclsNoChange;
     }
 
+    @Override
     public void incCountAclsChanged() {
         countAclsChanged++;
     }
@@ -334,6 +293,7 @@ public class AcInstallationLog implements InstallationLog, AcInstallationHistory
         return countAclsChanged;
     }
 
+    @Override
     public void incCountAclsPathDoesNotExist() {
         countAclsPathDoesNotExist++;
     }
@@ -346,6 +306,7 @@ public class AcInstallationLog implements InstallationLog, AcInstallationHistory
         return countAclsPathDoesNotExist;
     }
 
+    @Override
     public void incCountActionCacheMiss() {
         countActionCacheMiss++;
     }
@@ -358,6 +319,7 @@ public class AcInstallationLog implements InstallationLog, AcInstallationHistory
         return countActionCacheMiss;
     }
 
+    @Override
     public void incCountActionCacheHit() {
         countActionCacheHit++;
     }
@@ -370,6 +332,7 @@ public class AcInstallationLog implements InstallationLog, AcInstallationHistory
         return countActionCacheHit;
     }
 
+    @Override
     public void incMissingParentPathsForInitialContent() {
         missingParentPathsForInitialContent++;
     }
@@ -383,5 +346,6 @@ public class AcInstallationLog implements InstallationLog, AcInstallationHistory
     public int getMissingParentPathsForInitialContent() {
         return missingParentPathsForInitialContent;
     }
+
 
 }
