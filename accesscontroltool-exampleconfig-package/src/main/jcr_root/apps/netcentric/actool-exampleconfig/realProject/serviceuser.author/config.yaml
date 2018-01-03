@@ -1,59 +1,31 @@
-# Service users and groups
-
-- group_config:
-
-    - system-tags:
-
-       - name: 
-         isMemberOf: 
-         members: 
-         path: s
-
-
-    - system-content:
-
-       - name: 
-         isMemberOf: 
-         members: 
-         path: s
-
-
-    - system-home:
-
-       - name: 
-         isMemberOf: 
-         members: 
-         path: s
+# Service users
 
 - user_config:
 
-    - system-tags:
+    - system-user-tags:
 
        - name: 
-         isMemberOf: system-tags
-         path: s
+         path: realProject
          isSystemUser: true
          
 
-    - system-content:
+    - system-user-content:
 
        - name: 
-         isMemberOf: system-content
-         path: s
+         path: realProject
          isSystemUser: true
          
 
-    - system-home:
+    - system-user-home:
 
        - name: 
-         isMemberOf: system-home
-         path: s
+         path: realProject
          isSystemUser: true
 
 
 - ace_config:
 
-    - system-tags:
+    - system-user-tags:
 
        - path: /etc/tags
          permission: allow
@@ -61,7 +33,7 @@
          privileges: 
 
 
-    - system-content:
+    - system-user-content:
 
        - path: /content
          permission: allow
@@ -69,7 +41,7 @@
          privileges: 
 
 
-    - system-home:
+    - system-user-home:
 
        - path: /home
          permission: allow
