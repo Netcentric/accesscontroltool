@@ -165,6 +165,8 @@ Variables can also be declared to be an array and used in a loop:
     - FOR arrVal IN ${testArr}:
 ```
 
+NOTE: The scope of a variable is always limited to the lines in the very same yaml file following the definition till it is either redefined or the end of the yaml file is reach (this limitation will be lifted with [#257][i257])
+
 ## Configure permissions for anonymous
 
 To configure permissions for out-of-the-box anonymous user, it's best to create a custom group and add user `anonymous` to the `members` attribute of that group. The ACEs added to the custom group will then be effective for anonyomous user.
@@ -249,3 +251,5 @@ For large installations (> 1000 groups) that use MongoDB, the system possibly ma
 
 NOTE: This is never necessary when using TarMK and also it should only be used for MongoMK for large installations that do not contain a fix for OAK-5557 yet as the rollback functionality is lost when enabling intermediate saves.
 
+
+[i257]: https://github.com/Netcentric/accesscontroltool/issues/257
