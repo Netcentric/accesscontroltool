@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.helper.Constants;
+import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 /** SCR component to create external groups (as configured using "externalId"). Only available if package
@@ -50,7 +51,7 @@ public class ExternalGroupInstallerServiceImpl {
     public Authorizable createGroupWithExternalId(
             final UserManager userManager,
             final AuthorizableConfigBean authorizableConfigBean,
-            AcInstallationHistoryPojo status,
+            InstallationLogger status,
             Session session)
             throws AuthorizableExistsException, RepositoryException,
             AuthorizableCreatorException {

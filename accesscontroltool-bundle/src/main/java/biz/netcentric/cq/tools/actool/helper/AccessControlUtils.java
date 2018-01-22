@@ -152,12 +152,14 @@ public class AccessControlUtils {
         return null;
     }
 
-    /** @param session admin session
-     * @param path valid node path in CRX
-     * @param principalNames principal names of authorizables to be deleted from ACL of node specified by path
+    /** Removes the given principal names from path
+     * 
+     * @param session admin session
+     * @param path path where principals shall be removed
+     * @param principalNamesToBeDeleted principal names of authorizables to be deleted from ACL of node specified by path
      * @return count ACEs that were removed */
     public static int deleteAllEntriesForPrincipalsFromACL(final Session session,
-            String path, String[] principalNames)
+            String path, String[] principalNamesToBeDeleted)
                     throws UnsupportedRepositoryOperationException, RepositoryException {
         final AccessControlManager accessControlManager = session.getAccessControlManager();
 
@@ -179,7 +181,8 @@ public class AccessControlUtils {
             final JackrabbitAccessControlEntry jace = (JackrabbitAccessControlEntry) ace;
 
             String principalNameInCurrentAce = jace.getPrincipal().getName();
-            if (ArrayUtils.contains(principalNames, principalNameInCurrentAce)) {
+
+            if (ArrayUtils.contains(principalNamesToBeDeleted, principalNameInCurrentAce)) {
                 acl.removeAccessControlEntry(jace);
                 countRemoved++;
             }
@@ -266,4 +269,5 @@ public class AccessControlUtils {
 
         return userManager;
     }
+
 }

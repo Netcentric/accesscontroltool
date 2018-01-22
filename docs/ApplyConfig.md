@@ -9,9 +9,10 @@ The following steps are performed:
 If at any point during the installation an exception occurs, no changes get persisted in the system. This prevents ending up having a undefined state in the repository.
 
 During the installation a history containing the most important events gets created and persisted in CRX for later examination.
+The following section explain how you can trigger the installation of ACLs.
 
     
-### Installation Hook
+## Installation Hook
 
 You can automatically install ACEs and authorizables defined in YAML files within a package using the Content Package Install Hook mechanism.
 If you use the content-package-maven-plugin enable the installation hook via: 
@@ -35,6 +36,16 @@ Although it is not necessary that the YAML files are covered by the filter rules
 ## JMX
 
 See [JMX apply() method](Jmx.md).
+
+Different options on you can access JMX are listed [here](https://helpx.adobe.com/experience-manager/kb/workflow-monitor-via-jmx.html).
+
+### Curl calls
+
+Trigger the 'apply' method of the AC JMX service through HTTP Post
+
+```
+curl -sS --retry 1 -u ${CQ_ADMINUSER}:${CQ_ADMINPW} -X POST "http://${CQ_SERVER}:${CQ_PORT}/system/console/jmx/biz.netcentric.cq.tools:type=ACTool/op/apply/"
+```
     
 ## Upload Listener Service
 
@@ -49,11 +60,5 @@ It can be enabled/disabled in the OSGi console (AC Configuration Upload Listener
 <img src="images/installation-service.png">
 
 
-## Curl calls
 
-Trigger the 'apply' method of the AC service
-
-```
-curl -sS --retry 1 -u ${CQ_ADMINUSER}:${CQ_ADMINPW} -X POST "http://${CQ_SERVER}:${CQ_PORT}/system/console/jmx/biz.netcentric.cq.tools:type=ACTool/op/apply/"
-```
 

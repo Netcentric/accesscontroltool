@@ -18,7 +18,7 @@ See also our talk at [AdaptTo 2016](https://adapt.to/2016/en/schedule/ac-tool.ht
 
 # Requirements
 
-The AC Tool requires Java 7 and AEM 6.1 or above (use v1.x for older versions)
+The AC Tool requires Java 7 and AEM 6.1 (SP1) or above (use v1.x for older versions)
 
 # Installation
 

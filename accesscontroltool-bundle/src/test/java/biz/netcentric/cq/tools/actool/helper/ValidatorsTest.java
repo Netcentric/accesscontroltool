@@ -31,13 +31,13 @@ public class ValidatorsTest {
         assertTrue(Validators.isValidAuthorizableId("group A"));
         assertTrue(Validators.isValidAuthorizableId("group -A"));
 
-        assertFalse(Validators.isValidAuthorizableId("group,A"));
-        assertFalse(Validators.isValidAuthorizableId("group:A"));
-        assertFalse(Validators.isValidAuthorizableId("group;A"));
-        // FIXME: There were non-ASCII characters here. Use Unicode escape
-        // sequences instead.
-        assertFalse(Validators.isValidAuthorizableId("group-??"));
-        assertFalse(Validators.isValidAuthorizableId("group*A"));
+        assertTrue(Validators.isValidAuthorizableId("group,A"));
+        assertTrue(Validators.isValidAuthorizableId("group:A"));
+        assertTrue(Validators.isValidAuthorizableId("group;A"));
+      
+        // even unicode characters are fine
+        assertTrue(Validators.isValidAuthorizableId("group-\\u00F8\\u00FCa"));
+        // only empty string not allowed
         assertFalse(Validators.isValidAuthorizableId(""));
         assertFalse(Validators.isValidAuthorizableId(null));
     }

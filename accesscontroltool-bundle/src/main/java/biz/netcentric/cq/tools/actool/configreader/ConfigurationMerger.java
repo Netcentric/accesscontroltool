@@ -14,7 +14,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
-import biz.netcentric.cq.tools.actool.history.AcInstallationLog;
+import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
 public interface ConfigurationMerger {
@@ -31,7 +31,7 @@ public interface ConfigurationMerger {
      * @throws AcConfigBeanValidationException in case the given configuration is invalid */
     public abstract AcConfiguration getMergedConfigurations(
             final Map<String, String> newestConfigurations,
-            final AcInstallationLog installationLog,
+            final PersistableInstallationLogger installationLog,
             final ConfigReader configReader, Session session) throws RepositoryException,
             AcConfigBeanValidationException;
 

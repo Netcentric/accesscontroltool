@@ -12,9 +12,9 @@ import javax.jcr.Session;
 
 public interface AcHistoryService {
 
-    public void persistHistory(AcInstallationLog history);
+    public void persistHistory(PersistableInstallationLogger history);
 
-    public void persistAcePurgeHistory(AcInstallationLog history);
+    public void persistAcePurgeHistory(PersistableInstallationLogger history);
 
     public String[] getInstallationLogPaths();
 
@@ -25,5 +25,7 @@ public interface AcHistoryService {
     public String getLastInstallationHistory();
 
     public String showHistory(int n);
+
+    public boolean wasLastPersistHistoryCallSuccessful();
 
 }

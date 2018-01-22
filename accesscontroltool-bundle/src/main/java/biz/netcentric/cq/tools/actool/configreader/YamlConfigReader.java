@@ -69,6 +69,8 @@ public class YamlConfigReader implements ConfigReader {
 
     private static final String GROUP_CONFIG_PROPERTY_MIGRATE_FROM = "migrateFrom";
 
+    private static final String GROUP_CONFIG_PROPERTY_UNMANAGED_ACE_PATHS_REGEX = "unmanagedAcePathsRegex";
+
     private static final String USER_CONFIG_PROPERTY_IS_SYSTEM_USER = "isSystemUser";
 
     private static final String USER_CONFIG_PROFILE_CONTENT = "profileContent";
@@ -359,6 +361,9 @@ public class YamlConfigReader implements ConfigReader {
 
         authorizableConfigBean.setMigrateFrom(getMapValueAsString(currentPrincipalDataMap,
                 GROUP_CONFIG_PROPERTY_MIGRATE_FROM));
+
+        authorizableConfigBean.setUnmanagedAcePathsRegex(getMapValueAsString(currentPrincipalDataMap,
+                GROUP_CONFIG_PROPERTY_UNMANAGED_ACE_PATHS_REGEX));
 
         authorizableConfigBean.setIsGroup(isGroupSection);
         authorizableConfigBean.setIsSystemUser(Boolean.valueOf(getMapValueAsString(currentPrincipalDataMap,
