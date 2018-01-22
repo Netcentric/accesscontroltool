@@ -19,6 +19,6 @@ import biz.netcentric.cq.tools.actool.history.InstallationLogger;
  * @author ghenzler */
 public interface YamlMacroChildNodeObjectsProvider {
 
-    List<Object> getValuesForPath(String pathOfChildrenOfClause, InstallationLogger history, Session session);
+    List<Object> getValuesForPath(String pathOfChildrenOfClause, InstallationLogger history, Session session, boolean includeContent);
 
 }

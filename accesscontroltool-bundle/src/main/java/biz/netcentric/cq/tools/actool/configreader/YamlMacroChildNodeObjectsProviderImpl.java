@@ -45,9 +45,9 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
     private SlingRepository repository;
 
     @Override
-    public List<Object> getValuesForPath(String pathOfChildrenOfClause, InstallationLogger history, Session session) {
+    public List<Object> getValuesForPath(String pathOfChildrenOfClause, InstallationLogger history, Session session, boolean includeContent) {
 
-        LOG.debug("FOR Loop: Getting children for " + pathOfChildrenOfClause);
+        LOG.debug("FOR Loop: Getting children for {} with content {}", pathOfChildrenOfClause, includeContent);
 
         List<Object> results = new ArrayList<Object>();
 
@@ -78,7 +78,7 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
                         childNodeObjectForEl.put("title", jcrContentNode.getProperty(JcrConstants.JCR_TITLE).getString());
                     }
 
-                    Map<String, Object> jcrContentSubNode = getValuesForNode(jcrContentNode);
+                    Map<String, Object> jcrContentSubNode = getValuesForNode(jcrContentNode, includeContent);
                     childNodeObjectForEl.put(JcrConstants.JCR_CONTENT, jcrContentSubNode);
                 }
 
@@ -98,7 +98,7 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
         return results;
     }
 
-    private Map<String, Object> getValuesForNode(Node node) throws RepositoryException {
+    private Map<String, Object> getValuesForNode(Node node, boolean includeChildren) throws RepositoryException {
         PropertyIterator propertiesIt = node.getProperties();
         Map<String, Object> values = new HashMap<String, Object>();
         while (propertiesIt.hasNext()) {
@@ -115,10 +115,12 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
             }
         }
 
-        NodeIterator iterator = node.getNodes();
-        while (iterator.hasNext()) {
-            Node child = iterator.nextNode();
-            values.put(child.getName(), getValuesForNode(child));
+        if (includeChildren) {
+            NodeIterator iterator = node.getNodes();
+            while (iterator.hasNext()) {
+                Node child = iterator.nextNode();
+                values.put(child.getName(), getValuesForNode(child, includeChildren));
+            }
         }
 
         return values;
