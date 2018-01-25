@@ -181,7 +181,7 @@ public class YamlMacroProcessorTest {
         String contentLocationChildrenFromYamlFile = "/content/test";
 
         doReturn(getExampleValuesForLoopOverChildrenOfPath()).when(yamlMacroChildNodeObjectsProvider)
-                .getValuesForPath(contentLocationChildrenFromYamlFile, installLog, session);
+                .getValuesForPath(contentLocationChildrenFromYamlFile, installLog, session, false);
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
@@ -193,6 +193,33 @@ public class YamlMacroProcessorTest {
         AuthorizableConfigBean group1 = groups.getAuthorizableConfig("content-node1-reader");
         assertEquals("/home/groups/test", group1.getPath());
         assertEquals("Jcr Content Property in Name val1", group1.getName());
+
+        AuthorizableConfigBean group2 = groups.getAuthorizableConfig("content-node1-writer");
+        assertEquals("/home/groups/test", group2.getPath());
+        assertEquals("Writer of Node 1", group2.getName());
+
+    }
+
+    @Test
+    public void testLoopChildrenWithContentOf() throws IOException, AcConfigBeanValidationException, RepositoryException {
+
+        List<LinkedHashMap> yamlList = getYamlList("test-loop-children-with-content-of.yaml");
+
+        String contentLocationChildrenFromYamlFile = "/content/test";
+
+        doReturn(getExampleValuesForLoopOverChildrenOfPath()).when(yamlMacroChildNodeObjectsProvider)
+                .getValuesForPath(contentLocationChildrenFromYamlFile, installLog, session, true);
+
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+
+        // new Yaml().dump(yamlList, new PrintWriter(System.out));
+
+        AuthorizablesConfig groups = readGroupConfigs(yamlList);
+        assertEquals(4, groups.size());
+
+        AuthorizableConfigBean group1 = groups.getAuthorizableConfig("content-node1-reader");
+        assertEquals("/home/groups/test", group1.getPath());
+        assertEquals("Jcr Content Property with deep content subval1", group1.getName());
 
         AuthorizableConfigBean group2 = groups.getAuthorizableConfig("content-node1-writer");
         assertEquals("/home/groups/test", group2.getPath());
@@ -212,6 +239,11 @@ public class YamlMacroProcessorTest {
                     {
                         put("jcr:title", "testJcrTitle");
                         put("prop", "val1");
+                        put("subnode", new HashMap<String, Object>() {
+                            {
+                                put("prop", "subval1");
+                            }
+                        });
                     }
                 });
             }
@@ -227,6 +259,11 @@ public class YamlMacroProcessorTest {
                     {
                         put("jcr:title", "testJcrTitle");
                         put("prop", "val2");
+                        put("subnode", new HashMap<String, Object>() {
+                            {
+                                put("prop", "subval2");
+                            }
+                        });
                     }
                 });
             }

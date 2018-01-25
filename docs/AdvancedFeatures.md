@@ -100,6 +100,18 @@ For some use cases it is useful to dynamically derive the list of possible value
          path: /home/groups/${site.name}
 ```
 
+### Loops that traverse the full jcr:content structure
+
+By default only the direct properties of the jcr:content node will be mapped and made available for substitution. In some cases it may be desirable to extract properties from further down within the jcr:content node structure. As this can be memory intensive a special syntax has been introduced to enable this on a per-loop basis. FOR ... WITH CONTENT IN ... will perform the for loop and map the full jcr:content node structure.
+
+```
+- FOR site WITH CONTENT IN CHILDREN OF /content/myPrj:
+
+    - content-reader-${site.name}:
+       - name: Content Reader ${site["jcr:content"]["node1"]["prop1"]}
+         isMemberOf:
+         path: /home/groups/${site.name}
+```
 
 ### Conditional entries
 
