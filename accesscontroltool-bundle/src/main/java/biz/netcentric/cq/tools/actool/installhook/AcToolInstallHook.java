@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
-import biz.netcentric.cq.tools.actool.history.HistoryEntry;
 import biz.netcentric.cq.tools.actool.installhook.impl.AcToolInstallHookService;
 import biz.netcentric.cq.tools.actool.installhook.impl.OsgiAwareInstallHook;
 
@@ -55,7 +54,7 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
                 throw new PackageException(
                         "Could not instanciate AceService. Make sure the ACTool is installed and check the log for errors");
             }
-            //
+
             try {
                 PersistableInstallationLogger history;
                 try {
@@ -63,8 +62,9 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
                             .getPackage().getArchive(), context.getSession(), context.getOptions().getListener());
 
                 } catch (Exception e) {
-                    log("Exception while installing configurations: " + e,
-                            context.getOptions());
+                    // needed as root cause of PackageException is not reliably logged in AEM 6.2
+                    LOG.error("Exception during execution of install hook: " + e, e);
+                    log("Exception while installing configurations: " + e, context.getOptions());
                     throw new PackageException(e.getMessage(), e);
                 }
 

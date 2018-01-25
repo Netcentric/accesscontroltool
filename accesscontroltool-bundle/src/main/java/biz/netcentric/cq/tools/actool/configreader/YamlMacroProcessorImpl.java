@@ -36,7 +36,7 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(YamlMacroProcessorImpl.class);
 
     private final Pattern forLoopPattern = Pattern.compile(
-            "for +(\\w+) +in +(?:\\[([,/\\s\\w\\-]+)\\]|children +of +([^\\s]+)|(\\$\\{[^\\}]+\\}))",
+            "for +(\\w+)( +with +content)? +in +(?:\\[([,/\\s\\w\\-]+)\\]|children +of +([^\\s]+)|(\\$\\{[^\\}]+\\}))",
             Pattern.CASE_INSENSITIVE);
     private final Pattern ifPattern = Pattern.compile("if +(\\$\\{[^\\}]+\\})", Pattern.CASE_INSENSITIVE);
 
@@ -145,9 +145,10 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
     private Object evaluateForStatement(Map<String, Object> variables, Object objVal, Matcher forMatcher,
             InstallationLogger installLog, Session session) {
         String varName = StringUtils.trim(forMatcher.group(1));
-        String valueOfInClause = StringUtils.trim(forMatcher.group(2));
-        String pathOfChildrenOfClause = StringUtils.trim(forMatcher.group(3));
-        String variableForInClause = StringUtils.trim(forMatcher.group(4));
+        String withClause = StringUtils.trim(forMatcher.group(2));
+        String valueOfInClause = StringUtils.trim(forMatcher.group(3));
+        String pathOfChildrenOfClause = StringUtils.trim(forMatcher.group(4));
+        String variableForInClause = StringUtils.trim(forMatcher.group(5));
 
         List<?> iterationValues;
         if(valueOfInClause != null) {
@@ -155,7 +156,7 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
         } else if(pathOfChildrenOfClause!=null) {
             // allow variables in root path also
             pathOfChildrenOfClause = elEvaluator.evaluateEl(pathOfChildrenOfClause, String.class, variables);
-            iterationValues = yamlMacroChildNodeObjectsProvider.getValuesForPath(pathOfChildrenOfClause, installLog, session);
+            iterationValues = yamlMacroChildNodeObjectsProvider.getValuesForPath(pathOfChildrenOfClause, installLog, session, StringUtils.isNotBlank(withClause));
         } else if(variableForInClause!=null) {
             iterationValues = elEvaluator.evaluateEl(variableForInClause, List.class, variables);
         } else {

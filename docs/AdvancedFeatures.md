@@ -100,6 +100,18 @@ For some use cases it is useful to dynamically derive the list of possible value
          path: /home/groups/${site.name}
 ```
 
+### Loops that traverse the full jcr:content structure
+
+By default only the direct properties of the jcr:content node will be mapped and made available for substitution. In some cases it may be desirable to extract properties from further down within the jcr:content node structure. As this can be memory intensive a special syntax has been introduced to enable this on a per-loop basis. FOR ... WITH CONTENT IN ... will perform the for loop and map the full jcr:content node structure.
+
+```
+- FOR site WITH CONTENT IN CHILDREN OF /content/myPrj:
+
+    - content-reader-${site.name}:
+       - name: Content Reader ${site["jcr:content"]["node1"]["prop1"]}
+         isMemberOf:
+         path: /home/groups/${site.name}
+```
 
 ### Conditional entries
 
@@ -164,6 +176,8 @@ Variables can also be declared to be an array and used in a loop:
     
     - FOR arrVal IN ${testArr}:
 ```
+
+NOTE: The scope of a variable is always limited to the lines in the very same yaml file following the definition till it is either redefined or the end of the yaml file is reached (this limitation will supposably be lifted with [#257][i257]).
 
 ## Configure permissions for anonymous
 
@@ -249,3 +263,5 @@ For large installations (> 1000 groups) that use MongoDB, the system possibly ma
 
 NOTE: This is never necessary when using TarMK and also it should only be used for MongoMK for large installations that do not contain a fix for OAK-5557 yet as the rollback functionality is lost when enabling intermediate saves.
 
+
+[i257]: https://github.com/Netcentric/accesscontroltool/issues/257
