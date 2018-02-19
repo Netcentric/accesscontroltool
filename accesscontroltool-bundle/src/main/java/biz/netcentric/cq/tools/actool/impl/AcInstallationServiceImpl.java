@@ -214,8 +214,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             LOG.info("Successfully applied AC Tool configuration in " + msHumanReadable(executionTime));
             installLog.setExecutionTime(executionTime);
         } catch (Exception e) {
-            // TODO: separate exception
-            installLog.addError(e.toString()); // ensure exception is added to installLog before it's persisted in log in finally clause
+            installLog.addError("Could not process yaml files", e); // ensure exception is added to installLog before it's persisted in log in finally clause
             throw e; // handling is different depending on JMX or install hook case
         } finally {
             try {
