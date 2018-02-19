@@ -100,7 +100,7 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
 
         if (history.getMissingParentPathsForInitialContent() > 0) {
             history.addWarning(LOG, "There were " + history.getMissingParentPathsForInitialContent()
-                    + " parent paths missing for creation of intial content (those paths were skipped, see verbose log for details)");
+                    + " parent paths missing for creation of initial content (those paths were skipped, see verbose log for details)");
         }
 
         history.addMessage(LOG, "ACL Update Statistics: Changed=" + history.getCountAclsChanged() + " Unchanged=" + history.getCountAclsUnchanged()
