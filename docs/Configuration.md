@@ -38,7 +38,7 @@ Groups are specified in the **group_config**. A group record in the configuratio
 
 property | comment | required
 --- | --- | ---
-name | Name of the group as shown in UI | optional, if empty group id is taken
+name | Name of the group as shown in UI. Sets the property `profile/givenName` of that group. | optional
 description | Description of the group | optional
 externalId | Required for AC setups since AEM 6.2 SP1 that synchronize groups from LDAP to AEM. The value has to be in format LDAP-DN;IDP-NAME where LDAP-DN is the full distinguished name and IDP-NAME is configured in OSGI config PID org.apache.jackrabbit.oak.security.authentication.ldap.impl.LdapIdentityProvider property "provider-name". Example: `externalId: "cn=group-name,ou=mydepart,ou=Groups,dc=comp,dc=com;IDPNAME"`. Since v1.9.3 | optional
 path | Path of the intermediate node either relative or absolute. If relative, /home/groups is automatically prefixed. By default some implementation specific path is choosen. Usually the full group path the concatenated (intermediate) path and the authorizable id  | optional
@@ -76,7 +76,7 @@ Users can be configured in the same way as groups in the **user_config** section
 
 property | comment | required
 --- | --- | ---
-name | Works mostly like for groups, except that the string is split up in first and last name using the last space found in string. For instance "Johann Sebastian Bach" will result in first name "Johann Sebastian" and last name "Bach". For names where the split has to be explicitly configured, use a comma: "Van der Broek, Sebastian" will result in first name "Sebastian" and last name "Van der Broek" | optional
+name | Works mostly like for groups, except that the string is split up in first and last name using the last space found in string. For instance "Johann Sebastian Bach" will result in first name "Johann Sebastian" and last name "Bach". For names where the split has to be explicitly configured, use a comma: "Van der Broek, Sebastian" will result in first name "Sebastian" and last name "Van der Broek". Sets the properties `profile/familyName` and `profile/givenName` of the user. | optional
 description, path, isMemberOf | Work exactly as for groups | optional
 password | The PW for the user. Can be stored in plain text (only to be used for test users). If a password value is enclosed in brackets, then it will be automatically decrypted using com.adobe.granite.crypto.CryptoSupport. `/system/console/crypto` on target instance can be used to get encrypted password. Encrypted password (together with braces) should also be enclosed in double quotes. | Required for non-system users, otherwise must not be set
 isSystemUser | Create users as system user (AEM 6.1 and later) | optional
