@@ -198,6 +198,8 @@ The AC Tool manages relationships between authorizables of the configuration (th
 
 That way relationships that are created programmatically or manually can be left intact and the AC Tool does not remove them. Also this allows to have two configuration sets at different root paths.
 
+Additionally, it is also possible to set `unmanagedExternalIsMemberOfRegex` and `unmanagedExternalMembersRegex` directly on the authorizable definition (then only effective locally to the authorizable).
+
 ### Examples ###
 
 * `defaultUnmanagedExternalMembersRegex: .*` allow arbitrary groups to inherit from ACTool managed groups and keep those (unmanaged) relations even though relationship hasn't been established through the ACTool. Might be useful in a multi-tenant setup where each tenant maintains his own list of groups (e.g. via ACTool in dedicated packages) and wants to inherit from some fragments being set up by the global YAML file.
@@ -205,7 +207,7 @@ That way relationships that are created programmatically or manually can be left
 
 ## Limiting where the AC Tool creates and removes ACEs
 
-The property `unmanagedAcePathsRegex` for authorizable configurations (users or groups) can be used to ensure certain paths are not managed by the AC Tool. This property must contain a regular expression which is matched against all ACE paths bound to the authorizable found in the system. All ACEs with matching paths are not touched:
+The property `unmanagedAcePathsRegex` for authorizable configurations (users or groups) can be used to ensure certain paths are not managed by the AC Tool. This property must contain a regular expression which is matched against all ACE paths bound to the authorizable found in the system. All ACEs with matching paths are not touched. By setting the global config `defaultUnmanagedAcePathsRegex` it is possible to exclude certain areas of the JCR totally from removing (and creating once #244 is fixed) at all.
 
 ### Examples
 ```
@@ -225,6 +227,12 @@ You can use negative lookaheads to whitelist management of certain paths:
       isSystemUser: true
    # everything outside /conf should not be managed by the ac tool
       unmanagedAcePathsRegex: /(?!conf).*
+```
+
+Example for setting it globally:
+```
+- global_config:
+      defaultUnmanagedAcePathsRegex: /content/project2.* # will never change any ACLs underneath this root path 
 ```
 
 ## Automatically purge obsolete groups and users

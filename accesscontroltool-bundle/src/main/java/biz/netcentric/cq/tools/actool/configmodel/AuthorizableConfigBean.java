@@ -11,6 +11,7 @@ package biz.netcentric.cq.tools.actool.configmodel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -42,11 +43,14 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private String migrateFrom;
 
     private String unmanagedAcePathsRegex;
+    private Pattern unmanagedExternalIsMemberOfRegex;
+    private Pattern unmanagedExternalMembersRegex;
 
     private boolean isGroup = true;
     private boolean isSystemUser = false;
 
     private String disabled;
+
 
     public String getAuthorizableId() {
         return authorizableId;
@@ -248,6 +252,22 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.unmanagedAcePathsRegex = unmanagedAcePathsRegex;
     }
 
+    public Pattern getUnmanagedExternalIsMemberOfRegex() {
+        return unmanagedExternalIsMemberOfRegex;
+    }
+
+    public void setUnmanagedExternalIsMemberOfRegex(String unmanagedExternalIsMemberOfRegex) {
+        this.unmanagedExternalIsMemberOfRegex = GlobalConfiguration.stringToRegex(unmanagedExternalIsMemberOfRegex);
+    }
+
+    public Pattern getUnmanagedExternalMembersRegex() {
+        return unmanagedExternalMembersRegex;
+    }
+
+    public void setUnmanagedExternalMembersRegex(String unmanagedExternalMembersRegex) {
+        this.unmanagedExternalMembersRegex = GlobalConfiguration.stringToRegex(unmanagedExternalMembersRegex);
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -259,10 +279,11 @@ public class AuthorizableConfigBean implements AcDumpElement {
         return sb.toString();
     }
 
-    public boolean managesPath(String path) {
-        if (StringUtils.isNotBlank(unmanagedAcePathsRegex)
+    public boolean managesPath(String path, String defaultUnmanagedAcePathsRegex) {
+        String effectiveUnmanagedAcePathsRegex = StringUtils.defaultIfEmpty(unmanagedAcePathsRegex, defaultUnmanagedAcePathsRegex);
+        if (StringUtils.isNotBlank(effectiveUnmanagedAcePathsRegex)
                 && StringUtils.isNotBlank(path) /* not supporting repository permissions here */) {
-            boolean pathIsManaged = !path.matches(unmanagedAcePathsRegex);
+            boolean pathIsManaged = !path.matches(effectiveUnmanagedAcePathsRegex);
             return pathIsManaged;
         } else {
             return true; // default

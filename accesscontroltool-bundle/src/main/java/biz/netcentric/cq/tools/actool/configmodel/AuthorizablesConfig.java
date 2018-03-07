@@ -63,12 +63,12 @@ public class AuthorizablesConfig extends LinkedHashSet<AuthorizableConfigBean> {
         return principalName;
     }
 
-    public Set<String> removeUnmanagedPrincipalNamesAtPath(String path, Set<String> principals) {
+    public Set<String> removeUnmanagedPrincipalNamesAtPath(String path, Set<String> principals, String defaultUnmanagedAcePathsRegex) {
 
         Set<String> filteredPrincipals = new HashSet<String>();
         for (String principal : principals) {
             AuthorizableConfigBean authorizableConfig = getAuthorizableConfigByPrincipalName(principal);
-            if (authorizableConfig.managesPath(path)) {
+            if (authorizableConfig.managesPath(path, defaultUnmanagedAcePathsRegex)) {
                 filteredPrincipals.add(principal);
             }
         }
