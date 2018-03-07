@@ -89,7 +89,8 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
             orderedAceBeanSetFromConfig.addAll(aceBeanSetFromConfig);
 
             Set<String> principalsToRemoveAcesForAtThisPath = acConfiguration.getAuthorizablesConfig()
-                    .removeUnmanagedPrincipalNamesAtPath(path, principalsToRemoveAcesFor);
+                    .removeUnmanagedPrincipalNamesAtPath(path, principalsToRemoveAcesFor,
+                            acConfiguration.getGlobalConfiguration().getDefaultUnmanagedAcePathsRegex());
             installAcl(orderedAceBeanSetFromConfig, path, principalsToRemoveAcesForAtThisPath, session, history);
 
             if (intermediateSaves && session.hasPendingChanges()) {

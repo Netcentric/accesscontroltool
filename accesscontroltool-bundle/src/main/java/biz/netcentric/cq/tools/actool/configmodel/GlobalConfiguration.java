@@ -25,6 +25,7 @@ public class GlobalConfiguration {
 
     public static final String KEY_DEFAULT_UNMANAGED_EXTERNAL_ISMEMBEROF_REGEX = "defaultUnmanagedExternalIsMemberOfRegex";
     public static final String KEY_DEFAULT_UNMANAGED_EXTERNAL_MEMBERS_REGEX = "defaultUnmanagedExternalMembersRegex";
+    public static final String KEY_DEFAULT_UNMANAGED_ACE_PATHS_REGEX = "defaultUnmanagedAcePathsRegex";
 
     @Deprecated
     public static final String KEY_KEEP_EXISTING_MEMBERSHIPS_FOR_GROUP_NAMES_REGEX = "keepExistingMembershipsForGroupNamesRegEx";
@@ -34,6 +35,7 @@ public class GlobalConfiguration {
 
     private Pattern defaultUnmanagedExternalIsMemberOfRegex;
     private Pattern defaultUnmanagedExternalMembersRegex;
+    private String defaultUnmanagedAcePathsRegex;
 
     public GlobalConfiguration() {
     }
@@ -47,7 +49,9 @@ public class GlobalConfiguration {
                         + " (since v2.0.0) - please adjust your configuration.");
                 
             }
-            
+
+            setDefaultUnmanagedAcePathsRegex((String) globalConfigMap.get(KEY_DEFAULT_UNMANAGED_ACE_PATHS_REGEX));
+
             setDefaultUnmanagedExternalIsMemberOfRegex((String) globalConfigMap.get(KEY_DEFAULT_UNMANAGED_EXTERNAL_ISMEMBEROF_REGEX));
             setDefaultUnmanagedExternalMembersRegex((String) globalConfigMap.get(KEY_DEFAULT_UNMANAGED_EXTERNAL_MEMBERS_REGEX));
 
@@ -75,6 +79,13 @@ public class GlobalConfiguration {
 
     public void merge(GlobalConfiguration otherGlobalConfig) {
 
+        if (otherGlobalConfig.getDefaultUnmanagedAcePathsRegex() != null) {
+            if (defaultUnmanagedAcePathsRegex == null) {
+                defaultUnmanagedAcePathsRegex = otherGlobalConfig.getDefaultUnmanagedAcePathsRegex();
+            } else {
+                throw new IllegalArgumentException("Duplicate config for " + KEY_DEFAULT_UNMANAGED_ACE_PATHS_REGEX);
+            }
+        }
         if (otherGlobalConfig.getDefaultUnmanagedExternalIsMemberOfRegex() != null) {
             if (defaultUnmanagedExternalIsMemberOfRegex == null) {
                 defaultUnmanagedExternalIsMemberOfRegex = otherGlobalConfig.getDefaultUnmanagedExternalIsMemberOfRegex();
@@ -139,7 +150,15 @@ public class GlobalConfiguration {
         this.defaultUnmanagedExternalMembersRegex = stringToRegex(defaultUnmanagedExternalMembersRegex);
     }
 
-    private Pattern stringToRegex(String regex) {
+    public String getDefaultUnmanagedAcePathsRegex() {
+        return defaultUnmanagedAcePathsRegex;
+    }
+
+    public void setDefaultUnmanagedAcePathsRegex(String defaultUnmanagedAcePathsRegex) {
+        this.defaultUnmanagedAcePathsRegex = defaultUnmanagedAcePathsRegex;
+    }
+
+    static Pattern stringToRegex(String regex) {
         return StringUtils.isNotBlank(regex) ? Pattern.compile(regex) : null;
     }
 

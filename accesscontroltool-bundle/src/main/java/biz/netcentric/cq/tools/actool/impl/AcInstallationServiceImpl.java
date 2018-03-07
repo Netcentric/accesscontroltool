@@ -254,9 +254,9 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 acConfiguration.getAceConfig());
 
         for (String relevantPath : relevantPathsForCleanup) {
-            // TODO: why is acconfiguration retrieved from log?
             Set<String> principalsToRemoveAcesForAtThisPath = acConfiguration.getAuthorizablesConfig()
-                    .removeUnmanagedPrincipalNamesAtPath(relevantPath, principalsInConfig);
+                    .removeUnmanagedPrincipalNamesAtPath(relevantPath, principalsInConfig,
+                            acConfiguration.getGlobalConfiguration().getDefaultUnmanagedAcePathsRegex());
 
             // delete ACE if principal *is* in config, but the path *is not* in config
             int countRemoved = AccessControlUtils.deleteAllEntriesForPrincipalsFromACL(session,
