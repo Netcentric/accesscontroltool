@@ -147,6 +147,7 @@ Expressions are evaluated using javax.el expression language. The following util
 - contains(str,fragmentStr) 
 - endsWith(str,fragmentStr) 
 - startsWith(str,fragmentStr) 
+- length(str)
 
 ### Variables
 
