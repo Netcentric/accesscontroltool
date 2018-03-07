@@ -138,20 +138,10 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
         addError(error, e);
     }
 
-    @Override
-    public void addError(Logger log, String error) {
-        log.error(error);
-        addError(error);
-    }
-
     public void addError(final String error, Throwable e) {
-        addError(error + " / e=" + e);
-    }
-
-    @Override
-    public void addError(final String error) {
+        String fullErrorValue = error + " / e=" + e;
         errors.add(new HistoryEntry(msgIndex, new Timestamp(
-                new Date().getTime()), MSG_IDENTIFIER_ERROR + error));
+                new Date().getTime()), MSG_IDENTIFIER_ERROR + fullErrorValue));
         success = false;
         msgIndex++;
     }
