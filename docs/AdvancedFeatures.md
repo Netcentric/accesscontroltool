@@ -184,7 +184,9 @@ NOTE: The scope of a variable is always limited to the lines in the very same ya
 
 To configure permissions for already existing users, it's best to create a custom group and add this user to the `members` attribute of that group. The ACEs added to the custom group will then be effective for that user as well.
 
-Another alternative is to list the built-in user in the YAML file (with the correct path and system user flag) and leverage `unmanagedAcePathsRegex` as outlined below.
+This is not an option for the [`everyone` group](https://jackrabbit.apache.org/oak/docs/security/user/default.html#Everyone_Group) as it is neither allowed to put groups/users as members to this group (because implicitly every principal is member of this group) nor to put this group as member to another group (to prevent cycles, compare with [OAK-7323](https://issues.apache.org/jira/browse/OAK-7323)).
+
+Another alternative is to list the built-in user in the YAML file (with the correct path and system user flag) and leverage `unmanagedAcePathsRegex` as outlined below. This is currently the only option to extend rights for `everyone`.
   
 ## Configure memberships of/towards externally managed groups
 
