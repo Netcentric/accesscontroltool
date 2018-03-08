@@ -147,6 +147,7 @@ Expressions are evaluated using javax.el expression language. The following util
 - contains(str,fragmentStr) 
 - endsWith(str,fragmentStr) 
 - startsWith(str,fragmentStr) 
+- length(str)
 
 ### Variables
 
@@ -179,9 +180,13 @@ Variables can also be declared to be an array and used in a loop:
 
 NOTE: The scope of a variable is always limited to the lines in the very same yaml file following the definition till it is either redefined or the end of the yaml file is reached (this limitation will supposably be lifted with [#257][i257]).
 
-## Configure permissions for anonymous
+## Configure permissions for built-in users or groups (like anonymous)
 
-To configure permissions for out-of-the-box anonymous user, it's best to create a custom group and add user `anonymous` to the `members` attribute of that group. The ACEs added to the custom group will then be effective for anonyomous user.
+To configure permissions for already existing users, it's best to create a custom group and add this user to the `members` attribute of that group. The ACEs added to the custom group will then be effective for that user as well.
+
+This is not an option for the [`everyone` group](https://jackrabbit.apache.org/oak/docs/security/user/default.html#Everyone_Group) as it is neither allowed to put groups/users as members to this group (because implicitly every principal is member of this group) nor to put this group as member to another group (to prevent cycles, compare with [OAK-7323](https://issues.apache.org/jira/browse/OAK-7323)).
+
+Another alternative is to list the built-in user in the YAML file (with the correct path and system user flag) and leverage `unmanagedAcePathsRegex` as outlined below. This is currently the only option to extend rights for `everyone`.
   
 ## Configure memberships of/towards externally managed groups
 
@@ -196,6 +201,8 @@ The AC Tool manages relationships between authorizables of the configuration (th
 
 That way relationships that are created programmatically or manually can be left intact and the AC Tool does not remove them. Also this allows to have two configuration sets at different root paths.
 
+Additionally, it is also possible to set `unmanagedExternalIsMemberOfRegex` and `unmanagedExternalMembersRegex` directly on the authorizable definition (then only effective locally to the authorizable).
+
 ### Examples ###
 
 * `defaultUnmanagedExternalMembersRegex: .*` allow arbitrary groups to inherit from ACTool managed groups and keep those (unmanaged) relations even though relationship hasn't been established through the ACTool. Might be useful in a multi-tenant setup where each tenant maintains his own list of groups (e.g. via ACTool in dedicated packages) and wants to inherit from some fragments being set up by the global YAML file.
@@ -203,16 +210,33 @@ That way relationships that are created programmatically or manually can be left
 
 ## Limiting where the AC Tool creates and removes ACEs
 
-The property `unmanagedAcePathsRegx` for authorizable configurations (users or groups) can be used to ensure certain paths are not managed by the AC Tool:
+The property `unmanagedAcePathsRegex` for authorizable configurations (users or groups) can be used to ensure certain paths are not managed by the AC Tool. This property must contain a regular expression which is matched against all ACE paths bound to the authorizable found in the system. All ACEs with matching paths are not touched. By setting the global config `defaultUnmanagedAcePathsRegex` it is possible to exclude certain areas of the JCR totally from removing (and creating once #244 is fixed) at all.
 
+### Examples
 ```
     - testgroup:
 
         - name: "Test Group"
           unmanagedAcePathsRegex: /content/dam/.*
 ```
+That way for `testgroup`, ACEs in `/content/dam/` will be left untouched for this particular group. 
 
-That way for `testgroup`, ACE in `/content/dam/` will be left as they are for this particular group.
+You can use negative lookaheads to whitelist management of certain paths:
+```
+- user_config: 
+  - version-manager-service: 
+    # the user does exist already, make sure the path is set correctly
+    - path: /home/users/system/wcm
+      isSystemUser: true
+   # everything outside /conf should not be managed by the ac tool
+      unmanagedAcePathsRegex: /(?!conf).*
+```
+
+Example for setting it globally:
+```
+- global_config:
+      defaultUnmanagedAcePathsRegex: /content/project2.* # will never change any ACLs underneath this root path 
+```
 
 ## Automatically purge obsolete groups and users
 The root element `obsolete_authorizables` can be used to automatically purge authorizables that are not in use anymore:

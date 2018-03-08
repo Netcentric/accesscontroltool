@@ -214,8 +214,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             LOG.info("Successfully applied AC Tool configuration in " + msHumanReadable(executionTime));
             installLog.setExecutionTime(executionTime);
         } catch (Exception e) {
-            // TODO: separate exception
-            installLog.addError(e.toString()); // ensure exception is added to installLog before it's persisted in log in finally clause
+            installLog.addError("Could not process yaml files", e); // ensure exception is added to installLog before it's persisted in log in finally clause
             throw e; // handling is different depending on JMX or install hook case
         } finally {
             try {
@@ -255,9 +254,9 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 acConfiguration.getAceConfig());
 
         for (String relevantPath : relevantPathsForCleanup) {
-            // TODO: why is acconfiguration retrieved from log?
             Set<String> principalsToRemoveAcesForAtThisPath = acConfiguration.getAuthorizablesConfig()
-                    .removeUnmanagedPrincipalNamesAtPath(relevantPath, principalsInConfig);
+                    .removeUnmanagedPrincipalNamesAtPath(relevantPath, principalsInConfig,
+                            acConfiguration.getGlobalConfiguration().getDefaultUnmanagedAcePathsRegex());
 
             // delete ACE if principal *is* in config, but the path *is not* in config
             int countRemoved = AccessControlUtils.deleteAllEntriesForPrincipalsFromACL(session,

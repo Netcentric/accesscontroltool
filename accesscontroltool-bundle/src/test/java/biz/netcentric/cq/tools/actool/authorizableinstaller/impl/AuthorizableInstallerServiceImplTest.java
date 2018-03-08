@@ -161,7 +161,11 @@ public class AuthorizableInstallerServiceImplTest {
             }).when(cut).validateAssignedGroups(userManager, acConfiguration.getAuthorizablesConfig(), null, TESTGROUP, configuredGroups, status);
 
             Set<String> authorizablesInConfig = new HashSet<String>(asList(GROUP1));
-            cut.applyGroupMembershipConfigIsMemberOf(TESTGROUP, acConfiguration, status, userManager, null, configuredGroups, groupsInRepo,
+
+            AuthorizableConfigBean authorizableConfigBean = new AuthorizableConfigBean();
+            authorizableConfigBean.setAuthorizableId(TESTGROUP);
+            cut.applyGroupMembershipConfigIsMemberOf(authorizableConfigBean, acConfiguration, status, userManager, null, configuredGroups,
+                    groupsInRepo,
                     authorizablesInConfig);
 
             verifyZeroInteractions(group2); // in configuredGroups and in groupsInRepo

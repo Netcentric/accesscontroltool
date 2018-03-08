@@ -25,12 +25,6 @@ public class ProgressTrackerListenerInstallationLogger extends PersistableInstal
     }
 
     @Override
-    public void addError(String error) {
-        listener.onError(ProgressTrackerListener.Mode.TEXT, MSG_IDENTIFIER_ERROR + error, null);
-        super.addError(error);
-    }
-
-    @Override
     public void addError(String error, Throwable t) {
         Exception e;
         if (t instanceof Exception) {

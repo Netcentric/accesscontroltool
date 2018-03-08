@@ -109,7 +109,8 @@ public class YamlMacroElEvaluator {
                         StringUtils.class.getMethod("contains", new Class<?>[] { String.class, String.class }),
                         StringUtils.class.getMethod("endsWith", new Class<?>[] { String.class, String.class }),
                         StringUtils.class.getMethod("startsWith", new Class<?>[] { String.class, String.class }),
-                        StringUtils.class.getMethod("replace", new Class<?>[] { String.class, String.class, String.class })
+                        StringUtils.class.getMethod("replace", new Class<?>[] { String.class, String.class, String.class }),
+                        StringUtils.class.getMethod("length", new Class<?>[] { String.class })
                 };
                 for (Method method : exportedMethods) {
                     functionMap.put(method.getName(), method);

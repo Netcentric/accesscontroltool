@@ -224,8 +224,11 @@ public class AuthorizableInstallerServiceImpl implements
     private Set<String> removeExternalMembersUnmanagedByConfiguration(AcConfiguration acConfiguration, AuthorizableConfigBean authorizableConfigBean,
             Set<String> relevantMembersInRepo, InstallationLogger installLog) {
         Set<String> relevantMembers = new HashSet<String>(relevantMembersInRepo);
-        Pattern unmanagedExternalMembersRegex = acConfiguration.getGlobalConfiguration()
-                .getDefaultUnmanagedExternalMembersRegex();
+
+        Pattern unmanagedExternalMembersRegex = authorizableConfigBean.getUnmanagedExternalMembersRegex();
+        if (unmanagedExternalMembersRegex == null) {
+            unmanagedExternalMembersRegex = acConfiguration.getGlobalConfiguration().getDefaultUnmanagedExternalMembersRegex();
+        }
 
         Set<String> unmanagedMembers = new HashSet<String>();
         if (unmanagedExternalMembersRegex != null) {
@@ -413,13 +416,13 @@ public class AuthorizableInstallerServiceImpl implements
             AuthorizableConfigBean authorizableConfigBean, UserManager userManager, Session session,
             Set<String> authorizablesFromConfigurations) throws RepositoryException, AuthorizableCreatorException {
         String[] memberOf = authorizableConfigBean.getMemberOf();
-        String authorizableId = authorizableConfigBean.getAuthorizableId();
 
-        Authorizable currentGroupFromRepository = userManager.getAuthorizable(authorizableId);
+        Authorizable currentGroupFromRepository = userManager.getAuthorizable(authorizableConfigBean.getAuthorizableId());
         Set<String> membershipGroupsFromConfig = getMembershipGroupsFromConfig(memberOf);
         Set<String> membershipGroupsFromRepository = getMembershipGroupsFromRepository(currentGroupFromRepository);
 
-        applyGroupMembershipConfigIsMemberOf(authorizableId, acConfiguration, installLog, userManager, session, membershipGroupsFromConfig,
+        applyGroupMembershipConfigIsMemberOf(authorizableConfigBean, acConfiguration, installLog, userManager, session,
+                membershipGroupsFromConfig,
                 membershipGroupsFromRepository, authorizablesFromConfigurations);
     }
 
@@ -479,7 +482,7 @@ public class AuthorizableInstallerServiceImpl implements
     }
 
     @SuppressWarnings("unchecked")
-    void applyGroupMembershipConfigIsMemberOf(String authorizableId,
+    void applyGroupMembershipConfigIsMemberOf(AuthorizableConfigBean authorizableConfigBean,
             AcConfiguration acConfiguration,
             InstallationLogger installLog, UserManager userManager, Session session,
             Set<String> membershipGroupsFromConfig,
@@ -491,6 +494,7 @@ public class AuthorizableInstallerServiceImpl implements
         membershipGroupsFromConfig.remove(PRINCIPAL_EVERYONE);
         membershipGroupsFromRepository.remove(PRINCIPAL_EVERYONE);
 
+        String authorizableId = authorizableConfigBean.getAuthorizableId();
         installLog.addVerboseMessage(LOG, "Authorizable " + authorizableId + " isMemberOf(repo)=" + membershipGroupsFromRepository);
         installLog.addVerboseMessage(LOG, "Authorizable " + authorizableId + " isMemberOf(conifg)=" + membershipGroupsFromConfig);
 
@@ -508,8 +512,10 @@ public class AuthorizableInstallerServiceImpl implements
                 validatedMembershipGroupsFromConfig);
         Set<String> unmanagedMembers = new HashSet<String>();
 
-        Pattern unmanagedExternalIsMemberOfRegex = acConfiguration.getGlobalConfiguration()
-                .getDefaultUnmanagedExternalIsMemberOfRegex();
+        Pattern unmanagedExternalIsMemberOfRegex = authorizableConfigBean.getUnmanagedExternalIsMemberOfRegex();
+        if (unmanagedExternalIsMemberOfRegex == null) {
+            unmanagedExternalIsMemberOfRegex = acConfiguration.getGlobalConfiguration().getDefaultUnmanagedExternalIsMemberOfRegex();
+        }
 
         Iterator<String> toBeRemovedMembersIt = toBeRemovedMembers.iterator();
         while (toBeRemovedMembersIt.hasNext()) {
