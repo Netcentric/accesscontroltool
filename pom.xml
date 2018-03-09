@@ -116,12 +116,6 @@
                 <version>5.8.2</version>
                 <scope>provided</scope>
             </dependency>
-            <dependency>
-                <groupId>com.adobe.granite</groupId>
-                <artifactId>com.adobe.granite.crypto</artifactId>
-                <version>3.0.0</version>
-                <scope>provided</scope>
-            </dependency>
             <!-- Apache Felix 4.6.1 (shipped in AEM 6.1) is fully compliant with OSGi Core R6 -->
             <dependency>
                 <groupId>org.osgi</groupId>
@@ -242,6 +236,15 @@
                 <artifactId>snakeyaml</artifactId>
                 <version>1.13</version>
                 <type>bundle</type>
+            </dependency>
+            <!-- the com.adobe.granite:com.adobe.granite.crypto:3.0.0 is referencing an non-published parent pom.xml therefore for that we need 
+                to leverage the uber-jar -->
+            <dependency>
+                <groupId>com.adobe.aem</groupId>
+                <artifactId>uber-jar</artifactId>
+                <version>6.1.0-SP1-B0001</version>
+                <classifier>obfuscated-apis</classifier>
+                <scope>provided</scope>
             </dependency>
             <!-- testing dependencies -->
             <dependency>

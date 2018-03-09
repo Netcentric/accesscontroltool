@@ -105,10 +105,6 @@
             <artifactId>cq-commons</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.adobe.granite</groupId>
-            <artifactId>com.adobe.granite.crypto</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>1.13</version>
@@ -134,6 +130,7 @@
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>
@@ -189,6 +186,14 @@
             <artifactId>org.apache.sling.hc.annotations</artifactId>
             <version>1.0.2</version>
             <scope>provided</scope>
+        </dependency>
+
+        <!-- use the uber-jar always as last dependency because a lot of classes are provided also by other artifacts
+             It is only used here as replacement for com.adobe.granite:com.adobe.granite.crypto:3.0.0 whose pom.xml is not publicly available -->
+        <dependency>
+            <groupId>com.adobe.aem</groupId>
+            <artifactId>uber-jar</artifactId>
+            <classifier>obfuscated-apis</classifier>
         </dependency>
 
     </dependencies>
