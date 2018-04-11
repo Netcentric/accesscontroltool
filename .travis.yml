@@ -1,0 +1,2 @@
+# standard maven build with travis
+language: java

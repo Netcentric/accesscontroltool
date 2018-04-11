@@ -3,7 +3,8 @@
     and the accompanying materials are made available under the terms of the
     Eclipse Public License v1.0 which accompanies this distribution, and is available
     at http://www.eclipse.org/legal/epl-v10.html -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd ">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd ">
     <modelVersion>4.0.0</modelVersion>
     <!-- ====================================================================== -->
     <!-- P A R E N T P R O J E C T D E S C R I P T I O N -->
@@ -25,11 +26,11 @@
     <dependencies>
         <dependency>
             <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.compendium</artifactId>
+            <artifactId>osgi.cmpn</artifactId>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
+            <artifactId>osgi.core</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
@@ -44,7 +45,7 @@
             <artifactId>org.apache.felix.scr.annotations</artifactId>
         </dependency>
         <dependency>
-            <groupId>biz.aQute</groupId>
+            <groupId>biz.aQute.bnd</groupId>
             <artifactId>bndlib</artifactId>
         </dependency>
         <dependency>
@@ -57,7 +58,7 @@
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
+            <artifactId>javax.servlet-api</artifactId>
         </dependency>
         <dependency>
             <groupId>javax.jcr</groupId>
@@ -104,10 +105,6 @@
             <artifactId>cq-commons</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.adobe.granite</groupId>
-            <artifactId>com.adobe.granite.crypto</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>1.13</version>
@@ -133,7 +130,7 @@
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>
-            <version>1.3</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>
@@ -146,54 +143,59 @@
         <dependency>
             <groupId>org.apache.jackrabbit.vault</groupId>
             <artifactId>org.apache.jackrabbit.vault</artifactId>
-            <version>3.1.18</version>
-        </dependency>
-        
-        <dependency>
-          <groupId>org.apache.tomcat</groupId>
-          <artifactId>el-api</artifactId>
-          <version>6.0.53</version>
         </dependency>
         <dependency>
-          <groupId>org.apache.tomcat</groupId>
-          <artifactId>jasper-el</artifactId>
-          <version>6.0.53</version>
-        </dependency> 
-        
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>el-api</artifactId>
+            <version>6.0.53</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>jasper-el</artifactId>
+            <version>6.0.53</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>oak-core</artifactId>
             <version>1.2.7</version>
-        </dependency>        
-        
+        </dependency>
+
         <dependency>
-          <groupId>org.apache.jackrabbit</groupId>
-          <artifactId>oak-auth-external</artifactId>
-          <version>1.2.7</version>
-          <optional>true</optional>
-        </dependency> 
-            
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-auth-external</artifactId>
+            <version>1.2.7</version>
+            <optional>true</optional>
+        </dependency>
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
-            <version>1.5.10</version>
             <scope>test</scope>
-        </dependency>          
-        
+        </dependency>
+
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.hc.core</artifactId>
             <version>1.1.0</version>
             <scope>provided</scope>
             <optional>true</optional>
-        </dependency>        
+        </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.hc.annotations</artifactId>
             <version>1.0.2</version>
             <scope>provided</scope>
         </dependency>
-        
+
+        <!-- use the uber-jar always as last dependency because a lot of classes are provided also by other artifacts
+             It is only used here as replacement for com.adobe.granite:com.adobe.granite.crypto:3.0.0 whose pom.xml is not publicly available -->
+        <dependency>
+            <groupId>com.adobe.aem</groupId>
+            <artifactId>uber-jar</artifactId>
+            <classifier>obfuscated-apis</classifier>
+        </dependency>
+
     </dependencies>
 
     <!-- ====================================================================== -->
@@ -201,29 +203,29 @@
     <!-- ====================================================================== -->
     <build>
         <plugins>
-        
+
             <plugin>
-              <groupId>org.apache.felix</groupId>
-              <artifactId>maven-bundle-plugin</artifactId>
-              <configuration>
-                <instructions>
-                    <Embed-Dependency>el-api,jasper-el</Embed-Dependency>
-                    <!-- Required to support 6.1 and 6.2 -->
-                    <Export-Package>
-                        biz.netcentric.cq.tools.actool.api,
-                        biz.netcentric.cq.tools.actool.installhook,
-                        biz.netcentric.cq.tools.actool.aceservice,
-                        biz.netcentric.cq.tools.actool.installationhistory
-                    </Export-Package>
-                    <Import-Package>
-                        org.apache.jackrabbit.oak.spi.security.authentication.external;version="[1.0,3)",
-                        *
-                    </Import-Package>              
-                    
-                </instructions>
-                
-              </configuration>
-            </plugin>        
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <configuration>
+                    <instructions>
+                        <Embed-Dependency>el-api,jasper-el</Embed-Dependency>
+                        <!-- Required to support 6.1 and 6.2 -->
+                        <Export-Package>
+                            biz.netcentric.cq.tools.actool.api,
+                            biz.netcentric.cq.tools.actool.installhook,
+                            biz.netcentric.cq.tools.actool.aceservice,
+                            biz.netcentric.cq.tools.actool.installationhistory
+                        </Export-Package>
+                        <Import-Package>
+                            org.apache.jackrabbit.oak.spi.security.authentication.external;version="[1.0,3)",
+                            *
+                        </Import-Package>
+
+                    </instructions>
+
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-scr-plugin</artifactId>
