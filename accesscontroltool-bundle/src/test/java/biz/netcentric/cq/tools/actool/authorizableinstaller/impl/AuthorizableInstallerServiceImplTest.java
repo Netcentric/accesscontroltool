@@ -20,6 +20,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -113,9 +114,14 @@ public class AuthorizableInstallerServiceImplTest {
         @Mock
         private User regularUser1;
 
+        private AuthorizableConfigBean authorizableConfigBean;
+
+        private PersistableInstallationLogger history;
+
         @Before
         public void setup() throws RepositoryException {
-
+            authorizableConfigBean = new AuthorizableConfigBean();
+            history = new PersistableInstallationLogger();
             doReturn(valueFactory).when(session).getValueFactory();
             Mockito.when(valueFactory.createValue(anyString())).thenAnswer(new Answer<Value>() {
                 @Override
@@ -144,6 +150,11 @@ public class AuthorizableInstallerServiceImplTest {
             doReturn(id).when(authorizable).getID();
             doReturn(isGroup).when(authorizable).isGroup();
             doReturn("/home/" + (isGroup ? "groups" : "users") + (isSystemUser ? "/system" : "") + "/test").when(authorizable).getPath();
+            if (isGroup) {
+                Group group = (Group) authorizable;
+                when(group.addMember(Matchers.any(Authorizable.class))).thenReturn(true);
+                when(group.removeMember(Matchers.any(Authorizable.class))).thenReturn(true);
+            }
         }
 
         @Test
@@ -162,7 +173,6 @@ public class AuthorizableInstallerServiceImplTest {
 
             Set<String> authorizablesInConfig = new HashSet<String>(asList(GROUP1));
 
-            AuthorizableConfigBean authorizableConfigBean = new AuthorizableConfigBean();
             authorizableConfigBean.setAuthorizableId(TESTGROUP);
             cut.applyGroupMembershipConfigIsMemberOf(authorizableConfigBean, acConfiguration, status, userManager, null, configuredGroups,
                     groupsInRepo,
@@ -173,20 +183,18 @@ public class AuthorizableInstallerServiceImplTest {
             // configuration)
 
             verify(group1).addMember(testGroup);
+            verify(group1).getID();
             verifyNoMoreInteractions(group1);
 
             verify(group3).removeMember(testGroup);
+            verify(group3).getID();
             verifyNoMoreInteractions(group3);
 
         }
 
         @Test
-        public void testApplyGroupMembershipConfigMembers() throws Exception {
-
-            PersistableInstallationLogger history = new PersistableInstallationLogger();
+        public void testApplyGroupMembershipConfigMembersNoChange() throws Exception {
             acConfiguration.setGlobalConfiguration(new GlobalConfiguration());
-
-            AuthorizableConfigBean authorizableConfigBean = new AuthorizableConfigBean();
             authorizableConfigBean.setAuthorizableId(TESTGROUP);
 
             Set<String> authorizablesInConfig = new HashSet<String>(asList(GROUP1));
@@ -197,7 +205,13 @@ public class AuthorizableInstallerServiceImplTest {
             cut.applyGroupMembershipConfigMembers(acConfiguration, authorizableConfigBean, history, TESTGROUP, userManager, authorizablesInConfig);
             verify(testGroup, times(0)).addMember(any(Authorizable.class));
             verify(testGroup, times(0)).removeMember(any(Authorizable.class));
-            reset(testGroup);
+        }
+
+        @Test
+        public void testApplyGroupMembershipConfigMembersRemovedInConfig() throws Exception {
+            acConfiguration.setGlobalConfiguration(new GlobalConfiguration());
+            authorizableConfigBean.setAuthorizableId(TESTGROUP);
+            Set<String> authorizablesInConfig = new HashSet<String>(asList(GROUP1));
 
             // test removed in config
             authorizableConfigBean.setMembers(new String[] {});
@@ -208,9 +222,13 @@ public class AuthorizableInstallerServiceImplTest {
             verify(testGroup).removeMember(group3);
             verify(testGroup).removeMember(systemUser1);
             verify(testGroup, times(0)).removeMember(regularUser1);// regular user must not be removed
-            reset(testGroup);
+        }
 
+        @Test
+        public void testApplyGroupMembershipConfigMembersAddedInConfig() throws Exception {
             // test to be added as in config but not in repo
+            Set<String> authorizablesInConfig = new HashSet<String>(asList(GROUP1));
+
             authorizableConfigBean.setMembers(new String[] { GROUP2, GROUP3, SYSTEM_USER1 });
             doReturn(asList().iterator()).when(testGroup).getDeclaredMembers();
             cut.applyGroupMembershipConfigMembers(acConfiguration, authorizableConfigBean, history, TESTGROUP, userManager, authorizablesInConfig);
@@ -219,17 +237,26 @@ public class AuthorizableInstallerServiceImplTest {
             verify(testGroup).addMember(systemUser1);
             verify(testGroup, times(0)).removeMember(any(Authorizable.class));
             reset(testGroup);
+        }
 
+        @Test
+        public void testApplyGroupMembershipConfigMembersNotRemoved() throws Exception {
             // test authorizable in config not removed
+            Set<String> authorizablesInConfig = new HashSet<String>(asList(GROUP1));
+
             authorizableConfigBean.setMembers(new String[] {});
             doReturn(asList(group1, group2).iterator()).when(testGroup).getDeclaredMembers();
             cut.applyGroupMembershipConfigMembers(acConfiguration, authorizableConfigBean, history, TESTGROUP, userManager, authorizablesInConfig);
             verify(testGroup, times(0)).addMember(any(Authorizable.class));
             verify(testGroup, times(0)).removeMember(group1); // must not be removed since it's contained in config
             verify(testGroup).removeMember(group2);
-            reset(testGroup);
+        }
 
+        @Test
+        public void testApplyGroupMembershipConfigMembersNotRemovedDueToUnmanagedExternalMembers() throws Exception {
             // test authorizable in config not removed if defaultUnmanagedExternalMembersRegex is configured
+            Set<String> authorizablesInConfig = new HashSet<String>(asList(GROUP1));
+
             acConfiguration.getGlobalConfiguration().setDefaultUnmanagedExternalMembersRegex("group2.*");
             authorizableConfigBean.setMembers(new String[] {});
             doReturn(asList(group1, group2).iterator()).when(testGroup).getDeclaredMembers();
@@ -237,10 +264,7 @@ public class AuthorizableInstallerServiceImplTest {
             verify(testGroup, times(0)).addMember(any(Authorizable.class));
             verify(testGroup, times(0)).removeMember(group1); // must not be removed since it's contained in config
             verify(testGroup, times(0)).removeMember(group2); // must not be removed since allowExternalGroupNamesRegEx config
-            reset(testGroup);
-
         }
-
 
         @Test
         public void testSetAuthorizableProperties() throws Exception {

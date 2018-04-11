@@ -33,6 +33,7 @@ import org.apache.jackrabbit.api.security.user.AuthorizableExistsException;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
+import org.apache.jackrabbit.oak.spi.security.principal.EveryonePrincipal;
 import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -180,7 +181,7 @@ public class AuthorizableInstallerServiceImpl implements
                                 "Member " + member + " does not exist and cannot be added as external member to group "
                                         + authorizableConfigBean.getAuthorizableId());
                     }
-                    installedGroup.addMember(memberGroup);
+                    addMember(installedGroup, memberGroup, installLog);
                     installLog.addVerboseMessage(LOG,
                             "Adding " + member + " as external member to group " + authorizableConfigBean.getAuthorizableId());
                 }
@@ -192,7 +193,7 @@ public class AuthorizableInstallerServiceImpl implements
                         "Removing " + membersToRemove.size() + " external members to group " + authorizableConfigBean.getAuthorizableId());
                 for (String member : membersToRemove) {
                     Authorizable memberGroup = userManager.getAuthorizable(member);
-                    installedGroup.removeMember(memberGroup);
+                    removeMember(installedGroup, memberGroup, installLog);
                     installLog.addVerboseMessage(LOG,
                             "Removing " + member + " as external member to group " + authorizableConfigBean.getAuthorizableId());
                 }
@@ -295,7 +296,7 @@ public class AuthorizableInstallerServiceImpl implements
                     + authorizableConfigBean.getMigrateFrom() + " to group " + authorizableId);
             Group currentGroup = (Group) userManager.getAuthorizable(authorizableId);
             for (Authorizable user : usersFromGroupToTakeOver) {
-                currentGroup.addMember(user);
+                addMember(currentGroup, user, installLog);
             }
         }
 
@@ -370,7 +371,7 @@ public class AuthorizableInstallerServiceImpl implements
                 Group newGroup = (Group) newAuthorizable;
                 // add members of deleted group
                 for (Authorizable authorizable : membersOfDeletedGroup) {
-                    newGroup.addMember(authorizable);
+                    addMember(newGroup, authorizable, installLog);
                     countMovedMembersOfGroup++;
                 }
             }
@@ -541,13 +542,13 @@ public class AuthorizableInstallerServiceImpl implements
         for (String groupId : toBeAddedMembers) {
             LOG.debug("Membership Change: Adding {} to members of group {} in repository", authorizableId, groupId);
             Authorizable targetAuthorizable = userManager.getAuthorizable(groupId);
-            ((Group) targetAuthorizable).addMember(currentAuthorizable);
+            addMember((Group) targetAuthorizable, currentAuthorizable, installLog);
         }
 
         for (String groupId : toBeRemovedMembers) {
             LOG.debug("Membership Change: Removing {} from members of group {} in repository", authorizableId, groupId);
             Authorizable targetAuthorizable = userManager.getAuthorizable(groupId);
-            ((Group) targetAuthorizable).removeMember(currentAuthorizable);
+            removeMember((Group) targetAuthorizable, currentAuthorizable, installLog);
         }
 
         if (!toBeAddedMembers.isEmpty() && !toBeAddedMembers.isEmpty()) {
@@ -724,7 +725,7 @@ public class AuthorizableInstallerServiceImpl implements
                 LOG.debug("start adding {} to assignedGroups", authorizableId);
                 for (String referencingAuthorizableToBeChangedId : referencingAuthorizablesToBeChanged) {
                     Group referencingAuthorizableToBeChanged = (Group) userManager.getAuthorizable(referencingAuthorizableToBeChangedId);
-                    referencingAuthorizableToBeChanged.addMember(authorizable);
+                    addMember(referencingAuthorizableToBeChanged, authorizable, installLog);
                     LOG.debug("added to {} ", referencingAuthorizableToBeChanged);
                 }
             }
@@ -804,7 +805,25 @@ public class AuthorizableInstallerServiceImpl implements
         return authorizableSet;
     }
 
+    private void addMember(Group group, Authorizable authorizable, InstallationLogger installLog) throws RepositoryException {
+        if (StringUtils.equals(group.getID(), EveryonePrincipal.NAME)) {
+            return; // membership to everyone is implicit, no add needed
+        }
+        boolean addSuccess = group.addMember(authorizable);
+        if (!addSuccess) {
+            installLog.addWarning(LOG,
+                    "OAK unexpectedly returned false (=not added) while trying to add " + authorizable + " to group " + group);
+        }
+    }
 
-
-
+    private void removeMember(Group group, Authorizable authorizable, InstallationLogger installLog) throws RepositoryException {
+        if (StringUtils.equals(group.getID(), EveryonePrincipal.NAME)) {
+            return; // membership to everyone is implicit, no remove needed
+        }
+        boolean removeSuccess = group.removeMember(authorizable);
+        if (!removeSuccess) {
+            installLog.addWarning(LOG,
+                    "OAK unexpectedly returned false (=not removed) while trying to remove " + authorizable + " from group " + group);
+        }
+    }
 }
