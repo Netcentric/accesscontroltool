@@ -132,11 +132,11 @@ When looping over content structures, entries can be applied conditionally using
             path: /home/groups/global
 ```
 
-Expressions are evaluated using javax.el expression language. The following utility functions are made available to any EL expression used in yaml:
+Expressions are evaluated using javax.el expression language. The following utility functions are made available to any EL expression used in yaml (if not mentioned otherwise they are imported from commons lang StringUtils):
 
 - split(str,separator) 
 - join(array,separator)
-- subarray(array,startIndexInclusive,endIndexExclusive)
+- subarray(array,startIndexInclusive,endIndexExclusive) (from ArrayUtils)
 - upperCase(str) 
 - lowerCase(str) 
 - replace(text,searchString,replacement) 
@@ -148,6 +148,7 @@ Expressions are evaluated using javax.el expression language. The following util
 - endsWith(str,fragmentStr) 
 - startsWith(str,fragmentStr) 
 - length(str)
+- defaultIfEmpty(str,default)
 
 ### Variables
 
@@ -179,6 +180,12 @@ Variables can also be declared to be an array and used in a loop:
 ```
 
 NOTE: The scope of a variable is always limited to the lines in the very same yaml file following the definition till it is either redefined or the end of the yaml file is reached (this limitation will supposably be lifted with [#257][i257]).
+
+### Referencing OS environment variables
+
+Env variables can be referenced by using `${env.my_env_variable}`. To provide a default use `defaultIfEmpty()` as linked in from StringUtils class: `${defaultIfEmpty(env.my_env_variable, 'default-val')}`.
+
+NOTE: Use this feature sparingly, for most cases the configuration should be self-contained. One use case for this is production passwords (as needed for non-system users like replication receiver). 
 
 ## Configure permissions for built-in users or groups (like anonymous)
 
