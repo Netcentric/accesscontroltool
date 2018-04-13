@@ -102,7 +102,6 @@ public class AuthorizableInstallerServiceImpl implements
         LOG.debug("- start installation of authorizable: {}", authorizableId);
 
         UserManager userManager = AccessControlUtils.getUserManagerAutoSaveDisabled(session);
-        ValueFactory vf = session.getValueFactory();
 
         // if current authorizable from config doesn't exist yet
         Authorizable authorizableToInstall = userManager.getAuthorizable(authorizableId);
@@ -637,11 +636,20 @@ public class AuthorizableInstallerServiceImpl implements
                 authorizable.setProperty("profile/givenName", vf.createValue(givenName));
                 authorizable.setProperty("profile/familyName", vf.createValue(familyName));
             }
+        } else {
+            if (StringUtils.isBlank(profileContent)) {
+                authorizable.removeProperty("profile/givenName");
+                authorizable.removeProperty("profile/familyName");
+            }
         }
 
         String description = principalConfigBean.getDescription();
         if (StringUtils.isNotBlank(description)) {
             authorizable.setProperty("profile/aboutMe", vf.createValue(description));
+        } else {
+            if (StringUtils.isBlank(profileContent)) {
+                authorizable.removeProperty("profile/aboutMe");
+            }
         }
 
         String disabled = principalConfigBean.getDisabled();
