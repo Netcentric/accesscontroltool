@@ -164,13 +164,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
         if (isMemberOf == null) {
             return "";
         }
-
-        final StringBuilder memberOfString = new StringBuilder();
-
-        for (final String group : isMemberOf) {
-            memberOfString.append(group).append(",");
-        }
-        return StringUtils.chop(memberOfString.toString());
+        return StringUtils.join(isMemberOf, ",");
     }
 
     public void setMemberOf(final String[] memberOf) {
