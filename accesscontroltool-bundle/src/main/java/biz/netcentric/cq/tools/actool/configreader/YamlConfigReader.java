@@ -77,6 +77,7 @@ public class YamlConfigReader implements ConfigReader {
 
     private static final String USER_CONFIG_PROFILE_CONTENT = "profileContent";
     private static final String USER_CONFIG_PREFERENCES_CONTENT = "preferencesContent";
+    private static final String USER_CONFIG_SOCIAL_CONTENT = "socialContent";
 
     private static final String USER_CONFIG_DISABLED = "disabled";
 
@@ -382,6 +383,8 @@ public class YamlConfigReader implements ConfigReader {
                 currentPrincipalDataMap, USER_CONFIG_PROFILE_CONTENT));
         authorizableConfigBean.setPreferencesContent(getMapValueAsString(
                 currentPrincipalDataMap, USER_CONFIG_PREFERENCES_CONTENT));
+        authorizableConfigBean.setSocialContent(getMapValueAsString(
+                currentPrincipalDataMap, USER_CONFIG_SOCIAL_CONTENT));
 
         if (currentPrincipalDataMap.containsKey(USER_CONFIG_DISABLED)) {
             authorizableConfigBean.setDisabled(getMapValueAsString(currentPrincipalDataMap, USER_CONFIG_DISABLED));

@@ -39,6 +39,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     private String profileContent;
     private String preferencesContent;
+    private String socialContent;
 
     private String migrateFrom;
 
@@ -122,6 +123,14 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     public void setPreferencesContent(String preferencesContent) {
         this.preferencesContent = preferencesContent;
+    }
+
+    public String getSocialContent() {
+        return socialContent;
+    }
+
+    public void setSocialContent(String socialContent) {
+        this.socialContent = socialContent;
     }
 
     public void setMemberOfString(final String memberOfString) {

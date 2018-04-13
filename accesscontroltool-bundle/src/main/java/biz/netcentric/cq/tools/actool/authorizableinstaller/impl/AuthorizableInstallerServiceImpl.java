@@ -616,6 +616,11 @@ public class AuthorizableInstallerServiceImpl implements
             ContentHelper.importContent(session, authorizable.getPath() + "/preferences", preferencesContent);
         }
 
+        String socialContent = principalConfigBean.getSocialContent();
+        if (StringUtils.isNotBlank(socialContent)) {
+            ContentHelper.importContent(session, authorizable.getPath() + "/social", socialContent);
+        }
+
         ValueFactory vf = session.getValueFactory();
 
         String name = principalConfigBean.getName();
