@@ -56,6 +56,7 @@ import org.apache.jackrabbit.api.security.user.QueryBuilder;
 import org.apache.jackrabbit.api.security.user.QueryBuilder.Direction;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
+import org.apache.jackrabbit.oak.spi.security.principal.EveryonePrincipal;
 import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.commons.osgi.PropertiesUtil;
@@ -565,7 +566,7 @@ public class DumpServiceImpl implements ConfigDumpService {
             outStream
                     .println(AcHelper
                             .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY)
-                            + "memberOf: " + bean.getMemberOfString());
+                            + "isMemberOf: " + bean.getMemberOfString());
             outStream
                     .println(AcHelper
                             .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY)
@@ -669,7 +670,11 @@ public class DumpServiceImpl implements ConfigDumpService {
         List<String> memberOfList = new ArrayList<String>();
 
         while (it.hasNext()) {
-            memberOfList.add(it.next().getID());
+            String groupId = it.next().getID();
+            if (StringUtils.equals(groupId, EveryonePrincipal.NAME)) {
+                continue;
+            }
+            memberOfList.add(groupId);
         }
         bean.setMemberOf(memberOfList.toArray(new String[memberOfList.size()]));
     }
