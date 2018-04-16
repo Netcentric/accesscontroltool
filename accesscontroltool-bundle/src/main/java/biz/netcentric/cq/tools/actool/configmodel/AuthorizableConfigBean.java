@@ -39,6 +39,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     private String profileContent;
     private String preferencesContent;
+    private String socialContent;
 
     private String migrateFrom;
 
@@ -124,6 +125,14 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.preferencesContent = preferencesContent;
     }
 
+    public String getSocialContent() {
+        return socialContent;
+    }
+
+    public void setSocialContent(String socialContent) {
+        this.socialContent = socialContent;
+    }
+
     public void setMemberOfString(final String memberOfString) {
         memberOfStringFromConfig = memberOfString;
     }
@@ -164,13 +173,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
         if (isMemberOf == null) {
             return "";
         }
-
-        final StringBuilder memberOfString = new StringBuilder();
-
-        for (final String group : isMemberOf) {
-            memberOfString.append(group).append(",");
-        }
-        return StringUtils.chop(memberOfString.toString());
+        return StringUtils.join(isMemberOf, ",");
     }
 
     public void setMemberOf(final String[] memberOf) {

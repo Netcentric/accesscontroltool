@@ -110,7 +110,8 @@ public class YamlMacroElEvaluator {
                         StringUtils.class.getMethod("endsWith", new Class<?>[] { String.class, String.class }),
                         StringUtils.class.getMethod("startsWith", new Class<?>[] { String.class, String.class }),
                         StringUtils.class.getMethod("replace", new Class<?>[] { String.class, String.class, String.class }),
-                        StringUtils.class.getMethod("length", new Class<?>[] { String.class })
+                        StringUtils.class.getMethod("length", new Class<?>[] { String.class }),
+                        StringUtils.class.getMethod("defaultIfEmpty", new Class<?>[] { String.class, String.class })
                 };
                 for (Method method : exportedMethods) {
                     functionMap.put(method.getName(), method);
@@ -135,6 +136,9 @@ public class YamlMacroElEvaluator {
         @Override
         public ValueExpression resolveVariable(String paramString) {
             Object value = vars.get(paramString);
+            if (value == null && paramString.equals("env")) {
+                value = System.getenv();
+            }
             return value != null ? expressionFactory.createValueExpression(value, value.getClass()) : null;
         }
 
