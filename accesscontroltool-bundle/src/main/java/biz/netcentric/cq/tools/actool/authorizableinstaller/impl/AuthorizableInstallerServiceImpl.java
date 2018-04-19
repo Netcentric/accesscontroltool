@@ -180,10 +180,7 @@ public class AuthorizableInstallerServiceImpl implements
                                 "Member " + member + " does not exist and cannot be added as external member to group "
                                         + authorizableConfigBean.getAuthorizableId());
                     }
-                    if (!installedGroup.addMember(memberGroup)) {
-                        throw new IllegalStateException(
-                                "Member " + member + " cannot be added as external member to group '" + installedGroup.getID() + "'. Is this maybe a protected group like 'everyone'?");
-                    }
+                    installedGroup.addMember(memberGroup);
                     installLog.addVerboseMessage(LOG,
                             "Adding " + member + " as external member to group " + authorizableConfigBean.getAuthorizableId());
                 }
@@ -195,13 +192,9 @@ public class AuthorizableInstallerServiceImpl implements
                         "Removing " + membersToRemove.size() + " external members to group " + authorizableConfigBean.getAuthorizableId());
                 for (String member : membersToRemove) {
                     Authorizable memberGroup = userManager.getAuthorizable(member);
-                    if (!installedGroup.removeMember(memberGroup)) {
-                        throw new IllegalStateException(
-                                "Member " + member + " cannot be removed from group '" + installedGroup.getID() + "'. Is this maybe a protected group like 'everyone'?");
-                    } else {
-                        installLog.addVerboseMessage(LOG,
+                    installedGroup.removeMember(memberGroup);
+                    installLog.addVerboseMessage(LOG,
                             "Removing " + member + " as external member to group " + authorizableConfigBean.getAuthorizableId());
-                    }
                 }
             }
         }
@@ -302,10 +295,7 @@ public class AuthorizableInstallerServiceImpl implements
                     + authorizableConfigBean.getMigrateFrom() + " to group " + authorizableId);
             Group currentGroup = (Group) userManager.getAuthorizable(authorizableId);
             for (Authorizable user : usersFromGroupToTakeOver) {
-                if (!currentGroup.addMember(user)) {
-                    throw new IllegalStateException(
-                            "Member " + user + " cannot be added as external member to group '" + currentGroup.getID() + "'. Is this maybe a protected group like 'everyone'?");
-                }
+                currentGroup.addMember(user);
             }
         }
 
@@ -380,10 +370,7 @@ public class AuthorizableInstallerServiceImpl implements
                 Group newGroup = (Group) newAuthorizable;
                 // add members of deleted group
                 for (Authorizable authorizable : membersOfDeletedGroup) {
-                    if (!newGroup.addMember(authorizable)) {
-                        throw new IllegalStateException(
-                                "Member " + authorizable + " cannot be added as external member to group '" + newGroup.getID() + "'. Is this maybe a protected group like 'everyone'?");
-                    }
+                    newGroup.addMember(authorizable);
                     countMovedMembersOfGroup++;
                 }
             }
@@ -554,21 +541,13 @@ public class AuthorizableInstallerServiceImpl implements
         for (String groupId : toBeAddedMembers) {
             LOG.debug("Membership Change: Adding {} to members of group {} in repository", authorizableId, groupId);
             Authorizable targetAuthorizable = userManager.getAuthorizable(groupId);
-            Group group = (Group) targetAuthorizable;
-            if (!(group.addMember(currentAuthorizable))) {
-                throw new IllegalStateException(
-                        "Member " + currentAuthorizable + " cannot be added as external member to group '" + group.getID() + "'. Is this maybe a protected group like 'everyone'?");
-            }
+            ((Group) targetAuthorizable).addMember(currentAuthorizable);
         }
 
         for (String groupId : toBeRemovedMembers) {
             LOG.debug("Membership Change: Removing {} from members of group {} in repository", authorizableId, groupId);
             Authorizable targetAuthorizable = userManager.getAuthorizable(groupId);
-            Group group = (Group) targetAuthorizable;
-            if (!group.removeMember(currentAuthorizable)) {
-                throw new IllegalStateException(
-                        "Member " + currentAuthorizable.getID() + " cannot be removed from group '" + group.getID() + "'. Is this maybe a protected group like 'everyone'?");
-            }
+            ((Group) targetAuthorizable).removeMember(currentAuthorizable);
         }
 
         if (!toBeAddedMembers.isEmpty() && !toBeAddedMembers.isEmpty()) {
@@ -745,10 +724,7 @@ public class AuthorizableInstallerServiceImpl implements
                 LOG.debug("start adding {} to assignedGroups", authorizableId);
                 for (String referencingAuthorizableToBeChangedId : referencingAuthorizablesToBeChanged) {
                     Group referencingAuthorizableToBeChanged = (Group) userManager.getAuthorizable(referencingAuthorizableToBeChangedId);
-                    if (!referencingAuthorizableToBeChanged.addMember(authorizable)) {
-                        throw new IllegalStateException(
-                                "Member " + authorizable + " cannot be added as external member to group '" + referencingAuthorizableToBeChanged.getID() + "'. Is this maybe a protected group like 'everyone'?");
-                    }
+                    referencingAuthorizableToBeChanged.addMember(authorizable);
                     LOG.debug("added to {} ", referencingAuthorizableToBeChanged);
                 }
             }
