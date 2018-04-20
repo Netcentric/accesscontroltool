@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/Netcentric/accesscontroltool.svg?branch=develop)](https://travis-ci.org/Netcentric/accesscontroltool)
+
 Access Control Tool for Adobe Experience Manager
 ================================================
 
