@@ -3,13 +3,13 @@ package biz.netcentric.cq.tools.actool.configreader;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.jcr.Node;
 import javax.jcr.Session;
@@ -65,7 +65,7 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
     }
 
     private Map<String, String> getConfigurations(PackageEntryOrNode configFileOrDir) throws Exception {
-        Map<String, String> configs = new HashMap<String, String>();
+        Map<String, String> configs = new TreeMap<String, String>();
 
         Set<String> currentRunModes = slingSettingsService.getRunModes();
 
