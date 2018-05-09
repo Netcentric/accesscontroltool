@@ -203,12 +203,8 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
                 StringWriter writer = new StringWriter();
                 IOUtils.copy(configInputStream, writer, "UTF-8");
                 String configData = writer.toString();
-                if (StringUtils.isNotBlank(configData)) {
-                    LOG.debug("found configuration data of node: {}", node.getPath());
-                    return configData;
-                } else {
-                    throw new IllegalStateException("File " + node.getPath() + " is empty!");
-                }
+                LOG.debug("Found configuration data of node: {} with {} bytes", node.getPath(), configData.getBytes());
+                return configData;
 
             } finally {
                 configInputStream.close();
