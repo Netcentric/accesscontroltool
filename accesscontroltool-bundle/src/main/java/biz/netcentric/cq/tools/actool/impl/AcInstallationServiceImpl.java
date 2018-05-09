@@ -10,6 +10,7 @@ package biz.netcentric.cq.tools.actool.impl;
 
 import static biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger.msHumanReadable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Dictionary;
@@ -18,6 +19,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,6 +37,7 @@ import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.api.security.user.Authorizable;
+import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
@@ -657,7 +660,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
         try {
             // first the ACE entries have to be deleted
-
             Set<String> principalIds = new HashSet<String>();
             Set<AclBean> aclBeans = QueryHelper.getAuthorizablesAcls(session, authorizableIds, principalIds);
             String deleteAcesResultMsg = PurgeHelper.deleteAcesForPrincipalIds(session, principalIds, aclBeans);
@@ -665,8 +667,20 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
             // then the authorizables can be deleted
             UserManager userManager = AccessControlUtils.getUserManagerAutoSaveDisabled(session);
+            List<Authorizable> authorizablesToDelete = new ArrayList<Authorizable>();
             for (String authorizableId : authorizableIds) {
-                String deleteResultMsg = deleteAuthorizable(authorizableId, userManager);
+                Authorizable authorizable = userManager.getAuthorizable(authorizableId);
+                if (authorizable != null) {
+                    authorizablesToDelete.add(authorizable);
+                } else {
+                    message.append("Could not delete authorizable '" + authorizableId + "' because it does not exist\n");
+                }
+            }
+
+            sortAuthorizablesForDeletion(authorizablesToDelete);
+
+            for (Authorizable authorizableToDelete : authorizablesToDelete) {
+                String deleteResultMsg = deleteAuthorizable(authorizableToDelete);
                 message.append(deleteResultMsg);
             }
 
@@ -674,7 +688,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
             sw.stop();
             String executionTime = PersistableInstallationLogger.msHumanReadable(sw.getTime());
-            message.append("Purged " + authorizableIds.size() + " authorizables in " + executionTime + "\n");
+            message.append("Purged " + authorizablesToDelete.size() + " authorizables in " + executionTime + "\n");
 
         } catch (Exception e) {
             message.append("Deletion of ACEs failed! reason: RepositoryException: " + e + "\n");
@@ -684,19 +698,51 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         return message.toString();
     }
 
-    private String deleteAuthorizable(final String authorizableId, final UserManager userManager) {
+    void sortAuthorizablesForDeletion(List<Authorizable> authorizablesToDelete) throws RepositoryException {
+
+        outer:
+        for (int i = 0; i < authorizablesToDelete.size();) {
+            Authorizable currentAuthorizable = authorizablesToDelete.get(i);
+            Iterator<Group> declaredMemberOfIt = currentAuthorizable.declaredMemberOf();
+            LOG.trace("At index {}: {}", i, currentAuthorizable.getID());
+            while (declaredMemberOfIt != null && declaredMemberOfIt.hasNext()) {
+                Group groupOfAuthorizable = declaredMemberOfIt.next();
+                int groupOfAuthorizableIndex = authorizablesToDelete.indexOf(groupOfAuthorizable);
+                LOG.trace("  Is member of at index {}: {}", groupOfAuthorizableIndex, groupOfAuthorizable.getID());
+                if (groupOfAuthorizableIndex > -1 && groupOfAuthorizableIndex < i) {
+                    LOG.trace("    Swap at index {} (groupOfAuthorizableIndex {}):", i, groupOfAuthorizableIndex);
+                    // swap and set i
+                    authorizablesToDelete.set(groupOfAuthorizableIndex, currentAuthorizable);
+                    authorizablesToDelete.set(i, groupOfAuthorizable);
+                    i = groupOfAuthorizableIndex;
+                    continue outer;
+                }
+            }
+            i++;
+        }
+    }
+
+    private String deleteAuthorizable(Authorizable authorizable) throws RepositoryException {
         String message;
         try {
-            Authorizable authorizable = userManager.getAuthorizable(authorizableId);
-            if (authorizable != null) {
-                authorizable.remove();
-                message = "Deleted authorizable " + authorizableId + "\n";
-            } else {
-                message = "Could not delete authorizable '" + authorizableId + "' because it does not exist\n";
+            List<String> removedFromGroups = new ArrayList<String>();
+            Iterator<Group> declaredMemberOf = authorizable.declaredMemberOf();
+            while (declaredMemberOf.hasNext()) {
+                Group groupTheAuthorizableIsMemberOf = declaredMemberOf.next();
+                if (groupTheAuthorizableIsMemberOf.removeMember(authorizable)) {
+                    removedFromGroups.add(groupTheAuthorizableIsMemberOf.getID());
+                }
             }
+
+            authorizable.remove();
+            message = "Deleted authorizable '" + authorizable.getID() + "'"
+                    + (!removedFromGroups.isEmpty() ? " and removed it from groups: " + StringUtils.join(removedFromGroups, ", ")
+                            : "")
+                    + "\n";
+
         } catch (RepositoryException e) {
-            message = "Error while deleting authorizable '" + authorizableId + "': e=" + e;
-            LOG.warn("Error while deleting authorizable '" + authorizableId + "': e=" + e, e);
+            message = "Error while deleting authorizable '" + authorizable.getID() + "': e=" + e;
+            LOG.warn("Error while deleting authorizable '" + authorizable.getID() + "': e=" + e, e);
         }
 
         return message;
