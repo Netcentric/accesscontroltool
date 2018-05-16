@@ -68,7 +68,7 @@ public class AuthorizablesConfig extends LinkedHashSet<AuthorizableConfigBean> {
         Set<String> filteredPrincipals = new HashSet<String>();
         for (String principal : principals) {
             AuthorizableConfigBean authorizableConfig = getAuthorizableConfigByPrincipalName(principal);
-            if (authorizableConfig.managesPath(path, defaultUnmanagedAcePathsRegex)) {
+            if (authorizableConfig == null || authorizableConfig.managesPath(path, defaultUnmanagedAcePathsRegex)) {
                 filteredPrincipals.add(principal);
             }
         }
