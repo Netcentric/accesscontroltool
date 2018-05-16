@@ -52,7 +52,16 @@ public class AuthorizablesConfigTest {
 
         onlyManagedPrincipalNames = authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("/content/dam/geometrixx", principalSet, null);
         assertEquals(principalSet("testgroupAllManaged"), onlyManagedPrincipalNames);
+    }
 
+    @Test
+    public void testRemoveUnmanagedPrincipalNamesAtPathWithNoAutorizableBean() {
+        //We add a new non-existant name to remove but that doesn't belong in the authorizables list
+        Set<String> principalSet = principalSet(beanTestGroupAllManaged.getPrincipalName(), testgroupPartlyManaged.getPrincipalName(),
+                beanEveryone.getPrincipalName(), "nonExistentPrincipal");
+
+        Set<String> removedPrincipals = authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("/content/dam/geometrixx", principalSet, null);
+        assertEquals(principalSet("testgroupAllManaged", "nonExistentPrincipal"), removedPrincipals);
     }
 
     @Test
