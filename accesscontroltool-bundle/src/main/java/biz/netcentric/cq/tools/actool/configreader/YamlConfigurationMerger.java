@@ -38,8 +38,8 @@ import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.helper.Constants;
-import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
+import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
 import biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator;
@@ -86,9 +86,14 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         for (final Map.Entry<String, String> entry : configFileContentByFilename.entrySet()) {
 
             String sourceFile = entry.getKey();
-            history.addMessage(LOG, "Found configuration file " + sourceFile);
+            history.addMessage(LOG, "Using configuration file " + sourceFile);
 
             List<LinkedHashMap> yamlRootList = (List<LinkedHashMap>) yamlParser.load(entry.getValue());
+
+            if (yamlRootList == null || yamlRootList.isEmpty()) {
+                history.addMessage(LOG, "   " + sourceFile + " has no instructions");
+                continue;
+            }
 
             yamlRootList = yamlMacroProcessor.processMacros(yamlRootList, history, session);
             // set merged config per file to ensure it is there in case of validation errors (for success, the actual merged config is set
