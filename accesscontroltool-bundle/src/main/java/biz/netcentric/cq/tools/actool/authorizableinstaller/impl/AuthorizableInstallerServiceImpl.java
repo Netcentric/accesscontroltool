@@ -99,6 +99,7 @@ public class AuthorizableInstallerServiceImpl implements
             AuthorizableExistsException, AuthorizableCreatorException, CryptoException {
 
         String authorizableId = authorizableConfigBean.getAuthorizableId();
+        boolean authorizableIsEveryone = StringUtils.equals(authorizableId, PRINCIPAL_EVERYONE);
         LOG.debug("- start installation of authorizable: {}", authorizableId);
 
         UserManager userManager = AccessControlUtils.getUserManagerAutoSaveDisabled(session);
@@ -122,11 +123,15 @@ public class AuthorizableInstallerServiceImpl implements
             // move authorizable if path changed (retaining existing members)
             handleRecreationOfAuthorizableIfNecessary(session, acConfiguration, authorizableConfigBean, installLog, userManager);
 
-            applyGroupMembershipConfigIsMemberOf(installLog, acConfiguration, authorizableConfigBean, userManager, session, authorizablesFromConfigurations);
+            if (!authorizableIsEveryone) {
+                applyGroupMembershipConfigIsMemberOf(installLog, acConfiguration, authorizableConfigBean, userManager, session, authorizablesFromConfigurations);
+            }
 
         }
 
-        applyGroupMembershipConfigMembers(acConfiguration, authorizableConfigBean, installLog, authorizableId, userManager, authorizablesFromConfigurations);
+        if (!authorizableIsEveryone) {
+            applyGroupMembershipConfigMembers(acConfiguration, authorizableConfigBean, installLog, authorizableId, userManager, authorizablesFromConfigurations);
+        }
 
         if (StringUtils.isNotBlank(authorizableConfigBean.getMigrateFrom()) && authorizableConfigBean.isGroup()) {
             migrateFromOldGroup(authorizableConfigBean, userManager, installLog);
