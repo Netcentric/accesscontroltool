@@ -23,6 +23,7 @@ import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFactory;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
@@ -105,6 +106,19 @@ public class AuthorizableInstallerServiceImpl implements
 
         // if current authorizable from config doesn't exist yet
         Authorizable authorizableToInstall = userManager.getAuthorizable(authorizableId);
+
+        if(StringUtils.equals(authorizableId, PRINCIPAL_EVERYONE)) {
+            if (ArrayUtils.isNotEmpty(authorizableConfigBean.getMemberOf()) 
+                    || ArrayUtils.isNotEmpty(authorizableConfigBean.getMembers())
+                    || StringUtils.isNotBlank(authorizableConfigBean.getMigrateFrom())) {
+                throw new IllegalArgumentException("The special group " + PRINCIPAL_EVERYONE
+                        + " does not support setting properties 'members', 'isMemberOf' and 'migrateFrom'");
+            }
+            // only setting authorizables properties is supported for everyone
+            setAuthorizableProperties(authorizableToInstall, authorizableConfigBean, session, installLog);
+            return;
+        }
+
         if (authorizableToInstall == null) {
             authorizableToInstall = createNewAuthorizable(acConfiguration, authorizableConfigBean, installLog, userManager, session);
         }
@@ -122,11 +136,13 @@ public class AuthorizableInstallerServiceImpl implements
             // move authorizable if path changed (retaining existing members)
             handleRecreationOfAuthorizableIfNecessary(session, acConfiguration, authorizableConfigBean, installLog, userManager);
 
-            applyGroupMembershipConfigIsMemberOf(installLog, acConfiguration, authorizableConfigBean, userManager, session, authorizablesFromConfigurations);
+            applyGroupMembershipConfigIsMemberOf(installLog, acConfiguration, authorizableConfigBean, userManager, session,
+                    authorizablesFromConfigurations);
 
         }
 
-        applyGroupMembershipConfigMembers(acConfiguration, authorizableConfigBean, installLog, authorizableId, userManager, authorizablesFromConfigurations);
+        applyGroupMembershipConfigMembers(acConfiguration, authorizableConfigBean, installLog, authorizableId, userManager,
+                authorizablesFromConfigurations);
 
         if (StringUtils.isNotBlank(authorizableConfigBean.getMigrateFrom()) && authorizableConfigBean.isGroup()) {
             migrateFromOldGroup(authorizableConfigBean, userManager, installLog);
