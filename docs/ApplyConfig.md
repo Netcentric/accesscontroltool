@@ -15,7 +15,7 @@ The following section explain how you can trigger the installation of ACLs.
 ## Installation Hook
 
 You can automatically install ACEs and authorizables defined in YAML files within a package using the Content Package Install Hook mechanism.
-If you use the content-package-maven-plugin enable the installation hook via: 
+If you use the content-package-maven-plugin for building the package, enable the installation hook via: 
 
 ```
 <plugin>
@@ -26,6 +26,20 @@ If you use the content-package-maven-plugin enable the installation hook via:
       <installhook.actool.class>biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook</installhook.actool.class>
     </properties>
   </configuration>
+</plugin>
+```
+
+If you would rather use the filevault-package-maven-plugin for building the package, enable the installation hook via:
+
+```
+<plugin>
+    <groupId>org.apache.jackrabbit</groupId>
+    <artifactId>filevault-package-maven-plugin</artifactId>
+    <configuration>
+        <properties>
+            <installhook.actool.class>biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook</installhook.actool.class>
+        </properties>
+    </configuration>
 </plugin>
 ```
 
