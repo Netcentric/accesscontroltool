@@ -28,6 +28,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
+import org.apache.felix.scr.annotations.ReferencePolicyOption;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.AuthorizableExistsException;
@@ -70,7 +71,7 @@ public class AuthorizableInstallerServiceImpl implements
     @Reference(cardinality = ReferenceCardinality.OPTIONAL_UNARY)
     ExternalGroupInstallerServiceImpl externalGroupCreatorService;
 
-    @Reference
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL_UNARY, policyOption = ReferencePolicyOption.GREEDY)
     CryptoSupport cryptoSupport;
 
     @Override
@@ -154,6 +155,9 @@ public class AuthorizableInstallerServiceImpl implements
                              final User authorizableToInstall) throws RepositoryException, CryptoException {
         String password = authorizableConfigBean.getPassword();
         if (password.matches("\\{.+}")) {
+            if (cryptoSupport == null) {
+                throw new CryptoException("CryptoSupport missing to unprotect password.");
+            }
             password = cryptoSupport.unprotect(password);
         }
         authorizableToInstall.changePassword(password);
