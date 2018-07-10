@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.jcr.AccessDeniedException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
@@ -208,6 +209,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
                 installMergedConfigurations(installLog, acConfiguration, restrictedToPaths, session);
 
+                ensureVirtualGroupsAreRemoved(installLog, acConfiguration, session);
                 removeObsoleteAuthorizables(installLog, acConfiguration.getObsoleteAuthorizables(), session);
 
             }
@@ -463,6 +465,23 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 + msHumanReadable(stopWatch.getTime()));
     }
 
+    private Set<String> removeNonExistingAuthorizables(Set<String> authorizablesToCheck, Session session)
+            throws AccessDeniedException, UnsupportedRepositoryOperationException, RepositoryException {
+        Set<String> nonExistingAuthorizables = new HashSet<String>();
+
+        UserManager userManager = AccessControlUtils.getUserManagerAutoSaveDisabled(session);
+        Iterator<String> authorizablesIt = authorizablesToCheck.iterator();
+        while (authorizablesIt.hasNext()) {
+            String authorizableId = authorizablesIt.next();
+            Authorizable authorizable = userManager.getAuthorizable(authorizableId);
+            if (authorizable == null) {
+                nonExistingAuthorizables.add(authorizableId);
+                authorizablesIt.remove();
+            }
+        }
+        return nonExistingAuthorizables;
+    }
+
     private void removeObsoleteAuthorizables(InstallationLogger installLog, Set<String> obsoleteAuthorizables, Session session) {
 
         try {
@@ -472,19 +491,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 return;
             }
 
-            UserManager userManager = AccessControlUtils.getUserManagerAutoSaveDisabled(session);
-
-            Set<String> obsoleteAuthorizablesAlreadyPurged = new HashSet<String>();
-
-            Iterator<String> obsoleteAuthorizablesIt = obsoleteAuthorizables.iterator();
-            while (obsoleteAuthorizablesIt.hasNext()) {
-                String obsoleteAuthorizableId = obsoleteAuthorizablesIt.next();
-                Authorizable obsoleteAuthorizable = userManager.getAuthorizable(obsoleteAuthorizableId);
-                if (obsoleteAuthorizable == null) {
-                    obsoleteAuthorizablesAlreadyPurged.add(obsoleteAuthorizableId);
-                    obsoleteAuthorizablesIt.remove();
-                }
-            }
+            Set<String> obsoleteAuthorizablesAlreadyPurged = removeNonExistingAuthorizables(obsoleteAuthorizables, session);
 
             if (obsoleteAuthorizables.isEmpty()) {
                 installLog.addMessage(LOG, "All configured " + obsoleteAuthorizablesAlreadyPurged.size()
@@ -502,6 +509,41 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             installLog.addMessage(LOG, "Successfully purged " + obsoleteAuthorizables);
         } catch (Exception e) {
             installLog.addError(LOG, "Could not purge obsolete authorizables " + obsoleteAuthorizables, e);
+        }
+
+    }
+
+    private void ensureVirtualGroupsAreRemoved(InstallationLogger installLog, AcConfiguration acConfiguration, Session session) {
+
+        try {
+
+            List<AuthorizableConfigBean> virtualGroups = acConfiguration.getVirtualGroups();
+            Set<String> virtualGroupIds = new HashSet<>();
+            for (AuthorizableConfigBean virtualGroup : virtualGroups) {
+                virtualGroupIds.add(virtualGroup.getAuthorizableId());
+            }
+
+            if (virtualGroups.isEmpty()) {
+                installLog.addVerboseMessage(LOG,
+                        "No virtual groups are configured - no need to ensure virtual groups are removed from repo.");
+                return;
+            }
+
+            removeNonExistingAuthorizables(virtualGroupIds, session);
+            if (virtualGroupIds.isEmpty()) {
+                installLog.addVerboseMessage(LOG, "No virtual groups exist in repo that would require purging.");
+                return;
+            }
+
+            installLog.addMessage(LOG, "Purging " + virtualGroupIds.size()
+                    + " virtual groups from repository (most likely they were non-virtual groups before)...");
+
+            String purgeAuthorizablesResultMsg = purgeAuthorizables(virtualGroupIds, session);
+            installLog.addVerboseMessage(LOG, purgeAuthorizablesResultMsg); // this message is too long for regular log
+            installLog.addMessage(LOG, "Successfully purged virtual groups from repository: " + virtualGroupIds);
+
+        } catch (Exception e) {
+            installLog.addError(LOG, "Could not purge virtual groups", e);
         }
 
     }

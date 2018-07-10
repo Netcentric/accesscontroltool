@@ -52,6 +52,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     private String disabled;
 
+    private boolean virtual;
 
     public String getAuthorizableId() {
         return authorizableId;
@@ -157,7 +158,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.isSystemUser = isSystemUser;
     }
 
-    public String[] getMemberOf() {
+    public String[] getIsMemberOf() {
         return isMemberOf;
     }
 
@@ -165,22 +166,22 @@ public class AuthorizableConfigBean implements AcDumpElement {
         return isMemberOf != null;
     }
 
-    public String getMemberOfStringFromConfig() {
+    public String getIsMemberOfStringFromConfig() {
         return memberOfStringFromConfig;
     }
 
-    public String getMemberOfString() {
+    public String getIsMemberOfString() {
         if (isMemberOf == null) {
             return "";
         }
         return StringUtils.join(isMemberOf, ",");
     }
 
-    public void setMemberOf(final String[] memberOf) {
+    public void setIsMemberOf(final String[] memberOf) {
         this.isMemberOf = memberOf;
     }
 
-    public void setMemberOf(final List<String> memberOf) {
+    public void setIsMemberOf(final List<String> memberOf) {
         if ((memberOf != null) && !memberOf.isEmpty()) {
             this.isMemberOf = memberOf.toArray(new String[memberOf.size()]);
         }
@@ -271,13 +272,21 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.unmanagedExternalMembersRegex = GlobalConfiguration.stringToRegex(unmanagedExternalMembersRegex);
     }
 
+    public boolean isVirtual() {
+        return virtual;
+    }
+
+    public void setVirtual(boolean virtual) {
+        this.virtual = virtual;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append("\n" + "id: " + authorizableId + "\n");
         sb.append("name: " + principalName + "\n");
         sb.append("path: " + path + "\n");
-        sb.append("isMemberOf: " + getMemberOfString() + "\n");
+        sb.append("isMemberOf: " + getIsMemberOfString() + "\n");
         sb.append("members: " + getMembersString() + "\n");
         return sb.toString();
     }
