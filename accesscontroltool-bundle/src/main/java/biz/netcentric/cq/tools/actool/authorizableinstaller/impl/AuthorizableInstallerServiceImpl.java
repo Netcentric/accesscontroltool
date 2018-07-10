@@ -28,6 +28,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
+import org.apache.felix.scr.annotations.ReferencePolicyOption;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.AuthorizableExistsException;
@@ -70,7 +71,7 @@ public class AuthorizableInstallerServiceImpl implements
     @Reference(cardinality = ReferenceCardinality.OPTIONAL_UNARY)
     ExternalGroupInstallerServiceImpl externalGroupCreatorService;
 
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL_UNARY)
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL_UNARY, policyOption = ReferencePolicyOption.GREEDY)
     CryptoSupport cryptoSupport;
 
     @Override
