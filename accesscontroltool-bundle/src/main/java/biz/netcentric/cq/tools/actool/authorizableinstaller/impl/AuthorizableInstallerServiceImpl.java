@@ -70,7 +70,7 @@ public class AuthorizableInstallerServiceImpl implements
     @Reference(cardinality = ReferenceCardinality.OPTIONAL_UNARY)
     ExternalGroupInstallerServiceImpl externalGroupCreatorService;
 
-    @Reference
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL_UNARY)
     CryptoSupport cryptoSupport;
 
     @Override
@@ -154,6 +154,9 @@ public class AuthorizableInstallerServiceImpl implements
                              final User authorizableToInstall) throws RepositoryException, CryptoException {
         String password = authorizableConfigBean.getPassword();
         if (password.matches("\\{.+}")) {
+            if (cryptoSupport == null) {
+                throw new CryptoException("CryptoSupport missing to unprotect password.");
+            }
             password = cryptoSupport.unprotect(password);
         }
         authorizableToInstall.changePassword(password);
