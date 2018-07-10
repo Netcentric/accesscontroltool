@@ -1,5 +1,7 @@
 package biz.netcentric.cq.tools.actool.history;
 
+import java.util.Objects;
+
 import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.packaging.PackageException;
 
@@ -9,7 +11,7 @@ public class ProgressTrackerListenerInstallationLogger extends PersistableInstal
 
     public ProgressTrackerListenerInstallationLogger(ProgressTrackerListener listener) {
         super();
-        this.listener = listener;
+        this.listener = Objects.requireNonNull(listener);
     }
 
     @Override
