@@ -37,7 +37,7 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
     @Override
     public PersistableInstallationLogger installYamlFilesFromPackage(Archive archive, Session session, ProgressTrackerListener progressTrackerListener)
             throws Exception {
-        PersistableInstallationLogger history = new ProgressTrackerListenerInstallationLogger(progressTrackerListener);
+        PersistableInstallationLogger history = progressTrackerListener != null ? new ProgressTrackerListenerInstallationLogger(progressTrackerListener) : new PersistableInstallationLogger();
         Map<String, String> configs = configFilesRetriever.getConfigFileContentFromPackage(archive);
         history.setCrxPackageName(getArchiveName(archive));
         String[] restrictedToPaths = null; // never use path restriction for hook usage for now
