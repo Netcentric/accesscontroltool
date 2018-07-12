@@ -77,4 +77,11 @@ public class VirtualGroupProcessorTest {
 
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testVirtualGroupsInvalidMembersAttribute() throws Exception {
+
+        getAcConfigurationForFile(getConfigurationMerger(), session, "test-virtualgroups-invalid-use-of-members.yaml");
+
+    }
+
 }

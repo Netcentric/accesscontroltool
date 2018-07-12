@@ -48,6 +48,11 @@ public class VirtualGroupProcessor {
 
             logger.addVerboseMessage(LOG, "Authorizable bean " + virtualAutBean.getAuthorizableId() + " is virtual");
 
+            if (!ArrayUtils.isEmpty(virtualAutBean.getMembers())) {
+                throw new IllegalArgumentException("It is not allowed to define members in virtual groups (offending virtual group: '"
+                        + virtualAutBean.getAuthorizableId() + "')");
+            }
+
             List<AuthorizableConfigBean> referencingAuthBeans = getAuthConfigBeansReferencingVirtualGroup(
                     virtualAutBean.getAuthorizableId(), acConfiguration);
 
