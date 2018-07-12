@@ -64,6 +64,9 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
     @Reference
     VirtualGroupProcessor virtualGroupProcessor;
 
+    @Reference
+    TestUserConfigsCreator testUserConfigsCreator;
+
     @Override
     public AcConfiguration getMergedConfigurations(
             final Map<String, String> configFileContentByFilename,
@@ -179,6 +182,8 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         acConfiguration.setObsoleteAuthorizables(obsoleteAuthorizables);
 
         virtualGroupProcessor.flattenGroupTree(acConfiguration, installLog);
+
+        testUserConfigsCreator.createTestUserConfigs(acConfiguration, installLog);
 
         installLog.setMergedAndProcessedConfig(
                 "# Merged configuration of " + configFileContentByFilename.size() + " files \n" + yamlParser.dump(acConfiguration));

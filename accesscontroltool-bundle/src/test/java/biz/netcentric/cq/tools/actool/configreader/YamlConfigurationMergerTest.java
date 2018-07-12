@@ -90,6 +90,7 @@ public class YamlConfigurationMergerTest {
         merger.yamlMacroProcessor = new YamlMacroProcessorImpl();
         merger.obsoleteAuthorizablesValidator = new ObsoleteAuthorizablesValidatorImpl();
         merger.virtualGroupProcessor = new VirtualGroupProcessor();
+        merger.testUserConfigsCreator = new TestUserConfigsCreator();
         return merger;
     }
 
