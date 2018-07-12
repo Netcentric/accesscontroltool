@@ -566,7 +566,7 @@ public class DumpServiceImpl implements ConfigDumpService {
             outStream
                     .println(AcHelper
                             .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY)
-                            + "isMemberOf: " + bean.getMemberOfString());
+                            + "isMemberOf: " + bean.getIsMemberOfString());
             outStream
                     .println(AcHelper
                             .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY)
@@ -676,7 +676,7 @@ public class DumpServiceImpl implements ConfigDumpService {
             }
             memberOfList.add(groupId);
         }
-        bean.setMemberOf(memberOfList.toArray(new String[memberOfList.size()]));
+        bean.setIsMemberOf(memberOfList.toArray(new String[memberOfList.size()]));
     }
 
     private Set<AceBean> getNewAceSet(final int aclOrdering) {

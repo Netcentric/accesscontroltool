@@ -43,7 +43,7 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
                 .append("- name: '").append(authorizableConfigBean.getName()).append("'\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
                 .append("isMemberOf: "
-                        + authorizableConfigBean.getMemberOfString())
+                        + authorizableConfigBean.getIsMemberOfString())
                 .append("\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
                 .append("path: " + authorizableConfigBean.getPath())

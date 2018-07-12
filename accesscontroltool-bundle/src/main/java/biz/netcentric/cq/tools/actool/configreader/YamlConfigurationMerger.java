@@ -40,7 +40,6 @@ import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
-import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
 import biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator;
 import biz.netcentric.cq.tools.actool.validators.GlobalConfigurationValidator;
@@ -62,10 +61,13 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
     @Reference
     ObsoleteAuthorizablesValidator obsoleteAuthorizablesValidator;
 
+    @Reference
+    VirtualGroupProcessor virtualGroupProcessor;
+
     @Override
     public AcConfiguration getMergedConfigurations(
             final Map<String, String> configFileContentByFilename,
-            final PersistableInstallationLogger history,
+            final PersistableInstallationLogger installLog,
             final ConfigReader configReader, Session session) throws RepositoryException,
             AcConfigBeanValidationException {
 
@@ -86,19 +88,19 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         for (final Map.Entry<String, String> entry : configFileContentByFilename.entrySet()) {
 
             String sourceFile = entry.getKey();
-            history.addMessage(LOG, "Using configuration file " + sourceFile);
+            installLog.addMessage(LOG, "Using configuration file " + sourceFile);
 
             List<LinkedHashMap> yamlRootList = (List<LinkedHashMap>) yamlParser.load(entry.getValue());
 
             if (yamlRootList == null || yamlRootList.isEmpty()) {
-                history.addMessage(LOG, "   " + sourceFile + " has no instructions");
+                installLog.addMessage(LOG, "   " + sourceFile + " has no instructions");
                 continue;
             }
 
-            yamlRootList = yamlMacroProcessor.processMacros(yamlRootList, history, session);
+            yamlRootList = yamlMacroProcessor.processMacros(yamlRootList, installLog, session);
             // set merged config per file to ensure it is there in case of validation errors (for success, the actual merged config is set
             // after this loop)
-            history.setMergedAndProcessedConfig("# File " + sourceFile + "\n" + yamlParser.dump(yamlRootList));
+            installLog.setMergedAndProcessedConfig("# File " + sourceFile + "\n" + yamlParser.dump(yamlRootList));
 
             final Set<String> sectionIdentifiers = new LinkedHashSet<String>();
 
@@ -149,8 +151,8 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             }
 
             // --- ace_config section
-            final AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(authorizableIdsFromAllConfigs);
-            final Set<AceBean> currentAceBeansFromConfig = configReader.getAceConfigurationBeans(yamlRootList, aceBeanValidator, session);
+            final Set<AceBean> currentAceBeansFromConfig = configReader.getAceConfigurationBeans(yamlRootList,
+                    getAceBeanValidator(authorizableIdsFromAllConfigs), session);
 
             configurationsValidator.validateKeepOrder(mergedAceBeansFromConfig, currentAceBeansFromConfig, sourceFile);
 
@@ -166,7 +168,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             obsoleteAuthorizablesValidator.validate(obsoleteAuthorizables, authorizableIdsFromAllConfigs, sourceFile);
         }
 
-        ensureIsMemberOfIsUsedWherePossible(mergedAuthorizablesBeansfromConfig, history);
+        ensureIsMemberOfIsUsedWherePossible(mergedAuthorizablesBeansfromConfig, installLog);
 
         GlobalConfigurationValidator.validate(globalConfiguration);
 
@@ -176,12 +178,18 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         acConfiguration.setAceConfig(mergedAceBeansFromConfig);
         acConfiguration.setObsoleteAuthorizables(obsoleteAuthorizables);
 
-        history.setMergedAndProcessedConfig(
+        virtualGroupProcessor.flattenGroupTree(acConfiguration, installLog);
+
+        installLog.setMergedAndProcessedConfig(
                 "# Merged configuration of " + configFileContentByFilename.size() + " files \n" + yamlParser.dump(acConfiguration));
 
-        history.addMessage(LOG, "Loaded configuration in " + msHumanReadable(sw.getTime()));
+        installLog.addMessage(LOG, "Loaded configuration in " + msHumanReadable(sw.getTime()));
 
         return acConfiguration;
+    }
+
+    AceBeanValidatorImpl getAceBeanValidator(final Set<String> authorizableIdsFromAllConfigs) {
+        return new AceBeanValidatorImpl(authorizableIdsFromAllConfigs);
     }
 
     void ensureIsMemberOfIsUsedWherePossible(AuthorizablesConfig mergedAuthorizablesBeansfromConfig,
@@ -214,7 +222,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
                     membersIt.remove();
                     history.addWarning(LOG, "Group " + group.getAuthorizableId() + " is declaring member " + member
                             + " - moving relationship to isMemberOf of authorizable " + groupForIsMemberOf.getAuthorizableId()
-                            + " (always prefer using isMemberOf over members if possible referenced member is availalbe in configuration)");
+                            + " (always prefer using isMemberOf over members if referenced member is availalbe in configuration)");
                 }
 
             }

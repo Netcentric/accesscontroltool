@@ -137,7 +137,7 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
                     throws InvalidGroupNameException {
         final String currentAuthorizable = authorizableConfigBean.getAuthorizableId();
         final String currentEntryValue = authorizableConfigBean
-                .getMemberOfStringFromConfig();
+                .getIsMemberOfStringFromConfig();
         if (StringUtils.isNotBlank(currentEntryValue)) {
             if (currentEntryValue != null) {
 
@@ -159,7 +159,7 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
                     }
                 }
 
-                authorizableConfigBean.setMemberOf(groups);
+                authorizableConfigBean.setIsMemberOf(groups);
 
             }
         }

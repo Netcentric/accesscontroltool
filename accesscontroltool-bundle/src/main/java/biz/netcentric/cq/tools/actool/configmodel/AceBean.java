@@ -241,6 +241,7 @@ public class AceBean implements AcDumpElement {
         result = (prime * result) + ((initialContent == null) ? 0 : initialContent.hashCode());
         result = (prime * result) + ((jcrPath == null) ? 0 : jcrPath.hashCode());
         result = (prime * result) + ((permission == null) ? 0 : permission.hashCode());
+        result = (prime * result) + ((authorizableId == null) ? 0 : authorizableId.hashCode());
         result = (prime * result) + ((principalName == null) ? 0 : principalName.hashCode());
         result = (prime * result) + ((privilegesString == null) ? 0 : privilegesString.hashCode());
         result = (prime * result) + ((restrictions == null) ? 0 : restrictions.hashCode());
@@ -295,6 +296,13 @@ public class AceBean implements AcDumpElement {
                 return false;
             }
         } else if (!principalName.equals(other.principalName)) {
+            return false;
+        }
+        if (authorizableId == null) {
+            if (other.authorizableId != null) {
+                return false;
+            }
+        } else if (!authorizableId.equals(other.authorizableId)) {
             return false;
         }
         if (privilegesString == null) {

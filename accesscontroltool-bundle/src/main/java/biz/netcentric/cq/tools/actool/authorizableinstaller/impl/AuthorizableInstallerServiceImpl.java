@@ -109,7 +109,7 @@ public class AuthorizableInstallerServiceImpl implements
         Authorizable authorizableToInstall = userManager.getAuthorizable(authorizableId);
 
         if(StringUtils.equals(authorizableId, PRINCIPAL_EVERYONE)) {
-            if (ArrayUtils.isNotEmpty(authorizableConfigBean.getMemberOf()) 
+            if (ArrayUtils.isNotEmpty(authorizableConfigBean.getIsMemberOf()) 
                     || ArrayUtils.isNotEmpty(authorizableConfigBean.getMembers())
                     || StringUtils.isNotBlank(authorizableConfigBean.getMigrateFrom())) {
                 throw new IllegalArgumentException("The special group " + PRINCIPAL_EVERYONE
@@ -434,7 +434,7 @@ public class AuthorizableInstallerServiceImpl implements
             AcConfiguration acConfiguration,
             AuthorizableConfigBean authorizableConfigBean, UserManager userManager, Session session,
             Set<String> authorizablesFromConfigurations) throws RepositoryException, AuthorizableCreatorException {
-        String[] memberOf = authorizableConfigBean.getMemberOf();
+        String[] memberOf = authorizableConfigBean.getIsMemberOf();
 
         Authorizable currentGroupFromRepository = userManager.getAuthorizable(authorizableConfigBean.getAuthorizableId());
         Set<String> membershipGroupsFromConfig = getMembershipGroupsFromConfig(memberOf);
@@ -735,7 +735,7 @@ public class AuthorizableInstallerServiceImpl implements
             final UserManager userManager, Session session, InstallationLogger installLog)
             throws RepositoryException, AuthorizableCreatorException {
         String authorizableId = principalConfigBean.getAuthorizableId();
-        String[] memberOf = principalConfigBean.getMemberOf();
+        String[] memberOf = principalConfigBean.getIsMemberOf();
         if ((authorizable != null) && (memberOf != null) && (memberOf.length > 0)) {
             // add group to groups according to configuration
             Set<String> referencingAuthorizablesToBeChanged = validateAssignedGroups(userManager, authorizablesConfig, session, authorizableId,
