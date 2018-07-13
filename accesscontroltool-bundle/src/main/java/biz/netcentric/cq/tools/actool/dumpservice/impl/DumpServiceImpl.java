@@ -88,8 +88,8 @@ import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
 @Component(metatype = true, label = "AC Dump Service", description = "Service that creates dumps of the current AC configurations (groups&ACEs)")
 @Properties({
 
-        @Property(label = "Number of dumps to save", name = DumpServiceImpl.DUMP_SERVICE_NR_OF_SAVED_DUMPS, value = "5", description = "number of last dumps which get saved in CRX under /var/statistics/achistory"),
-        @Property(label = "Include user ACEs in dumps", name = DumpServiceImpl.DUMP_INCLUDE_USERS, boolValue = false, description = "if selected, also user based ACEs (and their respective users) get added to dumps"),
+        @Property(label = "Number of dumps to save", name = DumpServiceImpl.DUMP_SERVICE_NR_OF_SAVED_DUMPS, value = "5", description = "Number of last dumps which get saved in CRX under /var/statistics/achistory"),
+        @Property(label = "Include users in dumps", name = DumpServiceImpl.DUMP_INCLUDE_USERS, boolValue = false, description = "If selected, also users with their ACEs get added to dumps"),
         @Property(label = "AC query exclude paths", name = DumpServiceImpl.DUMP_SERVICE_EXCLUDE_PATHS_PATH, value = {
                 "/home", "/jcr:system",
                 "/tmp" }, description = "direct children of jcr:root which get excluded from all dumps (also from internal dumps)") })
@@ -141,6 +141,7 @@ public class DumpServiceImpl implements ConfigDumpService {
                 properties.get(DUMP_INCLUDE_USERS), false);
 
     }
+
 
     @Override
     public boolean isIncludeUsers() {
@@ -409,6 +410,13 @@ public class DumpServiceImpl implements ConfigDumpService {
         return accessControBeanSet;
     }
 
+    /** Called from JMX console using the OSGi configuration.
+     * 
+     * @param keyOrder
+     * @param aclOrdering
+     * @param excludePaths
+     * @param session
+     * @return */
     public AceDumpData createAclDumpMap(final int keyOrder, final int aclOrdering,
             final String[] excludePaths, Session session) throws ValueFormatException,
             IllegalArgumentException, IllegalStateException,
@@ -428,8 +436,7 @@ public class DumpServiceImpl implements ConfigDumpService {
      * @throws RepositoryException */
     @Override
     public AceDumpData createAclDumpMap(final int keyOrder, final int aclOrdering,
-            final String[] excludePaths,
-            final boolean isIncludeUsers, Session session) throws RepositoryException {
+            final String[] excludePaths, final boolean isIncludeUsers, Session session) throws RepositoryException {
 
         AceDumpData aceDumpData = new AceDumpData();
         UserManager um = ((JackrabbitSession) session).getUserManager();
@@ -595,8 +602,9 @@ public class DumpServiceImpl implements ConfigDumpService {
                 AuthorizableConfigBean newBean = new AuthorizableConfigBean();
                 newBean.setAuthorizableId(user.getID());
 
-                String userProfileName = AcHelper.valuesToString(user.getProperty("profile/givenName"))
-                        + " " + AcHelper.valuesToString(user.getProperty("profile/familyName"));
+                String userProfileName = StringUtils
+                        .trim(StringUtils.defaultIfEmpty(AcHelper.valuesToString(user.getProperty("profile/givenName")), "")
+                                + " " + StringUtils.defaultIfEmpty(AcHelper.valuesToString(user.getProperty("profile/familyName")), ""));
                 if (StringUtils.isBlank(userProfileName)) {
                     userProfileName = user.getID();
                 }
@@ -606,6 +614,9 @@ public class DumpServiceImpl implements ConfigDumpService {
                 String intermediatePath = getIntermediatePath(user.getPath());
                 newBean.setPath(intermediatePath);
                 newBean.setIsGroup(false);
+                newBean.setIsSystemUser(user.isSystemUser());
+                // password is not in system and cannot be set
+
                 new HashSet<Authorizable>();
                 addDeclaredMembers(user, newBean);
                 userBeans.add(newBean);
