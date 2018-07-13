@@ -181,6 +181,29 @@ Variables can also be declared to be an array and used in a loop:
 
 NOTE: The scope of a variable is always limited to the lines in the very same yaml file following the definition till it is either redefined or the end of the yaml file is reached (this limitation will supposably be lifted with [#257][i257]).
 
+### Auto-create test users for groups
+
+It is possible to automatically create test users (since v2.1.0) for groups given in the configuration by providing a yaml hash `autoCreateTestUsers` in `global_config`. The following properties are allowed:
+
+property | comment | required
+--- | --- | ---
+createForGroupNamesRegEx | A regex (matched against authorizableId of groups) to select the groups, test users should be created for | required
+prefix | The prefix for the authorizable id, for instance if prefix "tu-" is given, a user "tu-myproject-editors" will be created for group "myproject-editors" | required
+path | The location where the test users shall be created | required
+password | The password for all test users to be created. Can be encrypted using CryptoSupport. Defaults simply to the authorizable id of the test user. | optional
+skipForRunmodes | The configuration is placed in a regular config file, hence it is possible to add one to an author configuration (located in e.g. in a folder "config.author" and one to a publish configuration (e.g. folder "config.publish"). To avoid creating special runmodes folders just for this configuration that list all runmodes except production, skipForRunmodes can be a comma-separated list of runmodes, where the users are not created.  Defaults to prod,production | optional
+
+Example:
+
+```
+- global_config:
+   autoCreateTestUsers: 
+     createForGroupNamesRegEx: "(myproj)-.*" 
+     prefix: "testuser-"  
+     path: /home/users/myproj-test-users
+     skipForRunmodes: prod, preprod
+```
+
 ### Referencing OS environment variables
 
 Env variables can be referenced by using `${env.my_env_variable}`. To provide a default use `defaultIfEmpty()` as linked in from StringUtils class: `${defaultIfEmpty(env.my_env_variable, 'default-val')}`.
