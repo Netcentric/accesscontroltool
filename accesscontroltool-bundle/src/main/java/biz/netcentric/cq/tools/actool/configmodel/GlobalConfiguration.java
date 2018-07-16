@@ -27,6 +27,9 @@ public class GlobalConfiguration {
     public static final String KEY_DEFAULT_UNMANAGED_EXTERNAL_MEMBERS_REGEX = "defaultUnmanagedExternalMembersRegex";
     public static final String KEY_DEFAULT_UNMANAGED_ACE_PATHS_REGEX = "defaultUnmanagedAcePathsRegex";
 
+    public static final String KEY_ALLOW_CREATE_OF_UNMANAGED_RELATIONSHIPS = "allowCreateOfUnmanagedRelationships";
+
+    
     public static final String KEY_AUTOCREATE_TEST_USERS = "autoCreateTestUsers";
 
     @Deprecated
@@ -38,6 +41,7 @@ public class GlobalConfiguration {
     private Pattern defaultUnmanagedExternalIsMemberOfRegex;
     private Pattern defaultUnmanagedExternalMembersRegex;
     private String defaultUnmanagedAcePathsRegex;
+    private Boolean allowCreateOfUnmanagedRelationships = null;
 
     private AutoCreateTestUsersConfig autoCreateTestUsersConfig;
 
@@ -72,6 +76,9 @@ public class GlobalConfiguration {
                 }
             }
 
+            if (globalConfigMap.containsKey(KEY_ALLOW_CREATE_OF_UNMANAGED_RELATIONSHIPS)) {
+            	setAllowCreateOfUnmanagedRelationships(Boolean.valueOf(globalConfigMap.get(KEY_ALLOW_CREATE_OF_UNMANAGED_RELATIONSHIPS).toString()));
+            }
 
             setMinRequiredVersion((String) globalConfigMap.get(KEY_MIN_REQUIRED_VERSION));
             if (globalConfigMap.containsKey(KEY_INSTALL_ACLS_INCREMENTALLY)) {
@@ -81,7 +88,6 @@ public class GlobalConfiguration {
             if (globalConfigMap.containsKey(KEY_AUTOCREATE_TEST_USERS)) {
                 autoCreateTestUsersConfig = new AutoCreateTestUsersConfig((Map) globalConfigMap.get(KEY_AUTOCREATE_TEST_USERS));
             }
-
         }
 
     }
@@ -108,6 +114,14 @@ public class GlobalConfiguration {
             } else {
                 throw new IllegalArgumentException("Duplicate config for " + KEY_DEFAULT_UNMANAGED_EXTERNAL_MEMBERS_REGEX);
             }
+        }
+        
+        if (otherGlobalConfig.getAllowCreateOfUnmanagedRelationships() != null) {
+            if (allowCreateOfUnmanagedRelationships == null) {
+            	allowCreateOfUnmanagedRelationships = otherGlobalConfig.getAllowCreateOfUnmanagedRelationships();
+            } else {
+                throw new IllegalArgumentException("Duplicate config for " + KEY_ALLOW_CREATE_OF_UNMANAGED_RELATIONSHIPS);
+            }        	
         }
 
         if (otherGlobalConfig.getMinRequiredVersion() != null) {
@@ -175,13 +189,23 @@ public class GlobalConfiguration {
     public void setDefaultUnmanagedAcePathsRegex(String defaultUnmanagedAcePathsRegex) {
         this.defaultUnmanagedAcePathsRegex = defaultUnmanagedAcePathsRegex;
     }
+    
+	public Boolean getAllowCreateOfUnmanagedRelationships() {
+		return allowCreateOfUnmanagedRelationships;
+	}
 
-    static Pattern stringToRegex(String regex) {
+	public void setAllowCreateOfUnmanagedRelationships(Boolean allowCreateOfUnmanagedRelationships) {
+		this.allowCreateOfUnmanagedRelationships = allowCreateOfUnmanagedRelationships;
+	}
+
+	static Pattern stringToRegex(String regex) {
         return StringUtils.isNotBlank(regex) ? Pattern.compile(regex) : null;
     }
 
     public AutoCreateTestUsersConfig getAutoCreateTestUsersConfig() {
         return autoCreateTestUsersConfig;
     }
+    
+   
 
 }

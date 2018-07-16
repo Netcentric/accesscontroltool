@@ -44,6 +44,7 @@ import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
 import biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator;
 import biz.netcentric.cq.tools.actool.validators.GlobalConfigurationValidator;
 import biz.netcentric.cq.tools.actool.validators.ObsoleteAuthorizablesValidator;
+import biz.netcentric.cq.tools.actool.validators.UnmangedExternalMemberRelationshipChecker;
 import biz.netcentric.cq.tools.actool.validators.YamlConfigurationsValidator;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
@@ -185,6 +186,10 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
 
         testUserConfigsCreator.createTestUserConfigs(acConfiguration, installLog);
 
+        if(!Boolean.TRUE.equals(globalConfiguration.getAllowCreateOfUnmanagedRelationships())) {
+        	UnmangedExternalMemberRelationshipChecker.validate(acConfiguration);
+        }
+        
         installLog.setMergedAndProcessedConfig(
                 "# Merged configuration of " + configFileContentByFilename.size() + " files \n" + yamlParser.dump(acConfiguration));
 
