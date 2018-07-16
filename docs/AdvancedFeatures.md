@@ -222,13 +222,13 @@ Another alternative is to list the built-in user in the YAML file (with the corr
 
 THe following table gives and overview of what is managed by AC Tool and what not:
 
-| Aspect | Default behaviour when added via config | Default behaviour when not present in config | Configuration switches to alter the default |
-| --- | --- | --- | --- | --- |
-| Users and Groups | are created | not removed | `obsolete_authorizables` can be used [docu](https://github.com/Netcentric/accesscontroltool/blob/develop/docs/AdvancedFeatures.md#automatically-purge-obsolete-groups-and-users) | 
+| Aspect | Default behaviour if existent in config but not in repo | Default behaviour if existent in repo but not in config | Configuration optinos to alter the default behaviour |
+| --- | --- | --- | --- |
+| Users and Groups | are created | are **not** removed | `obsolete_authorizables` can be used, see [documentation](https://github.com/Netcentric/accesscontroltool/blob/develop/docs/AdvancedFeatures.md#automatically-purge-obsolete-groups-and-users) | 
 | Relationships between users and groups within config **not "leaving the config space"** (`isMemberOf` or `members`, internally `members` is always translated to `isMemberOf` on the other side of the relationship) | are created | are removed | Default behaviour can not be changed by design for consistent AC setups |
 | Relationships of users and groups **"leaving the config space"** and hence inheriting permissions from elsewhere (`isMemberOf`) | are created | are removed | Use `unmanagedExternalIsMemberOfRegex` on an authorizable config or `defaultUnmanagedExternalIsMemberOfRegex` in `global_config` to specify a default value for authorizable configs. |
-| Relationships of groups **"leaving the config space"** and pushing permissions to other, existing authorizables (`members`) | are created | are removed (if not regular users, regular users are often assigned by user administrators, LDAP or SSO) | Similar to `isMemberOf`, in row above, use `unmanagedExternalMembersRegex` on group configs or `defaultUnmanagedExternalMembersRegex` to configure it globally. |
-| ACEs for authorizables in the config | are created | are removed | Property `unmanagedAcePathsRegex` on authorizable config allow to not touch certain paths for a authorizable. Also, `defaultUnmanagedAcePathsRegex` can be used to define unmanaged areas globally.  |
+| Relationships of groups **"leaving the config space"** and pushing permissions to other, existing authorizables (`members`) | are created | **relationships to groups and system users are removed** - relationships to regular users are untouched (those are often assigned by user administrators, LDAP or SSO) | Similar to `isMemberOf`, in row above, use `unmanagedExternalMembersRegex` on group configs or `defaultUnmanagedExternalMembersRegex` to configure it globally. |
+| ACEs for authorizables in the config | are created | are removed | Property `unmanagedAcePathsRegex` on authorizable config allow to not touch certain paths for a authorizable. Also, `defaultUnmanagedAcePathsRegex` can be used to define unmanaged areas globally. |
 
 IMPORTANT: If relationships to certain group patterns are marked as unmanged, it is **not** allowed to list them in the configuration anymore. If this is needed (means if certain group memberships to external groups should be added but never deleted), use `allowCreateOfUnmanagedRelationships: true` in `global_config`. This should be rarely used though: Make a concious decision on what is managed by the AC tool and what not - if relationships are managed outside the AC Tool ensure the whole livecycle (incl. creation) of those releationships is managed externally (e.g. programatically upon certain repository events).
 
