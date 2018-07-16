@@ -220,7 +220,7 @@ Another alternative is to list the built-in user in the YAML file (with the corr
   
 ## Configure unmanaged aspects
 
-THe following table gives and overview of what is managed by AC Tool and what not:
+The following table gives and overview of what is managed by AC Tool and what not:
 
 | Aspect | Default behaviour if existent in config but not in repo | Default behaviour if existent in repo but not in config | Configuration optinos to alter the default behaviour |
 | --- | --- | --- | --- |
@@ -230,7 +230,7 @@ THe following table gives and overview of what is managed by AC Tool and what no
 | Relationships of groups **"leaving the config space"** and pushing permissions to other, existing authorizables (`members`) | are created | **relationships to groups and system users are removed** - relationships to regular users are untouched (those are often assigned by user administrators, LDAP or SSO) | Similar to `isMemberOf`, in row above, use `unmanagedExternalMembersRegex` on group configs or `defaultUnmanagedExternalMembersRegex` to configure it globally. |
 | ACEs for authorizables in the config | are created | are removed | Property `unmanagedAcePathsRegex` on authorizable config allow to not touch certain paths for a authorizable. Also, `defaultUnmanagedAcePathsRegex` can be used to define unmanaged areas globally. |
 
-IMPORTANT: If relationships to certain group patterns are marked as unmanged, it is **not** allowed to list them in the configuration anymore. If this is needed (means if certain group memberships to external groups should be added but never deleted), use `allowCreateOfUnmanagedRelationships: true` in `global_config`. This should be rarely used though: Make a concious decision on what is managed by the AC tool and what not - if relationships are managed outside the AC Tool ensure the whole livecycle (incl. creation) of those releationships is managed externally (e.g. programatically upon certain repository events).
+IMPORTANT: If relationships to certain group patterns are marked as unmanged, it is **not** allowed to list them in the configuration anymore. If this is needed (means if certain group memberships to external groups should be added but never deleted), use `allowCreateOfUnmanagedRelationships: true` in `global_config`. This should be rarely used though: Make a concious decision on what is managed by the AC tool and what not - if relationships are managed outside the AC Tool ensure the whole livecycle (incl. creation) of those releationships is managed externally (e.g. programmatically upon certain repository events).
 
 ### Configure memberships of/towards externally managed groups
 
