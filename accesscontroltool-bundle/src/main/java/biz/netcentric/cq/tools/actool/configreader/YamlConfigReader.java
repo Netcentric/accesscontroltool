@@ -73,6 +73,8 @@ public class YamlConfigReader implements ConfigReader {
     private static final String GROUP_CONFIG_PROPERTY_UNMANAGED_EXTERNAL_ISMEMBEROF_REGEX = "unmanagedExternalIsMemberOfRegex";
     private static final String GROUP_CONFIG_PROPERTY_UNMANAGED_EXTERNAL_MEMBERS_REGEX = "unmanagedExternalMembersRegex";
 
+    private static final String GROUP_CONFIG_IS_VIRTUAL = "virtual";
+
     private static final String USER_CONFIG_PROPERTY_IS_SYSTEM_USER = "isSystemUser";
 
     private static final String USER_CONFIG_PROFILE_CONTENT = "profileContent";
@@ -188,7 +190,7 @@ public class YamlConfigReader implements ConfigReader {
             if (!alreadyProcessedGroups.add(currentAuthorizableIdFromYaml)) {
                 throw new IllegalArgumentException("There is more than one group definition for group: " + currentAuthorizableIdFromYaml);
             }
-            LOG.debug("Found principal: {} in config", currentAuthorizableIdFromYaml);
+            LOG.trace("Found principal: {} in config", currentAuthorizableIdFromYaml);
 
             final List<Map<String, String>> currentAuthorizableData = (List<Map<String, String>>) currentMap.get(currentAuthorizableIdFromYaml);
 
@@ -226,7 +228,7 @@ public class YamlConfigReader implements ConfigReader {
 
             final List<Map<String, ?>> aceDefinitions = currentPrincipalAceMap.get(authorizableId);
 
-            LOG.debug("Start reading ACE configuration of authorizable: {}", authorizableId);
+            LOG.trace("Start reading ACE configuration of authorizable: {}", authorizableId);
 
             if ((aceDefinitions == null) || aceDefinitions.isEmpty()) {
                 LOG.warn("No ACE definition(s) found for authorizable: {}", authorizableId);
@@ -371,6 +373,9 @@ public class YamlConfigReader implements ConfigReader {
                 GROUP_CONFIG_PROPERTY_UNMANAGED_EXTERNAL_ISMEMBEROF_REGEX));
         authorizableConfigBean.setUnmanagedExternalMembersRegex(getMapValueAsString(currentPrincipalDataMap,
                 GROUP_CONFIG_PROPERTY_UNMANAGED_EXTERNAL_MEMBERS_REGEX));
+
+        authorizableConfigBean.setVirtual(Boolean.valueOf(getMapValueAsString(currentPrincipalDataMap,
+                GROUP_CONFIG_IS_VIRTUAL)));
 
         authorizableConfigBean.setIsGroup(isGroupSection);
         authorizableConfigBean.setIsSystemUser(Boolean.valueOf(getMapValueAsString(currentPrincipalDataMap,

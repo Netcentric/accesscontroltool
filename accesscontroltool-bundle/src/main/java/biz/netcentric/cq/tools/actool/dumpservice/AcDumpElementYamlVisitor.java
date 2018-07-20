@@ -35,19 +35,32 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
 
     @Override
     public void visit(final AuthorizableConfigBean authorizableConfigBean) {
+
+        String authorizableNameInDump = !StringUtils.equals(authorizableConfigBean.getAuthorizableId(), authorizableConfigBean.getName())
+                ? authorizableConfigBean.getName()
+                : "";
+
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_KEY))
                 .append("- " + authorizableConfigBean.getAuthorizableId() + ":")
                 .append("\n");
         sb.append("\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_FIRST_PROPERTY))
-                .append("- name: '").append(authorizableConfigBean.getName()).append("'\n");
+                .append("- name: ").append(StringUtils.isNotBlank(authorizableNameInDump) ? "\"" + authorizableNameInDump + "\"" : "")
+                .append("\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
                 .append("isMemberOf: "
-                        + authorizableConfigBean.getMemberOfString())
+                        + authorizableConfigBean.getIsMemberOfString())
                 .append("\n");
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
                 .append("path: " + authorizableConfigBean.getPath())
                 .append("\n");
+
+        if (!authorizableConfigBean.isGroup()) {
+            if (authorizableConfigBean.isSystemUser()) {
+                sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
+                        .append("isSystemUser: true\n");
+            }
+        }
 
         if (StringUtils.isNotBlank(authorizableConfigBean.getExternalId())) {
             sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))

@@ -27,6 +27,11 @@ public class GlobalConfiguration {
     public static final String KEY_DEFAULT_UNMANAGED_EXTERNAL_MEMBERS_REGEX = "defaultUnmanagedExternalMembersRegex";
     public static final String KEY_DEFAULT_UNMANAGED_ACE_PATHS_REGEX = "defaultUnmanagedAcePathsRegex";
 
+    public static final String KEY_ALLOW_CREATE_OF_UNMANAGED_RELATIONSHIPS = "allowCreateOfUnmanagedRelationships";
+
+    
+    public static final String KEY_AUTOCREATE_TEST_USERS = "autoCreateTestUsers";
+
     @Deprecated
     public static final String KEY_KEEP_EXISTING_MEMBERSHIPS_FOR_GROUP_NAMES_REGEX = "keepExistingMembershipsForGroupNamesRegEx";
 
@@ -36,6 +41,9 @@ public class GlobalConfiguration {
     private Pattern defaultUnmanagedExternalIsMemberOfRegex;
     private Pattern defaultUnmanagedExternalMembersRegex;
     private String defaultUnmanagedAcePathsRegex;
+    private Boolean allowCreateOfUnmanagedRelationships = null;
+
+    private AutoCreateTestUsersConfig autoCreateTestUsersConfig;
 
     public GlobalConfiguration() {
     }
@@ -68,10 +76,17 @@ public class GlobalConfiguration {
                 }
             }
 
+            if (globalConfigMap.containsKey(KEY_ALLOW_CREATE_OF_UNMANAGED_RELATIONSHIPS)) {
+            	setAllowCreateOfUnmanagedRelationships(Boolean.valueOf(globalConfigMap.get(KEY_ALLOW_CREATE_OF_UNMANAGED_RELATIONSHIPS).toString()));
+            }
 
             setMinRequiredVersion((String) globalConfigMap.get(KEY_MIN_REQUIRED_VERSION));
             if (globalConfigMap.containsKey(KEY_INSTALL_ACLS_INCREMENTALLY)) {
                 setInstallAclsIncrementally(Boolean.valueOf(globalConfigMap.get(KEY_INSTALL_ACLS_INCREMENTALLY).toString()));
+            }
+
+            if (globalConfigMap.containsKey(KEY_AUTOCREATE_TEST_USERS)) {
+                autoCreateTestUsersConfig = new AutoCreateTestUsersConfig((Map) globalConfigMap.get(KEY_AUTOCREATE_TEST_USERS));
             }
         }
 
@@ -100,6 +115,14 @@ public class GlobalConfiguration {
                 throw new IllegalArgumentException("Duplicate config for " + KEY_DEFAULT_UNMANAGED_EXTERNAL_MEMBERS_REGEX);
             }
         }
+        
+        if (otherGlobalConfig.getAllowCreateOfUnmanagedRelationships() != null) {
+            if (allowCreateOfUnmanagedRelationships == null) {
+            	allowCreateOfUnmanagedRelationships = otherGlobalConfig.getAllowCreateOfUnmanagedRelationships();
+            } else {
+                throw new IllegalArgumentException("Duplicate config for " + KEY_ALLOW_CREATE_OF_UNMANAGED_RELATIONSHIPS);
+            }        	
+        }
 
         if (otherGlobalConfig.getMinRequiredVersion() != null) {
             if (minRequiredVersion == null) {
@@ -113,6 +136,15 @@ public class GlobalConfiguration {
         // default is true, if false is configured anywhere that value is used
         if (!otherGlobalConfig.installAclsIncrementally) {
             installAclsIncrementally = false;
+        }
+
+
+        if (otherGlobalConfig.getAutoCreateTestUsersConfig() != null) {
+            if (autoCreateTestUsersConfig == null) {
+                autoCreateTestUsersConfig = otherGlobalConfig.getAutoCreateTestUsersConfig();
+            } else {
+                throw new IllegalArgumentException("Duplicate config for " + KEY_AUTOCREATE_TEST_USERS);
+            }
         }
 
     }
@@ -157,9 +189,23 @@ public class GlobalConfiguration {
     public void setDefaultUnmanagedAcePathsRegex(String defaultUnmanagedAcePathsRegex) {
         this.defaultUnmanagedAcePathsRegex = defaultUnmanagedAcePathsRegex;
     }
+    
+	public Boolean getAllowCreateOfUnmanagedRelationships() {
+		return allowCreateOfUnmanagedRelationships;
+	}
 
-    static Pattern stringToRegex(String regex) {
+	public void setAllowCreateOfUnmanagedRelationships(Boolean allowCreateOfUnmanagedRelationships) {
+		this.allowCreateOfUnmanagedRelationships = allowCreateOfUnmanagedRelationships;
+	}
+
+	static Pattern stringToRegex(String regex) {
         return StringUtils.isNotBlank(regex) ? Pattern.compile(regex) : null;
     }
+
+    public AutoCreateTestUsersConfig getAutoCreateTestUsersConfig() {
+        return autoCreateTestUsersConfig;
+    }
+    
+   
 
 }

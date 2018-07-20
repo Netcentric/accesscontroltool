@@ -113,7 +113,7 @@ By default only the direct properties of the jcr:content node will be mapped and
          path: /home/groups/${site.name}
 ```
 
-### Conditional entries
+## Conditional entries
 
 When looping over content structures, entries can be applied conditionally using the "IF" keyword:
 
@@ -150,7 +150,7 @@ Expressions are evaluated using javax.el expression language. The following util
 - length(str)
 - defaultIfEmpty(str,default)
 
-### Variables
+## Variables
 
 Sometimes it can be useful to declare variables to reuse values or to give certain strings an expressive name:
 
@@ -181,7 +181,30 @@ Variables can also be declared to be an array and used in a loop:
 
 NOTE: The scope of a variable is always limited to the lines in the very same yaml file following the definition till it is either redefined or the end of the yaml file is reached (this limitation will supposably be lifted with [#257][i257]).
 
-### Referencing OS environment variables
+## Auto-create test users for groups
+
+It is possible to automatically create test users (since v2.1.0) for groups given in the configuration by providing a yaml hash `autoCreateTestUsers` in `global_config`. The following properties are allowed:
+
+property | comment | required
+--- | --- | ---
+createForGroupNamesRegEx | A regex (matched against authorizableId of groups) to select the groups, test users should be created for | required
+prefix | The prefix for the authorizable id, for instance if prefix "tu-" is given, a user "tu-myproject-editors" will be created for group "myproject-editors" | required
+path | The location where the test users shall be created | required
+password | The password for all test users to be created. Can be encrypted using CryptoSupport. Defaults simply to the authorizable id of the test user. | optional
+skipForRunmodes | The configuration is placed in a regular config file, hence it is possible to add one to an author configuration (located in e.g. in a folder "config.author" and one to a publish configuration (e.g. folder "config.publish"). To avoid creating special runmodes folders just for this configuration that list all runmodes except production, skipForRunmodes can be a comma-separated list of runmodes, where the users are not created.  Defaults to prod,production | optional
+
+Example:
+
+```
+- global_config:
+   autoCreateTestUsers: 
+     createForGroupNamesRegEx: "(myproj)-.*" 
+     prefix: "testuser-"  
+     path: /home/users/myproj-test-users
+     skipForRunmodes: prod, preprod
+```
+
+## Referencing OS environment variables
 
 Env variables can be referenced by using `${env.my_env_variable}`. To provide a default use `defaultIfEmpty()` as linked in from StringUtils class: `${defaultIfEmpty(env.my_env_variable, 'default-val')}`.
 
@@ -195,7 +218,21 @@ This is not an option for the [`everyone` group](https://jackrabbit.apache.org/o
 
 Another alternative is to list the built-in user in the YAML file (with the correct path and system user flag) and leverage `unmanagedAcePathsRegex` as outlined below. This is currently the only option to extend rights for `everyone`.
   
-## Configure memberships of/towards externally managed groups
+## Configure unmanaged aspects
+
+The following table gives and overview of what is managed by AC Tool and what not:
+
+| Aspect | Default behaviour if existent in config but not in repo | Default behaviour if existent in repo but not in config | Configuration options to alter the default behaviour |
+| --- | --- | --- | --- |
+| Users and Groups | are created | are **not** removed | `obsolete_authorizables` can be used, see [documentation](https://github.com/Netcentric/accesscontroltool/blob/develop/docs/AdvancedFeatures.md#automatically-purge-obsolete-groups-and-users) | 
+| Relationships between users and groups within config **not "leaving the config space"** (`isMemberOf` or `members`, internally `members` is always translated to `isMemberOf` on the other side of the relationship) | are created | are removed | Default behaviour can not be changed by design for consistent AC setups |
+| Relationships of users and groups **"leaving the config space"** and hence inheriting permissions from elsewhere (`isMemberOf`) | are created | are removed | Use `unmanagedExternalIsMemberOfRegex` on an authorizable config or `defaultUnmanagedExternalIsMemberOfRegex` in `global_config` to specify a default value for authorizable configs. |
+| Relationships of groups **"leaving the config space"** and pushing permissions to other, existing authorizables (`members`) | are created | **relationships to groups and system users are removed** - relationships to regular users are untouched (those are often assigned by user administrators, LDAP or SSO) | Similar to `isMemberOf`, in row above, use `unmanagedExternalMembersRegex` on group configs or `defaultUnmanagedExternalMembersRegex` to configure it globally. |
+| ACEs for authorizables in the config | are created | are removed | Property `unmanagedAcePathsRegex` on authorizable config allow to not touch certain paths for a authorizable. Also, `defaultUnmanagedAcePathsRegex` can be used to define unmanaged areas globally. |
+
+IMPORTANT: If relationships to certain group patterns are marked as unmanged, it is **not** allowed to list them in the configuration anymore. If this is needed (means if certain group memberships to external groups should be added but never deleted), use `allowCreateOfUnmanagedRelationships: true` in `global_config`. This should be rarely used though: Make a concious decision on what is managed by the AC tool and what not - if relationships are managed outside the AC Tool ensure the whole livecycle (incl. creation) of those releationships is managed externally (e.g. programmatically upon certain repository events).
+
+### Configure memberships of/towards externally managed groups
 
 The AC Tool manages relationships between authorizables of the configuration (the normal case, not adjustable), but also relationships to authorizables that are not contained in the configuration (that means if you add `isMemberOf: contributor` this group id will be added to the `contributur`'s `members` list; if you remove `contributor` this group membership will be removed with the next run). This is the case even though only one side of the relationship is contained in the AC Tool configuration. To not manage (currently means only to not remove) certain relationships, the following configuration can be used:
 
@@ -203,23 +240,22 @@ The AC Tool manages relationships between authorizables of the configuration (th
 - global_config:
       defaultUnmanagedExternalIsMemberOfRegex: <regular expression matching against the externally managed group's authorizable id. The members property of matching external groups are not modified at all (i.e. pointers towards ACTool managed groups are not removed).
       defaultUnmanagedExternalMembersRegex: <regular expression matching against the ACTool managed groups' members property values> 
-      keepExistingMembershipsForGroupNamesRegEx: <regular expression> # DEPRECATED but still supported, sets the value for both configurations from above at the same time 
 ```
 
 That way relationships that are created programmatically or manually can be left intact and the AC Tool does not remove them. Also this allows to have two configuration sets at different root paths.
 
 Additionally, it is also possible to set `unmanagedExternalIsMemberOfRegex` and `unmanagedExternalMembersRegex` directly on the authorizable definition (then only effective locally to the authorizable).
 
-### Examples ###
+#### Examples
 
 * `defaultUnmanagedExternalMembersRegex: .*` allow arbitrary groups to inherit from ACTool managed groups and keep those (unmanaged) relations even though relationship hasn't been established through the ACTool. Might be useful in a multi-tenant setup where each tenant maintains his own list of groups (e.g. via ACTool in dedicated packages) and wants to inherit from some fragments being set up by the global YAML file.
 * `defaultUnmanagedExternalIsMemberOfRegex: contributor` allow the contributor group to list an ACTool managed group as a member (i.e. ACTool managed group inherits from `contributor` all ACLs) and keep that relation even though this relationship hasn't been established through the ACTool. This is **very dangerous as unmanaged ACLs may creep into AC managed groups**! So please use with care.
 
-## Limiting where the AC Tool creates and removes ACEs
+### Limiting where the AC Tool creates and removes ACEs
 
 The property `unmanagedAcePathsRegex` for authorizable configurations (users or groups) can be used to ensure certain paths are not managed by the AC Tool. This property must contain a regular expression which is matched against all ACE paths bound to the authorizable found in the system. All ACEs with matching paths are not touched. By setting the global config `defaultUnmanagedAcePathsRegex` it is possible to exclude certain areas of the JCR totally from removing (and creating once #244 is fixed) at all.
 
-### Examples
+#### Examples
 ```
     - testgroup:
 
@@ -229,17 +265,19 @@ The property `unmanagedAcePathsRegex` for authorizable configurations (users or 
 That way for `testgroup`, ACEs in `/content/dam/` will be left untouched for this particular group. 
 
 You can use negative lookaheads to whitelist management of certain paths:
+
 ```
 - user_config: 
   - version-manager-service: 
-    # the user does exist already, make sure the path is set correctly
     - path: /home/users/system/wcm
+      # the user does exist already, make sure the path is set correctly
       isSystemUser: true
-   # everything outside /conf should not be managed by the ac tool
+      # everything outside /conf is not be managed by the ac tool
       unmanagedAcePathsRegex: /(?!conf).*
 ```
 
 Example for setting it globally:
+
 ```
 - global_config:
       defaultUnmanagedAcePathsRegex: /content/project2.* # will never change any ACLs underneath this root path 
