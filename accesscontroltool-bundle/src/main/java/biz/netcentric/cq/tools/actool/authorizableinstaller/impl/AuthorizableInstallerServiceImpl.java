@@ -79,7 +79,7 @@ public class AuthorizableInstallerServiceImpl implements
             AcConfiguration acConfiguration,
             AuthorizablesConfig authorizablesConfigBeans,
             final Session session, InstallationLogger installLog)
-            throws RepositoryException, AuthorizableCreatorException, CryptoException {
+            throws RepositoryException, AuthorizableCreatorException {
 
         Set<String> authorizablesFromConfigurations = authorizablesConfigBeans.getAuthorizableIds();
         for (AuthorizableConfigBean authorizableConfigBean : authorizablesConfigBeans) {
@@ -98,7 +98,7 @@ public class AuthorizableInstallerServiceImpl implements
             InstallationLogger installLog, Set<String> authorizablesFromConfigurations)
             throws AccessDeniedException,
             UnsupportedRepositoryOperationException, RepositoryException,
-            AuthorizableExistsException, AuthorizableCreatorException, CryptoException {
+            AuthorizableExistsException, AuthorizableCreatorException {
 
         String authorizableId = authorizableConfigBean.getAuthorizableId();
         LOG.debug("- start installation of authorizable: {}", authorizableId);
@@ -128,11 +128,6 @@ public class AuthorizableInstallerServiceImpl implements
 
             // update name for both groups and users
             setAuthorizableProperties(authorizableToInstall, authorizableConfigBean, session, installLog);
-            // update password for users
-            if (!authorizableToInstall.isGroup() && !authorizableConfigBean.isSystemUser()
-                    && StringUtils.isNotBlank(authorizableConfigBean.getPassword())) {
-                setUserPassword(authorizableConfigBean, (User) authorizableToInstall);
-            }
 
             // move authorizable if path changed (retaining existing members)
             handleRecreationOfAuthorizableIfNecessary(session, acConfiguration, authorizableConfigBean, installLog, userManager);
@@ -152,15 +147,19 @@ public class AuthorizableInstallerServiceImpl implements
     }
 
     void setUserPassword(final AuthorizableConfigBean authorizableConfigBean,
-                             final User authorizableToInstall) throws RepositoryException, CryptoException {
-        String password = authorizableConfigBean.getPassword();
-        if (password.matches("\\{.+}")) {
-            if (cryptoSupport == null) {
-                throw new CryptoException("CryptoSupport missing to unprotect password.");
-            }
-            password = cryptoSupport.unprotect(password);
-        }
-        authorizableToInstall.changePassword(password);
+                             final User authorizableToInstall) throws RepositoryException, AuthorizableCreatorException {
+    	try {
+	        String password = authorizableConfigBean.getPassword();
+	        if (password.matches("\\{.+}")) {
+	            if (cryptoSupport == null) {
+	                throw new CryptoException("CryptoSupport missing to unprotect password.");
+	            }
+	            password = cryptoSupport.unprotect(password);
+	        }
+	        authorizableToInstall.changePassword(password);
+    	} catch(CryptoException e) {
+    		throw new AuthorizableCreatorException("Could not decrypt password "+e, e);
+    	}
     }
 
 
@@ -583,8 +582,7 @@ public class AuthorizableInstallerServiceImpl implements
             AuthorizablesConfig authorizablesConfig, 
             AuthorizableConfigBean principalConfigBean,
             InstallationLogger installLog, Session session)
-            throws AuthorizableExistsException, RepositoryException,
-            AuthorizableCreatorException {
+            throws AuthorizableExistsException, RepositoryException, AuthorizableCreatorException {
 
         String groupID = principalConfigBean.getAuthorizableId();
         String intermediatePath = principalConfigBean.getPath();
@@ -624,7 +622,7 @@ public class AuthorizableInstallerServiceImpl implements
 
     void setAuthorizableProperties(Authorizable authorizable, AuthorizableConfigBean principalConfigBean,
             Session session, InstallationLogger installationLog)
-            throws RepositoryException {
+            throws RepositoryException, AuthorizableCreatorException {
 
         String profileContent = principalConfigBean.getProfileContent();
         if (StringUtils.isNotBlank(profileContent)) {
@@ -635,7 +633,6 @@ public class AuthorizableInstallerServiceImpl implements
         if (StringUtils.isNotBlank(preferencesContent)) {
             ContentHelper.importContent(session, authorizable.getPath() + "/preferences", preferencesContent);
         }
-
         String socialContent = principalConfigBean.getSocialContent();
         if (StringUtils.isNotBlank(socialContent)) {
             ContentHelper.importContent(session, authorizable.getPath() + "/social", socialContent);
@@ -698,6 +695,17 @@ public class AuthorizableInstallerServiceImpl implements
             }
             
         }
+        
+        // update password for users
+        if(StringUtils.isNotBlank(principalConfigBean.getPassword())) {
+            if (!principalConfigBean.isGroup() && !principalConfigBean.isSystemUser()) {
+                setUserPassword(principalConfigBean, (User) authorizable);
+            } else {
+            	throw new AuthorizableCreatorException("Password can only be set on regular users (and not on groups and system users)");
+            }
+        }
+     
+        
     }
 
     private Authorizable createNewUser(
@@ -762,7 +770,7 @@ public class AuthorizableInstallerServiceImpl implements
      * @param installLog
      * @return Set of authorizables which the current authorizable is a member of
      * @throws RepositoryException
-     * @throws AuthorizableCreatorException if one of the authorizables contained in membersOf array is a user */
+     * @throws AuthorizableCreatorException if one of the authorizables contained in membersOf array is a user  */
     Set<String> validateAssignedGroups(
             final UserManager userManager, AuthorizablesConfig authorizablesConfig, Session session, final String authorizablelId,
             final Set<String> isMemberOf, InstallationLogger installLog) throws RepositoryException,
