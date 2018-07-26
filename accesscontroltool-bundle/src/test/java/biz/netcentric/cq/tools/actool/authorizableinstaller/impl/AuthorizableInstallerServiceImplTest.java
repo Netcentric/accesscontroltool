@@ -55,6 +55,7 @@ import org.mockito.stubbing.Answer;
 import com.adobe.granite.crypto.CryptoException;
 import com.adobe.granite.crypto.CryptoSupport;
 
+import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
@@ -340,7 +341,7 @@ public class AuthorizableInstallerServiceImplTest {
         }
 
         @Test
-        public void test() throws RepositoryException, CryptoException {
+        public void test() throws RepositoryException, AuthorizableCreatorException {
             final AuthorizableConfigBean bean = new AuthorizableConfigBean();
             bean.setPassword(password);
 
