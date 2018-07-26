@@ -152,16 +152,28 @@ public class AuthorizableInstallerServiceImpl implements
     }
 
     void setUserPassword(final AuthorizableConfigBean authorizableConfigBean,
-                             final User authorizableToInstall) throws RepositoryException, CryptoException {
-        String password = authorizableConfigBean.getPassword();
-        if (password.matches("\\{.+}")) {
-            if (cryptoSupport == null) {
-                throw new CryptoException("CryptoSupport missing to unprotect password.");
-            }
-            password = cryptoSupport.unprotect(password);
-        }
+                             final User authorizableToInstall) throws RepositoryException, AuthorizableCreatorException {
+        String password = getPassword(authorizableConfigBean);
         authorizableToInstall.changePassword(password);
     }
+
+
+	private String getPassword(final AuthorizableConfigBean authorizableConfigBean)
+			throws AuthorizableCreatorException {
+		try {
+			String password = authorizableConfigBean.getPassword();
+			if (password.matches("\\{.+}")) {
+				if (cryptoSupport == null) {
+					throw new CryptoException("CryptoSupport missing to unprotect password.");
+				}
+				password = cryptoSupport.unprotect(password);
+			}
+			return password;
+		} catch (CryptoException e) {
+			throw new AuthorizableCreatorException(
+					"Could not decrypt password for user " + authorizableConfigBean.getAuthorizableId() + ": " + e);
+		}
+	}
 
 
     /** This is only relevant for members that point to groups/users not contained in configuration.
@@ -709,7 +721,7 @@ public class AuthorizableInstallerServiceImpl implements
             throws AuthorizableExistsException, RepositoryException,
             AuthorizableCreatorException {
         String authorizableId = principalConfigBean.getAuthorizableId();
-        String password = principalConfigBean.getPassword();
+        String password = getPassword(principalConfigBean);
         boolean isSystemUser = principalConfigBean.isSystemUser();
         String intermediatePath = principalConfigBean.getPath();
 
