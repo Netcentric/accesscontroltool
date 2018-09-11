@@ -1,0 +1,66 @@
+#
+# (C) Copyright 2018 Netcentric AG.
+#
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+- group_config:
+
+    - groupVirtual1:
+       - isMemberOf: 
+         virtual: true
+
+    - groupVirtual2:
+       - isMemberOf: 
+         virtual: true
+
+    - groupVirtual3:
+       - isMemberOf: 
+         virtual: true
+
+    - groupVirtual4:
+       - isMemberOf: 
+         virtual: true
+
+    - groupVirtual5:
+       - isMemberOf: 
+         virtual: true
+       
+    - groupUsingVirtual:
+       - isMemberOf: groupVirtual1,groupVirtual2,groupVirtual3,groupVirtual4,groupVirtual5
+
+         
+- ace_config:
+
+    - groupVirtual1:
+        
+        - path:  /content/test1
+          permission: allow
+          actions: read
+
+    - groupVirtual2:
+        
+        - path:  /content/test2
+          permission: allow
+          actions: read
+
+    - groupVirtual3:
+        
+        - path:  /content/test3
+          permission: allow
+          actions: read
+
+    - groupVirtual4:
+        
+        - path:  /content/test4
+          permission: allow
+          actions: read
+          
+    - groupVirtual5:
+        
+        - path:  /content/test5
+          permission: allow
+          actions: read          
+    
