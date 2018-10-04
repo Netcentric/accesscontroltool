@@ -51,6 +51,25 @@ public class VirtualGroupProcessorTest {
         assertEquals("Number of ACEs", 4, acConfiguration.getAceConfig().size());
 
     }
+    
+    @Test
+    public void testVirtualGroupsInheritFromMultiple() throws Exception {
+
+        AcConfiguration acConfiguration = getAcConfigurationForFile(getConfigurationMerger(), session, "test-virtualgroups-inherit-from-multiple-vgroups.yaml");
+
+        assertNotNull(acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupUsingVirtual"));
+
+        assertNull("virtual group must be gone", acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupVirtual1"));
+        assertNull("virtual group must be gone", acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupVirtual2"));
+        assertNull("virtual group must be gone", acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupVirtual3"));
+
+        assertEquals("Number of authorizables", 1, acConfiguration.getAuthorizablesConfig().size());
+
+        assertEquals("Number of ACEs", 5, acConfiguration.getAceConfig().size());
+        assertEquals("Number of ACEs", 5, acConfiguration.getAceConfig().filterByAuthorizableId("groupUsingVirtual").size());
+        
+    }    
+    
 
     @Test
     public void testVirtualGroupsMultipleLevels() throws Exception {

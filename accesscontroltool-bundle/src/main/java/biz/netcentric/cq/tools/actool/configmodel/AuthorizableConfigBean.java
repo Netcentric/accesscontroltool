@@ -182,7 +182,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
     }
 
     public void setIsMemberOf(final List<String> memberOf) {
-        if ((memberOf != null) && !memberOf.isEmpty()) {
+        if ((memberOf != null)) {
             this.isMemberOf = memberOf.toArray(new String[memberOf.size()]);
         }
     }
