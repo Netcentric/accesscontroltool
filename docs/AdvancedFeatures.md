@@ -220,7 +220,7 @@ Another alternative is to list the built-in user in the YAML file (with the corr
   
 ## Configure unmanaged aspects
 
-The following table gives and overview of what is managed by AC Tool and what not:
+The following table gives an overview of what is managed (in terms of group memberships and ACLs) by AC Tool and what not:
 
 | Aspect | Default behaviour if existent in config but not in repo | Default behaviour if existent in repo but not in config | Configuration options to alter the default behaviour |
 | --- | --- | --- | --- |
