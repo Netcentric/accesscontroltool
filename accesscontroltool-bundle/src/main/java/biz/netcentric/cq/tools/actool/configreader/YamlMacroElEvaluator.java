@@ -12,6 +12,7 @@ import java.beans.FeatureDescriptor;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import javax.el.ArrayELResolver;
@@ -35,7 +36,7 @@ import org.apache.commons.lang.StringUtils;
  * 
  * @author ghenzler */
 public class YamlMacroElEvaluator {
-
+    
     private ExpressionFactory expressionFactory;
     private ELContext context;
 
@@ -99,7 +100,8 @@ public class YamlMacroElEvaluator {
                         StringUtils.class.getMethod("split", new Class<?>[] { String.class, String.class }),
                         StringUtils.class.getMethod("join", new Class<?>[] { Object[].class, String.class }),
                         ArrayUtils.class.getMethod("subarray", new Class<?>[] { Object[].class, int.class, int.class }),
-
+                        YamlMacroElEvaluator.class.getMethod("containsElement", new Class<?>[] { List.class, String.class }),
+                        
                         StringUtils.class.getMethod("upperCase", new Class<?>[] { String.class }),
                         StringUtils.class.getMethod("lowerCase", new Class<?>[] { String.class }),
                         StringUtils.class.getMethod("substringAfter", new Class<?>[] { String.class, String.class }),
@@ -209,4 +211,10 @@ public class YamlMacroElEvaluator {
 
     }
 
+    
+    // EL Functions not available in StringUtils or ArrayUtils
+    public static boolean containsElement(List<String> list, String element) {
+        return list.contains(element);
+    }
+    
 }
