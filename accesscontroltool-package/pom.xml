@@ -70,10 +70,11 @@
                         </goals>
                         <configuration>
                             <artifactItems>
+                                <!-- See http://sling.apache.org/documentation/bundles/installer-provider-installhook.html -->
                                 <artifactItem>
                                     <groupId>org.apache.sling</groupId>
                                     <artifactId>org.apache.sling.installer.provider.installhook</artifactId>
-                                    <version>1.0.0-SNAPSHOT</version>
+                                    <version>1.0.0</version>
                                 </artifactItem>
                             </artifactItems>
                             <outputDirectory>${project.build.directory}/vault-work/META-INF/vault/hooks</outputDirectory>
@@ -91,7 +92,8 @@
                     <filterSource>src/main/META-INF/vault/filter.xml</filterSource>
                     <properties>
                         <acHandling>merge_preserve</acHandling>
-                        <installPathRegex>/apps/netcentric/actool/install.*</installPathRegex>
+                        <installPathRegex>/apps/netcentric/actool/.*</installPathRegex>
+                        <waitForOsgiEventsQuietInSec>5</waitForOsgiEventsQuietInSec>
                     </properties>
                     <embeddeds>
                         <embedded>
