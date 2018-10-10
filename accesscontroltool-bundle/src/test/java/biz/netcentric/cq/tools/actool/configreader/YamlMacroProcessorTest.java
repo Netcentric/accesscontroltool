@@ -18,6 +18,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -388,4 +389,17 @@ public class YamlMacroProcessorTest {
 
     }
 
+    
+    @Test
+    public void testContainsElementFunction() throws Exception {
+
+        List<LinkedHashMap> yamlList = getYamlList("test-array-containsElement-function.yaml");
+
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+
+        AcesConfig aces = readAceConfigs(yamlList);
+        assertEquals("Number of ACEs expected to be 2 and not 4", 2, aces.size());
+
+    }    
+    
 }
