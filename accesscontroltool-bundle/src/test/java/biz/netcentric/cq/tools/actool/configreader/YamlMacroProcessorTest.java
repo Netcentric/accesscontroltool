@@ -408,6 +408,24 @@ public class YamlMacroProcessorTest {
         AcesConfig aces = readAceConfigs(yamlList);
         assertEquals("Number of ACEs expected to be 2 and not 4", 2, aces.size());
 
-    }     
+    }    
+    
+    @Test
+    public void testLoopOverRunmodes() throws Exception {
+
+        List<LinkedHashMap> yamlList = getYamlList("test-loop-over-runmodes.yaml");
+
+        when(slingSettingsService.getRunModes()).thenReturn(new HashSet<String>(Arrays.asList("runmode1", "runmode2", "runmode3")));
+        
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+
+        AuthorizablesConfig groups = readGroupConfigs(yamlList);
+        assertEquals(3, groups.size());
+        
+        assertNotNull(groups.getAuthorizableConfig("testgroup-runmode1"));
+        assertNotNull(groups.getAuthorizableConfig("testgroup-runmode2"));
+        assertNotNull(groups.getAuthorizableConfig("testgroup-runmode3"));
+
+    }       
     
 }
