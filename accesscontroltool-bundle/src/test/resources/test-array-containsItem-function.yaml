@@ -20,7 +20,7 @@
     - testgroup: 
 
         - FOR item IN [nodeA,nodeB,nodeC,nodeD]:
-             - IF ${containsElement(relevantNodes, item)}:
+             - IF ${containsItem(relevantNodes, item)}:
 
                 - path: /content/path/${item}
                   permission: allow

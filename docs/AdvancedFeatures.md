@@ -145,7 +145,7 @@ Expressions are evaluated using javax.el expression language. The following util
 - substringAfterLast(str,separator) 
 - substringBeforeLast(str,separator) 
 - contains(str,fragmentStr) 
-- containsElement(array,str)
+- containsItem(array,str)
 - endsWith(str,fragmentStr) 
 - startsWith(str,fragmentStr) 
 - length(str)

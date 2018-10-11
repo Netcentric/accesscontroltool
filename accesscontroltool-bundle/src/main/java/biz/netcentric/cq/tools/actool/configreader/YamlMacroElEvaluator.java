@@ -88,7 +88,7 @@ public class YamlMacroElEvaluator {
         return value;
     }
 
-    class ElFunctionMapper extends FunctionMapper {
+    public static class ElFunctionMapper extends FunctionMapper {
 
         private Map<String, Method> functionMap = new HashMap<String, Method>();
 
@@ -100,7 +100,6 @@ public class YamlMacroElEvaluator {
                         StringUtils.class.getMethod("split", new Class<?>[] { String.class, String.class }),
                         StringUtils.class.getMethod("join", new Class<?>[] { Object[].class, String.class }),
                         ArrayUtils.class.getMethod("subarray", new Class<?>[] { Object[].class, int.class, int.class }),
-                        YamlMacroElEvaluator.class.getMethod("containsElement", new Class<?>[] { List.class, String.class }),
                         
                         StringUtils.class.getMethod("upperCase", new Class<?>[] { String.class }),
                         StringUtils.class.getMethod("lowerCase", new Class<?>[] { String.class }),
@@ -113,7 +112,11 @@ public class YamlMacroElEvaluator {
                         StringUtils.class.getMethod("startsWith", new Class<?>[] { String.class, String.class }),
                         StringUtils.class.getMethod("replace", new Class<?>[] { String.class, String.class, String.class }),
                         StringUtils.class.getMethod("length", new Class<?>[] { String.class }),
-                        StringUtils.class.getMethod("defaultIfEmpty", new Class<?>[] { String.class, String.class })
+                        StringUtils.class.getMethod("defaultIfEmpty", new Class<?>[] { String.class, String.class }),
+
+                        YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("containsItem", new Class<?>[] { List.class, String.class })
+                       
+
                 };
                 for (Method method : exportedMethods) {
                     functionMap.put(method.getName(), method);
@@ -129,6 +132,12 @@ public class YamlMacroElEvaluator {
         public Method resolveFunction(String prefix, String localName) {
             String key = (StringUtils.isNotBlank(prefix) ? prefix + ":" : "") + localName;
             return functionMap.get(key);
+        }
+        
+        //  -- additional functions not available in StringUtils or ArrayUtils
+        
+        public static boolean containsItem(List<String> list, String element) {
+            return list.contains(element);
         }
 
     }
@@ -209,12 +218,6 @@ public class YamlMacroElEvaluator {
             delegate.setValue(context, base, property, value);
         }
 
-    }
-
-    
-    // EL Functions not available in StringUtils or ArrayUtils
-    public static boolean containsElement(List<String> list, String element) {
-        return list.contains(element);
     }
     
 }
