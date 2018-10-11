@@ -11,13 +11,17 @@ package biz.netcentric.cq.tools.actool.configreader;
 import static biz.netcentric.cq.tools.actool.configreader.YamlConfigReaderTest.getYamlList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,10 +31,12 @@ import java.util.regex.Matcher;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.apache.sling.settings.SlingSettingsService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
@@ -51,6 +57,9 @@ public class YamlMacroProcessorTest {
     @Mock
     Session session;
 
+    @Mock
+    SlingSettingsService slingSettingsService;
+    
     @InjectMocks
     YamlMacroProcessorImpl yamlMacroProcessor = new YamlMacroProcessorImpl();
 
@@ -388,4 +397,35 @@ public class YamlMacroProcessorTest {
 
     }
 
+    
+    @Test
+    public void testContainsElementFunction() throws Exception {
+
+        List<LinkedHashMap> yamlList = getYamlList("test-array-containsItem-function.yaml");
+
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+
+        AcesConfig aces = readAceConfigs(yamlList);
+        assertEquals("Number of ACEs expected to be 2 and not 4", 2, aces.size());
+
+    }    
+    
+    @Test
+    public void testLoopOverRunmodes() throws Exception {
+
+        List<LinkedHashMap> yamlList = getYamlList("test-loop-over-runmodes.yaml");
+
+        when(slingSettingsService.getRunModes()).thenReturn(new HashSet<String>(Arrays.asList("runmode1", "runmode2", "runmode3")));
+        
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+
+        AuthorizablesConfig groups = readGroupConfigs(yamlList);
+        assertEquals(3, groups.size());
+        
+        assertNotNull(groups.getAuthorizableConfig("testgroup-runmode1"));
+        assertNotNull(groups.getAuthorizableConfig("testgroup-runmode2"));
+        assertNotNull(groups.getAuthorizableConfig("testgroup-runmode3"));
+
+    }       
+    
 }
