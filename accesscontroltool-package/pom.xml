@@ -25,7 +25,8 @@
     <artifactId>accesscontroltool-package</artifactId>
     <packaging>content-package</packaging>
     <name>Access Control Tool Package</name>
-
+    <description>Package containing the system user, some scripts and the bundle necessary for the Access Control Tool.</description>
+    
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>

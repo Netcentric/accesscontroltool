@@ -22,6 +22,7 @@
     <artifactId>accesscontroltool-bundle</artifactId>
     <packaging>jar</packaging>
     <name>Access Control Tool Bundle</name>
+    <description>The OSGi bundle containing all classes of the Access Control Tool.</description>
 
     <dependencies>
         <dependency>

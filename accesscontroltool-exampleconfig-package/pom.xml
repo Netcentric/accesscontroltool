@@ -25,6 +25,7 @@
     <artifactId>accesscontroltool-exampleconfig-package</artifactId>
     <packaging>content-package</packaging>
     <name>Access Control Tool Package - Example Configuration</name>
+    <description>This package contains example YAML files for usage with the Access Control Tool.</description>
 
     <build>
 

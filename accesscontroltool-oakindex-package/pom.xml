@@ -25,6 +25,7 @@
     <artifactId>accesscontroltool-oakindex-package</artifactId>
     <packaging>content-package</packaging>
     <name>Access Control Tool Package - Oak Index</name>
+    <description>Package containing an oak index definition for 'rep:ACL' nodetypes. This speeds up the performance of the Access Control Tool.</description>
 
     <build>
 
