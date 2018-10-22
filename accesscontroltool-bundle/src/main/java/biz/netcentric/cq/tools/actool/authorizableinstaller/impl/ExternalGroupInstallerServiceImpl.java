@@ -16,8 +16,6 @@ import javax.jcr.Session;
 import javax.jcr.ValueFactory;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.AuthorizableExistsException;
 import org.apache.jackrabbit.api.security.user.Group;
@@ -27,6 +25,7 @@ import org.apache.jackrabbit.oak.spi.security.authentication.external.ExternalId
 import org.apache.jackrabbit.oak.spi.security.authentication.external.ExternalIdentityRef;
 import org.apache.jackrabbit.oak.spi.security.authentication.external.basic.DefaultSyncConfig;
 import org.apache.jackrabbit.oak.spi.security.authentication.external.basic.DefaultSyncContext;
+import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +33,6 @@ import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorE
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 /** SCR component to create external groups (as configured using "externalId"). Only available if package
  * o.a.j.oak.spi.security.authentication.external.basic (optional OSGi import) is available (this is the case starting from AEM 6.1+SP1, the
@@ -42,8 +40,7 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryP
  * 
  * This service is only referenced from AuthorizableCreatorServiceImpl that gracefully handles the situation when this service does not
  * exist, e.g. for AEM 6.0. */
-@Service(ExternalGroupInstallerServiceImpl.class)
-@Component(metatype = false)
+@Component(service=ExternalGroupInstallerServiceImpl.class)
 public class ExternalGroupInstallerServiceImpl {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExternalGroupInstallerServiceImpl.class);

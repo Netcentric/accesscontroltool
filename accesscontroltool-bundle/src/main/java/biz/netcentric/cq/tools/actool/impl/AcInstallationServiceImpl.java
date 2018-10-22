@@ -13,8 +13,6 @@ import static biz.netcentric.cq.tools.actool.history.PersistableInstallationLogg
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Dictionary;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -32,18 +30,17 @@ import javax.jcr.ValueFormatException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.StopWatch;
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
-import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.framework.FrameworkUtil;
-import org.osgi.service.cm.ConfigurationAdmin;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.Designate;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,14 +68,13 @@ import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
+import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl.Configuration;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
-@Service
-@Component(metatype = true, label = "AC Installation Service", description = "Service that installs groups & ACEs according to textual configuration files")
+@Component
+@Designate(ocd=Configuration.class)
 public class AcInstallationServiceImpl implements AcInstallationService, AcInstallationServiceInternal, AceService {
     private static final Logger LOG = LoggerFactory.getLogger(AcInstallationServiceImpl.class);
-
-    private static final String LEGACY_CONFIG_PID = "biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl";
 
     static final String PROPERTY_CONFIGURATION_PATH = "AceService.configurationPath";
     static final String PROPERTY_INTERMEDIATE_SAVES = "intermediateSaves";
@@ -110,33 +106,28 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     @Reference
     private ConfigFilesRetriever configFilesRetriever;
 
-    @Reference
-    private ConfigurationAdmin configAdmin;
-
-    @Property(label = "Configuration storage path", description = "CRX path where ACE configuration gets stored", name = AcInstallationServiceImpl.PROPERTY_CONFIGURATION_PATH, value = "")
     private String configuredAcConfigurationRootPath;
 
-    @Property(label = "Use intermedate saves", description = "Saves ACLs for each path individually - this can be used to avoid problems with large changesets and MongoDB (OAK-5557), however the rollback is disabled then.", name = AcInstallationServiceImpl.PROPERTY_INTERMEDIATE_SAVES, value = "")
     private boolean intermediateSaves;
+    
+    @ObjectClassDefinition(name = "AC Installation Service", 
+            description="Service that installs groups & ACEs according to textual configuration files",
+            id = "biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl")
+    protected static @interface Configuration {
+        @AttributeDefinition(name="Configuration storage path", description="CRX path where ACE configuration gets stored")
+        String AceService_configurationPath() default "";
+        
+        @AttributeDefinition(name="Use intermediate saves", description="Saves ACLs for each path individually - this can be used to avoid problems with large changesets and MongoDB (OAK-5557), however the rollback is disabled then.")
+        boolean intermediateSaves() default false;
+    }
 
     @Activate
-    public void activate(Map<String, Object> properties) throws Exception {
-
-        Dictionary<String, Object> legacyProps = configAdmin.getConfiguration(LEGACY_CONFIG_PID).getProperties();
-        if (legacyProps != null) {
-            properties = new HashMap<String, Object>(properties);
-            Enumeration<String> keysEnum = legacyProps.keys();
-            while (keysEnum.hasMoreElements()) {
-                String key = keysEnum.nextElement();
-                properties.put(key, legacyProps.get(key));
-            }
-        }
-
+    public void activate(Configuration configuration) throws Exception {
         LOG.debug("Activated AceService!");
-        configuredAcConfigurationRootPath = PropertiesUtil.toString(properties.get(PROPERTY_CONFIGURATION_PATH), "");
-        LOG.info("Conifg " + PROPERTY_CONFIGURATION_PATH + "=" + configuredAcConfigurationRootPath);
-        intermediateSaves = PropertiesUtil.toBoolean(properties.get(PROPERTY_INTERMEDIATE_SAVES), false);
-        LOG.info("Conifg " + PROPERTY_INTERMEDIATE_SAVES + "=" + intermediateSaves);
+        configuredAcConfigurationRootPath = configuration.AceService_configurationPath();
+        LOG.info("Config " + PROPERTY_CONFIGURATION_PATH + "=" + configuredAcConfigurationRootPath);
+        intermediateSaves = configuration.intermediateSaves();
+        LOG.info("Config " + PROPERTY_INTERMEDIATE_SAVES + "=" + intermediateSaves);
     }
 
     @Override

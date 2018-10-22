@@ -24,10 +24,9 @@ import javax.jcr.Session;
 import javax.jcr.query.InvalidQueryException;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.jcr.api.SlingRepository;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,8 +41,7 @@ import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
-@Service
-@Component(label = "AC Yaml Config Reader", description = "Service that installs groups & ACEs according to textual configuration files")
+@Component()
 public class YamlConfigReader implements ConfigReader {
 
     private static final Logger LOG = LoggerFactory.getLogger(YamlConfigReader.class);

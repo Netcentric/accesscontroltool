@@ -11,12 +11,10 @@ package biz.netcentric.cq.tools.actool.validators.impl;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Service;
+import org.osgi.service.component.annotations.Component;
 
 import biz.netcentric.cq.tools.actool.validators.ObsoleteAuthorizablesValidator;
 
-@Service
 @Component
 public class ObsoleteAuthorizablesValidatorImpl implements ObsoleteAuthorizablesValidator {
 

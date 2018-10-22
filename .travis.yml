@@ -1,2 +1,3 @@
 # standard maven build with travis
 language: java
+jdk: oraclejdk8

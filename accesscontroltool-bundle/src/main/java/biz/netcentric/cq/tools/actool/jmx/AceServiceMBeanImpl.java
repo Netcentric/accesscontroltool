@@ -14,12 +14,9 @@ import javax.management.NotCompliantMBeanException;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.StopWatch;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Properties;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.jcr.api.SlingRepository;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,11 +26,10 @@ import biz.netcentric.cq.tools.actool.dumpservice.ConfigDumpService;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceInternal;
 
-@Service
-@Component(immediate = true)
-@Properties({
-        @Property(name = "jmx.objectname", value = "biz.netcentric.cq.tools:type=ACTool"),
-        @Property(name = "pattern", value = "/.*") })
+@Component(immediate = true, property = {
+        "jmx.objectname=biz.netcentric.cq.tools:type=ACTool",
+        "pattern=/.*"
+})
 public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceServiceMBean {
     private static final Logger LOG = LoggerFactory.getLogger(AceServiceMBeanImpl.class);
 
