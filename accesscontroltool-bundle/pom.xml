@@ -98,10 +98,6 @@
         </dependency>
         <dependency>
             <groupId>com.day.cq</groupId>
-            <artifactId>cq-security</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.day.cq</groupId>
             <artifactId>cq-commons</artifactId>
         </dependency>
         <dependency>
@@ -130,6 +126,11 @@
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>
+            <scope>test</scope>
+        </dependency>
+         <dependency>
+            <groupId>com.day.cq</groupId>
+            <artifactId>cq-security</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -221,6 +222,20 @@
                             <excludes>META-INF/**</excludes>
                             <outputDirectory>${project.build.outputDirectory}</outputDirectory>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- see https://github.com/apache/felix/tree/trunk/tools/osgicheck-maven-plugin -->
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>osgicheck-maven-plugin</artifactId>
+                <version>0.1.0</version>
+                <executions>
+                    <execution>
+                        <id>check-bundle</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
