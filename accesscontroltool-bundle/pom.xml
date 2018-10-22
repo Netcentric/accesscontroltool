@@ -233,6 +233,7 @@ Bundle-Description: ${project.description}
 Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
 Bundle-License: Eclipse Public License 1.0
 Bundle-Vendor: Netcentric
+Bundle-SymbolicName: ${project.groupId}.${project.artifactId}
 # export all versioned packages by default
 -exportcontents: ${packages;VERSIONED}
 Import-Package: org.apache.jackrabbit.oak.spi.security.authentication.external;version="[1.0,3)",*
