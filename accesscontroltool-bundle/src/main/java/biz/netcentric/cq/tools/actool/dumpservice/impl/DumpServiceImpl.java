@@ -39,13 +39,6 @@ import javax.jcr.version.VersionException;
 import javax.servlet.ServletOutputStream;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Modified;
-import org.apache.felix.scr.annotations.Properties;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
@@ -59,9 +52,13 @@ import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.jackrabbit.oak.spi.security.principal.EveryonePrincipal;
 import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
-import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.Designate;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,6 +73,7 @@ import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementYamlVisitor;
 import biz.netcentric.cq.tools.actool.dumpservice.AceDumpData;
 import biz.netcentric.cq.tools.actool.dumpservice.CompleteAcDump;
 import biz.netcentric.cq.tools.actool.dumpservice.ConfigDumpService;
+import biz.netcentric.cq.tools.actool.dumpservice.impl.DumpServiceImpl.Configuration;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.AceWrapper;
@@ -84,15 +82,8 @@ import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
 
-@Service
-@Component(metatype = true, label = "AC Dump Service", description = "Service that creates dumps of the current AC configurations (groups&ACEs)")
-@Properties({
-
-        @Property(label = "Number of dumps to save", name = DumpServiceImpl.DUMP_SERVICE_NR_OF_SAVED_DUMPS, value = "5", description = "Number of last dumps which get saved in CRX under /var/statistics/achistory"),
-        @Property(label = "Include users in dumps", name = DumpServiceImpl.DUMP_INCLUDE_USERS, boolValue = false, description = "If selected, also users with their ACEs get added to dumps"),
-        @Property(label = "AC query exclude paths", name = DumpServiceImpl.DUMP_SERVICE_EXCLUDE_PATHS_PATH, value = {
-                "/home", "/jcr:system",
-                "/tmp" }, description = "direct children of jcr:root which get excluded from all dumps (also from internal dumps)") })
+@Component
+@Designate(ocd=Configuration.class)
 public class DumpServiceImpl implements ConfigDumpService {
 
     private static final Logger LOG = LoggerFactory.getLogger(DumpServiceImpl.class);
@@ -118,30 +109,26 @@ public class DumpServiceImpl implements ConfigDumpService {
     @Reference
     private SlingRepository repository;
 
+    @ObjectClassDefinition(name = "AC Dump Service", 
+            description="Service that creates dumps of the current AC configurations (groups&ACEs)",
+            id="biz.netcentric.cq.tools.actool.dumpservice.impl.DumpServiceImpl")
+    protected static @interface Configuration {
+        @AttributeDefinition(name="Number of dumps to save", description="Number of last dumps which get saved in the repository under /var/statistics/achistory")
+        int DumpService_nrOfSavedDumps() default 5;
+        
+        @AttributeDefinition(name="Include users in dumps", description="If selected, also users with their ACEs get added to dumps")
+        boolean DumpService_includeUsers() default false;
+        
+        @AttributeDefinition(name="AC query exclude paths", description="direct children of jcr:root which get excluded from all dumps (also from internal dumps)")
+        String[] DumpService_queryExcludePaths() default {"/home", "/jcr:system", "/tmp"};
+    }
+    
     @Activate
-    public void activate(@SuppressWarnings("rawtypes") final Map properties,
-            final ComponentContext context) throws Exception {
-        updateProperties(properties, context);
+    public void activate(Configuration configuration) throws Exception {
+        queryExcludePaths = configuration.DumpService_queryExcludePaths();
+        nrOfSavedDumps = configuration.DumpService_nrOfSavedDumps();
+        includeUsersInDumps = configuration.DumpService_includeUsers();
     }
-
-    @Modified
-    public void modified(@SuppressWarnings("rawtypes") final Map properties,
-            final ComponentContext context) throws Exception {
-        updateProperties(properties, context);
-    }
-
-    private void updateProperties(final Map properties,
-            final ComponentContext context) {
-        queryExcludePaths = PropertiesUtil.toStringArray(
-                properties.get(DUMP_SERVICE_EXCLUDE_PATHS_PATH), null);
-        nrOfSavedDumps = PropertiesUtil.toInteger(
-                properties.get(DUMP_SERVICE_NR_OF_SAVED_DUMPS),
-                NR_OF_DUMPS_TO_SAVE_DEFAULT);
-        includeUsersInDumps = PropertiesUtil.toBoolean(
-                properties.get(DUMP_INCLUDE_USERS), false);
-
-    }
-
 
     @Override
     public boolean isIncludeUsers() {

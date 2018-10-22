@@ -13,11 +13,10 @@ import java.util.Properties;
 
 import javax.jcr.Session;
 
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.fs.io.Archive;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetriever;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
@@ -25,7 +24,6 @@ import biz.netcentric.cq.tools.actool.history.ProgressTrackerListenerInstallatio
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceInternal;
 
 @Component
-@Service(value = AcToolInstallHookService.class)
 public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
 
     @Reference

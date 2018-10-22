@@ -20,15 +20,14 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Properties;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.commons.JcrUtils;
-import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.Designate;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,17 +37,14 @@ import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
+import biz.netcentric.cq.tools.actool.history.impl.AcHistoryServiceImpl.Configuration;
 
-@Service
-@Component(metatype = true, label = "AC History Service", immediate = true, description = "Service that writes & fetches Ac installation histories")
-@Properties({ @Property(label = "ACL number of histories to save", name = "AceService.nrOfSavedHistories", value = "5")
-
-})
+@Component
+@Designate(ocd=Configuration.class)
 public class AcHistoryServiceImpl implements AcHistoryService {
     private static final Logger LOG = LoggerFactory.getLogger(AcHistoryServiceImpl.class);
 
     public static final String INSTALLED_CONFIGS_NODE_NAME = "installedConfigs";
-    private static final int NR_OF_HISTORIES_TO_SAVE_DEFAULT = 5;
 
     private int nrOfSavedHistories;
 
@@ -58,11 +54,19 @@ public class AcHistoryServiceImpl implements AcHistoryService {
     @Reference
     private SlingRepository repository;
 
+    @ObjectClassDefinition(name = "AC History Service", 
+            description="Service that writes & fetches Ac installation histories.",
+            id="biz.netcentric.cq.tools.actool.history.impl.AcHistoryServiceImpl")
+    protected static @interface Configuration {
+        @AttributeDefinition(name="ACL number of histories to save")
+        int AceService_nrOfSavedHistories() default 5;
+    }
+
+    
     @Activate
-    public void activate(@SuppressWarnings("rawtypes") final Map properties)
+    public void activate(Configuration configuration)
             throws Exception {
-        nrOfSavedHistories = PropertiesUtil.toInteger(properties.get("AceService.nrOfSavedHistories"),
-                NR_OF_HISTORIES_TO_SAVE_DEFAULT);
+        nrOfSavedHistories = configuration.AceService_nrOfSavedHistories();
     }
 
     @Override

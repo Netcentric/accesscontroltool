@@ -24,9 +24,8 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.apache.commons.lang.time.StopWatch;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
@@ -50,7 +49,6 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
 import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
 
-@Service
 @Component
 public class YamlConfigurationMerger implements ConfigurationMerger {
 
