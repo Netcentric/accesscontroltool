@@ -141,7 +141,18 @@
                 <artifactId>org.osgi.service.metatype.annotations</artifactId>
                 <version>1.3.0</version>
             </dependency>
-
+            <!--  Config Admin 1.5 (https://osgi.org/javadoc/r6/cmpn/org/osgi/service/component/package-summary.html) -->
+            <dependency>
+                <groupId>org.osgi</groupId>
+                <artifactId>org.osgi.service.cm</artifactId>
+                <version>1.5.0</version>
+            </dependency>
+            <!--  Event Admin 1.3.1 (https://osgi.org/javadoc/r6/cmpn/org/osgi/service/event/package-summary.html) -->
+            <dependency>
+                <groupId>org.osgi</groupId>
+                <artifactId>org.osgi.service.event</artifactId>
+                <version>1.3.1</version>
+            </dependency>
             <!-- only constants are referenced from there which are inlined during compilation anyways, therefore no runtime dependency -->
             <dependency>
                 <groupId>org.apache.sling</groupId>

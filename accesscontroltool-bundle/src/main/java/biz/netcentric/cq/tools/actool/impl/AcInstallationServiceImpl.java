@@ -13,6 +13,7 @@ import static biz.netcentric.cq.tools.actool.history.PersistableInstallationLogg
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -33,8 +34,10 @@ import org.apache.commons.lang.time.StopWatch;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
+import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.framework.FrameworkUtil;
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -76,8 +79,10 @@ import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryP
 public class AcInstallationServiceImpl implements AcInstallationService, AcInstallationServiceInternal, AceService {
     private static final Logger LOG = LoggerFactory.getLogger(AcInstallationServiceImpl.class);
 
-    static final String PROPERTY_CONFIGURATION_PATH = "AceService.configurationPath";
-    static final String PROPERTY_INTERMEDIATE_SAVES = "intermediateSaves";
+    private static final String CONFIG_PID = "biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl";
+    private static final String LEGACY_CONFIG_PID = "biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl";
+    private static final String LEGACY_PROPERTY_CONFIGURATION_PATH = "AceService.configurationPath";
+    private static final String LEGACY_PROPERTY_INTERMEDIATE_SAVES = "intermediateSaves";
 
     @Reference
     AuthorizableInstallerService authorizableCreatorService;
@@ -106,13 +111,16 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     @Reference
     private ConfigFilesRetriever configFilesRetriever;
 
+    @Reference
+    private ConfigurationAdmin configAdmin;
+
     private String configuredAcConfigurationRootPath;
 
     private boolean intermediateSaves;
     
     @ObjectClassDefinition(name = "AC Installation Service", 
             description="Service that installs groups & ACEs according to textual configuration files",
-            id = "biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl")
+            id = CONFIG_PID)
     protected static @interface Configuration {
         @AttributeDefinition(name="Configuration storage path", description="CRX path where ACE configuration gets stored")
         String AceService_configurationPath() default "";
@@ -125,9 +133,17 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     public void activate(Configuration configuration) throws Exception {
         LOG.debug("Activated AceService!");
         configuredAcConfigurationRootPath = configuration.AceService_configurationPath();
-        LOG.info("Config " + PROPERTY_CONFIGURATION_PATH + "=" + configuredAcConfigurationRootPath);
         intermediateSaves = configuration.intermediateSaves();
-        LOG.info("Config " + PROPERTY_INTERMEDIATE_SAVES + "=" + intermediateSaves);
+
+        // only fall back to legacy config if new config does not exist
+        if (configAdmin.getConfiguration(CONFIG_PID).getProperties() == null) {
+            Dictionary<String, Object> legacyProps = configAdmin.getConfiguration(LEGACY_CONFIG_PID).getProperties();
+            if (legacyProps != null) {
+                LOG.warn("Using legacy configuration PID '{}'. Please remove this and switch to the new one with PID '{}',", LEGACY_CONFIG_PID, CONFIG_PID);
+                configuredAcConfigurationRootPath = PropertiesUtil.toString(legacyProps.get(LEGACY_PROPERTY_CONFIGURATION_PATH), "");
+                intermediateSaves = PropertiesUtil.toBoolean(legacyProps.get(LEGACY_PROPERTY_INTERMEDIATE_SAVES), false);
+            }
+        }
     }
 
     @Override
