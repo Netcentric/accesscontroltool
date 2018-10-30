@@ -10,6 +10,7 @@ package biz.netcentric.cq.tools.actool.installhook;
 
 import org.apache.jackrabbit.vault.packaging.InstallContext;
 import org.apache.jackrabbit.vault.packaging.PackageException;
+import org.osgi.annotation.versioning.ProviderType;
 import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,7 @@ import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.installhook.impl.AcToolInstallHookService;
 import biz.netcentric.cq.tools.actool.installhook.impl.OsgiAwareInstallHook;
 
+@ProviderType
 public class AcToolInstallHook extends OsgiAwareInstallHook {
 
     private static final Logger LOG = LoggerFactory.getLogger(AcToolInstallHook.class);

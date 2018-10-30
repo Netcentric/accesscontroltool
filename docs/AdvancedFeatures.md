@@ -145,6 +145,7 @@ Expressions are evaluated using javax.el expression language. The following util
 - substringAfterLast(str,separator) 
 - substringBeforeLast(str,separator) 
 - contains(str,fragmentStr) 
+- containsItem(array,str)
 - endsWith(str,fragmentStr) 
 - startsWith(str,fragmentStr) 
 - length(str)
@@ -210,31 +211,32 @@ Env variables can be referenced by using `${env.my_env_variable}`. To provide a 
 
 NOTE: Use this feature sparingly, for most cases the configuration should be self-contained. One use case for this is production passwords (as needed for non-system users like replication receiver). 
 
-## Configure permissions for built-in users or groups (like anonymous)
+  
+## Configure unmanaged aspects
+
+The following table gives an overview of what is managed (in terms of authorizables themselves, group memberships and ACLs) by AC Tool and what is not:
+
+| Aspect | Default behaviour if existing in config but not in repo | Default behaviour if existing in repo but not in config | Configuration options to change the default behaviour |
+| --- | --- | --- | --- |
+| Users and Groups | are created | are **not** removed | `obsolete_authorizables` can be used, see [documentation](https://github.com/Netcentric/accesscontroltool/blob/develop/docs/AdvancedFeatures.md#automatically-purge-obsolete-groups-and-users), to also remove groups/users existing in repo but not in config | 
+| Group memberships of users and groups within config **not "leaving the config space"**, i.e. only referring to groups managed by AC Tool (`isMemberOf` or `members`, internally `members` is always translated to `isMemberOf` on the other side of the relationship) | are created | are removed | Default behaviour can not be changed by design for consistent AC setups |
+| Group memberships of users and groups **"leaving the config space"** , i.e. referring to groups not managed by AC Tool and hence inheriting permissions from elsewhere (`isMemberOf`) | are created | are removed (this affects even membership not initially created by AC Tool, e.g. created programmatically or manually) | Use `unmanagedExternalIsMemberOfRegex` on an authorizable config or `defaultUnmanagedExternalIsMemberOfRegex` in `global_config` to not touch group memberships. *You cannot use groups in `isMemberOf` that you explicitly unmanage in the given regex.*  |
+| Group memberships of groups **"leaving the config space"**, i.e. referring to groups not managed by AC Tool  and pushing permissions to other, existing authorizables (`members`) | are created | **relationships to groups and system users are removed** - relationships to regular users are untouched (those are often assigned by user administrators, LDAP or SSO) | Similar to `isMemberOf`, in row above, use `unmanagedExternalMembersRegex` on group configs or `defaultUnmanagedExternalMembersRegex` to not touch group memberships. *You cannot use users/groups in `members` that you explicitly unmanage in the given regex.* |
+| ACEs for authorizables in the config | are created | are removed | Property `unmanagedAcePathsRegex` on authorizable config allow to not touch certain paths for a authorizable. Also, `defaultUnmanagedAcePathsRegex` can be used to define unmanaged areas globally. |
+
+For common use cases which may require tweaking the default behaviour refer to the following section
+
+### Configure permissions for built-in users or groups (like anonymous)
 
 To configure permissions for already existing users, it's best to create a custom group and add this user to the `members` attribute of that group. The ACEs added to the custom group will then be effective for that user as well.
 
 This is not an option for the [`everyone` group](https://jackrabbit.apache.org/oak/docs/security/user/default.html#Everyone_Group) as it is neither allowed to put groups/users as members to this group (because implicitly every principal is member of this group) nor to put this group as member to another group (to prevent cycles, compare with [OAK-7323](https://issues.apache.org/jira/browse/OAK-7323)).
 
 Another alternative is to list the built-in user in the YAML file (with the correct path and system user flag) and leverage `unmanagedAcePathsRegex` as outlined below. This is currently the only option to extend rights for `everyone`.
-  
-## Configure unmanaged aspects
-
-The following table gives and overview of what is managed by AC Tool and what not:
-
-| Aspect | Default behaviour if existent in config but not in repo | Default behaviour if existent in repo but not in config | Configuration options to alter the default behaviour |
-| --- | --- | --- | --- |
-| Users and Groups | are created | are **not** removed | `obsolete_authorizables` can be used, see [documentation](https://github.com/Netcentric/accesscontroltool/blob/develop/docs/AdvancedFeatures.md#automatically-purge-obsolete-groups-and-users) | 
-| Relationships between users and groups within config **not "leaving the config space"** (`isMemberOf` or `members`, internally `members` is always translated to `isMemberOf` on the other side of the relationship) | are created | are removed | Default behaviour can not be changed by design for consistent AC setups |
-| Relationships of users and groups **"leaving the config space"** and hence inheriting permissions from elsewhere (`isMemberOf`) | are created | are removed | Use `unmanagedExternalIsMemberOfRegex` on an authorizable config or `defaultUnmanagedExternalIsMemberOfRegex` in `global_config` to specify a default value for authorizable configs. |
-| Relationships of groups **"leaving the config space"** and pushing permissions to other, existing authorizables (`members`) | are created | **relationships to groups and system users are removed** - relationships to regular users are untouched (those are often assigned by user administrators, LDAP or SSO) | Similar to `isMemberOf`, in row above, use `unmanagedExternalMembersRegex` on group configs or `defaultUnmanagedExternalMembersRegex` to configure it globally. |
-| ACEs for authorizables in the config | are created | are removed | Property `unmanagedAcePathsRegex` on authorizable config allow to not touch certain paths for a authorizable. Also, `defaultUnmanagedAcePathsRegex` can be used to define unmanaged areas globally. |
-
-IMPORTANT: If relationships to certain group patterns are marked as unmanged, it is **not** allowed to list them in the configuration anymore. If this is needed (means if certain group memberships to external groups should be added but never deleted), use `allowCreateOfUnmanagedRelationships: true` in `global_config`. This should be rarely used though: Make a concious decision on what is managed by the AC tool and what not - if relationships are managed outside the AC Tool ensure the whole livecycle (incl. creation) of those releationships is managed externally (e.g. programmatically upon certain repository events).
 
 ### Configure memberships of/towards externally managed groups
 
-The AC Tool manages relationships between authorizables of the configuration (the normal case, not adjustable), but also relationships to authorizables that are not contained in the configuration (that means if you add `isMemberOf: contributor` this group id will be added to the `contributur`'s `members` list; if you remove `contributor` this group membership will be removed with the next run). This is the case even though only one side of the relationship is contained in the AC Tool configuration. To not manage (currently means only to not remove) certain relationships, the following configuration can be used:
+The AC Tool manages relationships between authorizables of the configuration, but also relationships to authorizables that are not contained in the configuration (that means if you add `isMemberOf: contributor` this group id will be added to the `contributur`'s `members` list; if you remove `contributor` from `isMemberOf` this group membership will be removed with the next run). This is the case even though only one side of the relationship is contained in the AC Tool configuration. To not manage certain relationships, the following configuration can be used:
 
 ```
 - global_config:
@@ -283,7 +285,7 @@ Example for setting it globally:
       defaultUnmanagedAcePathsRegex: /content/project2.* # will never change any ACLs underneath this root path 
 ```
 
-## Automatically purge obsolete groups and users
+### Automatically purge obsolete groups and users
 The root element `obsolete_authorizables` can be used to automatically purge authorizables that are not in use anymore:
 
 ```

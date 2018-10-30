@@ -10,10 +10,13 @@ package biz.netcentric.cq.tools.actool.aceservice;
 
 import java.util.Set;
 
+import org.osgi.annotation.versioning.ProviderType;
+
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 /** @deprecated Use {@link biz.netcentric.cq.tools.actool.api.AcInstallationService} instead. */
 @Deprecated
+@ProviderType
 public interface AceService {
 
     /** Applies the full configuration as stored at the path configured at PID biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl

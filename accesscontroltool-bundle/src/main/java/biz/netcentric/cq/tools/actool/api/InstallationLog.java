@@ -8,12 +8,15 @@
  */
 package biz.netcentric.cq.tools.actool.api;
 
+import org.osgi.annotation.versioning.ConsumerType;
+
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
 /**
  * Access to log messages being emitted
  *
  */
+@ConsumerType
 public interface InstallationLog extends AcInstallationHistoryPojo {
 
     // This is only set for the installhook mechanism

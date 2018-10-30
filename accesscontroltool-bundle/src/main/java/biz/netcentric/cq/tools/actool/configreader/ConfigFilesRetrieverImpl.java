@@ -17,27 +17,26 @@ import javax.jcr.nodetype.NodeType;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.commons.JcrUtils;
 import org.apache.jackrabbit.vault.fs.io.Archive;
 import org.apache.jackrabbit.vault.fs.io.Archive.Entry;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.apache.sling.settings.SlingSettingsService;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Service
-@Component(label = "AC Config Files Retriever", description = "Provides a map path->yamlConfigContent of relevant configs")
+@Component()
 public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfigFilesRetrieverImpl.class);
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingSettingsService slingSettingsService;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
 
     @Override

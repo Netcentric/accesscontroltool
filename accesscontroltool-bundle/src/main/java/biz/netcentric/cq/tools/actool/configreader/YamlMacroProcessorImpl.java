@@ -21,15 +21,15 @@ import java.util.regex.Pattern;
 import javax.jcr.Session;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
+import org.apache.sling.settings.SlingSettingsService;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
-@Service
 @Component
 public class YamlMacroProcessorImpl implements YamlMacroProcessor {
 
@@ -47,16 +47,28 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
 
     YamlMacroElEvaluator elEvaluator = new YamlMacroElEvaluator();
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     YamlMacroChildNodeObjectsProvider yamlMacroChildNodeObjectsProvider;
 
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    private SlingSettingsService slingSettingsService;
+    
     @Override
     public List<LinkedHashMap> processMacros(List<LinkedHashMap> yamlList, InstallationLogger installLog, Session session) {
         return (List<LinkedHashMap>) transform(yamlList, installLog, session);
     }
 
     private Object transform(Object o, InstallationLogger installLog, Session session) {
-        return transform(o, new HashMap<String, Object>(), installLog, session);
+        HashMap<String, Object> initialVariables = createInitialVariables();
+        return transform(o, initialVariables, installLog, session);
+    }
+
+    private HashMap<String, Object> createInitialVariables() {
+        HashMap<String, Object> initialVariables = new HashMap<String, Object>();
+        if(slingSettingsService != null) {
+            initialVariables.put("RUNMODES", new ArrayList<String>(slingSettingsService.getRunModes()));
+        }
+        return initialVariables;
     }
 
     private Object transform(Object o, Map<String, Object> variables, InstallationLogger installLog, Session session) {

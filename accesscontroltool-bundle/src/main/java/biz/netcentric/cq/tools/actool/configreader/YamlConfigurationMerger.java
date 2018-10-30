@@ -24,9 +24,9 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.apache.commons.lang.time.StopWatch;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
@@ -50,22 +50,21 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidati
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
 import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
 
-@Service
 @Component
 public class YamlConfigurationMerger implements ConfigurationMerger {
 
     private static final Logger LOG = LoggerFactory.getLogger(YamlConfigurationMerger.class);
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     YamlMacroProcessor yamlMacroProcessor;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     ObsoleteAuthorizablesValidator obsoleteAuthorizablesValidator;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     VirtualGroupProcessor virtualGroupProcessor;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     TestUserConfigsCreator testUserConfigsCreator;
 
     @Override

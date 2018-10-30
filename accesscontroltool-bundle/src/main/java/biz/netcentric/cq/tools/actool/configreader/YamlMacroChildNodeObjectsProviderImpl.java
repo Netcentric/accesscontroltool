@@ -24,10 +24,10 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFormatException;
 
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.jcr.api.SlingRepository;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,13 +35,12 @@ import com.day.cq.commons.jcr.JcrConstants;
 
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
-@Service
 @Component
 public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNodeObjectsProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(YamlMacroChildNodeObjectsProviderImpl.class);
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
 
     @Override

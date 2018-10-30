@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Dictionary;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -32,11 +31,6 @@ import javax.jcr.ValueFormatException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.StopWatch;
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
@@ -44,6 +38,14 @@ import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.cm.ConfigurationAdmin;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.Designate;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,72 +73,79 @@ import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
+import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl.Configuration;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 
-@Service
-@Component(metatype = true, label = "AC Installation Service", description = "Service that installs groups & ACEs according to textual configuration files")
+@Component
+@Designate(ocd=Configuration.class)
 public class AcInstallationServiceImpl implements AcInstallationService, AcInstallationServiceInternal, AceService {
     private static final Logger LOG = LoggerFactory.getLogger(AcInstallationServiceImpl.class);
 
+    private static final String CONFIG_PID = "biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl";
     private static final String LEGACY_CONFIG_PID = "biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl";
+    private static final String LEGACY_PROPERTY_CONFIGURATION_PATH = "AceService.configurationPath";
+    private static final String LEGACY_PROPERTY_INTERMEDIATE_SAVES = "intermediateSaves";
 
-    static final String PROPERTY_CONFIGURATION_PATH = "AceService.configurationPath";
-    static final String PROPERTY_INTERMEDIATE_SAVES = "intermediateSaves";
-
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     AuthorizableInstallerService authorizableCreatorService;
 
-    @Reference(target = "(component.name=biz.netcentric.cq.tools.actool.aceinstaller.AceBeanInstallerClassic)")
+    @Reference(target = "(component.name=biz.netcentric.cq.tools.actool.aceinstaller.AceBeanInstallerClassic)", policyOption = ReferencePolicyOption.GREEDY)
     AceBeanInstaller aceBeanInstallerClassic;
 
-    @Reference(target = "(component.name=biz.netcentric.cq.tools.actool.aceinstaller.AceBeanInstallerIncremental)")
+    @Reference(target = "(component.name=biz.netcentric.cq.tools.actool.aceinstaller.AceBeanInstallerIncremental)", policyOption = ReferencePolicyOption.GREEDY)
     AceBeanInstaller aceBeanInstallerIncremental;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     AcHistoryService acHistoryService;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ConfigDumpService dumpservice;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ConfigReader configReader;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ConfigurationMerger configurationMerger;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ConfigFilesRetriever configFilesRetriever;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ConfigurationAdmin configAdmin;
 
-    @Property(label = "Configuration storage path", description = "CRX path where ACE configuration gets stored", name = AcInstallationServiceImpl.PROPERTY_CONFIGURATION_PATH, value = "")
     private String configuredAcConfigurationRootPath;
 
-    @Property(label = "Use intermedate saves", description = "Saves ACLs for each path individually - this can be used to avoid problems with large changesets and MongoDB (OAK-5557), however the rollback is disabled then.", name = AcInstallationServiceImpl.PROPERTY_INTERMEDIATE_SAVES, value = "")
     private boolean intermediateSaves;
+    
+    @ObjectClassDefinition(name = "AC Installation Service", 
+            description="Service that installs groups & ACEs according to textual configuration files",
+            id = CONFIG_PID)
+    protected static @interface Configuration {
+        @AttributeDefinition(name="Configuration storage path", description="CRX path where ACE configuration gets stored")
+        String AceService_configurationPath() default "";
+        
+        @AttributeDefinition(name="Use intermediate saves", description="Saves ACLs for each path individually - this can be used to avoid problems with large changesets and MongoDB (OAK-5557), however the rollback is disabled then.")
+        boolean intermediateSaves() default false;
+    }
 
     @Activate
-    public void activate(Map<String, Object> properties) throws Exception {
+    public void activate(Configuration configuration) throws Exception {
+        LOG.debug("Activated AceService!");
+        configuredAcConfigurationRootPath = configuration.AceService_configurationPath();
+        intermediateSaves = configuration.intermediateSaves();
 
-        Dictionary<String, Object> legacyProps = configAdmin.getConfiguration(LEGACY_CONFIG_PID).getProperties();
-        if (legacyProps != null) {
-            properties = new HashMap<String, Object>(properties);
-            Enumeration<String> keysEnum = legacyProps.keys();
-            while (keysEnum.hasMoreElements()) {
-                String key = keysEnum.nextElement();
-                properties.put(key, legacyProps.get(key));
+        // only fall back to legacy config if new config does not exist
+        if (configAdmin.getConfiguration(CONFIG_PID).getProperties() == null) {
+            Dictionary<String, Object> legacyProps = configAdmin.getConfiguration(LEGACY_CONFIG_PID).getProperties();
+            if (legacyProps != null) {
+                LOG.warn("Using legacy configuration PID '{}'. Please remove this and switch to the new one with PID '{}',", LEGACY_CONFIG_PID, CONFIG_PID);
+                configuredAcConfigurationRootPath = PropertiesUtil.toString(legacyProps.get(LEGACY_PROPERTY_CONFIGURATION_PATH), "");
+                intermediateSaves = PropertiesUtil.toBoolean(legacyProps.get(LEGACY_PROPERTY_INTERMEDIATE_SAVES), false);
             }
         }
-
-        LOG.debug("Activated AceService!");
-        configuredAcConfigurationRootPath = PropertiesUtil.toString(properties.get(PROPERTY_CONFIGURATION_PATH), "");
-        LOG.info("Conifg " + PROPERTY_CONFIGURATION_PATH + "=" + configuredAcConfigurationRootPath);
-        intermediateSaves = PropertiesUtil.toBoolean(properties.get(PROPERTY_INTERMEDIATE_SAVES), false);
-        LOG.info("Conifg " + PROPERTY_INTERMEDIATE_SAVES + "=" + intermediateSaves);
     }
 
     @Override

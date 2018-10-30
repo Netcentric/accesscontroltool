@@ -27,11 +27,10 @@ import javax.jcr.security.Privilege;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
+import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +43,7 @@ import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 /** The way ACEs were installed in version one is still available and can be configured in "global_config" section by setting
  * "installAclsIncrementally=false". */
-@Service
-@Component
+@Component()
 public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements AceBeanInstaller {
 
     private static final Logger LOG = LoggerFactory.getLogger(AceBeanInstallerClassic.class);

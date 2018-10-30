@@ -8,8 +8,11 @@
  */
 package biz.netcentric.cq.tools.actool.installationhistory;
 
-/** @deprecated Use sevices from API package instead. */
+import org.osgi.annotation.versioning.ConsumerType;
+
+/** @deprecated Use services from API package instead. */
 @Deprecated
+@ConsumerType
 public interface AcInstallationHistoryPojo {
 
 }

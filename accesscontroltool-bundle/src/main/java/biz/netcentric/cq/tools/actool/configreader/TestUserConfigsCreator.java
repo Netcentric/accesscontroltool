@@ -13,12 +13,12 @@ import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.ReferenceCardinality;
-import org.apache.felix.scr.annotations.ReferencePolicyOption;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.settings.SlingSettingsService;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,16 +32,15 @@ import biz.netcentric.cq.tools.actool.configmodel.AutoCreateTestUsersConfig;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
-@Service(TestUserConfigsCreator.class)
-@Component
+@Component(service=TestUserConfigsCreator.class)
 public class TestUserConfigsCreator {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestUserConfigsCreator.class);
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     SlingSettingsService slingSettingsService;
 
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL_UNARY, policyOption = ReferencePolicyOption.GREEDY)
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
     CryptoSupport cryptoSupport;
 
     public boolean isSkippedForRunmode(List<String> skipForRunmodes) {

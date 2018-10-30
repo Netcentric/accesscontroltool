@@ -6,6 +6,8 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-@aQute.bnd.annotation.Version("1.9.99")
+@Version("1.9.100")
 @java.lang.Deprecated
 package biz.netcentric.cq.tools.actool.installationhistory;
+
+import org.osgi.annotation.versioning.Version;

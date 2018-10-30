@@ -15,27 +15,49 @@ import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.sling.hc.annotations.SlingHealthCheck;
 import org.apache.sling.hc.api.HealthCheck;
 import org.apache.sling.hc.api.Result;
 import org.apache.sling.hc.util.FormattingResultLog;
 import org.apache.sling.jcr.api.SlingRepository;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.Designate;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
 import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
 
 /** Sling Health Check that returns WARN if the last installation failed. */
-@SlingHealthCheck(name = "Last Run of AC Tool", tags = "actool")
+@Component
+@Designate(ocd=LastRunSuccessHealthCheck.Configuration.class)
 public class LastRunSuccessHealthCheck implements HealthCheck {
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     AcHistoryService historyService;
 
+    @ObjectClassDefinition(name = "Sling Health Check: Last Run of AC Tool", 
+            description="Health Check Configuration",
+            id="biz.netcentric.cq.tools.actool.healthcheck.LastRunSuccessHealthCheck")
+    protected static @interface Configuration {
+        @AttributeDefinition(name="Tags", description="Tags")
+        String[] hc_tags() default "actool";
+        
+        @AttributeDefinition(name="Cron expression", description ="Cron expression for asynchronous execution (leave empty for synchronous execution)")
+        String hc_async_cronExpression();
+        
+        @AttributeDefinition(name="Name", description = "Name")
+        String hc_name() default "Last Run of AC Tool";
+        
+        @AttributeDefinition(name="MBean", description = "MBean name (leave empty for not using JMX)")
+        String hc_mbean_name() default "";
+    }
+    
     @Override
     public Result execute() {
         final FormattingResultLog resultLog = new FormattingResultLog();

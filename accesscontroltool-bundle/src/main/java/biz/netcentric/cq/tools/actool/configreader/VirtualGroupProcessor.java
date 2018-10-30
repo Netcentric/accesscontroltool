@@ -18,8 +18,7 @@ import java.util.Set;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Service;
+import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,8 +28,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
-@Service(VirtualGroupProcessor.class)
-@Component
+@Component(service=VirtualGroupProcessor.class)
 public class VirtualGroupProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(VirtualGroupProcessor.class);
