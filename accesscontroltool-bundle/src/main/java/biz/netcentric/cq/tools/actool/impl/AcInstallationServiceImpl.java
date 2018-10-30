@@ -41,6 +41,8 @@ import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
@@ -84,34 +86,34 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     private static final String LEGACY_PROPERTY_CONFIGURATION_PATH = "AceService.configurationPath";
     private static final String LEGACY_PROPERTY_INTERMEDIATE_SAVES = "intermediateSaves";
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     AuthorizableInstallerService authorizableCreatorService;
 
-    @Reference(target = "(component.name=biz.netcentric.cq.tools.actool.aceinstaller.AceBeanInstallerClassic)")
+    @Reference(target = "(component.name=biz.netcentric.cq.tools.actool.aceinstaller.AceBeanInstallerClassic)", policyOption = ReferencePolicyOption.GREEDY)
     AceBeanInstaller aceBeanInstallerClassic;
 
-    @Reference(target = "(component.name=biz.netcentric.cq.tools.actool.aceinstaller.AceBeanInstallerIncremental)")
+    @Reference(target = "(component.name=biz.netcentric.cq.tools.actool.aceinstaller.AceBeanInstallerIncremental)", policyOption = ReferencePolicyOption.GREEDY)
     AceBeanInstaller aceBeanInstallerIncremental;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     AcHistoryService acHistoryService;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ConfigDumpService dumpservice;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ConfigReader configReader;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ConfigurationMerger configurationMerger;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ConfigFilesRetriever configFilesRetriever;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ConfigurationAdmin configAdmin;
 
     private String configuredAcConfigurationRootPath;

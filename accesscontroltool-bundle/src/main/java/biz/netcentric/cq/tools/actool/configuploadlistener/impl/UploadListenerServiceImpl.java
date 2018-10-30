@@ -23,6 +23,7 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
@@ -46,10 +47,10 @@ public class UploadListenerServiceImpl implements UploadListenerService, EventHa
     private boolean enabled;
     private int executionDelayInMs;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     AcInstallationService acInstallationService;
     
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     Scheduler scheduler;
 
     private ServiceRegistration eventHandlerServiceRegistration;

@@ -62,7 +62,7 @@ public class Validators {
         try {
             Pattern.compile(expression);
         } catch (PatternSyntaxException e) {
-            LOG.error("Error while validating rep glob: {} ", expression, e);
+            LOG.error("PatternSyntaxException while validating rep glob: {} ", expression);
             isValid = false;
         }
 

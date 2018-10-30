@@ -21,6 +21,7 @@ import org.apache.sling.hc.util.FormattingResultLog;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
@@ -34,10 +35,10 @@ import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
 @Designate(ocd=LastRunSuccessHealthCheck.Configuration.class)
 public class LastRunSuccessHealthCheck implements HealthCheck {
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     AcHistoryService historyService;
 
     @ObjectClassDefinition(name = "Sling Health Check: Last Run of AC Tool", 
