@@ -38,6 +38,8 @@ import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +55,7 @@ import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 @Component
 public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements AceBeanInstaller {
 
-    @Reference
+    @Reference(policyOption=ReferencePolicyOption.GREEDY)
     private SlingRepository slingRepository;
 
     private static final Logger LOG = LoggerFactory.getLogger(AceBeanInstallerIncremental.class);

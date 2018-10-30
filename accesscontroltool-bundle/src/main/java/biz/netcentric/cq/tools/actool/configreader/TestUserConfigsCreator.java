@@ -17,6 +17,7 @@ import org.apache.sling.settings.SlingSettingsService;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,10 +37,10 @@ public class TestUserConfigsCreator {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestUserConfigsCreator.class);
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     SlingSettingsService slingSettingsService;
 
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policyOption = ReferencePolicyOption.GREEDY)
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
     CryptoSupport cryptoSupport;
 
     public boolean isSkippedForRunmode(List<String> skipForRunmodes) {

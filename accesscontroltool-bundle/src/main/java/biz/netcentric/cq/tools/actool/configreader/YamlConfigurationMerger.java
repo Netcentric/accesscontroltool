@@ -26,6 +26,7 @@ import javax.jcr.Session;
 import org.apache.commons.lang.time.StopWatch;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
@@ -54,16 +55,16 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
 
     private static final Logger LOG = LoggerFactory.getLogger(YamlConfigurationMerger.class);
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     YamlMacroProcessor yamlMacroProcessor;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     ObsoleteAuthorizablesValidator obsoleteAuthorizablesValidator;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     VirtualGroupProcessor virtualGroupProcessor;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     TestUserConfigsCreator testUserConfigsCreator;
 
     @Override

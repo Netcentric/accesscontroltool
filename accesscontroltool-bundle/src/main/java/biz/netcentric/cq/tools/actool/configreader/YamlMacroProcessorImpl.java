@@ -24,6 +24,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.sling.settings.SlingSettingsService;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,10 +47,10 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
 
     YamlMacroElEvaluator elEvaluator = new YamlMacroElEvaluator();
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     YamlMacroChildNodeObjectsProvider yamlMacroChildNodeObjectsProvider;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingSettingsService slingSettingsService;
     
     @Override

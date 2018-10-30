@@ -17,6 +17,7 @@ import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.fs.io.Archive;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetriever;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
@@ -26,10 +27,10 @@ import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceInternal;
 @Component
 public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private AcInstallationServiceInternal acInstallationService;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ConfigFilesRetriever configFilesRetriever;
 
     @Override
