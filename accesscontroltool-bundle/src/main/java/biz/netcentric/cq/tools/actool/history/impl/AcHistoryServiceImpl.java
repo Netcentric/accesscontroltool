@@ -25,6 +25,7 @@ import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
@@ -51,7 +52,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
     // to be used by health check to be able to warn if the history could not be persisted
     private boolean wasLastPersistHistoryCallSuccessful = true;
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
 
     @ObjectClassDefinition(name = "AC History Service", 
