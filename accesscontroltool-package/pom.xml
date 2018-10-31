@@ -69,7 +69,9 @@
                     <filterSource>src/main/META-INF/vault/filter.xml</filterSource>
                     <properties>
                         <acHandling>merge_preserve</acHandling>
-                        <installPathRegex>/apps/netcentric/actool/.*</installPathRegex>
+                        <!-- install the two bundles and service user config synchronously in order to be callable from within 
+                              same complete package (if yaml file containing package declares the dependency to it) -->
+                        <installPathRegex>/apps/netcentric/actool/(config|install)/.*</installPathRegex>
                         <waitForOsgiEventsQuietInSec>5</waitForOsgiEventsQuietInSec>
                     </properties>
                     <embeddeds>
