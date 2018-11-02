@@ -25,9 +25,10 @@
     <description>The OSGi bundle containing all classes of the Access Control Tool.</description>
 
     <dependencies>
+        <!-- OSGi annotations (build time, but only use those compliant with R6) -->
         <dependency>
             <groupId>org.osgi</groupId>
-            <artifactId>osgi.core</artifactId>
+            <artifactId>org.osgi.annotation.versioning</artifactId>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
@@ -35,11 +36,12 @@
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.annotation</artifactId>
+            <artifactId>org.osgi.service.metatype.annotations</artifactId>
         </dependency>
+        <!-- OSGi Core/Compendium individual dependencies -->
         <dependency>
             <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.service.metatype.annotations</artifactId>
+            <artifactId>org.osgi.framework</artifactId>
         </dependency>
         <!-- Config Admin -->
         <dependency>

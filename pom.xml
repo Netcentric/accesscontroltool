@@ -117,14 +117,7 @@
                 <version>5.8.2</version>
                 <scope>provided</scope>
             </dependency>
-            <!-- Apache Felix 4.6.1 (shipped in AEM 6.1) is fully compliant with OSGi Core R6 -->
-            <dependency>
-                <groupId>org.osgi</groupId>
-                <artifactId>osgi.core</artifactId>
-                <version>6.0.0</version>
-                <scope>provided</scope>
-            </dependency>
-            <!-- and mostly compliant with OSGi Compendium R6 -->
+            <!-- OSGi annotations (build time only) -->
             <dependency>
                 <groupId>org.osgi</groupId>
                 <artifactId>org.osgi.service.component.annotations</artifactId>
@@ -133,14 +126,22 @@
             <!-- for Version annotations and Provider annotations, official OSGi version (supported by bnd as well) -->
             <dependency>
                 <groupId>org.osgi</groupId>
-                <artifactId>org.osgi.annotation</artifactId>
-                <version>6.0.0</version>
+                <artifactId>org.osgi.annotation.versioning</artifactId>
+                <version>1.0.0</version>
             </dependency>
             <dependency>
                 <groupId>org.osgi</groupId>
                 <artifactId>org.osgi.service.metatype.annotations</artifactId>
                 <version>1.3.0</version>
             </dependency>
+            <!-- Apache Felix 4.6.1 (shipped in AEM 6.1) is fully compliant with OSGi Core R6 -->
+            <dependency>
+                <groupId>org.osgi</groupId>
+                <artifactId>org.osgi.framework</artifactId>
+                <version>1.8.0</version>
+                <scope>provided</scope>
+            </dependency>
+            <!-- and mostly compliant with OSGi Compendium R6 -->
             <!--  Config Admin 1.5 (https://osgi.org/javadoc/r6/cmpn/org/osgi/service/component/package-summary.html) -->
             <dependency>
                 <groupId>org.osgi</groupId>
