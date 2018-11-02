@@ -37,6 +37,31 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-hook-into-package</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <!-- See http://sling.apache.org/documentation/bundles/installer-provider-installhook.html -->
+                                <artifactItem>
+                                    <groupId>org.apache.sling</groupId>
+                                    <artifactId>org.apache.sling.installer.provider.installhook</artifactId>
+                                    <version>1.0.2</version>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.build.directory}/vault-work/META-INF/vault/hooks</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>        
+        
+            <plugin>
                 <groupId>org.apache.jackrabbit</groupId>
                 <artifactId>filevault-package-maven-plugin</artifactId>
                 <configuration>
@@ -44,6 +69,10 @@
                     <filterSource>src/main/META-INF/vault/filter.xml</filterSource>
                     <properties>
                         <acHandling>merge_preserve</acHandling>
+                        <!-- install the two bundles and service user config synchronously in order to be callable from within 
+                              same complete package (if yaml file containing package declares the dependency to it) -->
+                        <installPathRegex>/apps/netcentric/actool/(config|install)/.*</installPathRegex>
+                        <waitForOsgiEventsQuietInSec>5</waitForOsgiEventsQuietInSec>
                     </properties>
                     <embeddeds>
                         <embedded>
