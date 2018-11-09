@@ -29,6 +29,7 @@ import javax.el.VariableMapper;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.el.ExpressionFactoryImpl;
 
 /** Evaluates expressions that may contain variables from for loops.
  * 
@@ -44,12 +45,7 @@ public class YamlMacroElEvaluator {
 
     public YamlMacroElEvaluator() {
 
-        try {
-            Class<?> expressionFactoryClass = getClass().getClassLoader().loadClass("org.apache.el.ExpressionFactoryImpl");
-            expressionFactory = (ExpressionFactory) expressionFactoryClass.newInstance();
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-            throw new IllegalStateException("Could not init EL: " + e);
-        }
+        expressionFactory = new ExpressionFactoryImpl();
 
         final VariableMapper variableMapper = new ElVariableMapper();
         final ElFunctionMapper functionMapper = new ElFunctionMapper();
