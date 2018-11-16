@@ -136,6 +136,25 @@ public class YamlMacroProcessorTest {
         assertEquals("Number of ACEs for groupB", 2, group2.size());
     }
 
+    /** @see <a href=
+     *      "https://github.com/Netcentric/accesscontroltool/issues/330">https://github.com/Netcentric/accesscontroltool/issues/330</a> */
+    @Test
+    public void testAceLoopWithSpecialCharacters() throws IOException, AcConfigBeanValidationException, RepositoryException {
+
+        List<LinkedHashMap> yamlList = getYamlList("test-loop-with-special-characters.yaml");
+
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+
+        AuthorizablesConfig groupConfigs = readGroupConfigs(yamlList);
+
+        assertEquals("Number of groups in config", 4, groupConfigs.size());
+        
+        assertNotNull("Expected to find brand_1", groupConfigs.getAuthorizableConfig("brand_1"));
+        assertNotNull("Expected to find BRAND-2", groupConfigs.getAuthorizableConfig("BRAND-2"));
+        assertNotNull("Expected to find BRAND.3", groupConfigs.getAuthorizableConfig("BRAND.3"));
+        assertNotNull("Expected to find BRAND 4", groupConfigs.getAuthorizableConfig("BRAND 4"));
+    }
+    
     @Test
     public void testNestedLoop() throws IOException, AcConfigBeanValidationException, RepositoryException {
 
