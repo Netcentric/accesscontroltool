@@ -106,17 +106,6 @@
           password: secret
           assertedException: InvalidIntermediatePathException
           
-    - user_E:  
-       
-        - isMemberOf:
-          path: /home/users/u
-          assertedException: InvalidAuthorizableException
-          
-    - user_F:  
-       
-         - isMemberOf:
-           path: /home/users/
-           assertedException: InvalidAuthorizableException
     
          
 - ace_config:
@@ -129,7 +118,6 @@
          actions: read
          privileges: 
          repGlob: 
-        
 
        - path: /content/dam
          permission: allow
