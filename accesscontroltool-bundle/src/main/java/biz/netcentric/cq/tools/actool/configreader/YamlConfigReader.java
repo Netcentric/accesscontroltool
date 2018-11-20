@@ -378,8 +378,10 @@ public class YamlConfigReader implements ConfigReader {
         authorizableConfigBean.setIsSystemUser(Boolean.valueOf(getMapValueAsString(currentPrincipalDataMap,
                 USER_CONFIG_PROPERTY_IS_SYSTEM_USER)));
 
-        authorizableConfigBean.setPassword(getMapValueAsString(
-                currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_PASSWORD));
+        if(currentPrincipalDataMap.containsKey(GROUP_CONFIG_PROPERTY_PASSWORD)) {
+            authorizableConfigBean.setPassword(getMapValueAsString(
+                    currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_PASSWORD));
+        }
 
         authorizableConfigBean.setProfileContent(getMapValueAsString(
                 currentPrincipalDataMap, USER_CONFIG_PROFILE_CONTENT));

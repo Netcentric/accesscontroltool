@@ -113,14 +113,8 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
                     LOG.error(message);
                     throw new InvalidAuthorizableException(message);
                 }
-            } else {
-                if (StringUtils.isBlank(authorizableConfigBean.getPassword())) {
-                    final String message = "Password is required for user " + authorizableConfigBean.getAuthorizableId();
-                    LOG.error(message);
-                    throw new InvalidAuthorizableException(message);
-                }
-            }
-
+            } 
+            
             if (StringUtils.isNotBlank(authorizableConfigBean.getMigrateFrom())) {
                 final String message = "migrateFrom can only be used with groups (found in " + authorizableConfigBean.getAuthorizableId()
                         + ")";

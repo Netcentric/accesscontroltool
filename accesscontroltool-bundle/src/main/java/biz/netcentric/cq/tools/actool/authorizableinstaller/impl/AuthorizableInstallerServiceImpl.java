@@ -89,7 +89,6 @@ public class AuthorizableInstallerServiceImpl implements
 
     }
 
-
     private void installAuthorizableConfigurationBean(final Session session,
             AcConfiguration acConfiguration,
             AuthorizableConfigBean authorizableConfigBean,
@@ -160,7 +159,7 @@ public class AuthorizableInstallerServiceImpl implements
 			throws AuthorizableCreatorException {
 		try {
 			String password = authorizableConfigBean.getPassword();
-			if (password.matches("\\{.+}")) {
+			if (StringUtils.isNotBlank(password) && password.matches("\\{.+}")) {
 				if (cryptoSupport == null) {
 					throw new CryptoException("CryptoSupport missing to unprotect password.");
 				}
