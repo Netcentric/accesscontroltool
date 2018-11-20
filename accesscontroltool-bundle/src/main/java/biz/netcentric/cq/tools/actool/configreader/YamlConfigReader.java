@@ -85,8 +85,6 @@ public class YamlConfigReader implements ConfigReader {
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
 
-    private final Pattern forLoopPattern = Pattern.compile("for (\\w+) in \\[([,/\\s\\w\\-]+)\\]", Pattern.CASE_INSENSITIVE);
-
     @Override
     @SuppressWarnings("rawtypes")
     public AcesConfig getAceConfigurationBeans(final Collection<?> aceConfigData,
