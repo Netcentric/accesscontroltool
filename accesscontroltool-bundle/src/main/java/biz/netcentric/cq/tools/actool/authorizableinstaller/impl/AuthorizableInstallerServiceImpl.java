@@ -579,7 +579,7 @@ public class AuthorizableInstallerServiceImpl implements
             ((Group) targetAuthorizable).removeMember(currentAuthorizable);
         }
 
-        if (!toBeAddedMembers.isEmpty() && !toBeAddedMembers.isEmpty()) {
+        if (!toBeAddedMembers.isEmpty() && !toBeRemovedMembers.isEmpty()) {
             installLog.addVerboseMessage(LOG,
                     "Membership Change: Authorizable " + authorizableId + " was added to " + toBeAddedMembers.size()
                             + " and removed from " + toBeRemovedMembers.size() + " groups");
