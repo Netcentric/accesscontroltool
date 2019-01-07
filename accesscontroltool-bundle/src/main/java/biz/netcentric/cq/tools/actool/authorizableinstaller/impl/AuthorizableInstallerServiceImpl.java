@@ -70,7 +70,7 @@ public class AuthorizableInstallerServiceImpl implements
     ExternalGroupInstallerServiceImpl externalGroupCreatorService;
 
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
-    CryptoSupport cryptoSupport;
+    volatile CryptoSupport cryptoSupport;
 
     @Override
     public void installAuthorizables(
