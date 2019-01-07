@@ -54,7 +54,7 @@ public class ExternalGroupInstallerServiceImpl {
             AuthorizableCreatorException {
 
         if (StringUtils.isBlank(authorizableConfigBean.getExternalId())) {
-            throw new IllegalStateException("externalId must not be emtpy for " + authorizableConfigBean);
+            throw new IllegalStateException("externalId must not be empty for " + authorizableConfigBean);
         }
 
         ExternalGroup externalGroup = new PrecreatedExternalGroup(authorizableConfigBean);
