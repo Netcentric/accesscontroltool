@@ -524,7 +524,7 @@ public class AuthorizableInstallerServiceImpl implements
 
         String authorizableId = authorizableConfigBean.getAuthorizableId();
         installLog.addVerboseMessage(LOG, "Authorizable " + authorizableId + " isMemberOf(repo)=" + membershipGroupsFromRepository);
-        installLog.addVerboseMessage(LOG, "Authorizable " + authorizableId + " isMemberOf(conifg)=" + membershipGroupsFromConfig);
+        installLog.addVerboseMessage(LOG, "Authorizable " + authorizableId + " isMemberOf(config)=" + membershipGroupsFromConfig);
 
         Set<String> validatedMembershipGroupsFromConfig = validateAssignedGroups(userManager, acConfiguration.getAuthorizablesConfig(), session, authorizableId,
                 membershipGroupsFromConfig, installLog);
@@ -605,7 +605,7 @@ public class AuthorizableInstallerServiceImpl implements
             if (StringUtils.isNotEmpty(principalConfigBean.getExternalId())) {
 
                 if (externalGroupCreatorService == null) {
-                    throw new IllegalStateException("External IDs are not availabe for your AEM version ("
+                    throw new IllegalStateException("External IDs are not available for your AEM version ("
                             + principalConfigBean.getAuthorizableId() + " is using '" + principalConfigBean.getExternalId() + "')");
                 }
                 newGroup = (Group) externalGroupCreatorService.createGroupWithExternalId(userManager, principalConfigBean, installLog, session);
