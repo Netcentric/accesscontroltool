@@ -267,7 +267,7 @@ Bundle-Name: ${project.name}
 Bundle-SymbolicName: biz.netcentric.cq.tools.accesscontroltool.bundle
 # export all versioned packages by default
 -exportcontents: ${packages;VERSIONED}
-Import-Package: org.apache.jackrabbit.oak.spi.security.authentication.external;version="[1.0,3)",com.adobe.granite.crypto;resolution:=optional,com.adobe.granite.jmx.annotation;resolution:=optional,com.day.cq.security.util;resolution:=optional,*
+Import-Package: org.apache.jackrabbit.oak.spi.security.authentication.external;resolution:=optional;version="[1.0,3)",org.apache.jackrabbit.oak.spi.security.authentication.external.basic;resolution:=optional,com.adobe.granite.crypto;resolution:=optional,com.adobe.granite.jmx.annotation;resolution:=optional,com.day.cq.security.util;resolution:=optional,*
                     ]]></bnd>
                 </configuration>
                 <executions>
