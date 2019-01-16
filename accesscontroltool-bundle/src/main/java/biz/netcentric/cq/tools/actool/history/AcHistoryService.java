@@ -8,8 +8,6 @@
  */
 package biz.netcentric.cq.tools.actool.history;
 
-import javax.jcr.Session;
-
 public interface AcHistoryService {
 
     public void persistHistory(PersistableInstallationLogger history);
@@ -18,13 +16,9 @@ public interface AcHistoryService {
 
     public String[] getInstallationLogPaths();
 
-    public String getLogHtml(Session session, String path);
-
-    public String getLogTxt(Session session, String path);
-
     public String getLastInstallationHistory();
 
-    public String showHistory(int n);
+    public String getLogFromHistory(int n, boolean inHtmlFormat);
 
     public boolean wasLastPersistHistoryCallSuccessful();
 

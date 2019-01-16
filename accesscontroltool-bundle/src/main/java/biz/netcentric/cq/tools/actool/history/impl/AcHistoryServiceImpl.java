@@ -122,13 +122,11 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         return null;
     }
 
-    @Override
-    public String getLogHtml(Session session, String path) {
+    private String getLogHtml(Session session, String path) {
         return HistoryUtils.getLogHtml(session, path);
     }
 
-    @Override
-    public String getLogTxt(Session session, String path) {
+    private String getLogTxt(Session session, String path) {
         return HistoryUtils.getLogTxt(session, path);
     }
 
@@ -190,14 +188,13 @@ public class AcHistoryServiceImpl implements AcHistoryService {
     }
 
     @Override
-    public String showHistory(int n) {
+    public String getLogFromHistory(int n, boolean inHtmlFormat) {
         Session session = null;
         String history = "";
         try {
             session = repository.loginService(Constants.USER_AC_SERVICE, null);
 
-            Node statisticsRootNode = HistoryUtils
-                    .getAcHistoryRootNode(session);
+            Node statisticsRootNode = HistoryUtils.getAcHistoryRootNode(session);
             NodeIterator it = statisticsRootNode.getNodes();
             int cnt = 1;
 
@@ -205,7 +202,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
                 Node historyNode = it.nextNode();
 
                 if ((historyNode != null) && (cnt == n)) {
-                    history = getLogTxt(session, historyNode.getName());
+                    history = inHtmlFormat ? getLogHtml(session, historyNode.getName()) : getLogTxt(session, historyNode.getName());
                 }
                 cnt++;
             }
