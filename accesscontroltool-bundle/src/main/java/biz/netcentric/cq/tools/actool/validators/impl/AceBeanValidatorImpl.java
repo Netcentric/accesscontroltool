@@ -22,8 +22,6 @@ import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.day.cq.security.util.CqActions;
-
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
@@ -193,7 +191,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
             return false;
         }
 
-        if (actions.length > CqActions.ACTIONS.length) {
+        if (actions.length > Validators.ALLOWED_CQ_ACTIONS.length) {
             final String errorMessage = getBeanDescription(this.currentBeanCounter,
                     principal) + " too many actions defined!";
             LOG.error(errorMessage);

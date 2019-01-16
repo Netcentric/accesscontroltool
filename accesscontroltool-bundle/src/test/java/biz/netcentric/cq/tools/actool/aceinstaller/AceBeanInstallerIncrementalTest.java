@@ -16,6 +16,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -51,14 +52,15 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import biz.netcentric.cq.tools.actool.aem.AemCqActionsSupportImpl;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.configreader.YamlConfigReader;
-import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 
 public class AceBeanInstallerIncrementalTest {
@@ -99,6 +101,9 @@ public class AceBeanInstallerIncrementalTest {
     @Mock
     SlingRepository slingRepository;
 
+    @Spy
+    AemCqActionsSupportImpl aemCqActionsSupport  = new AemCqActionsSupportImpl();
+    
     @Before
     public void setup() throws RepositoryException {
         initMocks(this);
@@ -130,14 +135,15 @@ public class AceBeanInstallerIncrementalTest {
         doReturn(session).when(slingRepository).loginService(anyString(), anyString());
 
         doReturn(true).when(aceBeanInstallerIncremental).definesContent(testPath, session);
-        doReturn(new PrincipalImpl(FAKE_PRINCIPAL_ID)).when(aceBeanInstallerIncremental).applyCqActions(any(AceBean.class), eq(session),
-                anyString());
+
+        doReturn(new PrincipalImpl(FAKE_PRINCIPAL_ID)).when(aceBeanInstallerIncremental).getTestActionMapperPrincipal();
+        doNothing().when(aceBeanInstallerIncremental).applyCqActions(any(AceBean.class), any(Session.class), any(Principal.class));
     }
 
     @Test
     public void testPrivilegesToComparableSet() throws RepositoryException {
 
-        // ensure mocking is correct
+        // ensure mocking is correc
         assertFalse(accessControlManager.privilegeFromName("jcr:removeNode").isAggregate()); // default mocking
         assertFalse(accessControlManager.privilegeFromName("jcr:lockManagement").isAggregate()); // default mocking
         assertTrue(accessControlManager.privilegeFromName("jcr:read").isAggregate()); // aggragate test mocking

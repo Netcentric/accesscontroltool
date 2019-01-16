@@ -21,8 +21,6 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.day.cq.security.util.CqActions;
-
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElement;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementVisitor;
 
@@ -327,7 +325,7 @@ public class AceBean implements AcDumpElement {
         acDumpElementVisitor.visit(this);
     }
 
-    /** Creates an action map being used in {@link CqActions#installActions(String, Principal, Map, Collection)} out of the set actions on
+    /** Creates an action map being used in {@link com.day.cq.security.util.CqActions#installActions(String, Principal, Map, Collection)} out of the set actions on
      * this bean.
      *
      * @return a map containing actions as keys and booleans representing {@code true} for allow and {@code false} for deny. */

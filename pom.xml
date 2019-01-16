@@ -223,23 +223,9 @@
                 <scope>provided</scope>
             </dependency>
             <dependency>
-                <groupId>com.adobe.granite</groupId>
-                <artifactId>com.adobe.granite.jmx</artifactId>
-                <!-- latest version available in repo.adobe.com, but AEM 6.1 SP1 actually ships with the newer version 0.3.0 -->
-                <version>0.2.6</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.apache.jackrabbit</groupId>
                 <artifactId>jackrabbit-api</artifactId>
                 <version>2.10.0</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.day.cq</groupId>
-                <artifactId>cq-security</artifactId>
-                <!-- latest version available in repo.adobe.com, but AEM 6.1 SP1 actually ships with a newer version 5.8.18 -->
-                <version>5.6.2</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
@@ -247,6 +233,31 @@
                 <artifactId>snakeyaml</artifactId>
                 <version>1.13</version>
                 <type>bundle</type>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.hc.core</artifactId>
+                <version>1.1.0</version>
+                <scope>provided</scope>
+                <optional>true</optional>
+            </dependency>            
+            
+            <!-- START: Optional AEM dependencies -->
+            <dependency>
+                <groupId>com.adobe.granite</groupId>
+                <artifactId>com.adobe.granite.jmx</artifactId>
+                <!-- latest version available in repo.adobe.com, but AEM 6.1 SP1 actually ships with the newer version 0.3.0 -->
+                <version>0.2.6</version>
+                <scope>provided</scope>
+                <optional>true</optional>
+            </dependency>
+            <dependency>
+                <groupId>com.day.cq</groupId>
+                <artifactId>cq-security</artifactId>
+                <!-- latest version available in repo.adobe.com, but AEM 6.1 SP1 actually ships with a newer version 5.8.18 -->
+                <version>5.6.2</version>
+                <scope>provided</scope>
+                <optional>true</optional>
             </dependency>
             <!-- the com.adobe.granite:com.adobe.granite.crypto:3.0.0 is referencing an non-published parent pom.xml therefore for that we need
                 to leverage the uber-jar -->
@@ -256,7 +267,11 @@
                 <version>6.1.0-SP1-B0001</version>
                 <classifier>obfuscated-apis</classifier>
                 <scope>provided</scope>
-            </dependency>
+                <optional>true</optional>
+            </dependency>            
+            <!-- END: Optional AEM dependencies -->
+            
+
             <!-- testing dependencies -->
             <dependency>
                 <groupId>junit</groupId>
@@ -495,6 +510,10 @@
                                 </goals>
                             </execution>
                         </executions>
+                        <configuration>
+                            <slingUrl>http://${crx.host}:${crx.port}/apps/netcentric/actool/install</slingUrl>
+                            <usePut>true</usePut>
+                        </configuration>                        
                     </plugin>
                 </plugins>
             </build>

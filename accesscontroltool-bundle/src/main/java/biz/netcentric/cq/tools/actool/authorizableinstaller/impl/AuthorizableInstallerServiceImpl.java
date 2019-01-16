@@ -38,9 +38,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.adobe.granite.crypto.CryptoException;
-import com.adobe.granite.crypto.CryptoSupport;
-
+import biz.netcentric.cq.tools.actool.aem.AemCryptoSupport;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableInstallerService;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
@@ -70,14 +68,14 @@ public class AuthorizableInstallerServiceImpl implements
     ExternalGroupInstallerServiceImpl externalGroupCreatorService;
 
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
-    volatile CryptoSupport cryptoSupport;
+    volatile AemCryptoSupport cryptoSupport;
 
     @Override
     public void installAuthorizables(
             AcConfiguration acConfiguration,
             AuthorizablesConfig authorizablesConfigBeans,
             final Session session, InstallationLogger installLog)
-            throws RepositoryException, AuthorizableCreatorException, CryptoException {
+            throws RepositoryException, AuthorizableCreatorException {
 
         Set<String> authorizablesFromConfigurations = authorizablesConfigBeans.getAuthorizableIds();
         for (AuthorizableConfigBean authorizableConfigBean : authorizablesConfigBeans) {
@@ -95,7 +93,7 @@ public class AuthorizableInstallerServiceImpl implements
             InstallationLogger installLog, Set<String> authorizablesFromConfigurations)
             throws AccessDeniedException,
             UnsupportedRepositoryOperationException, RepositoryException,
-            AuthorizableExistsException, AuthorizableCreatorException, CryptoException {
+            AuthorizableExistsException, AuthorizableCreatorException {
 
         String authorizableId = authorizableConfigBean.getAuthorizableId();
         LOG.debug("- start installation of authorizable: {}", authorizableId);
@@ -161,12 +159,12 @@ public class AuthorizableInstallerServiceImpl implements
 			String password = authorizableConfigBean.getPassword();
 			if (StringUtils.isNotBlank(password) && password.matches("\\{.+}")) {
 				if (cryptoSupport == null) {
-					throw new CryptoException("CryptoSupport missing to unprotect password.");
+					throw new IllegalArgumentException("Password with {...} syntax is used but AEM CryptoSupport is missing to unprotect password.");
 				}
 				password = cryptoSupport.unprotect(password);
 			}
 			return password;
-		} catch (CryptoException e) {
+		} catch (IllegalArgumentException e) {
 			throw new AuthorizableCreatorException(
 					"Could not decrypt password for user " + authorizableConfigBean.getAuthorizableId() + ": " + e);
 		}

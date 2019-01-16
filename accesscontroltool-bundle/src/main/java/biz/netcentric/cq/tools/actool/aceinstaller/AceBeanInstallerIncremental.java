@@ -38,6 +38,7 @@ import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
@@ -45,6 +46,8 @@ import org.slf4j.LoggerFactory;
 
 import com.day.cq.security.util.CqActions;
 
+import biz.netcentric.cq.tools.actool.aem.AemCqActionsSupport;
+import biz.netcentric.cq.tools.actool.aem.AemCqActionsSupport.AemCqActions;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
@@ -62,6 +65,9 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
 
     private Map<String, Set<AceBean>> actionsToPrivilegesMapping = new ConcurrentHashMap<String, Set<AceBean>>();
 
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
+    volatile AemCqActionsSupport aemCqActionsSupport;
+    
     /** Installs a full set of ACE beans that form an ACL for the path
      * 
      * @throws RepositoryException */
@@ -286,15 +292,14 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
 
         Set<AceBean> aceBeansForActionEntry = new LinkedHashSet<AceBean>();
 
-        String groupPrincipalId = "actool-tester-action-mapper"; // does not have to exist since the ACEs for it are not saved
-
-        Principal principal = applyCqActions(origAceBean, session, groupPrincipalId);
+        Principal testActionMapperPrincipal = getTestActionMapperPrincipal();
+        applyCqActions(origAceBean, session, testActionMapperPrincipal);
 
         JackrabbitAccessControlList newAcl = getAccessControlList(session.getAccessControlManager(), origAceBean.getJcrPathForPolicyApi());
 
         boolean isFirst = true;
         for (AccessControlEntry newAce : newAcl.getAccessControlEntries()) {
-            if (!newAce.getPrincipal().equals(principal)) {
+            if (!newAce.getPrincipal().equals(testActionMapperPrincipal)) {
                 continue;
             }
 
@@ -345,7 +350,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
         if (LOG.isDebugEnabled()) {
             StringBuilder buf = new StringBuilder();
             buf.append("CqActions at path " + origAceBean.getJcrPath()
-                    + " with authorizableId=" + origAceBean.getAuthorizableId() + "/" + principal.getName() + " produced \n");
+                    + " with authorizableId=" + origAceBean.getAuthorizableId() + "/" + testActionMapperPrincipal.getName() + " produced \n");
             for (AceBean aceBean : aceBeansForActionEntry) {
                 buf.append("   " + toAceCompareString(aceBean, acMgr) + "\n");
             }
@@ -356,14 +361,37 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
 
     }
 
-    Principal applyCqActions(AceBean origAceBean, Session session, String groupPrincipalId) throws RepositoryException {
-        CqActions cqActions = new CqActions(session);
+    Principal getTestActionMapperPrincipal() {
+        String groupPrincipalId = "actool-tester-action-mapper"; // does not have to exist since the ACEs for it are not saved
         Principal principal = new PrincipalImpl(groupPrincipalId);
-        Collection<String> inheritedAllows = cqActions.getAllowedActions(origAceBean.getJcrPathForPolicyApi(),
-                Collections.singleton(principal));
-        // this does always install new entries
-        cqActions.installActions(origAceBean.getJcrPath(), principal, origAceBean.getActionMap(), inheritedAllows);
         return principal;
+    }
+
+    void applyCqActions(AceBean origAceBean, Session session, Principal principal) throws RepositoryException {
+        
+        if(origAceBean.getActionMap().isEmpty()) {
+            return;
+        }
+        
+        if(aemCqActionsSupport==null) {
+            throw new IllegalArgumentException("actions can only be used when using AC Tool in AEM (package com.day.cq.security with class CqActions is not available)");
+        }
+
+        if(true) {
+            CqActions cqActions = new CqActions(session);
+            Collection<String> inheritedAllows = cqActions.getAllowedActions(origAceBean.getJcrPathForPolicyApi(),
+                    Collections.singleton(principal));
+            // this does always install new entries
+            cqActions.installActions(origAceBean.getJcrPath(), principal, origAceBean.getActionMap(), inheritedAllows);       
+        } else {
+            
+            AemCqActions cqActions = aemCqActionsSupport.getCqActions(session);
+            Collection<String> inheritedAllows = cqActions.getAllowedActions(origAceBean.getJcrPathForPolicyApi(),
+                    Collections.singleton(principal));
+            // this does always install new entries
+            cqActions.installActions(origAceBean.getJcrPath(), principal, origAceBean.getActionMap(), inheritedAllows);            
+        }
+
     }
 
     private Set<String> flatSetResolvedAggregates(String[] privNames, AccessControlManager acMgr, boolean includeAggregates)
@@ -388,11 +416,11 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
     }
 
     boolean definesContent(String pagePath, Session session) throws RepositoryException {
-        if (pagePath == null || pagePath.equals("/")) {
+        if (pagePath == null || pagePath.equals("/") || aemCqActionsSupport==null) {
             return false;
         }
         try {
-            return CqActions.definesContent(session.getNode(pagePath));
+            return aemCqActionsSupport.definesContent(session.getNode(pagePath));
         } catch (PathNotFoundException e) {
             return false;
         }
