@@ -137,11 +137,6 @@ public class DumpServiceImpl implements ConfigDumpService {
     }
 
     @Override
-    public String[] getQueryExcludePaths() {
-        return queryExcludePaths;
-    }
-
-    @Override
     public String getCompletePathBasedDumpsAsString() {
         Session session = null;
         try {
@@ -353,27 +348,7 @@ public class DumpServiceImpl implements ConfigDumpService {
             throws RepositoryException {
 
         List<String> excludeNodesList = Arrays.asList(queryExcludePaths);
-
-        // check excludePaths for existence
-        for (String path : excludeNodesList) {
-            try {
-                if (!session.itemExists(path)) {
-                    LOG.error(
-                            "Query exclude path: {} doesn't exist in repository! AccessControl installation aborted! Check exclude paths in OSGi configuration of AceService!",
-                            path);
-                    throw new IllegalArgumentException(
-                            "Query exclude path: "
-                                    + path
-                                    + " doesn't exist in repository! AccessControl installation aborted! Check exclude paths in OSGi configuration of AceService!");
-                }
-            } catch (RepositoryException e) {
-                LOG.error("RepositoryException: {}", e);
-                throw e;
-            }
-        }
-
-        Set<Node> resultNodeSet = QueryHelper.getRepPolicyNodes(session,
-                excludeNodesList);
+        Set<Node> resultNodeSet = QueryHelper.getRepPolicyNodes(session, excludeNodesList);
         Set<AclBean> accessControBeanSet = new LinkedHashSet<AclBean>();
 
         // assemble big query result set using the query results of the child
