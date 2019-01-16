@@ -180,7 +180,17 @@ Variables can also be declared to be an array and used in a loop:
     - FOR arrVal IN ${testArr}:
 ```
 
-NOTE: The scope of a variable is always limited to the lines in the very same yaml file following the definition till it is either redefined or the end of the yaml file is reached (this limitation will supposably be lifted with [#257][i257]).
+NOTE: The scope of a variable is limited to:
+ * the lines in the very same yaml file following the definition till it is either redefined or the end of the yaml file is reached (this limitation will supposably be lifted with [#257][i257]);
+ * `FOR` loop in which variable is defined or re-defined.
+ 
+### Predefined variables 
+
+Some variables are provided by AC Tool by default.
+
+property name | description
+--- | --- 
+RUNMODES | List of activate run modes. Uses `SlingSettingsService#getRunModes` underneath.
 
 ## Auto-create test users for groups
 
