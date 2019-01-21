@@ -144,7 +144,7 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
         if (i < 1 || i > numberOfFoundLogs) {
             return errorMessage;
         }
-        return acHistoryService.showHistory(i);
+        return acHistoryService.getLogFromHistory(i, false);
     }
 
     @Override
