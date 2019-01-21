@@ -53,8 +53,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
 import com.adobe.granite.crypto.CryptoException;
-import com.adobe.granite.crypto.CryptoSupport;
 
+import biz.netcentric.cq.tools.actool.aem.AemCryptoSupport;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
@@ -307,7 +307,7 @@ public class AuthorizableInstallerServiceImplTest {
         private User user;
 
         @Mock
-        private CryptoSupport cryptoSupportMock;
+        private AemCryptoSupport cryptoSupportMock;
 
         private AuthorizableInstallerServiceImpl service;
 

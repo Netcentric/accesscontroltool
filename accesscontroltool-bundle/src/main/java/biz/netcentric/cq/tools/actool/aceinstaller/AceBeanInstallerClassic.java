@@ -31,11 +31,15 @@ import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.day.cq.security.util.CqActions;
-
+import biz.netcentric.cq.tools.actool.aem.AemCqActionsSupport;
+import biz.netcentric.cq.tools.actool.aem.AemCqActionsSupport.AemCqActions;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.RestrictionsHolder;
@@ -48,6 +52,9 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
 
     private static final Logger LOG = LoggerFactory.getLogger(AceBeanInstallerClassic.class);
 
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
+    volatile AemCqActionsSupport aemCqActionsSupport;
+    
     /** Installs a full set of ACE beans that form an ACL for the path
      * 
      * @throws RepositoryException */
@@ -129,8 +136,12 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
         if (actionMap.isEmpty()) {
             return acl;
         }
-
-        final CqActions cqActions = new CqActions(session);
+        
+        if(aemCqActionsSupport==null) {
+            throw new IllegalArgumentException("actions can only be used when using AC Tool in AEM (package com.day.cq.security.util with class CqActions is not available)");
+        }
+        
+        final AemCqActions cqActions = aemCqActionsSupport.getCqActions(session);
         final Collection<String> inheritedAllows = cqActions.getAllowedActions(
                 aceBean.getJcrPathForPolicyApi(), Collections.singleton(principal));
         // this does always install new entries
@@ -208,9 +219,9 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
      * action can lead to privileges on multiple nodes.
      *
      * @throws RepositoryException */
-    private static Set<String> removeRedundantPrivileges(Session session, String[] privileges, String[] actions)
+    private Set<String> removeRedundantPrivileges(Session session, String[] privileges, String[] actions)
             throws RepositoryException {
-        final CqActions cqActions = new CqActions(session);
+        final AemCqActions cqActions = aemCqActionsSupport.getCqActions(session);
         final Set<String> cleanedPrivileges = new HashSet<String>();
         if (privileges == null) {
             return cleanedPrivileges;
@@ -220,7 +231,6 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
             return cleanedPrivileges;
         }
         for (final String action : actions) {
-            @SuppressWarnings("deprecation")
             final Set<Privilege> coveredPrivileges = cqActions.getPrivileges(action);
             for (final Privilege coveredPrivilege : coveredPrivileges) {
                 cleanedPrivileges.remove(coveredPrivilege.getName());

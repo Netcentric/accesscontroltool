@@ -101,10 +101,6 @@
             <artifactId>commons-collections</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.adobe.granite</groupId>
-            <artifactId>com.adobe.granite.jmx</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>jackrabbit-api</artifactId>
         </dependency>
@@ -117,34 +113,7 @@
             <artifactId>snakeyaml</artifactId>
             <version>1.13</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.commons.testing</artifactId>
-            <version>2.0.16</version>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <artifactId>slf4j-simple</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.10.19</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-library</artifactId>
-            <scope>test</scope>
-        </dependency>
-         <dependency>
-            <groupId>com.day.cq</groupId>
-            <artifactId>cq-security</artifactId>
-            <scope>test</scope>
-        </dependency>
+
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>jackrabbit-jcr-commons</artifactId>
@@ -182,26 +151,65 @@
         </dependency>
 
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.hc.core</artifactId>
-            <version>1.1.0</version>
-            <scope>provided</scope>
             <optional>true</optional>
         </dependency>
 
+        <!-- START: Optional AEM dependencies -->
+        <dependency>
+            <groupId>com.adobe.granite</groupId>
+            <artifactId>com.adobe.granite.jmx</artifactId>
+            <optional>true</optional>
+        </dependency>
+         <dependency>
+            <groupId>com.day.cq</groupId>
+            <artifactId>cq-security</artifactId>
+            <optional>true</optional>
+        </dependency>        
+        
         <!-- use the uber-jar always as last dependency because a lot of classes are provided also by other artifacts
             It is only used here as replacement for com.adobe.granite:com.adobe.granite.crypto:3.0.0 whose pom.xml is not publicly available -->
         <dependency>
             <groupId>com.adobe.aem</groupId>
             <artifactId>uber-jar</artifactId>
             <classifier>obfuscated-apis</classifier>
+            <optional>true</optional>
         </dependency>
+
+        <!-- END: Optional AEM dependencies -->
+
+        <!-- START: Test Dependencies -->
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.commons.testing</artifactId>
+            <version>2.0.16</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>slf4j-simple</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.10.19</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-library</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <scope>test</scope>
+        </dependency>        
+        <!-- END: Test Dependencies -->
+
 
     </dependencies>
 
@@ -259,7 +267,7 @@ Bundle-Name: ${project.name}
 Bundle-SymbolicName: biz.netcentric.cq.tools.accesscontroltool.bundle
 # export all versioned packages by default
 -exportcontents: ${packages;VERSIONED}
-Import-Package: org.apache.jackrabbit.oak.spi.security.authentication.external;version="[1.0,3)",*
+Import-Package: org.apache.jackrabbit.oak.spi.security.authentication.external;resolution:=optional;version="[1.0,3)",org.apache.jackrabbit.oak.spi.security.authentication.external.basic;resolution:=optional,com.adobe.granite.crypto;resolution:=optional,com.adobe.granite.jmx.annotation;resolution:=optional,com.day.cq.security.util;resolution:=optional,*
                     ]]></bnd>
                 </configuration>
                 <executions>
@@ -283,19 +291,11 @@ Import-Package: org.apache.jackrabbit.oak.spi.security.authentication.external;v
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.sling</groupId>
-                <artifactId>maven-sling-plugin</artifactId>
-                <configuration>
-                    <slingUrl>http://${crx.host}:${crx.port}/apps/netcentric/actool/install</slingUrl>
-                    <usePut>true</usePut>
-                </configuration>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
                     <excludePackageNames>
-                        *.impl
+                        *.impl,*.aceinstaller,*.aceservice,*.aem,*.authorizableinstaller,*.comparators,*.components,*.configmodel,*.configreader,*configupdatelistener,*.dumpservice,*.healthcheck,*.helper,*.history,*.installationhistory,*.jmx,*.validators*
                     </excludePackageNames>
                 </configuration>
             </plugin>

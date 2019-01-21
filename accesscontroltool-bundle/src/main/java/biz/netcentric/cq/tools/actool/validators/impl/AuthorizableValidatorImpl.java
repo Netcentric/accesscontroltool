@@ -22,8 +22,8 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidIntermediateP
 
 public class AuthorizableValidatorImpl implements AuthorizableValidator {
 
-    private static final Logger LOG = LoggerFactory
-            .getLogger(AuthorizableValidatorImpl.class);
+    private static final Logger LOG = LoggerFactory .getLogger(AuthorizableValidatorImpl.class);
+    
     private boolean enabled = true;
     AuthorizableConfigBean authorizableConfigBean;
     final String groupsPath;

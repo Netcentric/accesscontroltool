@@ -22,9 +22,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.adobe.granite.crypto.CryptoException;
-import com.adobe.granite.crypto.CryptoSupport;
-
+import biz.netcentric.cq.tools.actool.aem.AemCryptoSupport;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
@@ -41,7 +39,7 @@ public class TestUserConfigsCreator {
     SlingSettingsService slingSettingsService;
 
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
-    CryptoSupport cryptoSupport;
+    volatile AemCryptoSupport cryptoSupport;
 
     public boolean isSkippedForRunmode(List<String> skipForRunmodes) {
         return slingSettingsService != null && !CollectionUtils.intersection(slingSettingsService.getRunModes(), skipForRunmodes).isEmpty();
@@ -78,7 +76,7 @@ public class TestUserConfigsCreator {
                 if (password.matches("\\{.+}") && cryptoSupport != null) {
                     try {
                         password = cryptoSupport.unprotect(password);
-                    } catch (CryptoException e) {
+                    } catch (IllegalArgumentException e) {
                         throw new IllegalArgumentException("Could not unprotect password " + password + " as given in "
                                 + GlobalConfiguration.KEY_AUTOCREATE_TEST_USERS);
                     }

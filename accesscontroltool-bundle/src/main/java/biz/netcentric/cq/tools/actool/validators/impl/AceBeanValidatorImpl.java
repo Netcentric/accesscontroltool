@@ -193,7 +193,7 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
             return false;
         }
 
-        if (actions.length > CqActions.ACTIONS.length) {
+        if (actions.length > CqActions.ACTIONS.length /* package com.day.cq.security.util is optional but constant is guaranteed to be inlined at compile time */) {
             final String errorMessage = getBeanDescription(this.currentBeanCounter,
                     principal) + " too many actions defined!";
             LOG.error(errorMessage);

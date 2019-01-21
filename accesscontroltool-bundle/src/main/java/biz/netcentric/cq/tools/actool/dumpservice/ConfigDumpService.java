@@ -27,11 +27,6 @@ public interface ConfigDumpService {
 
     public boolean isIncludeUsers();
 
-    /** returns the paths under jcr:root which are excluded from search for rep:policy nodes in OSGi configuration
-     *
-     * @return String array containing the paths */
-    public String[] getQueryExcludePaths();
-
     public String getConfigurationDumpAsString(final AceDumpData aceDumpData,
             final Set<AuthorizableConfigBean> groupSet,
             final Set<AuthorizableConfigBean> userSet, final int mapOrder) throws IOException;

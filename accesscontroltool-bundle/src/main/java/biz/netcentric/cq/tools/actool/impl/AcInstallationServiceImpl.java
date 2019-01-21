@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.AccessDeniedException;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
@@ -171,13 +172,25 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         Session session = null;
         try {
             session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configurationRootPath, session);
+            
+            // get config file contents from JCR
+            Map<String, String> newestConfigurations;
+            try {
+                newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configurationRootPath, session);
+            } catch (Exception e) {
+                installLog.addError("Could not retrieve configuration from path "+configurationRootPath+": "+e.getMessage(), e);
+                persistHistory(installLog);
+                return installLog;
+            }
+            
+            // install config files
             installConfigurationFiles(installLog, newestConfigurations, restrictedToPaths, session);
+            
         } catch (AuthorizableCreatorException e) {
             // exception was added to history in installConfigurationFiles() before it was saved
             LOG.warn("Exception during installation of authorizables (no rollback), e=" + e, e);
             // here no rollback of authorizables necessary since session wasn't
-            // saved
+            // saved 
         } catch (Exception e) {
             // in case an installation of an ACE configuration
             // threw an exception, logout from this session
@@ -231,15 +244,18 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             installLog.addError("Could not process yaml files", e); // ensure exception is added to installLog before it's persisted in log in finally clause
             throw e; // handling is different depending on JMX or install hook case
         } finally {
-            try {
-                acHistoryService.persistHistory(installLog);
-            } catch (Exception e) {
-                LOG.warn("Could not persist history, e=" + e, e);
-            }
-
+            persistHistory(installLog);
             Thread.currentThread().setName(origThreadName);
         }
 
+    }
+
+    private void persistHistory(PersistableInstallationLogger installLog) {
+        try {
+            acHistoryService.persistHistory(installLog);
+        } catch (Exception e) {
+            LOG.warn("Could not persist history, e=" + e, e);
+        }
     }
 
 
