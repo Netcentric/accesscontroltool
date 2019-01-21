@@ -20,14 +20,11 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.day.cq.security.util.CqActions;
+
 public class Validators {
 
     private static final Logger LOG = LoggerFactory.getLogger(Validators.class);
-
-    /* copied to not have runtime dependency on that class in this validator */
-    public static final String[] ALLOWED_CQ_ACTIONS = new String[] {
-            "read", "modify", "create", "delete", "acl_read", "acl_edit", "replicate"
-    };
     
     public static boolean isValidNodePath(final String path) {
         if (StringUtils.isBlank(path)) {
@@ -72,7 +69,7 @@ public class Validators {
     }
 
     public static boolean isValidAction(String action) {
-    	List<String> validActions = Arrays.asList(ALLOWED_CQ_ACTIONS);
+    	List<String> validActions = Arrays.asList(CqActions.ACTIONS /* package com.day.cq.security.util is optional but constant is guaranteed to be inlined at compile time */);
         if (action == null) {
             return false;
         }

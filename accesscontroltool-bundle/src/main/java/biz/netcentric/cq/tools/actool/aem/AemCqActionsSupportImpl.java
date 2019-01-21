@@ -16,17 +16,14 @@ import java.util.Set;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.security.Privilege;
 
 import org.osgi.service.component.annotations.Component;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.day.cq.security.util.CqActions;
 
 @Component(service = AemCqActionsSupport.class)
 public class AemCqActionsSupportImpl implements AemCqActionsSupport {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AemCqActionsSupportImpl.class);
 
     public static class CqActionsWrapper implements AemCqActions {
         
@@ -44,6 +41,10 @@ public class AemCqActionsSupportImpl implements AemCqActionsSupport {
             cqActions.installActions(nodePath, principal, actionMap, inheritedAllows);
         }
 
+        @SuppressWarnings("deprecation")
+        public Set<Privilege> getPrivileges(String action) {
+            return cqActions.getPrivileges(action);
+        }
     }
     
     public AemCqActions getCqActions(Session session) {

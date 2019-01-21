@@ -165,8 +165,7 @@ public class AuthorizableInstallerServiceImpl implements
 			}
 			return password;
 		} catch (IllegalArgumentException e) {
-			throw new AuthorizableCreatorException(
-					"Could not decrypt password for user " + authorizableConfigBean.getAuthorizableId() + ": " + e);
+			throw new AuthorizableCreatorException("Could not decrypt password for user " + authorizableConfigBean.getAuthorizableId() + ": " + e);
 		}
 	}
 

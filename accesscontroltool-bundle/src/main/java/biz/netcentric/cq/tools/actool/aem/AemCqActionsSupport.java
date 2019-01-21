@@ -16,8 +16,9 @@ import java.util.Set;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.security.Privilege;
 
-/** OSGi service that encapsulates the usage of class CqAction in AC Tool. If not available (e.g. for the Sling use case), "actions" will not be supported but only "priveleges". */
+/** OSGi service that encapsulates the usage of class CqAction in AC Tool. If not available (e.g. for the Sling use case), "actions" will not be supported but only "privileges". */
 public interface AemCqActionsSupport {
 
     public static interface AemCqActions {
@@ -25,6 +26,8 @@ public interface AemCqActionsSupport {
         public Collection<String> getAllowedActions(String nodePath, Set<Principal> principals) throws RepositoryException;
 
         public void installActions(String nodePath, Principal principal, Map<String, Boolean> actionMap, Collection<String> inheritedAllows) throws RepositoryException;
+
+        public Set<Privilege> getPrivileges(String action);
     }
     
     public AemCqActions getCqActions(Session session);

@@ -44,8 +44,6 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.day.cq.security.util.CqActions;
-
 import biz.netcentric.cq.tools.actool.aem.AemCqActionsSupport;
 import biz.netcentric.cq.tools.actool.aem.AemCqActionsSupport.AemCqActions;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
@@ -368,29 +366,21 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
     }
 
     void applyCqActions(AceBean origAceBean, Session session, Principal principal) throws RepositoryException {
-        
-        if(origAceBean.getActionMap().isEmpty()) {
+
+        if (origAceBean.getActionMap().isEmpty()) {
             return;
         }
-        
-        if(aemCqActionsSupport==null) {
-            throw new IllegalArgumentException("actions can only be used when using AC Tool in AEM (package com.day.cq.security with class CqActions is not available)");
+
+        if (aemCqActionsSupport == null) {
+            throw new IllegalArgumentException(
+                    "actions can only be used when using AC Tool in AEM (package com.day.cq.security.util with class CqActions is not available)");
         }
 
-        if(true) {
-            CqActions cqActions = new CqActions(session);
-            Collection<String> inheritedAllows = cqActions.getAllowedActions(origAceBean.getJcrPathForPolicyApi(),
-                    Collections.singleton(principal));
-            // this does always install new entries
-            cqActions.installActions(origAceBean.getJcrPath(), principal, origAceBean.getActionMap(), inheritedAllows);       
-        } else {
-            
-            AemCqActions cqActions = aemCqActionsSupport.getCqActions(session);
-            Collection<String> inheritedAllows = cqActions.getAllowedActions(origAceBean.getJcrPathForPolicyApi(),
-                    Collections.singleton(principal));
-            // this does always install new entries
-            cqActions.installActions(origAceBean.getJcrPath(), principal, origAceBean.getActionMap(), inheritedAllows);            
-        }
+        AemCqActions cqActions = aemCqActionsSupport.getCqActions(session);
+        Collection<String> inheritedAllows = cqActions.getAllowedActions(origAceBean.getJcrPathForPolicyApi(),
+                Collections.singleton(principal));
+        // this does always install new entries
+        cqActions.installActions(origAceBean.getJcrPath(), principal, origAceBean.getActionMap(), inheritedAllows);
 
     }
 

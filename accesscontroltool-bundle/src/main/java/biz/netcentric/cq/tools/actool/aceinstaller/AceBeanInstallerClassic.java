@@ -38,8 +38,6 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.day.cq.security.util.CqActions;
-
 import biz.netcentric.cq.tools.actool.aem.AemCqActionsSupport;
 import biz.netcentric.cq.tools.actool.aem.AemCqActionsSupport.AemCqActions;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
@@ -140,7 +138,7 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
         }
         
         if(aemCqActionsSupport==null) {
-            throw new IllegalArgumentException("actions can only be used when using AC Tool in AEM (package com.day.cq.security with class CqActions is not available)");
+            throw new IllegalArgumentException("actions can only be used when using AC Tool in AEM (package com.day.cq.security.util with class CqActions is not available)");
         }
         
         final AemCqActions cqActions = aemCqActionsSupport.getCqActions(session);
@@ -221,9 +219,9 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
      * action can lead to privileges on multiple nodes.
      *
      * @throws RepositoryException */
-    private static Set<String> removeRedundantPrivileges(Session session, String[] privileges, String[] actions)
+    private Set<String> removeRedundantPrivileges(Session session, String[] privileges, String[] actions)
             throws RepositoryException {
-        final CqActions cqActions = new CqActions(session);
+        final AemCqActions cqActions = aemCqActionsSupport.getCqActions(session);
         final Set<String> cleanedPrivileges = new HashSet<String>();
         if (privileges == null) {
             return cleanedPrivileges;
@@ -233,7 +231,6 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
             return cleanedPrivileges;
         }
         for (final String action : actions) {
-            @SuppressWarnings("deprecation")
             final Set<Privilege> coveredPrivileges = cqActions.getPrivileges(action);
             for (final Privilege coveredPrivilege : coveredPrivileges) {
                 cleanedPrivileges.remove(coveredPrivilege.getName());
