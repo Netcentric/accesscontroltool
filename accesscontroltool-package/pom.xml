@@ -25,7 +25,7 @@
     <artifactId>accesscontroltool-package</artifactId>
     <packaging>content-package</packaging>
     <name>Access Control Tool Package</name>
-    <description>Package containing the system user, some scripts and the bundle necessary for the Access Control Tool.</description>
+    <description>Core package of the AC Tool containing the bundle, system user and ACLs for it.</description>
     
     <dependencies>
         <dependency>
