@@ -29,9 +29,11 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.api.AcInstallationService;
 import biz.netcentric.cq.tools.actool.api.InstallationLog;
+import biz.netcentric.cq.tools.actool.dumpservice.ConfigDumpService;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl;
+import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceInternal;
 
 /** Webconsole plugin to execute health check services */
 @Component(service=Servlet.class, property={
@@ -54,17 +56,25 @@ public class AcToolWebconsolePlugin extends HttpServlet {
     public static final String PARAM_BASE_PATHS = "basePaths";
     public static final String PARAM_SHOW_LOG_NO = "showLogNo";
 
+    private static final String PATH_SEGMENT_DUMP = "dump.yaml";
 
     @Reference
-    AcInstallationService acInstallationService;
+    AcInstallationServiceInternal acInstallationService;
     
     @Reference
     AcHistoryService acHistoryService;
     
-    @Override
-    protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
-    throws ServletException, IOException {
+    @Reference
+    ConfigDumpService dumpService;
 
+    
+    @Override
+    protected void doGet(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
+
+        if(processGetActions(req, resp)) {
+            return;
+        }
+        
         RequestParameters reqParams = RequestParameters.fromRequest(req, acInstallationService);
         
         final PrintWriter out = resp.getWriter();
@@ -76,11 +86,23 @@ public class AcToolWebconsolePlugin extends HttpServlet {
         out.println("More operations are available at <a href='jmx/biz.netcentric.cq.tools:type=ACTool'>AC Tool JMX Bean</a><br/>\n<br/>\n");
         
     }
-    
+
+    private boolean processGetActions(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
+        if(req.getRequestURI().endsWith("/"+LABEL+"/"+PATH_SEGMENT_DUMP)) {
+            resp.setContentType("application/x-yaml");
+            resp.setHeader("Content-Disposition", "inline; filename=\"actool-dump.yaml\"");
+            String dumpAsString = dumpService.getCompletePrincipalBasedDumpsAsString();
+            PrintWriter out = resp.getWriter();
+            out.println(dumpAsString);
+            out.flush();
+            return true;
+        }
+        return false;
+    }
+
     private void printInstallationLogsSection(PrintWriter out, RequestParameters reqParams) {
         String[] installationLogPaths = acHistoryService.getInstallationLogPaths();
         
-
 
         final HtmlWriter writer = new HtmlWriter(out);
         writer.openTable();
@@ -131,7 +153,6 @@ public class AcToolWebconsolePlugin extends HttpServlet {
 
     @Override
     protected void doPost(final HttpServletRequest req, final HttpServletResponse resp) throws IOException, ServletException {
-
         
         RequestParameters reqParams = RequestParameters.fromRequest(req, acInstallationService);
         LOG.info("Received POST request to apply AC Tool config with configurationRootPath={} basePaths={}", reqParams.configurationRootPath, reqParams.basePaths);
@@ -157,41 +178,57 @@ public class AcToolWebconsolePlugin extends HttpServlet {
 
         writer.print("<form id='acForm'>");
         writer.openTable();
-        writer.tableHeader("AC Tool Parameters", 2);
+        writer.tableHeader("AC Tool v"+acInstallationService.getVersion(), 3);
 
         writer.tr();
         writer.openTd();
-        writer.print("Configuration Root Path<br/> (see also <a href='configMgr/biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl'>default config</a>)");
+        writer.print("<b>Configuration Root Path</b><br/> (default from <a href='configMgr/biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl'>OSGi config</a>)");
         writer.closeTd();
         writer.openTd();
         writer.print("<input type='text' name='" + PARAM_CONFIGURATION_ROOT_PATH + "' value='");
         if ( reqParams.configurationRootPath != null ) {
             writer.print(escapeHtml(reqParams.configurationRootPath));
         }
-        writer.println("' class='input' size='80'>");
+        writer.println("' class='input' size='70'>");
         writer.closeTd();
+        
+        writer.openTd();
+        writer.println("<button id='applyButton' onclick=\"window.open('"+LABEL+"/"+PATH_SEGMENT_DUMP+"', '_blank')\"> Download Dump </button>");
+        writer.closeTd();
+        
         writer.closeTr();
         
         writer.tr();
         writer.openTd();
-        writer.println("Base paths to restrict ACL installation<br/>  (comma-separated, leave empty to apply whole configuration)");
+        writer.println("<b>Base Path(s)</b> to restrict where ACLs are installed<br/>  (comma-separated, leave empty to apply the whole configuration)");
         writer.closeTd();
         writer.openTd();
         writer.print("<input type='text' name='" + PARAM_BASE_PATHS + "' value='");
         if ( reqParams.basePaths != null ) {
             writer.print(escapeHtml(StringUtils.join(reqParams.basePaths, ",")));
         }
-        writer.println("' class='input' size='80'>");
+        writer.println("' class='input' size='70'>");
         writer.closeTd();
+        
+        writer.openTd();
+        writer.println("");
+        writer.closeTd();
+                
         writer.closeTr();
 
         writer.tr();
         writer.openTd();
-        String onClick = "$('#applySpinner').show(); var b=$('#applyButton'); b.prop('disabled', true); b.html('Applying AC Tool Configuration...'); var fd=$('#acForm').serialize();$.post('"+LABEL+"', fd).done(function(){alert('Config successfully applied')}).fail(function(){alert('Config could not be applied - check log for errors')}).always(function() { location.href='"+LABEL+"?"+PARAM_SHOW_LOG_NO+"=1&'+fd; }); return false";
-        writer.println("<button id='applyButton' onclick=\""+onClick+"\">Apply AC Tool Configuration</button>");
+        String onClick = "$('#applySpinner').show(); var b=$('#applyButton'); b.prop('disabled', true); b.html(' Applying AC Tool Configuration... '); var fd=$('#acForm').serialize();$.post('"+LABEL+"', fd).done(function(){alert('Config successfully applied')}).fail(function(){alert('Config could not be applied - check log for errors')}).always(function() { location.href='"+LABEL+"?"+PARAM_SHOW_LOG_NO+"=1&'+fd; }); return false";
+        writer.println("<button id='applyButton' onclick=\""+onClick+"\"> Apply AC Tool Configuration </button>");
         writer.closeTd();
         writer.openTd();
         writer.println("<div id='applySpinner' style='display:none' class='spinner'><div></div><div></div><div></div></div>");
+
+        writer.openTd();
+        writer.println("");
+        writer.closeTd();
+        
+        
         writer.closeTr();
 
         writer.println("</form>");
@@ -275,7 +312,7 @@ public class AcToolWebconsolePlugin extends HttpServlet {
         void openTd(int colspan) {
             pw.print("<td class='content' colspan='"+colspan+"'>");
         }
-    
+
         void closeTd() {
             pw.print("</td>");
         }
