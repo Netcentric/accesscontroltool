@@ -175,20 +175,20 @@ public class AuthorizableInstallerServiceImpl implements
      * regular relationships between groups contained in config are kept in isMemberOf */
     @SuppressWarnings("unchecked")
     void applyGroupMembershipConfigMembers(AcConfiguration acConfiguration, AuthorizableConfigBean authorizableConfigBean, InstallationLogger installLog,
-            String principalId, UserManager userManager, Set<String> authorizablesFromConfigurations) throws RepositoryException {
+            String authorizableId, UserManager userManager, Set<String> authorizablesFromConfigurations) throws RepositoryException {
         if (authorizableConfigBean.isGroup()) {
+
+            Group installedGroup = (Group) userManager.getAuthorizable(authorizableId);
+
             String[] membersInConfigArr = authorizableConfigBean.getMembers();
+            Set<String> membersInConfig = membersInConfigArr != null ? new HashSet<String>(Arrays.asList(membersInConfigArr)) : new HashSet<String>();
 
-            Group installedGroup = (Group) userManager.getAuthorizable(principalId);
-
-            Set<String> membersInConfig = membersInConfigArr != null ? new HashSet<String>(Arrays.asList(membersInConfigArr))
-                    : new HashSet<String>();
-            Set<String> relevantMembersInRepo = getDeclaredMembers(installedGroup);
+            // initial set without regular users (those are never removed because that relationship is typically managed in AEM UI or LDAP/SAML/SSO/etc. )
+            Set<String> relevantMembersInRepo = getDeclaredMembersWithoutRegularUsers(installedGroup);
 
             // ensure authorizables from config itself that are added via isMemberOf are not deleted
             relevantMembersInRepo = new HashSet<String>(CollectionUtils.subtract(relevantMembersInRepo, authorizablesFromConfigurations));
-            // ensure regular users are never removed
-            relevantMembersInRepo = removeRegularUsers(relevantMembersInRepo, userManager);
+            
             // take configuration 'defaultUnmanagedExternalMembersRegex' into account (and remove matching groups from further handling)
             relevantMembersInRepo = removeExternalMembersUnmanagedByConfiguration(acConfiguration, authorizableConfigBean, relevantMembersInRepo,
                     installLog);
@@ -215,38 +215,33 @@ public class AuthorizableInstallerServiceImpl implements
 
             if (!membersToRemove.isEmpty()) {
                 installLog.addVerboseMessage(LOG,
-                        "Removing " + membersToRemove.size() + " external members to group " + authorizableConfigBean.getAuthorizableId());
+                        "Removing " + membersToRemove.size() + " external members from group " + authorizableConfigBean.getAuthorizableId());
                 for (String member : membersToRemove) {
                     Authorizable memberGroup = userManager.getAuthorizable(member);
                     installedGroup.removeMember(memberGroup);
                     installLog.addVerboseMessage(LOG,
-                            "Removing " + member + " as external member to group " + authorizableConfigBean.getAuthorizableId());
+                            "Removing " + member + " as external member from group " + authorizableConfigBean.getAuthorizableId());
                 }
             }
         }
     }
 
-    private Set<String> removeRegularUsers(Set<String> allMembersFromRepo, UserManager userManager) throws RepositoryException {
-
-        Set<String> relevantMembers = new HashSet<String>(allMembersFromRepo);
-        Iterator<String> relevantMembersIt = relevantMembers.iterator();
-        while (relevantMembersIt.hasNext()) {
-            String memberId = relevantMembersIt.next();
-            Authorizable member = userManager.getAuthorizable(memberId);
-
-            if (isRegularUser(member)) {
-                // not relevant for further handling
-                relevantMembersIt.remove();
+    private Set<String> getDeclaredMembersWithoutRegularUsers(Group installedGroup) throws RepositoryException {
+        Set<String> membersInRepo = new HashSet<String>();
+        Iterator<Authorizable> currentMemberInRepo = installedGroup.getDeclaredMembers();
+        while (currentMemberInRepo.hasNext()) {
+            Authorizable member = currentMemberInRepo.next();
+            if (!isRegularUser(member)) {
+                membersInRepo.add(member.getID());
             }
         }
-
-        return relevantMembers;
+        return membersInRepo;
     }
 
-    private boolean isRegularUser(Authorizable member) throws RepositoryException {
-      return member != null && !member.isGroup() // if user
-          && !member.getPath().startsWith(Constants.USERS_ROOT + "/system/") // but not system user
-          && !member.getID().equals(Constants.USER_ANONYMOUS);  // and not anonymous
+    private boolean isRegularUser(Authorizable member) throws RepositoryException { 
+        return member != null && !member.isGroup() // if user
+            && !member.getPath().startsWith(Constants.USERS_ROOT + "/system/") // but not system user
+            && !member.getID().equals(Constants.USER_ANONYMOUS);  // and not anonymous
     }
 
     private Set<String> removeExternalMembersUnmanagedByConfiguration(AcConfiguration acConfiguration, AuthorizableConfigBean authorizableConfigBean,
@@ -280,18 +275,7 @@ public class AuthorizableInstallerServiceImpl implements
 
     }
 
-    private Set<String> getDeclaredMembers(Group installedGroup) throws RepositoryException {
-        Set<String> membersInRepo = new HashSet<String>();
-        Iterator<Authorizable> currentMemberInRepo = installedGroup.getDeclaredMembers();
-        while (currentMemberInRepo.hasNext()) {
-            Authorizable member = currentMemberInRepo.next();
-            if (!isRegularUser(member)) {
-                membersInRepo.add(member.getID());
-            }
-        }
-        return membersInRepo;
-    }
-
+    
     private void migrateFromOldGroup(AuthorizableConfigBean authorizableConfigBean, UserManager userManager,
             InstallationLogger installLog) throws RepositoryException {
         Authorizable groupForMigration = userManager.getAuthorizable(authorizableConfigBean.getMigrateFrom());
