@@ -234,16 +234,19 @@ public class AuthorizableInstallerServiceImpl implements
             String memberId = relevantMembersIt.next();
             Authorizable member = userManager.getAuthorizable(memberId);
 
-            if (member != null && !member.isGroup() // if user
-                    && !member.getPath().startsWith(Constants.USERS_ROOT + "/system/") // but not system user
-                    && !member.getID().equals(Constants.USER_ANONYMOUS) // and not anonymous
-            ) {
+            if (isRegularUser(member)) {
                 // not relevant for further handling
                 relevantMembersIt.remove();
             }
         }
 
         return relevantMembers;
+    }
+
+    private boolean isRegularUser(Authorizable member) throws RepositoryException {
+      return member != null && !member.isGroup() // if user
+          && !member.getPath().startsWith(Constants.USERS_ROOT + "/system/") // but not system user
+          && !member.getID().equals(Constants.USER_ANONYMOUS);  // and not anonymous
     }
 
     private Set<String> removeExternalMembersUnmanagedByConfiguration(AcConfiguration acConfiguration, AuthorizableConfigBean authorizableConfigBean,
@@ -281,7 +284,10 @@ public class AuthorizableInstallerServiceImpl implements
         Set<String> membersInRepo = new HashSet<String>();
         Iterator<Authorizable> currentMemberInRepo = installedGroup.getDeclaredMembers();
         while (currentMemberInRepo.hasNext()) {
-            membersInRepo.add(currentMemberInRepo.next().getID());
+            Authorizable member = currentMemberInRepo.next();
+            if (!isRegularUser(member)) {
+                membersInRepo.add(member.getID());
+            }
         }
         return membersInRepo;
     }
