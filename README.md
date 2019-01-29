@@ -4,7 +4,7 @@ Access Control Tool for Adobe Experience Manager
 ================================================
 
 The Access Control Tool for Adobe Experience Manager (AC Tool) simplifies the specification and deployment of complex [Access Control Lists in AEM](http://docs.adobe.com/docs/en/cq/current/administering/security.html#Access%20Control%20Lists%20and%20how%20they%20are%20evaluated).
-Instead of [existing solutions](docs/Comparison.md) that build e.g. a content package with actual ACL nodes you can write simple configuration files and deploy them with your content packages.
+Instead of existing solutions that build e.g. a content package with actual ACL nodes you can write simple configuration files and deploy them with your content packages. See [Comparison to other approches](docs/Comparison.md) for a comprehensive overview.
 
 Features:
 * easy-to-read Yaml configuration file format
