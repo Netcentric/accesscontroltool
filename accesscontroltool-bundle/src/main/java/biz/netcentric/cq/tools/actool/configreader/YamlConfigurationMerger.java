@@ -229,7 +229,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
                 if (memberContainedInConfig) {
                     groupForIsMemberOf.addIsMemberOf(groupName);
                     membersIt.remove();
-                    history.addWarning(LOG, "Group " + group.getAuthorizableId() + " is declaring member " + member
+                    history.addVerboseMessage(LOG, "Group " + group.getAuthorizableId() + " is declaring member " + member
                             + " - moving relationship to isMemberOf of authorizable " + groupForIsMemberOf.getAuthorizableId()
                             + " (always prefer using isMemberOf over members if referenced member is availalbe in configuration)");
                 }
