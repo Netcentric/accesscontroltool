@@ -167,7 +167,6 @@ Sometimes it can be useful to declare variables to reuse values or to give certa
        - name: Content Reader ${site.title}
          isMemberOf: 
          path: /home/groups/${groupToken}
-
 ```
 
 DEF entries can be used inside and outside of loops and conditional entries.
@@ -269,6 +268,7 @@ Additionally, it is also possible to set `unmanagedExternalIsMemberOfRegex` and 
 The property `unmanagedAcePathsRegex` for authorizable configurations (users or groups) can be used to ensure certain paths are not managed by the AC Tool. This property must contain a regular expression which is matched against all ACE paths bound to the authorizable found in the system. All ACEs with matching paths are not touched. By setting the global config `defaultUnmanagedAcePathsRegex` it is possible to exclude certain areas of the JCR totally from removing (and creating once #244 is fixed) at all.
 
 #### Examples
+
 ```
     - testgroup:
 
@@ -310,6 +310,45 @@ The root element `obsolete_authorizables` can be used to automatically purge aut
 
 The `FOR` and `IF` syntax can be used within `obsolete_authorizables`.
 
+## Providing Initial Content
+
+The property `initialContent` on ACE entries allows to specify enhanced docview xml to create the path if it does not exist. The namespaces for jcr, sling and cq are added automatically if not provided to keep xml short. Initial content must only be specified exactly once per path (this is validated). 
+
+The feature is useful when staging new content paths through all environments up to production. Then often the challenge is to ensure that the paths are created with the correct permissions on all environments. **Using a mix of content packages (that contain the path) and AC tool (that sets the ACL for the path) is not recommended since it is hard to control the correct installation order** (the path needs to exist when the AC Tool runs). It is better to provide initial content for nodes that also carry permissions with the `intialContent` property on ACE entries as follows: 
+
+```
+        - path: /content/cq:tags/newstags
+          permission: allow
+          actions: read
+          initialContent: |
+                            <jcr:root jcr:primaryType="cq:Tag"
+                                jcr:title="News Tags"
+                                sling:resourceType="cq/tagging/components/tag">
+                            </jcr:root>
+```
+
+Sometimes it is also useful to create intermediate paths that do not even contain an ACE entry, this is also supported by the following syntax:
+
+```
+        - path: /content/sites # only initialContent without permissions just ensures the node exists
+          initialContent: |
+                            <jcr:root jcr:primaryType="cq:Page">
+                                <jcr:content jcr:primaryType="cq:PageContent"
+                                    jcr:title="Intermediate Page"
+                                	   sling:resourceType="foundation/components/redirect"
+                            </jcr:root>
+
+        - path: /content/sites/site1
+          permission: allow
+          actions: read
+          initialContent: |
+                            <jcr:root jcr:primaryType="cq:Page">
+                                <jcr:content jcr:primaryType="cq:PageContent"
+                                    jcr:title="Site 1"
+                                	   sling:resourceType="site1/home"
+                            </jcr:root>                    
+```
+
 ## Health Check
 
 The AC Tool comes with a Sling Health Check to returns WARN if the last run of the AC Tool was not successful. The health check can be triggered via `/system/console/healthcheck?tags=actool`. Additional tags can be configured using PID `biz.netcentric.cq.tools.actool.healthcheck.LastRunSuccessHealthCheck` and property `hc.tags`. Also see [Sling Health Check Tools Documentation](https://sling.apache.org/documentation/bundles/sling-health-check-tool.html).
@@ -345,5 +384,5 @@ For large installations (> 1000 groups) that use MongoDB, the system possibly ma
 
 NOTE: This is never necessary when using TarMK and also it should only be used for MongoMK for large installations that do not contain a fix for OAK-5557 yet as the rollback functionality is lost when enabling intermediate saves.
 
-
 [i257]: https://github.com/Netcentric/accesscontroltool/issues/257
+
