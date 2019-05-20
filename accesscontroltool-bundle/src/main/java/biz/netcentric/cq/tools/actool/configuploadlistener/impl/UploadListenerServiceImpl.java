@@ -59,7 +59,8 @@ public class UploadListenerServiceImpl implements UploadListenerService, EventHa
             description="Listens for ACL configuration uploads and triggers ACL Service.",
             id="biz.netcentric.cq.tools.actool.configuploadlistener.impl.UploadListenerServiceImpl")
     protected static @interface Configuration {
-        @AttributeDefinition(name="Service status", options={
+        @AttributeDefinition(name="Service status", description = "Enable/disable AC Configuration Upload Listener Service", 
+            options={
                 @Option(label = "disabled", value = "disabled"),
                 @Option(label = "enabled", value = "enabled")
         })
