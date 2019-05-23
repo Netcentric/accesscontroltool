@@ -135,12 +135,14 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
         if (StringUtils.isNotBlank(currentEntryValue)) {
             if (currentEntryValue != null) {
 
-                final String[] groups = currentEntryValue.split(",");
+                final String[] groups = currentEntryValue.split("(?<!\\\\),"); // Ignores escaped commas
 
                 for (int i = 0; i < groups.length; i++) {
 
                     // remove leading and trailing blanks from groupname
                     groups[i] = StringUtils.strip(groups[i]);
+                    // unescape commas
+                    groups[i] = StringUtils.replace(groups[i], "\\,", ",");
 
                     if (!Validators.isValidAuthorizableId(groups[i])) {
                         LOG.error(
@@ -169,12 +171,14 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
         if (StringUtils.isNotBlank(currentEntryValue)) {
             if (currentEntryValue != null) {
 
-                final String[] groups = currentEntryValue.split(",");
+                final String[] groups = currentEntryValue.split("(?<!\\\\),"); // Ignores escaped commas
 
                 for (int i = 0; i < groups.length; i++) {
 
                     // remove leading and trailing blanks from groupname
                     groups[i] = StringUtils.strip(groups[i]);
+                    // unescape commas
+                    groups[i] = StringUtils.replace(groups[i], "\\,", ",");
 
                     if (!Validators.isValidAuthorizableId(groups[i])) {
                         LOG.error(
