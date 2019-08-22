@@ -71,7 +71,15 @@ public class YamlConfigReaderTest {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
         final List<LinkedHashMap> yamlList = getYamlList("test-multiple-aces-same-path.yaml");
         final AcesConfig acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session);
+
         assertEquals("Number of ACLs", 3, acls.filterByAuthorizableId("groupA").size());
+        assertEquals("Number of ACLs", 2, acls.filterByAuthorizableId("groupB").size());
+
+        Iterator<AceBean> iterator = acls.iterator();
+        while (iterator.hasNext()) {
+            AceBean aceBean = iterator.next();
+            assertEquals("/content", aceBean.getJcrPath());
+        }
     }
 
     @Test
