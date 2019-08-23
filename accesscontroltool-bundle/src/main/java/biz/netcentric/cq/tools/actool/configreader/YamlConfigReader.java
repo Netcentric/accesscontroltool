@@ -293,31 +293,24 @@ public class YamlConfigReader implements ConfigReader {
         return new AuthorizableConfigBean();
     }
 
-    protected void setupAceBean(final String authorizableId,
-            final Map<String, ?> currentAceDefinition, final AceBean aclBean) {
+    protected void setupAceBean(final String authorizableId, final Map<String, ?> currentAceDefinition, final AceBean aclBean) {
 
         aclBean.setAuthorizableId(authorizableId);
         aclBean.setPrincipalName(authorizableId); // to ensure it is set, later corrected if necessary in
                                                   // AcConfiguration.ensureAceBeansHaveCorrectPrincipalNameSet()
 
-        aclBean.setJcrPath(getMapValueAsString(currentAceDefinition,
-                ACE_CONFIG_PROPERTY_PATH));
+        String jcrPath = getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PATH);
+        aclBean.setJcrPath(StringUtils.removeEnd(jcrPath, "/"));
 
-        aclBean.setPrivilegesString(getMapValueAsString(
-                currentAceDefinition, ACE_CONFIG_PROPERTY_PRIVILEGES));
-        aclBean.setPermission(getMapValueAsString(
-                currentAceDefinition, ACE_CONFIG_PROPERTY_PERMISSION));
+        aclBean.setPrivilegesString(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PRIVILEGES));
+        aclBean.setPermission(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PERMISSION));
 
-        aclBean.setRestrictions(currentAceDefinition.get(ACE_CONFIG_PROPERTY_RESTRICTIONS),
-                (String) currentAceDefinition.get(ACE_CONFIG_PROPERTY_GLOB));
-        aclBean.setActions(parseActionsString(getMapValueAsString(currentAceDefinition,
-                ACE_CONFIG_PROPERTY_ACTIONS)));
+        aclBean.setRestrictions(currentAceDefinition.get(ACE_CONFIG_PROPERTY_RESTRICTIONS),(String) currentAceDefinition.get(ACE_CONFIG_PROPERTY_GLOB));
+        aclBean.setActions(parseActionsString(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_ACTIONS)));
 
-        aclBean.setKeepOrder(Boolean.valueOf(getMapValueAsString(currentAceDefinition,
-                ACE_CONFIG_PROPERTY_KEEP_ORDER)));
+        aclBean.setKeepOrder(Boolean.valueOf(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_KEEP_ORDER)));
 
-        String initialContent = getMapValueAsString(currentAceDefinition,
-                ACE_CONFIG_INITIAL_CONTENT);
+        String initialContent = getMapValueAsString(currentAceDefinition, ACE_CONFIG_INITIAL_CONTENT);
         aclBean.setInitialContent(initialContent);
     }
 

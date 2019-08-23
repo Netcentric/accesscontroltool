@@ -14,11 +14,17 @@
          isMemberOf: 
          path: /home/groups/g
          
+    - groupB:
+
+        - name:
+          isMemberOf:
+          path: /home/groups/g
+
 - ace_config:
     
     - groupA:
     
-        - path: /content
+        - path: /content/
           permission: deny
           actions: read,acl_read
           privileges:
@@ -35,3 +41,17 @@
           actions: read,acl_read
           privileges:
           repGlob: /jcr:content*
+
+    - groupB:
+
+        - path: /content
+          permission: deny
+          actions: read,acl_read
+          privileges:
+          repGlob:
+
+        - path: /content
+          permission: allow
+          actions: read,acl_read
+          privileges:
+          repGlob: ""
