@@ -300,9 +300,7 @@ public class YamlConfigReader implements ConfigReader {
                                                   // AcConfiguration.ensureAceBeansHaveCorrectPrincipalNameSet()
 
         String jcrPath = getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PATH);
-        String cleanJcrPath =  StringUtils.removeEnd(jcrPath, "/");
-        LOG.debug("cleaned jcr path: {} to {}", jcrPath, cleanJcrPath);
-        aclBean.setJcrPath(cleanJcrPath);
+        aclBean.setJcrPath(StringUtils.removeEnd(jcrPath, "/"));
 
         aclBean.setPrivilegesString(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PRIVILEGES));
         aclBean.setPermission(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PERMISSION));
