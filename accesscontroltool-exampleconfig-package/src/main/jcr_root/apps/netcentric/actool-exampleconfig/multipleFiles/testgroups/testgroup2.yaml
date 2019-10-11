@@ -11,7 +11,7 @@
 
     - testgroup2-tags:
 
-       - path: /etc/tags
+       - path: /content/cq:tags
          permission: allow
          actions: read
          privileges: 

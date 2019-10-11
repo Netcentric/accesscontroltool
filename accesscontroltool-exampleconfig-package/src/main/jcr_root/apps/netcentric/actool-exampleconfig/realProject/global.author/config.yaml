@@ -34,7 +34,7 @@
          actions: read,modify,create,delete,acl_read,replicate
          privileges: 
 
-       - path: /etc/tags
+       - path: /content/cq:tags
          permission: allow
          actions: read,modify,create,delete,acl_read,replicate
          privileges: 
@@ -74,7 +74,7 @@
          actions: read,modify,create,delete,acl_read,replicate
          privileges: 
 
-       - path: /etc/tags
+       - path: /content/cq:tags
          permission: allow
          actions: read,modify,create,delete,acl_read,replicate
          privileges: 
@@ -96,7 +96,7 @@
          actions: read,acl_read
          privileges: 
 
-       - path: /etc/tags
+       - path: /content/cq:tags
          permission: allow
          actions: read,acl_read
          privileges: 
