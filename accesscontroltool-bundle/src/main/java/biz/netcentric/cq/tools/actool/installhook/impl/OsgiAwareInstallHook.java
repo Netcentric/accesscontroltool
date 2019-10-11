@@ -18,6 +18,7 @@ import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 /**
  * A <a href="http://jackrabbit.apache.org/filevault">Jackrabbit FileVault</a> install hook 
  * which supports retrieving OSGi services and the bundle context as well as some logging capabilities.
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
  * Previous versions of that bundle (and more specifically the {@code com.day.jcr.vault.packaging.impl.JrVltInstallHookProcessor$Hook#loadMainClass(...)} 
  * only support the old interface at {@code com.day.jcr.vault.packaging.InstallHook}</p>
  */
+// TODO: move to other package as this is part of the API as long as at least one public method is contained
 public abstract class OsgiAwareInstallHook implements InstallHook {
 
 	private final BundleContext bundleContext;
@@ -45,22 +47,45 @@ public abstract class OsgiAwareInstallHook implements InstallHook {
 		}
 	}
 
+	// TODO: make protected
 	public BundleContext getBundleContext() {
 		return bundleContext;
 	}
 
-	public ServiceReference getServiceReference(String clazz) {
-		ServiceReference serviceReference = bundleContext
-				.getServiceReference(clazz);
-		return serviceReference;
-	}
+	/**
+	 * 
+	 * @param clazz
+	 * @return
+	 * @deprecated Use {@link #getServiceReference(Class)} instead
+	 */
+	@SuppressWarnings("rawtypes")
+    @Deprecated
+    public ServiceReference getServiceReference(String clazz) {
+        ServiceReference serviceReference = bundleContext
+                .getServiceReference(clazz);
+        return serviceReference;
+    }
 
+	/**
+	 * 
+	 * @param message
+	 * @param options
+	 * @deprecated Use {@link #log(String, ProgressTrackerListener)} instead.
+	 */
+	@Deprecated
     public void log(String message, ImportOptions options) {
-		ProgressTrackerListener listener = options.getListener();
-		if (listener != null) {
-			listener.onMessage(ProgressTrackerListener.Mode.TEXT, message, "");
-		} else {
-			LOG.info(message);
-		}
-	}
+        log(message, options.getListener());
+    }
+
+	protected <T> ServiceReference<T> getServiceReference(Class<T> clazz) {
+        return bundleContext.getServiceReference(clazz);
+    }
+
+    protected void log(String message, ProgressTrackerListener listener) {
+        if (listener != null) {
+            listener.onMessage(ProgressTrackerListener.Mode.TEXT, message, "");
+        } else {
+            LOG.info(message);
+        }
+    }
 }

@@ -47,6 +47,8 @@ The `*.yaml` files are installed directly from the package content and respect t
 
 Although it is not necessary that the YAML files are covered by the filter rules of the `filter.xml`, this is recommended practice. That way you can see afterwards in the repository which YAML files have been processed. However if you would not let the `filter.xml` cover your YAML files, those files would still be processed by the installation hook.
 
+The installation takes place in phase "PREPARE" by default, i.e. before any other content from the package has been installed. Optionally you can make the hook kick in in phase "INSTALLED" (i.e. after the content has been installed) by additionally setting the package property `actool.atinstalledphase` to `true`. This is helpful if the initial content on which you want to set ACEs is created via classical package content (instead of inline yaml `initialContent`). That is only properly supported since AEM 6.4.2 (for details look at [issue 287](https://github.com/Netcentric/accesscontroltool/issues/287)) and since ACTool 2.3.3.
+
 ## Web Console
 
 A Felix Web Console UI is available at "Main" -> "AC Tool". The web console provides fewer operations as JMX, but for manual testing it provides better usability for applying config changes continuously. 

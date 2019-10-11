@@ -17,13 +17,24 @@
     <name>Access Control Tool - Reactor Project</name>
     <description>Maven Multimodule project for Access Control Tool.</description>
     <url>https://github.com/Netcentric/accesscontroltool</url>
-
+    <organization>
+        <name>Netcentric - A Cognizant Digital Business</name>
+        <url>https://www.netcentric.biz/</url>
+    </organization>
     <developers>
         <developer>
             <name>Georg Henzler</name>
             <email>georg.henzler@netcentric.biz</email>
+            <id>georg.henzler@netcentric.biz</id>
             <organization>Netcentric</organization>
-            <organizationUrl>http://www.netcentric.biz/</organizationUrl>
+            <organizationUrl>https://www.netcentric.biz/</organizationUrl>
+        </developer>
+        <developer>
+            <name>Konrad Windszus</name>
+            <email>konrad.windszus@netcentric.biz</email>
+            <id>konrad.windszus@netcentric.biz</id>
+            <organization>Netcentric</organization>
+            <organizationUrl>https://www.netcentric.biz/</organizationUrl>
         </developer>
     </developers>
 
@@ -53,10 +64,6 @@
         </repository>
     </distributionManagement>
 
-    <prerequisites>
-        <maven>3.0.2</maven>
-    </prerequisites>
-
     <!-- ====================================================================== -->
     <!-- P R O P E R T I E S -->
     <!-- ====================================================================== -->
@@ -72,7 +79,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <slf4j.version>1.7.6</slf4j.version>
-        <bnd.version>4.1.0</bnd.version>
+        <bnd.version>4.3.0</bnd.version>
     </properties>
 
     <modules>
@@ -336,7 +343,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.1.0</version>
+                    <version>3.1.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -451,6 +458,29 @@
                     <source>1.7</source>
                     <target>1.7</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.0.0-M2</version>
+                <executions>
+                    <execution>
+                        <id>enforce-maven-and-java</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>3.0.2</version>
+                                </requireMavenVersion>
+                                <requireJavaVersion>
+                                    <version>1.7.0</version>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
