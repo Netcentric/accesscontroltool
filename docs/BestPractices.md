@@ -52,7 +52,7 @@ There are cases where you want to deny access to a node's children by default an
 You can achieve this by using globbing. In the example below /content is denied for all users in fragment-restrict-for-everyone. But this will not only deny access to the child nodes but also to /content itself. So we need two more rules:
 
 * allow to /content with repGlob "": This will allow access to the /content node itself ("" as repGlob means just this node)
-* allow to /content with repGlob "jcr:*": This is needed e.g. for site admin since it needs to read the jcr:primaryType property.
+* allow to /content with repGlob "/jcr:*": This is needed e.g. for site admin since it needs to read the jcr:primaryType property.
 
 This will allow to see /content without its children.
 
