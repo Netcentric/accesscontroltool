@@ -74,6 +74,21 @@ public class YamlConfigurationMergerTest {
                 groupBConfig.getMembers());
     }
 
+    @Test(expected = AcConfigBeanValidationException.class)
+    public void testReadInvalidYaml1() throws IOException, RepositoryException, AcConfigBeanValidationException {
+        getAcConfigurationForFile(getConfigurationMerger(), session, "test-invalid1.yaml");
+    }
+
+    @Test(expected = AcConfigBeanValidationException.class)
+    public void testReadInvalidYaml2() throws IOException, RepositoryException, AcConfigBeanValidationException {
+        getAcConfigurationForFile(getConfigurationMerger(), session, "test-invalid2.yaml");
+    }
+
+    @Test()
+    public void testReadEmptyYaml() throws IOException, RepositoryException, AcConfigBeanValidationException {
+        getAcConfigurationForFile(getConfigurationMerger(), session, "test-empty.yaml");
+    }
+   
     public static AcConfiguration getAcConfigurationForFile(YamlConfigurationMerger merger, Session session, String testConfigFile)
             throws IOException, RepositoryException, AcConfigBeanValidationException {
         final String config = YamlConfigReaderTest.getTestConfigAsString(testConfigFile);
@@ -93,5 +108,4 @@ public class YamlConfigurationMergerTest {
         merger.testUserConfigsCreator = new TestUserConfigsCreator();
         return merger;
     }
-
 }

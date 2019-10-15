@@ -16,9 +16,11 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
@@ -48,7 +50,7 @@ public class YamlConfigReaderTest {
     @Test
     public void testNullActions() throws IOException, AcConfigBeanValidationException, RepositoryException {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
-        final List<LinkedHashMap> yamlList = getYamlList("test-null-actions.yaml");
+        final List<Map> yamlList = getYamlList("test-null-actions.yaml");
         final AcesConfig acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session);
         final Set<AceBean> acl = acls.filterByAuthorizableId("groupA");
         for (final AceBean ace : acl) {
@@ -59,7 +61,7 @@ public class YamlConfigReaderTest {
     @Test
     public void testNoActions() throws IOException, AcConfigBeanValidationException, RepositoryException {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
-        final List<LinkedHashMap> yamlList = getYamlList("test-no-actions.yaml");
+        final List<Map> yamlList = getYamlList("test-no-actions.yaml");
         final AcesConfig acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session);
         final Set<AceBean> acl = acls.filterByAuthorizableId("groupA");
         final AceBean ace = acl.iterator().next();
@@ -69,7 +71,7 @@ public class YamlConfigReaderTest {
     @Test
     public void testMultipleAcesSamePath() throws IOException, AcConfigBeanValidationException, RepositoryException {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
-        final List<LinkedHashMap> yamlList = getYamlList("test-multiple-aces-same-path.yaml");
+        final List<Map> yamlList = getYamlList("test-multiple-aces-same-path.yaml");
         final AcesConfig acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session);
 
         assertEquals("Number of ACLs", 3, acls.filterByAuthorizableId("groupA").size());
@@ -85,7 +87,7 @@ public class YamlConfigReaderTest {
     @Test
     public void testEmptyGlobVsNoGlob() throws Exception {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
-        final List<LinkedHashMap> yamlList = getYamlList("test-empty-glob.yaml");
+        final List<Map> yamlList = getYamlList("test-empty-glob.yaml");
         final AcesConfig acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session);
         final Iterator<AceBean> it = acls.filterByAuthorizableId("groupA").iterator();
         final AceBean ace1 = it.next();
@@ -97,7 +99,7 @@ public class YamlConfigReaderTest {
     @Test
     public void testOptionalSections() throws Exception {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
-        List<LinkedHashMap> yamlList = getYamlList("test-no-aces.yaml");
+        List<Map> yamlList = getYamlList("test-no-aces.yaml");
         Set<AuthorizableConfigBean> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
         AcesConfig acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session);
         assertNull("No ACEs", acls);
@@ -112,7 +114,7 @@ public class YamlConfigReaderTest {
     @Test
     public void testMemberGroups() throws IOException, AcConfigBeanValidationException, RepositoryException {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
-        final List<LinkedHashMap> yamlList = getYamlList("test-membergroups.yaml");
+        final List<Map> yamlList = getYamlList("test-membergroups.yaml");
         final Set<AuthorizableConfigBean> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
         assertEquals("Number of groups", 4, groups.size());
 
@@ -127,24 +129,20 @@ public class YamlConfigReaderTest {
 
     }
 
-    static List<LinkedHashMap> getYamlList(final String filename) throws IOException {
+    static List<Map> getYamlList(final String filename) throws IOException {
         final String configString = getTestConfigAsString(filename);
 
         final Yaml yaml = new Yaml();
-        List<LinkedHashMap> yamlList = (List<LinkedHashMap>) yaml.load(configString);
-
+        List<Map> yamlList = yaml.loadAs(configString, List.class);
         return yamlList;
     }
 
     static String getTestConfigAsString(final String resourceName)
             throws IOException {
-        final ClassLoader classloader = Thread.currentThread()
-                .getContextClassLoader();
-        final InputStream is = classloader.getResourceAsStream(resourceName);
-
-        final StringWriter stringWriter = new StringWriter();
-        IOUtils.copy(is, stringWriter, "UTF-8");
-        return stringWriter.toString();
+        final ClassLoader classloader = YamlConfigReaderTest.class.getClassLoader();
+        try (final InputStream is = classloader.getResourceAsStream(resourceName)) {
+            return IOUtils.toString(is, StandardCharsets.UTF_8);
+        }
     }
 
 

@@ -54,17 +54,17 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
     private SlingSettingsService slingSettingsService;
     
     @Override
-    public List<LinkedHashMap> processMacros(List<LinkedHashMap> yamlList, InstallationLogger installLog, Session session) {
-        return (List<LinkedHashMap>) transform(yamlList, installLog, session);
+    public List<Map> processMacros(List<Map> yamlList, InstallationLogger installLog, Session session) {
+        return (List<Map>) transform(yamlList, installLog, session);
     }
 
     private Object transform(Object o, InstallationLogger installLog, Session session) {
-        HashMap<String, Object> initialVariables = createInitialVariables();
+        Map<String, Object> initialVariables = createInitialVariables();
         return transform(o, initialVariables, installLog, session);
     }
 
-    private HashMap<String, Object> createInitialVariables() {
-        HashMap<String, Object> initialVariables = new HashMap<String, Object>();
+    private Map<String, Object> createInitialVariables() {
+        Map<String, Object> initialVariables = new LinkedHashMap<String, Object>();
         if(slingSettingsService != null) {
             initialVariables.put("RUNMODES", new ArrayList<String>(slingSettingsService.getRunModes()));
         }
