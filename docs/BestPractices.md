@@ -105,3 +105,22 @@ In this case the user is a content manager. So the group "contentmanager" provid
 * fragment-basic-allow: allows access to nodes that are readable for all users (e.g. /content without subnodes)
 
 Please note that the functional fragment groups do not provide any content access. Read/write access to a website is provided by the groups "content-project1-read" and "content-project1-write".
+
+## Minimum rights to create nodes at a certain path
+
+Often it is desirable that certain groups have the right to create and delete new nodes/pages below a certain parent page/node but not having the rights to adjust/delete the parent page/node itself. Unfortunately that cannot be achieved in most of the cases.
+The minimum [required privileges](https://docs.adobe.com/docs/en/spec/jcr/2.0/16_Access_Control_Management.html#16.2.3%20Standard%20Privileges) on the *parent path* for creating and deleting nodes are
+
+* `jcr:addChildNodes`
+* `jcr:deleteChildNodes`
+* `jcr:readAccessControl`
+* `jcr:modifyProperties` (this is unfortunately necessary because otherwise the order can not be set below orderable node types)
+
+On the *actual node path* you need
+
+* `jcr:modifyProperties`
+* `jcr:nodeTypeManagement`
+
+and most probably also 
+* `jcr:addChildNodes`
+* `jcr:deleteChildNodes`
