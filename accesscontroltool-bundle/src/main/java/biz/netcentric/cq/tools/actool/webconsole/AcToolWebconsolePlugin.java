@@ -193,7 +193,7 @@ public class AcToolWebconsolePlugin extends HttpServlet {
         writer.closeTd();
         
         writer.openTd();
-        writer.println("<button id='applyButton' onclick=\"window.open('"+LABEL+"/"+PATH_SEGMENT_DUMP+"', '_blank')\"> Download Dump </button>");
+        writer.println("<button id='downloadDumpButton' onclick=\"window.open('"+LABEL+"/"+PATH_SEGMENT_DUMP+"', '_blank')\"> Download Dump </button>");
         writer.closeTd();
         
         writer.closeTr();
