@@ -120,6 +120,8 @@ public class AuthorizableInstallerServiceImpl implements
         }
         // if current authorizable from config already exists in repository
         else {
+            // move authorizable if path changed (retaining existing members)
+            handleRecreationOfAuthorizableIfNecessary(session, acConfiguration, authorizableConfigBean, installLog, userManager);
 
             // update name for both groups and users
             setAuthorizableProperties(authorizableToInstall, authorizableConfigBean, session, installLog);
@@ -128,9 +130,6 @@ public class AuthorizableInstallerServiceImpl implements
                     && StringUtils.isNotBlank(authorizableConfigBean.getPassword())) {
                 setUserPassword(authorizableConfigBean, (User) authorizableToInstall);
             }
-
-            // move authorizable if path changed (retaining existing members)
-            handleRecreationOfAuthorizableIfNecessary(session, acConfiguration, authorizableConfigBean, installLog, userManager);
 
             applyGroupMembershipConfigIsMemberOf(installLog, acConfiguration, authorizableConfigBean, userManager, session,
                     authorizablesFromConfigurations);
@@ -328,9 +327,9 @@ public class AuthorizableInstallerServiceImpl implements
 
         String authorizableId = principalConfigBean.getAuthorizableId();
 
-        // compare intermediate paths
         Authorizable existingAuthorizable = userManager.getAuthorizable(authorizableId);
-
+        
+        // compare intermediate paths
         String intermediatedPathOfExistingAuthorizable = existingAuthorizable.getPath()
                 .substring(0, existingAuthorizable.getPath().lastIndexOf("/"));
 
