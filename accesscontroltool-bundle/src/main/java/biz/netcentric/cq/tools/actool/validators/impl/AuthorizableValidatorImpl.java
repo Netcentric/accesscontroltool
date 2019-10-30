@@ -130,32 +130,20 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
             final AuthorizableConfigBean authorizableConfigBean)
                     throws InvalidGroupNameException {
         final String currentAuthorizable = authorizableConfigBean.getAuthorizableId();
-        final String currentEntryValue = authorizableConfigBean
-                .getIsMemberOfStringFromConfig();
-        if (StringUtils.isNotBlank(currentEntryValue)) {
-            if (currentEntryValue != null) {
+        final String[] isMemberOfGroups = authorizableConfigBean.getIsMemberOf();
+        if (isMemberOfGroups!=null && isMemberOfGroups.length > 0) {
 
-                final String[] groups = currentEntryValue.split(",");
-
-                for (int i = 0; i < groups.length; i++) {
-
-                    // remove leading and trailing blanks from groupname
-                    groups[i] = StringUtils.strip(groups[i]);
-
-                    if (!Validators.isValidAuthorizableId(groups[i])) {
+                for (int i = 0; i < isMemberOfGroups.length; i++) {
+                    if (!Validators.isValidAuthorizableId(isMemberOfGroups[i])) {
                         LOG.error(
                                 "Validation error while reading group property of authorizable:{}, invalid authorizable name: {}",
-                                currentAuthorizable, groups[i]);
+                                currentAuthorizable, isMemberOfGroups[i]);
                         throw new InvalidGroupNameException(
                                 "Validation error while reading group property of authorizable: "
                                         + currentAuthorizable
-                                        + ", invalid group name: " + groups[i]);
+                                        + ", invalid group name: " + isMemberOfGroups[i]);
                     }
                 }
-
-                authorizableConfigBean.setIsMemberOf(groups);
-
-            }
         }
         return true;
     }
@@ -164,31 +152,19 @@ public class AuthorizableValidatorImpl implements AuthorizableValidator {
             final AuthorizableConfigBean authorizableConfigBean)
                     throws InvalidGroupNameException {
         final String currentAuthorizable = authorizableConfigBean.getAuthorizableId();
-        final String currentEntryValue = authorizableConfigBean
-                .getMembersStringFromConfig();
-        if (StringUtils.isNotBlank(currentEntryValue)) {
-            if (currentEntryValue != null) {
+        final String[] members = authorizableConfigBean.getMembers();
+        if (members!=null && members.length > 0) {
+            for (int i = 0; i < members.length; i++) {
 
-                final String[] groups = currentEntryValue.split(",");
-
-                for (int i = 0; i < groups.length; i++) {
-
-                    // remove leading and trailing blanks from groupname
-                    groups[i] = StringUtils.strip(groups[i]);
-
-                    if (!Validators.isValidAuthorizableId(groups[i])) {
-                        LOG.error(
-                                "Validation error while reading group property of authorizable:{}, invalid authorizable name: {}",
-                                currentAuthorizable, groups[i]);
-                        throw new InvalidGroupNameException(
-                                "Validation error while reading group property of authorizable: "
-                                        + currentAuthorizable
-                                        + ", invalid group name: " + groups[i]);
-                    }
+                if (!Validators.isValidAuthorizableId(members[i])) {
+                    LOG.error(
+                            "Validation error while reading group property of authorizable:{}, invalid authorizable name: {}",
+                            currentAuthorizable, members[i]);
+                    throw new InvalidGroupNameException(
+                            "Validation error while reading group property of authorizable: "
+                                    + currentAuthorizable
+                                    + ", invalid group name: " + members[i]);
                 }
-
-                authorizableConfigBean.setMembers(groups);
-
             }
         }
         return true;

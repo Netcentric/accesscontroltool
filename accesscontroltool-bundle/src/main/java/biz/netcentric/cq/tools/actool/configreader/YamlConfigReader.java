@@ -57,7 +57,7 @@ public class YamlConfigReader implements ConfigReader {
     protected static final String ACE_CONFIG_PROPERTY_KEEP_ORDER = "keepOrder";
     protected static final String ACE_CONFIG_INITIAL_CONTENT = "initialContent";
 
-    private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF = "isMemberOf";
+    private static final String GROUP_CONFIG_PROPERTY_IS_MEMBER_OF = "isMemberOf";
     private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY = "memberOf";
     private static final String GROUP_CONFIG_PROPERTY_MEMBERS = "members";
     private static final String GROUP_CONFIG_PROPERTY_PATH = "path";
@@ -189,11 +189,11 @@ public class YamlConfigReader implements ConfigReader {
             }
             LOG.trace("Found principal: {} in config", currentAuthorizableIdFromYaml);
 
-            final List<Map<String, String>> currentAuthorizableData = (List<Map<String, String>>) currentMap.get(currentAuthorizableIdFromYaml);
+            final List<Map<String, Object>> currentAuthorizableData = (List<Map<String, Object>>) currentMap.get(currentAuthorizableIdFromYaml);
 
             if ((currentAuthorizableData != null) && !currentAuthorizableData.isEmpty()) {
 
-                for (final Map<String, String> currentPrincipalDataMap : currentAuthorizableData) {
+                for (final Map<String, Object> currentPrincipalDataMap : currentAuthorizableData) {
                     final AuthorizableConfigBean tmpPrincipalConfigBean = getNewAuthorizableConfigBean();
                     setupAuthorizableBean(tmpPrincipalConfigBean, currentPrincipalDataMap, currentAuthorizableIdFromYaml, isGroupSection);
                     if (authorizableValidator != null) {
@@ -323,7 +323,7 @@ public class YamlConfigReader implements ConfigReader {
 
     protected void setupAuthorizableBean(
             final AuthorizableConfigBean authorizableConfigBean,
-            final Map<String, String> currentPrincipalDataMap,
+            final Map<String, Object> currentPrincipalDataMap,
             final String authorizableId,
             boolean isGroupSection) {
         authorizableConfigBean.setAuthorizableId(authorizableId);
@@ -344,15 +344,23 @@ public class YamlConfigReader implements ConfigReader {
             authorizableConfigBean.setPrincipalName(authorizableId);
         }
 
-        authorizableConfigBean.setMemberOfString(getMapValueAsString(
-                currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBER_OF));
-        // read also memberOf property from legacy scripts
-        if (!StringUtils.isEmpty(getMapValueAsString(currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY))) {
-            authorizableConfigBean.setMemberOfString(getMapValueAsString(
-                    currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY));
+        Object isMemberOfVal = currentPrincipalDataMap.containsKey(GROUP_CONFIG_PROPERTY_IS_MEMBER_OF) ? 
+                currentPrincipalDataMap.get(GROUP_CONFIG_PROPERTY_IS_MEMBER_OF) : 
+                    currentPrincipalDataMap.get(GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY);
+        if(isMemberOfVal instanceof String) {
+            authorizableConfigBean.setIsMemberOf(((String) isMemberOfVal).trim().split(" *, *"));
+        } else if(isMemberOfVal instanceof List) {
+            authorizableConfigBean.setIsMemberOf((List<String>) isMemberOfVal);
         }
-        authorizableConfigBean.setMembersString(getMapValueAsString(
-                currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBERS));
+
+        Object membersVal = currentPrincipalDataMap.get(GROUP_CONFIG_PROPERTY_MEMBERS);
+        if(membersVal instanceof String) {
+            authorizableConfigBean.setMembers(((String) membersVal).trim().split(" *, *"));
+        } else if(membersVal instanceof List) {
+            List<String> membersList = (List<String>) membersVal;
+            authorizableConfigBean.setMembers(membersList.toArray(new String[membersList.size()]));
+        }
+        
         authorizableConfigBean.setPath(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_PATH));
 

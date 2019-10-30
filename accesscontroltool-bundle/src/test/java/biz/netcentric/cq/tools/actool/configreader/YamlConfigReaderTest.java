@@ -8,6 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -120,12 +121,12 @@ public class YamlConfigReaderTest {
 
         Iterator<AuthorizableConfigBean> groupsIt = groups.iterator();
         AuthorizableConfigBean firstGroup = groupsIt.next();
-        assertEquals("", firstGroup.getMembersStringFromConfig());
+        assertArrayEquals(null, firstGroup.getMembers());
         assertEquals("groupA", firstGroup.getAuthorizableId());
 
         AuthorizableConfigBean secondGroup = groupsIt.next();
         assertEquals("groupB", secondGroup.getAuthorizableId());
-        assertEquals("groupA", secondGroup.getMembersStringFromConfig());
+        assertArrayEquals(new String[] {"groupA"}, secondGroup.getMembers());
 
     }
 
