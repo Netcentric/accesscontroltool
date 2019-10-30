@@ -299,8 +299,10 @@ public class YamlConfigReader implements ConfigReader {
         aclBean.setPrincipalName(authorizableId); // to ensure it is set, later corrected if necessary in
                                                   // AcConfiguration.ensureAceBeansHaveCorrectPrincipalNameSet()
 
-        String jcrPath = getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PATH);
-        aclBean.setJcrPath(StringUtils.removeEnd(jcrPath, "/"));
+        String jcrPath = getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PATH).trim();
+        // remove trailing slashes (but retain simple slashes)
+        jcrPath = (!jcrPath.equals("/") && jcrPath.endsWith("/")) ? StringUtils.removeEnd(jcrPath, "/") : jcrPath;
+        aclBean.setJcrPath(jcrPath);
 
         aclBean.setPrivilegesString(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PRIVILEGES));
         aclBean.setPermission(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PERMISSION));
