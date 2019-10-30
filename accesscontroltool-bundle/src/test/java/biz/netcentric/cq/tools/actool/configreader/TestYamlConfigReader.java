@@ -25,8 +25,8 @@ public class TestYamlConfigReader extends YamlConfigReader {
 
     @Override
     protected void setupAceBean(final String principal,
-            final Map<String, ?> currentAceDefinition, final AceBean tmpAclBean) {
-        super.setupAceBean(principal, currentAceDefinition, tmpAclBean);
+            final Map<String, ?> currentAceDefinition, final AceBean tmpAclBean, String sourceFile) {
+        super.setupAceBean(principal, currentAceDefinition, tmpAclBean, sourceFile);
         ((TestAceBean) tmpAclBean).setAssertedExceptionString(getMapValueAsString(
                 currentAceDefinition, ASSERTED_EXCEPTION));
     }

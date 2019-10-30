@@ -88,7 +88,7 @@ public class YamlConfigReader implements ConfigReader {
     @Override
     @SuppressWarnings("rawtypes")
     public AcesConfig getAceConfigurationBeans(final Collection<?> aceConfigData,
-            final AceBeanValidator aceBeanValidator, Session session) throws RepositoryException, AcConfigBeanValidationException {
+            final AceBeanValidator aceBeanValidator, Session session, String sourceFile) throws RepositoryException, AcConfigBeanValidationException {
 
         final List<LinkedHashMap> aclList = (List<LinkedHashMap>) getConfigSection(Constants.ACE_CONFIGURATION_KEY, aceConfigData);
 
@@ -98,7 +98,7 @@ public class YamlConfigReader implements ConfigReader {
         }
 
         // group based Map from config file
-        AcesConfig aceMapFromConfig = getPreservedOrderdAceSet(aclList, aceBeanValidator, session);
+        AcesConfig aceMapFromConfig = getPreservedOrderdAceSet(aclList, aceBeanValidator, session, sourceFile);
         return aceMapFromConfig;
 
     }
@@ -208,9 +208,8 @@ public class YamlConfigReader implements ConfigReader {
 
     }
 
-    private AcesConfig getPreservedOrderdAceSet(
-            List<LinkedHashMap> aceYamlList,
-            final AceBeanValidator aceBeanValidator, Session session) throws RepositoryException,
+    private AcesConfig getPreservedOrderdAceSet(List<LinkedHashMap> aceYamlList,
+            AceBeanValidator aceBeanValidator, Session session, String sourceFile) throws RepositoryException,
             AcConfigBeanValidationException {
 
         final AcesConfig aceSet = new AcesConfig();
@@ -236,7 +235,7 @@ public class YamlConfigReader implements ConfigReader {
             // in the config
             for (final Map<String, ?> currentAceDefinition : aceDefinitions) {
                 AceBean newAceBean = getNewAceBean();
-                setupAceBean(authorizableId, currentAceDefinition, newAceBean);
+                setupAceBean(authorizableId, currentAceDefinition, newAceBean, sourceFile);
                 if (aceBeanValidator != null) {
                     aceBeanValidator.validate(newAceBean, session.getAccessControlManager());
                 }
@@ -293,14 +292,16 @@ public class YamlConfigReader implements ConfigReader {
         return new AuthorizableConfigBean();
     }
 
-    protected void setupAceBean(final String authorizableId, final Map<String, ?> currentAceDefinition, final AceBean aclBean) {
+    protected void setupAceBean(final String authorizableId, final Map<String, ?> currentAceDefinition, final AceBean aclBean, String sourceFile) {
 
         aclBean.setAuthorizableId(authorizableId);
         aclBean.setPrincipalName(authorizableId); // to ensure it is set, later corrected if necessary in
                                                   // AcConfiguration.ensureAceBeansHaveCorrectPrincipalNameSet()
 
-        String jcrPath = getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PATH);
-        aclBean.setJcrPath(StringUtils.removeEnd(jcrPath, "/"));
+        String jcrPath = getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PATH).trim();
+        // remove trailing slashes (but retain simple slashes)
+        jcrPath = (!jcrPath.equals("/") && jcrPath.endsWith("/")) ? StringUtils.removeEnd(jcrPath, "/") : jcrPath;
+        aclBean.setJcrPath(jcrPath);
 
         aclBean.setPrivilegesString(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PRIVILEGES));
         aclBean.setPermission(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PERMISSION));
@@ -312,6 +313,8 @@ public class YamlConfigReader implements ConfigReader {
 
         String initialContent = getMapValueAsString(currentAceDefinition, ACE_CONFIG_INITIAL_CONTENT);
         aclBean.setInitialContent(initialContent);
+        
+        aclBean.setConfigSource(sourceFile);
     }
 
     public static String[] parseActionsString(final String actionsStringFromConfig) {
