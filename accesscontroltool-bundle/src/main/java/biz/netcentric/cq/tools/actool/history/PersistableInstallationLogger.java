@@ -55,6 +55,9 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
     private int countActionCacheHit = 0;
     private int countActionCacheMiss = 0;
 
+    private int countAuthorizablesCreated = 0;
+    private int countAuthorizablesMoved = 0;
+
     private int missingParentPathsForInitialContent = 0;
 
     private DateFormat timestampFormat = new SimpleDateFormat("HH:mm:ss.SSS");
@@ -337,5 +340,22 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
         return missingParentPathsForInitialContent;
     }
 
+    @Override
+    public void incCountAuthorizablesCreated() {
+        countAuthorizablesCreated++;
+    }
+
+    @Override
+    public void incCountAuthorizablesMoved() {
+        countAuthorizablesMoved++;
+    }
+
+    public int getCountAuthorizablesCreated() {
+        return countAuthorizablesCreated;
+    }
+
+    public int getCountAuthorizablesMoved() {
+        return countAuthorizablesMoved;
+    }
 
 }

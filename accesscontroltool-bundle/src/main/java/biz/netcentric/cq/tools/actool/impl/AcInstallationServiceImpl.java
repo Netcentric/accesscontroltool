@@ -466,7 +466,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         stopWatch.start();
 
         AuthorizablesConfig authorizablesConfig = acConfiguration.getAuthorizablesConfig();
-        installLog.addMessage(LOG, "*** Starting installation of " + authorizablesConfig.size() + " authorizables...");
+        installLog.addMessage(LOG, "*** Starting installation of " + authorizablesConfig.size() + " authorizables from configuration...");
 
         try {
             // only save session if no exceptions occurred
