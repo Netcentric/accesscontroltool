@@ -123,9 +123,6 @@ public class AuthorizableInstallerServiceImpl implements
         }
         // if current authorizable from config already exists in repository
         else {
-            // move authorizable if path changed (retaining existing members)
-            handleRecreationOfAuthorizableIfNecessary(session, acConfiguration, authorizableConfigBean, installLog, userManager);
-
             // update name for both groups and users
             setAuthorizableProperties(authorizableToInstall, authorizableConfigBean, session, installLog);
             // update password for users
@@ -133,6 +130,9 @@ public class AuthorizableInstallerServiceImpl implements
                     && StringUtils.isNotBlank(authorizableConfigBean.getPassword())) {
                 setUserPassword(authorizableConfigBean, (User) authorizableToInstall);
             }
+
+            // move authorizable if path changed (retaining existing members)
+            handleRecreationOfAuthorizableIfNecessary(session, acConfiguration, authorizableConfigBean, installLog, userManager);
 
             applyGroupMembershipConfigIsMemberOf(installLog, acConfiguration, authorizableConfigBean, userManager, session,
                     authorizablesFromConfigurations);
