@@ -33,6 +33,9 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
+import biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook;
+import biz.netcentric.cq.tools.actool.jmx.AceServiceMBeanImpl;
+import biz.netcentric.cq.tools.actool.webconsole.AcToolWebconsolePlugin;
 
 public class HistoryUtils {
 
@@ -83,12 +86,18 @@ public class HistoryUtils {
 
         Node acHistoryRootNode = getAcHistoryRootNode(session);
         String name = HISTORY_NODE_NAME_PREFIX + System.currentTimeMillis();
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        
         if (StringUtils.isNotBlank(installLog.getCrxPackageName())) {
-            name += "_via_" + installLog.getCrxPackageName();
+            name += "_via_hook_in_" + installLog.getCrxPackageName();
+        } else if(isInStrackTracke(stackTrace, AceServiceMBeanImpl.class)) {
+            name += "_via_jmx";
+        } else if(isInStrackTracke(stackTrace, AcToolWebconsolePlugin.class)) {
+            name += "_via_webconsole";
         } else {
             name += "_via_api";
         }
-
+        
         Node newHistoryNode = safeGetNode(acHistoryRootNode, name, NODETYPE_NT_UNSTRUCTURED);
         String path = newHistoryNode.getPath();
         setHistoryNodeProperties(newHistoryNode, installLog);
@@ -109,6 +118,15 @@ public class HistoryUtils {
 
         installLog.addMessage(LOG, "Saved history in node: " + path);
         return newHistoryNode;
+    }
+
+    private static boolean isInStrackTracke(StackTraceElement[] stackTrace, Class<?> classToSearch) {
+        for (StackTraceElement stackTraceElement : stackTrace) {
+            if(classToSearch.getName().equals(stackTraceElement.getClassName())) { 
+                return true;
+            }
+        }
+        return false;
     }
 
     private static Node safeGetNode(final Node baseNode, final String name,
