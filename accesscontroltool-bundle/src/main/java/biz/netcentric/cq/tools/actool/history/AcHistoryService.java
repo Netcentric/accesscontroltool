@@ -18,7 +18,7 @@ public interface AcHistoryService {
 
     public String getLastInstallationHistory();
 
-    public String getLogFromHistory(int n, boolean inHtmlFormat);
+    public String getLogFromHistory(int n, boolean inHtmlFormat, boolean includeVerbose);
 
     public boolean wasLastPersistHistoryCallSuccessful();
 

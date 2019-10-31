@@ -122,12 +122,12 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         return null;
     }
 
-    private String getLogHtml(Session session, String path) {
-        return HistoryUtils.getLogHtml(session, path);
+    private String getLogHtml(Session session, String path, boolean includeVerbose) {
+        return HistoryUtils.getLogHtml(session, path, includeVerbose);
     }
 
-    private String getLogTxt(Session session, String path) {
-        return HistoryUtils.getLogTxt(session, path);
+    private String getLogTxt(Session session, String path, boolean includeVerbose) {
+        return HistoryUtils.getLogTxt(session, path, includeVerbose);
     }
 
     @Override
@@ -144,7 +144,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
                 Node lastHistoryNode = it.nextNode();
 
                 if (lastHistoryNode != null) {
-                    history = getLogHtml(session, lastHistoryNode.getName());
+                    history = getLogHtml(session, lastHistoryNode.getName(), true);
                 }
             } else {
                 history = "no history found!";
@@ -188,7 +188,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
     }
 
     @Override
-    public String getLogFromHistory(int n, boolean inHtmlFormat) {
+    public String getLogFromHistory(int n, boolean inHtmlFormat, boolean includeVerbose) {
         Session session = null;
         String history = "";
         try {
@@ -202,7 +202,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
                 Node historyNode = it.nextNode();
 
                 if ((historyNode != null) && (cnt == n)) {
-                    history = inHtmlFormat ? getLogHtml(session, historyNode.getName()) : getLogTxt(session, historyNode.getName());
+                    history = inHtmlFormat ? getLogHtml(session, historyNode.getName(), includeVerbose) : getLogTxt(session, historyNode.getName(), includeVerbose);
                 }
                 cnt++;
             }

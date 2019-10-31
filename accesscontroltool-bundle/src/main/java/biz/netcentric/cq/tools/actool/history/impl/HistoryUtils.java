@@ -8,6 +8,8 @@
  */
 package biz.netcentric.cq.tools.actool.history.impl;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -23,7 +25,9 @@ import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.version.VersionException;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.jackrabbit.commons.JcrUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +35,11 @@ import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 
 public class HistoryUtils {
+
     private static final Logger LOG = LoggerFactory.getLogger(HistoryUtils.class);
+
+    public static final String LOG_FILE_NAME = "actool.log";
+    public static final String LOG_FILE_NAME_VERBOSE = "actool-verbose.log";
 
     public static final String HISTORY_NODE_NAME_PREFIX = "history_";
     public static final String NODETYPE_NT_UNSTRUCTURED = "nt:unstructured";
@@ -84,6 +92,13 @@ public class HistoryUtils {
         Node newHistoryNode = safeGetNode(acHistoryRootNode, name, NODETYPE_NT_UNSTRUCTURED);
         String path = newHistoryNode.getPath();
         setHistoryNodeProperties(newHistoryNode, installLog);
+        
+        // not ideal to save both variants, but the easiest for now
+        JcrUtils.putFile(newHistoryNode, LOG_FILE_NAME_VERBOSE, "text/plain",
+                new ByteArrayInputStream(installLog.getVerboseMessageHistory().getBytes()));
+        JcrUtils.putFile(newHistoryNode, LOG_FILE_NAME, "text/plain",
+                new ByteArrayInputStream(installLog.getMessageHistory().getBytes()));
+        
         deleteObsoleteHistoryNodes(acHistoryRootNode, nrOfHistoriesToSave);
 
         Node previousHistoryNode = (Node) acHistoryRootNode.getNodes().next();
@@ -118,14 +133,6 @@ public class HistoryUtils {
         historyNode.setProperty(PROPERTY_EXECUTION_TIME,
                 installLog.getExecutionTime());
 
-        String messageHistory = installLog.getVerboseMessageHistory();
-
-        // 16777216 bytes = ~ 16MB was the error in #145, assuming chars*2, hence 16777216 / 2 = 8MB, using 7MB to consider the BSON
-        // overhead
-        if (messageHistory.length() > (7 * 1024 * 1024)) {
-            messageHistory = installLog.getMessageHistory(); // just use non-verbose history for this case
-        }
-        historyNode.setProperty(PROPERTY_MESSAGES, messageHistory);
         historyNode.setProperty(PROPERTY_TIMESTAMP, installLog
                 .getInstallationDate().getTime());
         historyNode.setProperty(PROPERTY_SLING_RESOURCE_TYPE,
@@ -210,12 +217,12 @@ public class HistoryUtils {
         return messages.toArray(new String[messages.size()]);
     }
 
-    public static String getLogTxt(final Session session, final String path) {
-        return getLog(session, path, "\n").toString();
+    public static String getLogTxt(final Session session, final String path, boolean includeVerbose) {
+        return getLog(session, path, "\n", includeVerbose).toString();
     }
 
-    public static String getLogHtml(final Session session, final String path) {
-        return getLog(session, path, "<br />").toString();
+    public static String getLogHtml(final Session session, final String path, boolean includeVerbose) {
+        return getLog(session, path, "<br />", includeVerbose).toString();
     }
 
     /**
@@ -223,7 +230,7 @@ public class HistoryUtils {
      * of the respective history node which is specified by the path parameter
      */
     public static String getLog(final Session session, final String path,
-            final String lineFeedSymbol) {
+            final String lineFeedSymbol, boolean includeVerbose) {
 
         StringBuilder sb = new StringBuilder();
         try {
@@ -234,9 +241,22 @@ public class HistoryUtils {
                 sb.append("Installation triggered: "
                         + historyNode.getProperty(PROPERTY_INSTALLATION_DATE)
                                 .getString());
-                sb.append(lineFeedSymbol
-                        + historyNode.getProperty(PROPERTY_MESSAGES)
-                                .getString().replace("\n", lineFeedSymbol));
+                
+                if(historyNode.hasProperty(PROPERTY_MESSAGES)) {
+                    sb.append(lineFeedSymbol
+                            + historyNode.getProperty(PROPERTY_MESSAGES)
+                                    .getString().replace("\n", lineFeedSymbol));
+                } else {
+                    Node logFileNode;
+                    if(includeVerbose) {
+                        logFileNode = historyNode.getNode(LOG_FILE_NAME_VERBOSE);
+                    } else {
+                        logFileNode = historyNode.getNode(LOG_FILE_NAME);
+                    }
+                    sb.append(lineFeedSymbol
+                            +  IOUtils.toString(JcrUtils.readFile(logFileNode)).replace("\n", lineFeedSymbol));
+                }
+
                 sb.append(lineFeedSymbol
                         + "Execution time: "
                         + historyNode.getProperty(PROPERTY_EXECUTION_TIME)
@@ -246,8 +266,9 @@ public class HistoryUtils {
                         + historyNode.getProperty(PROPERTY_SUCCESS)
                                 .getBoolean());
             }
-        } catch (RepositoryException e) {
-            LOG.error("RepositoryException: {}", e);
+        } catch (IOException|RepositoryException e) {
+            sb.append(lineFeedSymbol+"ERROR while retrieving log: "+e);
+            LOG.error("ERROR while retrieving log: "+e, e);
         }
         return sb.toString();
     }

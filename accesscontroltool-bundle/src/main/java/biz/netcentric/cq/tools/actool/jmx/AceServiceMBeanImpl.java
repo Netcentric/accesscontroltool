@@ -126,7 +126,7 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
     }
 
     @Override
-    public String showInstallationLog(final String n) {
+    public String showInstallationLog(final String n, boolean verbose) {
         int i;
         String[] logs = acHistoryService.getInstallationLogPaths();
         if (logs.length == 0) {
@@ -144,7 +144,7 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
         if (i < 1 || i > numberOfFoundLogs) {
             return errorMessage;
         }
-        return acHistoryService.getLogFromHistory(i, false);
+        return acHistoryService.getLogFromHistory(i, false, verbose);
     }
 
     @Override
