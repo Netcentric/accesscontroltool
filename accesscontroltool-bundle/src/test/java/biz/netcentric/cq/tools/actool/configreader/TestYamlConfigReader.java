@@ -34,7 +34,7 @@ public class TestYamlConfigReader extends YamlConfigReader {
     @Override
     protected void setupAuthorizableBean(
             final AuthorizableConfigBean authorizableConfigBean,
-            final Map<String, String> currentPrincipalDataMap,
+            final Map<String, Object> currentPrincipalDataMap,
             final String authorizableId,
             boolean isGroupSection) {
         super.setupAuthorizableBean(authorizableConfigBean, currentPrincipalDataMap, authorizableId, isGroupSection);
