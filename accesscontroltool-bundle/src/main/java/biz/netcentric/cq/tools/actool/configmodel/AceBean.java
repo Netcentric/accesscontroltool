@@ -45,6 +45,9 @@ public class AceBean implements AcDumpElement {
 
     private String initialContent;
 
+    // config source (only for logging)
+    private String configSource;
+
     public static final String RESTRICTION_NAME_GLOB = "rep:glob";
 
     @Override
@@ -60,6 +63,7 @@ public class AceBean implements AcDumpElement {
         clone.setRestrictions(new ArrayList<Restriction>(restrictions));
         clone.setInitialContent(initialContent);
         clone.setKeepOrder(keepOrder);
+        clone.setConfigSource(configSource +" (cloned)"); 
 
         return clone;
 
@@ -221,14 +225,20 @@ public class AceBean implements AcDumpElement {
 
     @Override
     public String toString() {
-        return "AceBean [jcrPath=" + jcrPath + "\n" + ", actionsStringFromConfig=" + actionsStringFromConfig + "\n"
+        return "AceBean [\n  jcrPath=" + jcrPath + "\n" + ", actionsStringFromConfig=" + actionsStringFromConfig + "\n"
                 + ", privilegesString=" + privilegesString + "\n" + ", principal=" + principalName + "\n, authorizableId=" + authorizableId
                 + "\n" + ", permission=" + permission
                 + "\n, actions=" + Arrays.toString(actions) + "\n" + ", restrictions="
-                + restrictions + "\n"
-                + ", initialContent=" + initialContent + "]";
+                + restrictions + "\n, initialContent=" + initialContent + "\n, configSource="+configSource+"]";
     }
 
+    public String getConfigSource() {
+        return configSource;
+    }
+
+    public void setConfigSource(String configSource) {
+        this.configSource = configSource;
+    }
 
     @Override
     public int hashCode() {

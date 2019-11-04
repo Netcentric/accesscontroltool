@@ -319,7 +319,7 @@ public class YamlMacroProcessorTest {
     private AcesConfig readAceConfigs(final List<Map> yamlList)
             throws RepositoryException, AcConfigBeanValidationException {
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
-        return new YamlConfigReader().getAceConfigurationBeans(yamlList, null, session);
+        return new YamlConfigReader().getAceConfigurationBeans(yamlList, null, session, "junit");
     }
 
     private AuthorizablesConfig readGroupConfigs(List<Map> yamlList) throws AcConfigBeanValidationException {

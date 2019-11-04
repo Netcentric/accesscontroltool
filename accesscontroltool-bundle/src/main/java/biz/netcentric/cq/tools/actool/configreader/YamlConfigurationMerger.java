@@ -163,7 +163,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
 
             // --- ace_config section
             final Set<AceBean> currentAceBeansFromConfig = configReader.getAceConfigurationBeans(yamlRootList,
-                    getAceBeanValidator(authorizableIdsFromAllConfigs), session);
+                    getAceBeanValidator(authorizableIdsFromAllConfigs), session, sourceFile);
 
             configurationsValidator.validateKeepOrder(mergedAceBeansFromConfig, currentAceBeansFromConfig, sourceFile);
 
