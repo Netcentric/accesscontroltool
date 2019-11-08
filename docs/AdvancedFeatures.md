@@ -388,7 +388,7 @@ NOTE: This is never necessary when using TarMK and also it should only be used f
 
 ## Custom Privileges
 
-Since v2.3.3 you can register custom Oak privileges and grant it in your ACL configurations: 
+Since v2.3.3 you can register custom Oak privileges and grant them in your ACL configurations: 
 
 ```
 - privilege_config:
