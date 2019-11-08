@@ -23,6 +23,7 @@ import java.util.Set;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import biz.netcentric.cq.tools.actool.configmodel.*;
 import org.apache.commons.lang.time.StopWatch;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -33,12 +34,6 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.ConstructorException;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
-import biz.netcentric.cq.tools.actool.configmodel.AceBean;
-import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
-import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
-import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
-import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
@@ -86,6 +81,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         final Set<String> authorizableIdsFromAllConfigs = new HashSet<String>(); // needed for detection of doubled defined groups in
                                                                                  // configurations
         final Set<String> obsoleteAuthorizables = new HashSet<String>();
+        final PrivilegeConfig privilegeConfig = new PrivilegeConfig();
 
         final Yaml yamlParser = new Yaml();
 
@@ -108,6 +104,12 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             } catch (YAMLException e) {
                 throw new NoListOnTopLevelException("Invalid yaml, please check format of " + sourceFile, e);
             }
+            try {
+                privilegeConfig.merge(configReader.getPrivilegeConfiguration(yamlRootList));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid privilege configuration in " + sourceFile + ": " + e, e);
+            }
+
             yamlRootList = yamlMacroProcessor.processMacros(yamlRootList, installLog, session);
             // set merged config per file to ensure it is there in case of validation errors (for success, the actual merged config is set
             // after this loop)
@@ -188,6 +190,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         acConfiguration.setAuthorizablesConfig(mergedAuthorizablesBeansfromConfig);
         acConfiguration.setAceConfig(mergedAceBeansFromConfig);
         acConfiguration.setObsoleteAuthorizables(obsoleteAuthorizables);
+        acConfiguration.setPrivilegeConfig(privilegeConfig);
 
         virtualGroupProcessor.flattenGroupTree(acConfiguration, installLog);
 

@@ -1,0 +1,25 @@
+- privilege_config:
+
+    - sling:feature:
+
+    - sling:anotherFeature:
+        - isAbstract: false
+          declaredAggregateNames: jcr:read,jcr:write
+
+
+- group_config:
+
+    - sling-feature-users:
+        - name:
+
+- ace_config:
+
+    - sling-feature-users:
+
+        - path: /content
+          permission: allow
+          privileges: sling:feature
+
+        - path: /content/dam
+          permission: allow
+          privileges: sling:anotherFeature

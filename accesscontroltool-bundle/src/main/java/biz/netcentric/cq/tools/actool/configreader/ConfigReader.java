@@ -17,6 +17,7 @@ import javax.jcr.Session;
 import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
+import biz.netcentric.cq.tools.actool.configmodel.PrivilegeConfig;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
@@ -40,5 +41,7 @@ public interface ConfigReader {
     public GlobalConfiguration getGlobalConfiguration(final Collection yamlList);
 
     public Set<String> getObsoluteAuthorizables(Collection yamlList);
+
+    PrivilegeConfig getPrivilegeConfiguration(Collection yamlList);
 
 }

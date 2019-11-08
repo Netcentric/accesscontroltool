@@ -33,6 +33,8 @@ public class AcConfiguration {
 
     private Set<String> obsoleteAuthorizables = new HashSet<String>();
 
+    private PrivilegeConfig privilegeConfiguration;
+
     private List<AuthorizableConfigBean> virtualGroups = new ArrayList<AuthorizableConfigBean>();
 
     public GlobalConfiguration getGlobalConfiguration() {
@@ -58,6 +60,15 @@ public class AcConfiguration {
     public void setAceConfig(AcesConfig aceBeansSet) {
         this.aceBeansConfig = aceBeansSet;
         ensureAceBeansHaveCorrectPrincipalNameSet();
+    }
+
+
+    public PrivilegeConfig getPrivilegeConfig() {
+        return privilegeConfiguration;
+    }
+
+    public void setPrivilegeConfig(PrivilegeConfig cfg){
+        privilegeConfiguration = cfg;
     }
 
     // this is required as the configuration contains authorizableIds, but the JCR contains principal names. The mapping is available via

@@ -12,6 +12,8 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
@@ -25,15 +27,13 @@ import java.util.Set;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import biz.netcentric.cq.tools.actool.configmodel.*;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.yaml.snakeyaml.Yaml;
 
-import biz.netcentric.cq.tools.actool.configmodel.AceBean;
-import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
-import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
 public class YamlConfigReaderTest {
@@ -128,6 +128,35 @@ public class YamlConfigReaderTest {
         assertEquals("groupB", secondGroup.getAuthorizableId());
         assertArrayEquals(new String[] {"groupA"}, secondGroup.getMembers());
 
+    }
+
+    @Test
+    public void testPrivileges() throws IOException {
+        ConfigReader yamlConfigReader = new YamlConfigReader();
+        List<Map> yamlList = getYamlList("test-privileges.yaml");
+        PrivilegeConfig config = yamlConfigReader.getPrivilegeConfiguration(yamlList);
+        assertEquals("Number of privileges", 4, config.size());
+
+        Iterator<PrivilegeBean> it = config.iterator();
+        PrivilegeBean bean1 = it.next();
+        assertEquals("sling:feature", bean1.getPrivilegeName());
+        assertFalse(bean1.isAbstract());
+        assertArrayEquals(new String[0], bean1.getAggregateNames());
+
+        PrivilegeBean bean2 = it.next();
+        assertEquals("cq:doThis", bean2.getPrivilegeName());
+        assertFalse(bean2.isAbstract());
+        assertArrayEquals(new String[0], bean2.getAggregateNames());
+
+        PrivilegeBean bean3 = it.next();
+        assertEquals("cq:doThat", bean3.getPrivilegeName());
+        assertTrue(bean3.isAbstract());
+        assertArrayEquals(new String[0], bean3.getAggregateNames());
+
+        PrivilegeBean bean4 = it.next();
+        assertEquals("cq:doThese", bean4.getPrivilegeName());
+        assertFalse(bean4.isAbstract());
+        assertArrayEquals(new String[]{"jcr:read", "jcr:write"}, bean4.getAggregateNames());
     }
 
     static List<Map> getYamlList(final String filename) throws IOException {

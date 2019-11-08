@@ -8,9 +8,8 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.anySet;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -18,18 +17,17 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import biz.netcentric.cq.tools.actool.configmodel.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
-import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
-import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.ObsoleteAuthorizablesValidatorImpl;
@@ -89,6 +87,45 @@ public class YamlConfigurationMergerTest {
         getAcConfigurationForFile(getConfigurationMerger(), session, "test-empty.yaml");
     }
    
+    @Test
+    public void testMergePrivilegeConfiguration() throws RepositoryException, IOException, AcConfigBeanValidationException {
+        YamlConfigurationMerger merger = getConfigurationMerger();
+
+        ConfigReader reader = new YamlConfigReader();
+        Map<String, String> configs = new HashMap<String, String>();
+        configs.put("/etc/config-a", YamlConfigReaderTest.getTestConfigAsString("test-merge-privileges-a.yaml"));
+        configs.put("/etc/config-b", YamlConfigReaderTest.getTestConfigAsString("test-merge-privileges-b.yaml"));
+        AcConfiguration acConfiguration = merger.getMergedConfigurations(configs, new PersistableInstallationLogger(), reader, session);
+
+        PrivilegeConfig privilegeConfig = acConfiguration.getPrivilegeConfig();
+        assertEquals(2, privilegeConfig.size());
+
+        Iterator<PrivilegeBean> it = privilegeConfig.iterator();
+        PrivilegeBean bean1 = it.next();
+        assertEquals("sling:feature1", bean1.getPrivilegeName());
+
+        PrivilegeBean bean2 = it.next();
+        assertEquals("sling:feature2", bean2.getPrivilegeName());
+
+    }
+
+    @Test
+    public void testMergePrivilegeThrowExceptionOnDuplicateConfig() throws RepositoryException, IOException, AcConfigBeanValidationException {
+        YamlConfigurationMerger merger = getConfigurationMerger();
+
+        ConfigReader reader = new YamlConfigReader();
+        Map<String, String> configs = new HashMap<String, String>();
+        configs.put("/etc/config-a", YamlConfigReaderTest.getTestConfigAsString("test-merge-privileges-a.yaml"));
+        configs.put("/etc/config-b", YamlConfigReaderTest.getTestConfigAsString("test-merge-privileges-a.yaml"));
+        try {
+            AcConfiguration acConfiguration = merger.getMergedConfigurations(configs, new PersistableInstallationLogger(), reader, session);
+            fail("expected exception");
+        } catch (IllegalArgumentException e){
+            assertTrue(e.getMessage().contains("Duplicate privilege configuration"));
+        }
+
+    }
+
     public static AcConfiguration getAcConfigurationForFile(YamlConfigurationMerger merger, Session session, String testConfigFile)
             throws IOException, RepositoryException, AcConfigBeanValidationException {
         final String config = YamlConfigReaderTest.getTestConfigAsString(testConfigFile);

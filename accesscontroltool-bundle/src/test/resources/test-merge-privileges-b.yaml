@@ -1,0 +1,5 @@
+- privilege_config:
+
+    - sling:feature2:
+        - isAbstract: true
+

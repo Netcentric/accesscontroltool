@@ -29,6 +29,8 @@ import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
 
+import biz.netcentric.cq.tools.actool.authorizableinstaller.PrivilegeInstaller;
+import biz.netcentric.cq.tools.actool.configmodel.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.StopWatch;
@@ -56,11 +58,6 @@ import biz.netcentric.cq.tools.actool.api.AcInstallationService;
 import biz.netcentric.cq.tools.actool.api.InstallationLog;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableInstallerService;
-import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
-import biz.netcentric.cq.tools.actool.configmodel.AceBean;
-import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
-import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
-import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetriever;
 import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
 import biz.netcentric.cq.tools.actool.configreader.ConfigurationMerger;
@@ -116,6 +113,9 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ConfigurationAdmin configAdmin;
+
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    PrivilegeInstaller privilegeInstaller;
 
     private String configuredAcConfigurationRootPath;
 
@@ -468,7 +468,12 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         AuthorizablesConfig authorizablesConfig = acConfiguration.getAuthorizablesConfig();
         installLog.addMessage(LOG, "*** Starting installation of " + authorizablesConfig.size() + " authorizables from configuration...");
 
+        PrivilegeConfig privilegesConfig = acConfiguration.getPrivilegeConfig();
         try {
+            if(privilegesConfig != null) {
+                privilegeInstaller.installPrivileges(privilegesConfig, session, installLog);
+            }
+
             // only save session if no exceptions occurred
             authorizableCreatorService.installAuthorizables(acConfiguration, authorizablesConfig, session, installLog);
 

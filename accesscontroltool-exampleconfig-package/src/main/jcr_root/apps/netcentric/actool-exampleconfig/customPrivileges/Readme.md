@@ -1,0 +1,1 @@
+Registers custom Oak privileges and uses them in the ACE configurations.

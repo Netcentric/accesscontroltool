@@ -23,6 +23,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.query.InvalidQueryException;
 
+import biz.netcentric.cq.tools.actool.configmodel.*;
 import org.apache.commons.lang.StringUtils;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.annotations.Component;
@@ -31,11 +32,6 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.configmodel.AceBean;
-import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
-import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
-import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
-import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
@@ -81,6 +77,10 @@ public class YamlConfigReader implements ConfigReader {
     private static final String USER_CONFIG_SOCIAL_CONTENT = "socialContent";
 
     private static final String USER_CONFIG_DISABLED = "disabled";
+
+    public static final String PRIVILEGE_NAME = "name";
+    public static final String PRIVILEGE_IS_ABSTRACT = "isAbstract";
+    public static final String PRIVILEGE_DECLARED_AGGREGATE_NAMES = "declaredAggregateNames";
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
@@ -158,6 +158,39 @@ public class YamlConfigReader implements ConfigReader {
         }
         return obsoleteAuthorizables;
     }
+
+    @Override
+    public PrivilegeConfig getPrivilegeConfiguration(final Collection yamlList) {
+
+        List<Map> yamlConfig = (List<Map>)getConfigSection(Constants.PRIVILEGE_CONFIGURATION_KEY, yamlList);
+        PrivilegeConfig config = new PrivilegeConfig();
+        if(yamlConfig != null) for(Map entry : yamlConfig){
+            String entryKey = (String)entry.keySet().iterator().next();
+            PrivilegeBean bean = new PrivilegeBean();
+
+            List entryValues = (List)entry.get(entryKey);
+            String privilegeName = null;
+            String[] aggregateNames = {};
+            boolean isAbstract = false;
+            if(entryValues != null && !entryValues.isEmpty()) {
+                Map entryConfig = (Map)entryValues.iterator().next();
+                privilegeName = getMapValueAsString(entryConfig, PRIVILEGE_NAME);
+                isAbstract = Boolean.parseBoolean(getMapValueAsString(entryConfig, PRIVILEGE_IS_ABSTRACT));
+                aggregateNames = parseActionsString(getMapValueAsString(entryConfig, PRIVILEGE_DECLARED_AGGREGATE_NAMES));
+            }
+            if(StringUtils.isEmpty(privilegeName)) {
+                // if name is not set it defaults to the yaml key
+                privilegeName = entryKey;
+            }
+
+            bean.setAggregateNames(aggregateNames);
+            bean.setPrivilegeName(privilegeName);
+            bean.setAbstract(isAbstract);
+            config.add(bean);
+        }
+        return config;
+    }
+
 
     private Object getConfigSection(final String sectionName, final Collection yamlList) {
         final List<LinkedHashMap<?, ?>> yamList = new ArrayList<LinkedHashMap<?, ?>>(yamlList);

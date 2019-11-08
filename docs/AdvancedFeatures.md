@@ -386,3 +386,32 @@ NOTE: This is never necessary when using TarMK and also it should only be used f
 
 [i257]: https://github.com/Netcentric/accesscontroltool/issues/257
 
+## Custom Privileges
+
+Since v2.3.3 you can register custom Oak privileges and grant it in your ACL configurations: 
+
+```
+- privilege_config:
+    # register a custom privilege
+    - sling:feature:
+
+- group_config:
+
+    - sling-feature-users:
+        - name:
+
+- ace_config:
+
+    - sling-feature-users:
+
+        - path: /content
+          permission: allow
+          privileges: sling:feature
+```
+The _privilege_config_ block is evaluated before all ACE configurations and can contain the following properties:
+
+property | comment | required
+--- | --- | ---
+name | The name of the privilege. Corresponds to the node name under `/jcr:system/rep:privileges/*`, e.g. the name `sling:feature` will corresepnd to `/jcr:system/rep:privileges/sling:feature` | no. defaults to the yaml key if not set or empty
+isAbstract | whether this privilege is abstract | no. default is `false`
+declaredAggregateNames | Comma-separated names of the directly contained privileges | no

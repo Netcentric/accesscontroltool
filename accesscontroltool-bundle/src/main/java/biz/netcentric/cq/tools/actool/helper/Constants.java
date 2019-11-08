@@ -22,6 +22,7 @@ public class Constants {
     public static final String GROUP_CONFIGURATION_KEY = "group_config";
     public static final String USER_CONFIGURATION_KEY = "user_config";
     public static final String ACE_CONFIGURATION_KEY = "ace_config";
+    public static final String PRIVILEGE_CONFIGURATION_KEY = "privilege_config";
 
     public static final String OBSOLETE_AUTHORIZABLES_KEY = "obsolete_authorizables";
 
@@ -30,7 +31,8 @@ public class Constants {
             GROUP_CONFIGURATION_KEY,
             USER_CONFIGURATION_KEY,
             ACE_CONFIGURATION_KEY,
-            OBSOLETE_AUTHORIZABLES_KEY));
+            OBSOLETE_AUTHORIZABLES_KEY,
+            PRIVILEGE_CONFIGURATION_KEY));
 
     public static final String USER_ANONYMOUS = "anonymous";
     public static final String USER_AC_SERVICE = "actool";

@@ -1,0 +1,16 @@
+- privilege_config:
+
+    - sling:feature:
+
+    - cq:doThis:
+        - isAbstract: false
+          name: cq:doThis
+          declaredAggregateNames:
+
+    - cq:doThat:
+        - isAbstract: true
+
+    - doThese:
+        - isAbstract: false
+          name: cq:doThese
+          declaredAggregateNames: jcr:read,jcr:write
