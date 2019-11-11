@@ -259,7 +259,7 @@ public class DumpServiceImpl implements ConfigDumpService {
                     keyOrder, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE, // this ORDER is important to keep the ORDER of denies with
                                                                        // "keepOrder"
                     // attribute that is automatically added if needed
-                    queryExcludePaths, session);
+                    Arrays.asList(queryExcludePaths), session);
             Map<String, Set<AceBean>> aclDumpMap = aceDumpData.getAceDump();
 
             Set<AuthorizableConfigBean> groupBeans = getGroupBeans(session);
@@ -381,7 +381,7 @@ public class DumpServiceImpl implements ConfigDumpService {
      * @param session
      * @return */
     public AceDumpData createAclDumpMap(final int keyOrder, final int aclOrdering,
-            final String[] excludePaths, Session session) throws ValueFormatException,
+            final List<String> excludePaths, Session session) throws ValueFormatException,
             IllegalArgumentException, IllegalStateException,
             RepositoryException {
         return createAclDumpMap(keyOrder, aclOrdering, excludePaths, includeUsersInDumps, session);
@@ -399,7 +399,7 @@ public class DumpServiceImpl implements ConfigDumpService {
      * @throws RepositoryException */
     @Override
     public AceDumpData createAclDumpMap(final int keyOrder, final int aclOrdering,
-            final String[] excludePaths, final boolean isIncludeUsers, Session session) throws RepositoryException {
+            final List<String> excludePaths, final boolean isIncludeUsers, Session session) throws RepositoryException {
 
         AceDumpData aceDumpData = new AceDumpData();
         UserManager um = ((JackrabbitSession) session).getUserManager();
