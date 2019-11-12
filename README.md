@@ -33,10 +33,12 @@ The package is available from [the Maven Central repository](https://repo1.maven
     <artifactId>accesscontroltool-package</artifactId>
 ```
 
-## AEM6.x/Oak
+## Oak Index for rep:ACL
 
-In case you run AEM 6 with Oak (required as of 6.1) we recommend to install the Oak index package.
-It will speed up installation of ACLs.
+To retrieve all ACLs in the system, an oak index for node type `rep:ACL` is 
+
+* required for versions < 2.4.0 (otherwise the performance degrades significantly)
+* beneficial for large installations for versions >= 2.4.0 (see #386, most installations will be fine without index)
 
 You can get the ZIP file via [Maven](https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-oakindex-package/). Install it e.g. via CRX package manager.
 
