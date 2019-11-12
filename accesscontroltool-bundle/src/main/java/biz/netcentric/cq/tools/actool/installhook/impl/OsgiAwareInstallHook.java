@@ -28,37 +28,32 @@ import org.slf4j.LoggerFactory;
  * Previous versions of that bundle (and more specifically the {@code com.day.jcr.vault.packaging.impl.JrVltInstallHookProcessor$Hook#loadMainClass(...)} 
  * only support the old interface at {@code com.day.jcr.vault.packaging.InstallHook}</p>
  */
-// TODO: move to other package as this is part of the API as long as at least one public method is contained
 public abstract class OsgiAwareInstallHook implements InstallHook {
 
-	private final BundleContext bundleContext;
-	private static final Logger LOG = LoggerFactory.getLogger(OsgiAwareInstallHook.class);
+    private final BundleContext bundleContext;
+    private static final Logger LOG = LoggerFactory.getLogger(OsgiAwareInstallHook.class);
 
-	public OsgiAwareInstallHook() throws ClassCastException {
-		// since this class was loaded through a bundle class loader as well, just take the bundle context
-		Bundle currentBundle = FrameworkUtil.getBundle(this.getClass());
-		if (currentBundle == null) {
-			throw new IllegalStateException("The class " + this.getClass() + " was not loaded through a a bundle classloader");
-		}
-		
-		bundleContext = currentBundle.getBundleContext();
-		if (bundleContext == null) {
-			throw new IllegalStateException("Could not get bundle context for bundle " + currentBundle);
-		}
-	}
+    public OsgiAwareInstallHook() throws ClassCastException {
+        // since this class was loaded through a bundle class loader as well, just take the bundle context
+        Bundle currentBundle = FrameworkUtil.getBundle(this.getClass());
+        if (currentBundle == null) {
+            throw new IllegalStateException("The class " + this.getClass() + " was not loaded through a a bundle classloader");
+        }
 
-	// TODO: make protected
-	public BundleContext getBundleContext() {
-		return bundleContext;
-	}
+        bundleContext = currentBundle.getBundleContext();
+        if (bundleContext == null) {
+            throw new IllegalStateException("Could not get bundle context for bundle " + currentBundle);
+        }
+    }
 
-	/**
-	 * 
-	 * @param clazz
-	 * @return
-	 * @deprecated Use {@link #getServiceReference(Class)} instead
-	 */
-	@SuppressWarnings("rawtypes")
+    public BundleContext getBundleContext() {
+        return bundleContext;
+    }
+
+    /** @param clazz
+     * @return
+     * @deprecated Use {@link #getServiceReference(Class)} instead */
+    @SuppressWarnings("rawtypes")
     @Deprecated
     public ServiceReference getServiceReference(String clazz) {
         ServiceReference serviceReference = bundleContext
