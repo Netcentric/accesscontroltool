@@ -259,7 +259,7 @@ public class DumpServiceImpl implements ConfigDumpService {
                     keyOrder, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE, // this ORDER is important to keep the ORDER of denies with
                                                                        // "keepOrder"
                     // attribute that is automatically added if needed
-                    queryExcludePaths, session);
+                    Arrays.asList(queryExcludePaths), session);
             Map<String, Set<AceBean>> aclDumpMap = aceDumpData.getAceDump();
 
             Set<AuthorizableConfigBean> groupBeans = getGroupBeans(session);
@@ -381,7 +381,7 @@ public class DumpServiceImpl implements ConfigDumpService {
      * @param session
      * @return */
     public AceDumpData createAclDumpMap(final int keyOrder, final int aclOrdering,
-            final String[] excludePaths, Session session) throws ValueFormatException,
+            final List<String> excludePaths, Session session) throws ValueFormatException,
             IllegalArgumentException, IllegalStateException,
             RepositoryException {
         return createAclDumpMap(keyOrder, aclOrdering, excludePaths, includeUsersInDumps, session);
@@ -399,7 +399,7 @@ public class DumpServiceImpl implements ConfigDumpService {
      * @throws RepositoryException */
     @Override
     public AceDumpData createAclDumpMap(final int keyOrder, final int aclOrdering,
-            final String[] excludePaths, final boolean isIncludeUsers, Session session) throws RepositoryException {
+            final List<String> excludePaths, final boolean isIncludeUsers, Session session) throws RepositoryException {
 
         AceDumpData aceDumpData = new AceDumpData();
         UserManager um = ((JackrabbitSession) session).getUserManager();
@@ -491,63 +491,6 @@ public class DumpServiceImpl implements ConfigDumpService {
         return result;
     }
 
-    public void returnAuthorizableDumpAsFile(
-            final SlingHttpServletResponse response,
-            Set<AuthorizableConfigBean> authorizableSet) throws IOException {
-        String mimetype = "application/octet-stream";
-        response.setContentType(mimetype);
-        ServletOutputStream outStream = null;
-        try {
-            outStream = response.getOutputStream();
-        } catch (IOException e) {
-            LOG.error("Exception in AuthorizableDumpUtils: {}", e);
-        }
-
-        String fileName = "Authorizable_Dump_"
-                + new Date(System.currentTimeMillis());
-        response.setHeader("Content-Disposition", "attachment; filename=\""
-                + fileName + "\"");
-
-        try {
-            writeAuthorizableConfigToStream(authorizableSet, outStream);
-        } catch (IOException e) {
-            LOG.error("Exception in AuthorizableDumpUtils: {}", e);
-        }
-        outStream.close();
-    }
-
-    public void writeAuthorizableConfigToStream(
-            Set<AuthorizableConfigBean> authorizableSet,
-            ServletOutputStream outStream) throws IOException {
-
-        outStream.println("- " + Constants.GROUP_CONFIGURATION_KEY + ":");
-        outStream.println();
-
-        for (AuthorizableConfigBean bean : authorizableSet) {
-            outStream
-                    .println(AcHelper
-                            .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_KEY)
-                            + "- " + bean.getAuthorizableId() + ":");
-            outStream.println();
-            outStream
-                    .println(AcHelper
-                            .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_FIRST_PROPERTY)
-                            + "- name: ");
-            outStream
-                    .println(AcHelper
-                            .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY)
-                            + "isMemberOf: " + bean.getIsMemberOfString());
-            outStream
-                    .println(AcHelper
-                            .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY)
-                            + "path: " + bean.getPath());
-            outStream
-                    .println(AcHelper
-                            .getBlankString(AcDumpElementYamlVisitor.DUMP_INDENTATION_PROPERTY)
-                            + "isGroup: " + "'" + bean.isGroup() + "'");
-            outStream.println();
-        }
-    }
 
     /** method that returns the data of users contained in a set as AuthorizableConfigBeans
      *

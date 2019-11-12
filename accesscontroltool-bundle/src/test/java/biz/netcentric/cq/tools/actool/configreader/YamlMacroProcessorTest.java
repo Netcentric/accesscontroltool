@@ -70,7 +70,7 @@ public class YamlMacroProcessorTest {
     @Test
     public void testGroupLoop() throws IOException, AcConfigBeanValidationException, RepositoryException {
 
-        List<LinkedHashMap> yamlList = getYamlList("test-loop.yaml");
+        List<Map> yamlList = getYamlList("test-loop.yaml");
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
@@ -92,7 +92,7 @@ public class YamlMacroProcessorTest {
     @Test
     public void testNestedGroupLoop() throws IOException, AcConfigBeanValidationException, RepositoryException {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
-        List<LinkedHashMap> yamlList = getYamlList("test-nested-loops.yaml");
+        List<Map> yamlList = getYamlList("test-nested-loops.yaml");
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
@@ -106,7 +106,7 @@ public class YamlMacroProcessorTest {
     @Test
     public void testAceLoop() throws IOException, AcConfigBeanValidationException, RepositoryException {
 
-        List<LinkedHashMap> yamlList = getYamlList("test-loop.yaml");
+        List<Map> yamlList = getYamlList("test-loop.yaml");
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
@@ -123,7 +123,7 @@ public class YamlMacroProcessorTest {
     @Test
     public void testAceLoopWithHyphen() throws IOException, AcConfigBeanValidationException, RepositoryException {
 
-        List<LinkedHashMap> yamlList = getYamlList("test-loop-with-hyphen.yaml");
+        List<Map> yamlList = getYamlList("test-loop-with-hyphen.yaml");
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
@@ -140,7 +140,7 @@ public class YamlMacroProcessorTest {
     @Test
     public void testAceLoopWithSpecialCharacters() throws IOException, AcConfigBeanValidationException, RepositoryException {
 
-        List<LinkedHashMap> yamlList = getYamlList("test-loop-with-special-characters.yaml");
+        List<Map> yamlList = getYamlList("test-loop-with-special-characters.yaml");
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
@@ -157,7 +157,7 @@ public class YamlMacroProcessorTest {
     @Test
     public void testNestedLoop() throws IOException, AcConfigBeanValidationException, RepositoryException {
 
-        List<LinkedHashMap> yamlList = getYamlList("test-nested-loops.yaml");
+        List<Map> yamlList = getYamlList("test-nested-loops.yaml");
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
@@ -182,7 +182,7 @@ public class YamlMacroProcessorTest {
     @Test
     public void testIf() throws IOException, AcConfigBeanValidationException, RepositoryException {
 
-        List<LinkedHashMap> yamlList = getYamlList("test-if.yaml");
+        List<Map> yamlList = getYamlList("test-if.yaml");
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
@@ -203,7 +203,7 @@ public class YamlMacroProcessorTest {
     @Test
     public void testLoopChildrenOf() throws IOException, AcConfigBeanValidationException, RepositoryException {
 
-        List<LinkedHashMap> yamlList = getYamlList("test-loop-children-of.yaml");
+        List<Map> yamlList = getYamlList("test-loop-children-of.yaml");
 
         String contentLocationChildrenFromYamlFile = "/content/test";
 
@@ -230,7 +230,7 @@ public class YamlMacroProcessorTest {
     @Test
     public void testLoopChildrenWithContentOf() throws IOException, AcConfigBeanValidationException, RepositoryException {
 
-        List<LinkedHashMap> yamlList = getYamlList("test-loop-children-with-content-of.yaml");
+        List<Map> yamlList = getYamlList("test-loop-children-with-content-of.yaml");
 
         String contentLocationChildrenFromYamlFile = "/content/test";
 
@@ -303,7 +303,7 @@ public class YamlMacroProcessorTest {
     @Test
     public void testSystemUser() throws IOException, AcConfigBeanValidationException, RepositoryException {
 
-        List<LinkedHashMap> yamlList = getYamlList("test-system-user.yaml");
+        List<Map> yamlList = getYamlList("test-system-user.yaml");
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
@@ -316,21 +316,21 @@ public class YamlMacroProcessorTest {
 
     // --- using YamlConfigReader to make assertions easier (the raw yaml structure makes it really hard)
 
-    private AcesConfig readAceConfigs(final List<LinkedHashMap> yamlList)
+    private AcesConfig readAceConfigs(final List<Map> yamlList)
             throws RepositoryException, AcConfigBeanValidationException {
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
-        return new YamlConfigReader().getAceConfigurationBeans(yamlList, null, session);
+        return new YamlConfigReader().getAceConfigurationBeans(yamlList, null, session, "junit");
     }
 
-    private AuthorizablesConfig readGroupConfigs(List<LinkedHashMap> yamlList) throws AcConfigBeanValidationException {
+    private AuthorizablesConfig readGroupConfigs(List<Map> yamlList) throws AcConfigBeanValidationException {
         return new YamlConfigReader().getGroupConfigurationBeans(yamlList, null);
     }
 
-    private GlobalConfiguration readGlobalConfig(List<LinkedHashMap> yamlList) throws AcConfigBeanValidationException {
+    private GlobalConfiguration readGlobalConfig(List<Map> yamlList) throws AcConfigBeanValidationException {
         return new YamlConfigReader().getGlobalConfiguration(yamlList);
     }
 
-    private AuthorizablesConfig readUserConfigs(List<LinkedHashMap> yamlList)
+    private AuthorizablesConfig readUserConfigs(List<Map> yamlList)
             throws AcConfigBeanValidationException {
         return new YamlConfigReader().getUserConfigurationBeans(yamlList, null);
     }
@@ -338,7 +338,7 @@ public class YamlMacroProcessorTest {
     @Test
     public void testVariables() throws Exception {
 
-        List<LinkedHashMap> yamlList = getYamlList("test-variables.yaml");
+        List<Map> yamlList = getYamlList("test-variables.yaml");
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
@@ -356,7 +356,7 @@ public class YamlMacroProcessorTest {
     @Test
     public void testVariableForLdap() throws Exception {
 
-        List<LinkedHashMap> yamlList = getYamlList("test-variables-ldap.yaml");
+        List<Map> yamlList = getYamlList("test-variables-ldap.yaml");
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
@@ -369,7 +369,7 @@ public class YamlMacroProcessorTest {
     @Test
     public void testLoopWithArrVariable() throws Exception {
 
-        List<LinkedHashMap> yamlList = getYamlList("test-loop-with-variable-evaluating-to-arr.yaml");
+        List<Map> yamlList = getYamlList("test-loop-with-variable-evaluating-to-arr.yaml");
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
@@ -419,7 +419,7 @@ public class YamlMacroProcessorTest {
     @Test
     public void testContainsElementFunction() throws Exception {
 
-        List<LinkedHashMap> yamlList = getYamlList("test-array-containsItem-function.yaml");
+        List<Map> yamlList = getYamlList("test-array-containsItem-function.yaml");
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
 
@@ -431,7 +431,7 @@ public class YamlMacroProcessorTest {
     @Test
     public void testLoopOverRunmodes() throws Exception {
 
-        List<LinkedHashMap> yamlList = getYamlList("test-loop-over-runmodes.yaml");
+        List<Map> yamlList = getYamlList("test-loop-over-runmodes.yaml");
 
         when(slingSettingsService.getRunModes()).thenReturn(new HashSet<String>(Arrays.asList("runmode1", "runmode2", "runmode3")));
         

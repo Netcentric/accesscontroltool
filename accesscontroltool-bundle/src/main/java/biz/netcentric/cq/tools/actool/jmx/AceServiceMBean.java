@@ -55,8 +55,6 @@ public interface AceServiceMBean {
     @Description("Purges all authorizables contained in configuration files and all their ACEs from the system")
     public String purgeAllAuthorizablesFromConfiguration();
 
-
-
     @Description("Returns a configuration dump containing all groups and all ACLs ordered by path")
     public String pathBasedDump();
 
@@ -65,7 +63,8 @@ public interface AceServiceMBean {
 
     @Description("Returns installation log for the given ordinal")
     public String showInstallationLog(
-            @Name("installationLogNumber") @Description("Ordinal of the installation log to be shown") final String historyLogNumber);
+            @Name("installationLogNumber") @Description("Ordinal of the installation log to be shown") final String historyLogNumber, 
+            @Name("includeVerbose") @Description("Include verbose messages") boolean verbose);
 
     @Description("Purges authorizable(s) and respective ACEs from the system.")
     public String purgeAuthorizables(

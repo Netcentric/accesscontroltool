@@ -9,6 +9,7 @@
 package biz.netcentric.cq.tools.actool.dumpservice;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 
 import javax.jcr.AccessDeniedException;
@@ -39,12 +40,12 @@ public interface ConfigDumpService {
      * @param keyOrder either principals (AceHelper.PRINCIPAL_BASED_ORDERING) or node paths (AceHelper.PATH_BASED_ORDERING) as keys
      * @param aclOrdering specifies whether the allow and deny ACEs within an ACL should be divided in separate blocks (first deny then
      *            allow)
+     * @param excludePaths
      * @param isIncludeUsers
-     * @param session a jcr session
+     * @param session a JCR session
      * @return AceDumpData */
-    public AceDumpData createAclDumpMap(final int keyOrder, final int aclOrdering,
-            final String[] excludePaths,
-            final boolean isIncludeUsers, Session session) throws RepositoryException;
+    public AceDumpData createAclDumpMap(int keyOrder, int aclOrdering,
+            List<String> excludePaths, boolean isIncludeUsers, Session session) throws RepositoryException;
 
     /** method that return a dump comprising of all groups and all aces in path based view
      *

@@ -29,7 +29,7 @@ public class HistoryRenderer {
         Session session = resourceResolver.adaptTo(Session.class);
         Resource resource = request.getResource();
 
-        return HistoryUtils.getLogHtml(session, resource.getName());
+        return HistoryUtils.getLogHtml(session, resource.getName(), true);
 
     }
 

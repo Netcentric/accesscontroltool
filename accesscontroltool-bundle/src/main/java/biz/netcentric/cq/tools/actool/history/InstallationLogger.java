@@ -35,5 +35,9 @@ public interface InstallationLogger extends InstallationLog {
 
     void incCountAclsNoChange();
 
+    void incCountAuthorizablesCreated();
+    void incCountAuthorizablesMoved();
 
+    int getCountAuthorizablesCreated();
+    int getCountAuthorizablesMoved();
 }

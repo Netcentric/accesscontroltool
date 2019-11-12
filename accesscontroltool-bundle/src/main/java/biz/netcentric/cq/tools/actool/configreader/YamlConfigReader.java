@@ -57,7 +57,7 @@ public class YamlConfigReader implements ConfigReader {
     protected static final String ACE_CONFIG_PROPERTY_KEEP_ORDER = "keepOrder";
     protected static final String ACE_CONFIG_INITIAL_CONTENT = "initialContent";
 
-    private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF = "isMemberOf";
+    private static final String GROUP_CONFIG_PROPERTY_IS_MEMBER_OF = "isMemberOf";
     private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY = "memberOf";
     private static final String GROUP_CONFIG_PROPERTY_MEMBERS = "members";
     private static final String GROUP_CONFIG_PROPERTY_PATH = "path";
@@ -88,7 +88,7 @@ public class YamlConfigReader implements ConfigReader {
     @Override
     @SuppressWarnings("rawtypes")
     public AcesConfig getAceConfigurationBeans(final Collection<?> aceConfigData,
-            final AceBeanValidator aceBeanValidator, Session session) throws RepositoryException, AcConfigBeanValidationException {
+            final AceBeanValidator aceBeanValidator, Session session, String sourceFile) throws RepositoryException, AcConfigBeanValidationException {
 
         final List<LinkedHashMap> aclList = (List<LinkedHashMap>) getConfigSection(Constants.ACE_CONFIGURATION_KEY, aceConfigData);
 
@@ -98,7 +98,7 @@ public class YamlConfigReader implements ConfigReader {
         }
 
         // group based Map from config file
-        AcesConfig aceMapFromConfig = getPreservedOrderdAceSet(aclList, aceBeanValidator, session);
+        AcesConfig aceMapFromConfig = getPreservedOrderdAceSet(aclList, aceBeanValidator, session, sourceFile);
         return aceMapFromConfig;
 
     }
@@ -189,11 +189,11 @@ public class YamlConfigReader implements ConfigReader {
             }
             LOG.trace("Found principal: {} in config", currentAuthorizableIdFromYaml);
 
-            final List<Map<String, String>> currentAuthorizableData = (List<Map<String, String>>) currentMap.get(currentAuthorizableIdFromYaml);
+            final List<Map<String, Object>> currentAuthorizableData = (List<Map<String, Object>>) currentMap.get(currentAuthorizableIdFromYaml);
 
             if ((currentAuthorizableData != null) && !currentAuthorizableData.isEmpty()) {
 
-                for (final Map<String, String> currentPrincipalDataMap : currentAuthorizableData) {
+                for (final Map<String, Object> currentPrincipalDataMap : currentAuthorizableData) {
                     final AuthorizableConfigBean tmpPrincipalConfigBean = getNewAuthorizableConfigBean();
                     setupAuthorizableBean(tmpPrincipalConfigBean, currentPrincipalDataMap, currentAuthorizableIdFromYaml, isGroupSection);
                     if (authorizableValidator != null) {
@@ -208,9 +208,8 @@ public class YamlConfigReader implements ConfigReader {
 
     }
 
-    private AcesConfig getPreservedOrderdAceSet(
-            List<LinkedHashMap> aceYamlList,
-            final AceBeanValidator aceBeanValidator, Session session) throws RepositoryException,
+    private AcesConfig getPreservedOrderdAceSet(List<LinkedHashMap> aceYamlList,
+            AceBeanValidator aceBeanValidator, Session session, String sourceFile) throws RepositoryException,
             AcConfigBeanValidationException {
 
         final AcesConfig aceSet = new AcesConfig();
@@ -236,7 +235,7 @@ public class YamlConfigReader implements ConfigReader {
             // in the config
             for (final Map<String, ?> currentAceDefinition : aceDefinitions) {
                 AceBean newAceBean = getNewAceBean();
-                setupAceBean(authorizableId, currentAceDefinition, newAceBean);
+                setupAceBean(authorizableId, currentAceDefinition, newAceBean, sourceFile);
                 if (aceBeanValidator != null) {
                     aceBeanValidator.validate(newAceBean, session.getAccessControlManager());
                 }
@@ -293,14 +292,16 @@ public class YamlConfigReader implements ConfigReader {
         return new AuthorizableConfigBean();
     }
 
-    protected void setupAceBean(final String authorizableId, final Map<String, ?> currentAceDefinition, final AceBean aclBean) {
+    protected void setupAceBean(final String authorizableId, final Map<String, ?> currentAceDefinition, final AceBean aclBean, String sourceFile) {
 
         aclBean.setAuthorizableId(authorizableId);
         aclBean.setPrincipalName(authorizableId); // to ensure it is set, later corrected if necessary in
                                                   // AcConfiguration.ensureAceBeansHaveCorrectPrincipalNameSet()
 
-        String jcrPath = getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PATH);
-        aclBean.setJcrPath(StringUtils.removeEnd(jcrPath, "/"));
+        String jcrPath = getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PATH).trim();
+        // remove trailing slashes (but retain simple slashes)
+        jcrPath = (!jcrPath.equals("/") && jcrPath.endsWith("/")) ? StringUtils.removeEnd(jcrPath, "/") : jcrPath;
+        aclBean.setJcrPath(jcrPath);
 
         aclBean.setPrivilegesString(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PRIVILEGES));
         aclBean.setPermission(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PERMISSION));
@@ -312,6 +313,8 @@ public class YamlConfigReader implements ConfigReader {
 
         String initialContent = getMapValueAsString(currentAceDefinition, ACE_CONFIG_INITIAL_CONTENT);
         aclBean.setInitialContent(initialContent);
+        
+        aclBean.setConfigSource(sourceFile);
     }
 
     public static String[] parseActionsString(final String actionsStringFromConfig) {
@@ -321,7 +324,7 @@ public class YamlConfigReader implements ConfigReader {
 
     protected void setupAuthorizableBean(
             final AuthorizableConfigBean authorizableConfigBean,
-            final Map<String, String> currentPrincipalDataMap,
+            final Map<String, Object> currentPrincipalDataMap,
             final String authorizableId,
             boolean isGroupSection) {
         authorizableConfigBean.setAuthorizableId(authorizableId);
@@ -342,15 +345,23 @@ public class YamlConfigReader implements ConfigReader {
             authorizableConfigBean.setPrincipalName(authorizableId);
         }
 
-        authorizableConfigBean.setMemberOfString(getMapValueAsString(
-                currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBER_OF));
-        // read also memberOf property from legacy scripts
-        if (!StringUtils.isEmpty(getMapValueAsString(currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY))) {
-            authorizableConfigBean.setMemberOfString(getMapValueAsString(
-                    currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY));
+        Object isMemberOfVal = currentPrincipalDataMap.containsKey(GROUP_CONFIG_PROPERTY_IS_MEMBER_OF) ? 
+                currentPrincipalDataMap.get(GROUP_CONFIG_PROPERTY_IS_MEMBER_OF) : 
+                    currentPrincipalDataMap.get(GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY);
+        if(isMemberOfVal instanceof String) {
+            authorizableConfigBean.setIsMemberOf(((String) isMemberOfVal).trim().split(" *, *"));
+        } else if(isMemberOfVal instanceof List) {
+            authorizableConfigBean.setIsMemberOf((List<String>) isMemberOfVal);
         }
-        authorizableConfigBean.setMembersString(getMapValueAsString(
-                currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_MEMBERS));
+
+        Object membersVal = currentPrincipalDataMap.get(GROUP_CONFIG_PROPERTY_MEMBERS);
+        if(membersVal instanceof String) {
+            authorizableConfigBean.setMembers(((String) membersVal).trim().split(" *, *"));
+        } else if(membersVal instanceof List) {
+            List<String> membersList = (List<String>) membersVal;
+            authorizableConfigBean.setMembers(membersList.toArray(new String[membersList.size()]));
+        }
+        
         authorizableConfigBean.setPath(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_PATH));
 

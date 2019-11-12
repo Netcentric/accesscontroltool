@@ -12,4 +12,8 @@ public abstract class AcConfigBeanValidationException extends Exception {
     public AcConfigBeanValidationException(String message) {
         super(message);
     }
+    
+    public AcConfigBeanValidationException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

@@ -65,7 +65,7 @@ public class ValidatorTestHelper {
             List<AceBean> aceBeanList, Session session)
             throws RepositoryException, AcConfigBeanValidationException {
 
-        final Set<AceBean> aceBeans = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session);
+        final Set<AceBean> aceBeans = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session, "junit");
 
         for (AceBean bean : aceBeans) {
             aceBeanList.add(bean);

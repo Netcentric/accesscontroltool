@@ -84,6 +84,7 @@ public class AuthorizableInstallerServiceImpl implements
                     authorizableConfigBean, installLog, authorizablesFromConfigurations);
         }
 
+        installLog.addMessage(LOG, "Created "+installLog.getCountAuthorizablesCreated() + " authorizables (moved "+installLog.getCountAuthorizablesMoved() + " authorizables)");
 
     }
 
@@ -117,10 +118,11 @@ public class AuthorizableInstallerServiceImpl implements
 
         if (authorizableToInstall == null) {
             authorizableToInstall = createNewAuthorizable(acConfiguration, authorizableConfigBean, installLog, userManager, session);
+            
+            installLog.incCountAuthorizablesCreated();
         }
         // if current authorizable from config already exists in repository
         else {
-
             // update name for both groups and users
             setAuthorizableProperties(authorizableToInstall, authorizableConfigBean, session, installLog);
             // update password for users
@@ -153,21 +155,23 @@ public class AuthorizableInstallerServiceImpl implements
     }
 
 
-	private String getPassword(final AuthorizableConfigBean authorizableConfigBean)
-			throws AuthorizableCreatorException {
-		try {
-			String password = authorizableConfigBean.getPassword();
-			if (StringUtils.isNotBlank(password) && password.matches("\\{.+}")) {
-				if (cryptoSupport == null) {
-					throw new IllegalArgumentException("Password with {...} syntax is used but AEM CryptoSupport is missing to unprotect password.");
-				}
-				password = cryptoSupport.unprotect(password);
-			}
-			return password;
-		} catch (IllegalArgumentException e) {
-			throw new AuthorizableCreatorException("Could not decrypt password for user " + authorizableConfigBean.getAuthorizableId() + ": " + e);
-		}
-	}
+    private String getPassword(final AuthorizableConfigBean authorizableConfigBean)
+            throws AuthorizableCreatorException {
+        try {
+            String password = authorizableConfigBean.getPassword();
+            if (StringUtils.isNotBlank(password) && password.matches("\\{.+}")) {
+                if (cryptoSupport == null) {
+                    throw new IllegalArgumentException(
+                            "Password with {...} syntax is used but AEM CryptoSupport is missing to unprotect password.");
+                }
+                password = cryptoSupport.unprotect(password);
+            }
+            return password;
+        } catch (IllegalArgumentException e) {
+            throw new AuthorizableCreatorException(
+                    "Could not decrypt password for user " + authorizableConfigBean.getAuthorizableId() + ": " + e);
+        }
+    }
 
 
     /** This is only relevant for members that point to groups/users not contained in configuration.
@@ -328,9 +332,9 @@ public class AuthorizableInstallerServiceImpl implements
 
         String authorizableId = principalConfigBean.getAuthorizableId();
 
-        // compare intermediate paths
         Authorizable existingAuthorizable = userManager.getAuthorizable(authorizableId);
-
+        
+        // compare intermediate paths
         String intermediatedPathOfExistingAuthorizable = existingAuthorizable.getPath()
                 .substring(0, existingAuthorizable.getPath().lastIndexOf("/"));
 
@@ -396,6 +400,7 @@ public class AuthorizableInstallerServiceImpl implements
             installLog.addMessage(LOG, "Recreated authorizable " + newAuthorizable + " at path " + newAuthorizable.getPath()
             + (newAuthorizable.isGroup() ? "(retained " + countMovedMembersOfGroup + " members of group)" : ""));
 
+            installLog.incCountAuthorizablesMoved();
         }
 
     }

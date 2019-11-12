@@ -13,6 +13,7 @@ import static biz.netcentric.cq.tools.actool.history.PersistableInstallationLogg
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -466,7 +467,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         stopWatch.start();
 
         AuthorizablesConfig authorizablesConfig = acConfiguration.getAuthorizablesConfig();
-        installLog.addMessage(LOG, "*** Starting installation of " + authorizablesConfig.size() + " authorizables...");
+        installLog.addMessage(LOG, "*** Starting installation of " + authorizablesConfig.size() + " authorizables from configuration...");
 
         try {
             // only save session if no exceptions occurred
@@ -588,7 +589,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         LOG.debug("Building dump from repository (to compare delta with config to be installed)");
         repositoryDumpAceMap = dumpservice.createAclDumpMap(AcHelper.PATH_BASED_ORDER,
                 AcHelper.ACE_ORDER_NONE,
-                new String[0], true, session).getAceDump();
+                Collections.<String>emptyList(), true, session).getAceDump();
 
         installLog.addMessage(LOG, "Retrieved existing ACLs from repository in " + msHumanReadable(stopWatch.getTime()));
 

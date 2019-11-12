@@ -22,7 +22,7 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
     public static final int DUMP_INDENTATION_KEY = 4;
     public static final int DUMP_INDENTATION_FIRST_PROPERTY = 7;
     public static final int DUMP_INDENTATION_PROPERTY = 9;
-    public static final int DUMP_INDENTATION_RESTRICTIONS = 11;
+    public static final int DUMP_INDENTATION_PROPERTY_SUB = 11;
 
     public static final String YAML_STRUCTURAL_ELEMENT_PREFIX = "- ";
     private final StringBuilder sb;
@@ -47,10 +47,9 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_FIRST_PROPERTY))
                 .append("- name: ").append(StringUtils.isNotBlank(authorizableNameInDump) ? "\"" + authorizableNameInDump + "\"" : "")
                 .append("\n");
-        sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
-                .append("isMemberOf: "
-                        + authorizableConfigBean.getIsMemberOfString())
-                .append("\n");
+        
+        writeIsMemberOf(authorizableConfigBean);
+        
         sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
                 .append("path: " + authorizableConfigBean.getPath())
                 .append("\n");
@@ -69,6 +68,30 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
         }
 
         sb.append("\n");
+    }
+
+    private void writeIsMemberOf(final AuthorizableConfigBean authorizableConfigBean) {
+        String[] isMemberOf = authorizableConfigBean.getIsMemberOf();
+        if(isMemberOf == null) {
+            isMemberOf = new String[0];
+        }
+        boolean useCommaSeparatedList = isMemberOf.length <= 3;
+        for (String isMemberOfGroup : isMemberOf) {
+            if(isMemberOfGroup.contains(",")) {
+                useCommaSeparatedList = false; // if there is a comma we have to force the list
+            }
+        }
+        StringBuilder isMemberOfYamlVal = new StringBuilder(); 
+        if(useCommaSeparatedList) {
+            isMemberOfYamlVal.append(StringUtils.join(isMemberOf, ","));
+        } else {
+            for (String isMemberOfGroup : isMemberOf) {
+                isMemberOfYamlVal.append("\n"+ AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY_SUB) + "- "+isMemberOfGroup);
+            } 
+        }
+        sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY))
+                .append("isMemberOf: "+isMemberOfYamlVal)
+                .append("\n");
     }
 
     @Override
@@ -127,7 +150,7 @@ public class AcDumpElementYamlVisitor implements AcDumpElementVisitor {
                 restrictionsValEscaped = "'" + restrictionsValueString + "'";
             }
 
-            sb.append(AcHelper.getBlankString(DUMP_INDENTATION_RESTRICTIONS)).append(restriction.getName()).append(": ")
+            sb.append(AcHelper.getBlankString(DUMP_INDENTATION_PROPERTY_SUB)).append(restriction.getName()).append(": ")
                     .append(restrictionsValEscaped);
 
             sb.append("\n");

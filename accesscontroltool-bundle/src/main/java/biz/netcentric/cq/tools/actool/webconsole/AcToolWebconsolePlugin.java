@@ -55,7 +55,8 @@ public class AcToolWebconsolePlugin extends HttpServlet {
     public static final String PARAM_CONFIGURATION_ROOT_PATH = "configurationRootPath";
     public static final String PARAM_BASE_PATHS = "basePaths";
     public static final String PARAM_SHOW_LOG_NO = "showLogNo";
-
+    public static final String PARAM_SHOW_LOG_VERBOSE = "showLogVerbose";
+    
     private static final String PATH_SEGMENT_DUMP = "dump.yaml";
 
     @Reference
@@ -122,7 +123,7 @@ public class AcToolWebconsolePlugin extends HttpServlet {
             String linkToLog = LABEL+"?showLogNo="+(i+1);
             writer.tr();
             writer.openTd();
-            writer.println(markFailureRed(logLabel)+" [<a href='"+linkToLog+"'>show</a>]");
+            writer.println(markFailureRed(logLabel)+" [<a href='"+linkToLog+"'>short</a>] [<a href='"+linkToLog+"&showLogVerbose=true'>verbose</a>]");
             writer.closeTd();
             writer.closeTr();
         }
@@ -132,7 +133,7 @@ public class AcToolWebconsolePlugin extends HttpServlet {
             
             String installationLogPath = installationLogPaths[reqParams.showLogNo-1];
             String logLabel = StringUtils.substringAfterLast(installationLogPath, "/");
-            String logHtml = acHistoryService.getLogFromHistory(reqParams.showLogNo, true);
+            String logHtml = acHistoryService.getLogFromHistory(reqParams.showLogNo, true, reqParams.showLogVerbose);
             
             writer.openTable();
             writer.tableHeader("Log of "+markFailureRed(logLabel), 1, false);
@@ -193,7 +194,7 @@ public class AcToolWebconsolePlugin extends HttpServlet {
         writer.closeTd();
         
         writer.openTd();
-        writer.println("<button id='applyButton' onclick=\"window.open('"+LABEL+"/"+PATH_SEGMENT_DUMP+"', '_blank')\"> Download Dump </button>");
+        writer.println("<button id='downloadDumpButton' onclick=\"window.open('"+LABEL+"/"+PATH_SEGMENT_DUMP+"', '_blank')\"> Download Dump </button>");
         writer.closeTd();
         
         writer.closeTr();
@@ -244,7 +245,8 @@ public class AcToolWebconsolePlugin extends HttpServlet {
             RequestParameters result = new RequestParameters(
                     configRootPath,
                     StringUtils.isNotBlank(basePathsParam) ? Arrays.asList(basePathsParam.split(" *, *")): null,
-                    Integer.parseInt(getParam(req, PARAM_SHOW_LOG_NO, "0"))
+                    Integer.parseInt(getParam(req, PARAM_SHOW_LOG_NO, "0")),
+                    Boolean.valueOf(req.getParameter(PARAM_SHOW_LOG_VERBOSE))
             );
 
             return result;
@@ -253,12 +255,14 @@ public class AcToolWebconsolePlugin extends HttpServlet {
         private final String configurationRootPath;
         private final List<String> basePaths;
         private final int showLogNo;
+        private final boolean showLogVerbose;
 
-        RequestParameters(String configurationRootPath, List<String> basePaths, int showLogNo) {
+        RequestParameters(String configurationRootPath, List<String> basePaths, int showLogNo, boolean showLogVerbose) {
             super();
             this.configurationRootPath = configurationRootPath;
             this.basePaths = basePaths;
             this.showLogNo = showLogNo;
+            this.showLogVerbose = showLogVerbose;
         }
 
         String[] getBasePathsArr() {

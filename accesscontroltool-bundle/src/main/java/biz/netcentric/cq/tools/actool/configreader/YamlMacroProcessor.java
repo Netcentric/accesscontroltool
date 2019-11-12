@@ -8,8 +8,8 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.jcr.Session;
 
@@ -20,6 +20,6 @@ import biz.netcentric.cq.tools.actool.history.InstallationLogger;
  * @author ghenzler */
 public interface YamlMacroProcessor {
 
-    List<LinkedHashMap> processMacros(List<LinkedHashMap> yamlList, InstallationLogger history, Session session);
+    List<Map> processMacros(List<Map> yamlList, InstallationLogger history, Session session);
 
 }

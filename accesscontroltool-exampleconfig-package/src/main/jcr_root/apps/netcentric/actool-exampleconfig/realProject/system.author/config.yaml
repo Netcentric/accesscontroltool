@@ -161,19 +161,19 @@
          privileges: jcr:read,jcr:readAccessControl
          repGlob: /jcr:*
 
-       - path: /etc/tags
+       - path: /content/cq:tags
          permission: deny
          actions: 
          privileges: jcr:read,jcr:readAccessControl
          repGlob: 
 
-       - path: /etc/tags
+       - path: /content/cq:tags
          permission: allow
          actions: 
          privileges: jcr:read,jcr:readAccessControl
          repGlob: ""
 
-       - path: /etc/tags
+       - path: /content/cq:tags
          permission: allow
          actions: 
          privileges: jcr:read,jcr:readAccessControl

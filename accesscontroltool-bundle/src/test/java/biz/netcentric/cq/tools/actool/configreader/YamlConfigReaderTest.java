@@ -8,6 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -15,10 +16,10 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
@@ -47,20 +48,25 @@ public class YamlConfigReaderTest {
 
     @Test
     public void testNullActions() throws IOException, AcConfigBeanValidationException, RepositoryException {
-        final ConfigReader yamlConfigReader = new YamlConfigReader();
-        final List<LinkedHashMap> yamlList = getYamlList("test-null-actions.yaml");
-        final AcesConfig acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session);
+        
+        final AcesConfig acls = readAcesFromTestFile("test-null-actions.yaml", new YamlConfigReader());
         final Set<AceBean> acl = acls.filterByAuthorizableId("groupA");
         for (final AceBean ace : acl) {
             assertNotNull("Testing null actions", ace.getActions());
         }
     }
 
+    private AcesConfig readAcesFromTestFile(String testFile, ConfigReader yamlConfigReader)
+            throws IOException, RepositoryException, AcConfigBeanValidationException {
+        List<Map> yamlList = getYamlList(testFile);
+        final AcesConfig acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session, testFile);
+        return acls;
+    }
+
     @Test
     public void testNoActions() throws IOException, AcConfigBeanValidationException, RepositoryException {
-        final ConfigReader yamlConfigReader = new YamlConfigReader();
-        final List<LinkedHashMap> yamlList = getYamlList("test-no-actions.yaml");
-        final AcesConfig acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session);
+        
+        final AcesConfig acls = readAcesFromTestFile("test-no-actions.yaml", new YamlConfigReader());
         final Set<AceBean> acl = acls.filterByAuthorizableId("groupA");
         final AceBean ace = acl.iterator().next();
         assertEquals("Number of actions", 0, ace.getActions().length);
@@ -68,9 +74,8 @@ public class YamlConfigReaderTest {
 
     @Test
     public void testMultipleAcesSamePath() throws IOException, AcConfigBeanValidationException, RepositoryException {
-        final ConfigReader yamlConfigReader = new YamlConfigReader();
-        final List<LinkedHashMap> yamlList = getYamlList("test-multiple-aces-same-path.yaml");
-        final AcesConfig acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session);
+
+        final AcesConfig acls = readAcesFromTestFile("test-multiple-aces-same-path.yaml", new YamlConfigReader());
 
         assertEquals("Number of ACLs", 3, acls.filterByAuthorizableId("groupA").size());
         assertEquals("Number of ACLs", 2, acls.filterByAuthorizableId("groupB").size());
@@ -84,9 +89,7 @@ public class YamlConfigReaderTest {
 
     @Test
     public void testEmptyGlobVsNoGlob() throws Exception {
-        final ConfigReader yamlConfigReader = new YamlConfigReader();
-        final List<LinkedHashMap> yamlList = getYamlList("test-empty-glob.yaml");
-        final AcesConfig acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session);
+        final AcesConfig acls = readAcesFromTestFile("test-empty-glob.yaml", new YamlConfigReader());
         final Iterator<AceBean> it = acls.filterByAuthorizableId("groupA").iterator();
         final AceBean ace1 = it.next();
         assertNull("repGlob", ace1.getRepGlob());
@@ -97,14 +100,14 @@ public class YamlConfigReaderTest {
     @Test
     public void testOptionalSections() throws Exception {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
-        List<LinkedHashMap> yamlList = getYamlList("test-no-aces.yaml");
+        List<Map> yamlList = getYamlList("test-no-aces.yaml");
         Set<AuthorizableConfigBean> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
-        AcesConfig acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session);
+        AcesConfig acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session, "test-no-aces.yaml");
         assertNull("No ACEs", acls);
         yamlList = getYamlList("test-no-groups.yaml");
         groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
         assertNull("No groups", groups);
-        acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session);
+        acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session, "test-no-groups.yaml");
         assertNotNull("ACL for groupA", acls.filterByAuthorizableId("groupA"));
         assertEquals("Number of ACEs", 1, acls.filterByAuthorizableId("groupA").size());
     }
@@ -112,39 +115,35 @@ public class YamlConfigReaderTest {
     @Test
     public void testMemberGroups() throws IOException, AcConfigBeanValidationException, RepositoryException {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
-        final List<LinkedHashMap> yamlList = getYamlList("test-membergroups.yaml");
+        final List<Map> yamlList = getYamlList("test-membergroups.yaml");
         final Set<AuthorizableConfigBean> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
         assertEquals("Number of groups", 4, groups.size());
 
         Iterator<AuthorizableConfigBean> groupsIt = groups.iterator();
         AuthorizableConfigBean firstGroup = groupsIt.next();
-        assertEquals("", firstGroup.getMembersStringFromConfig());
+        assertArrayEquals(null, firstGroup.getMembers());
         assertEquals("groupA", firstGroup.getAuthorizableId());
 
         AuthorizableConfigBean secondGroup = groupsIt.next();
         assertEquals("groupB", secondGroup.getAuthorizableId());
-        assertEquals("groupA", secondGroup.getMembersStringFromConfig());
+        assertArrayEquals(new String[] {"groupA"}, secondGroup.getMembers());
 
     }
 
-    static List<LinkedHashMap> getYamlList(final String filename) throws IOException {
+    static List<Map> getYamlList(final String filename) throws IOException {
         final String configString = getTestConfigAsString(filename);
 
         final Yaml yaml = new Yaml();
-        List<LinkedHashMap> yamlList = (List<LinkedHashMap>) yaml.load(configString);
-
+        List<Map> yamlList = yaml.loadAs(configString, List.class);
         return yamlList;
     }
 
     static String getTestConfigAsString(final String resourceName)
             throws IOException {
-        final ClassLoader classloader = Thread.currentThread()
-                .getContextClassLoader();
-        final InputStream is = classloader.getResourceAsStream(resourceName);
-
-        final StringWriter stringWriter = new StringWriter();
-        IOUtils.copy(is, stringWriter, "UTF-8");
-        return stringWriter.toString();
+        final ClassLoader classloader = YamlConfigReaderTest.class.getClassLoader();
+        try (final InputStream is = classloader.getResourceAsStream(resourceName)) {
+            return IOUtils.toString(is, StandardCharsets.UTF_8);
+        }
     }
 
 

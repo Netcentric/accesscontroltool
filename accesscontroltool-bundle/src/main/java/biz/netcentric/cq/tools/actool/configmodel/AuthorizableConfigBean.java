@@ -27,10 +27,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private String description;
 
     private String[] isMemberOf;
-    private String memberOfStringFromConfig;
-
     private String[] members;
-    private String membersStringFromConfig;
 
     private String path;
     private String password;
@@ -134,14 +131,6 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.socialContent = socialContent;
     }
 
-    public void setMemberOfString(final String memberOfString) {
-        memberOfStringFromConfig = memberOfString;
-    }
-
-    public void setMembersString(final String membersString) {
-        membersStringFromConfig = membersString;
-    }
-
     public boolean isGroup() {
         return isGroup;
     }
@@ -166,10 +155,6 @@ public class AuthorizableConfigBean implements AcDumpElement {
         return isMemberOf != null;
     }
 
-    public String getIsMemberOfStringFromConfig() {
-        return memberOfStringFromConfig;
-    }
-
     public String getIsMemberOfString() {
         if (isMemberOf == null) {
             return "";
@@ -182,8 +167,10 @@ public class AuthorizableConfigBean implements AcDumpElement {
     }
 
     public void setIsMemberOf(final List<String> memberOf) {
-        if ((memberOf != null)) {
+        if (memberOf != null) {
             this.isMemberOf = memberOf.toArray(new String[memberOf.size()]);
+        } else {
+            this.isMemberOf = null;
         }
     }
 
@@ -198,10 +185,6 @@ public class AuthorizableConfigBean implements AcDumpElement {
             memberList.add(member);
             isMemberOf = memberList.toArray(new String[memberList.size()]);
         }
-    }
-
-    public String getMembersStringFromConfig() {
-        return membersStringFromConfig;
     }
 
     public String getMembersString() {
