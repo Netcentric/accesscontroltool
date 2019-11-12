@@ -18,6 +18,7 @@ import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 /**
  * A <a href="http://jackrabbit.apache.org/filevault">Jackrabbit FileVault</a> install hook 
  * which supports retrieving OSGi services and the bundle context as well as some logging capabilities.
@@ -29,38 +30,57 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class OsgiAwareInstallHook implements InstallHook {
 
-	private final BundleContext bundleContext;
-	private static final Logger LOG = LoggerFactory.getLogger(OsgiAwareInstallHook.class);
+    private final BundleContext bundleContext;
+    private static final Logger LOG = LoggerFactory.getLogger(OsgiAwareInstallHook.class);
 
-	public OsgiAwareInstallHook() throws ClassCastException {
-		// since this class was loaded through a bundle class loader as well, just take the bundle context
-		Bundle currentBundle = FrameworkUtil.getBundle(this.getClass());
-		if (currentBundle == null) {
-			throw new IllegalStateException("The class " + this.getClass() + " was not loaded through a a bundle classloader");
-		}
-		
-		bundleContext = currentBundle.getBundleContext();
-		if (bundleContext == null) {
-			throw new IllegalStateException("Could not get bundle context for bundle " + currentBundle);
-		}
-	}
+    public OsgiAwareInstallHook() throws ClassCastException {
+        // since this class was loaded through a bundle class loader as well, just take the bundle context
+        Bundle currentBundle = FrameworkUtil.getBundle(this.getClass());
+        if (currentBundle == null) {
+            throw new IllegalStateException("The class " + this.getClass() + " was not loaded through a a bundle classloader");
+        }
 
-	public BundleContext getBundleContext() {
-		return bundleContext;
-	}
+        bundleContext = currentBundle.getBundleContext();
+        if (bundleContext == null) {
+            throw new IllegalStateException("Could not get bundle context for bundle " + currentBundle);
+        }
+    }
 
-	public ServiceReference getServiceReference(String clazz) {
-		ServiceReference serviceReference = bundleContext
-				.getServiceReference(clazz);
-		return serviceReference;
-	}
+    public BundleContext getBundleContext() {
+        return bundleContext;
+    }
 
+    /** @param clazz
+     * @return
+     * @deprecated Use {@link #getServiceReference(Class)} instead */
+    @SuppressWarnings("rawtypes")
+    @Deprecated
+    public ServiceReference getServiceReference(String clazz) {
+        ServiceReference serviceReference = bundleContext
+                .getServiceReference(clazz);
+        return serviceReference;
+    }
+
+	/**
+	 * 
+	 * @param message
+	 * @param options
+	 * @deprecated Use {@link #log(String, ProgressTrackerListener)} instead.
+	 */
+	@Deprecated
     public void log(String message, ImportOptions options) {
-		ProgressTrackerListener listener = options.getListener();
-		if (listener != null) {
-			listener.onMessage(ProgressTrackerListener.Mode.TEXT, message, "");
-		} else {
-			LOG.info(message);
-		}
-	}
+        log(message, options.getListener());
+    }
+
+	protected <T> ServiceReference<T> getServiceReference(Class<T> clazz) {
+        return bundleContext.getServiceReference(clazz);
+    }
+
+    protected void log(String message, ProgressTrackerListener listener) {
+        if (listener != null) {
+            listener.onMessage(ProgressTrackerListener.Mode.TEXT, message, "");
+        } else {
+            LOG.info(message);
+        }
+    }
 }

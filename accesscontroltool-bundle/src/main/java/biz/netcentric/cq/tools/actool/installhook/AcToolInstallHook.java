@@ -8,8 +8,10 @@
  */
 package biz.netcentric.cq.tools.actool.installhook;
 
+import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.packaging.InstallContext;
 import org.apache.jackrabbit.vault.packaging.PackageException;
+import org.apache.jackrabbit.vault.packaging.PackageProperties;
 import org.osgi.annotation.versioning.ProviderType;
 import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
@@ -23,6 +25,7 @@ import biz.netcentric.cq.tools.actool.installhook.impl.OsgiAwareInstallHook;
 public class AcToolInstallHook extends OsgiAwareInstallHook {
 
     private static final Logger LOG = LoggerFactory.getLogger(AcToolInstallHook.class);
+    private static final String PROPERTY_ACTOOL_INSTALL_AT_INSTALLED_PHASE = "actool.atinstalledphase";
 
     private boolean alreadyRan = false;
 
@@ -32,59 +35,73 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
 
         switch (context.getPhase()) {
         case PREPARE:
-
-            /*
-             * Workaround for a bug in CQ whereby the package installer goes into a loop if a PackageException is thrown Daycare Ticket:
-             * https://daycare.day.com/home/netcentric/netcentric_de/partner_services/67812.html Granite Bug: GRANITE-7945, fixed in
-             * com.day.jcr.vault, version 2.5.8 (AEM 6.1)
-             */
-            if (alreadyRan) {
-                log("Evading attempt to run the install hook twice due to a bug in CQ.", context.getOptions());
-                return;
-            }
-            alreadyRan = true;
-
-            // check if AcTool is installed
-            log("Installing ACLs through AcToolInstallHook...", context.getOptions());
-            ServiceReference acToolInstallHookService = getServiceReference(AcToolInstallHookService.class.getName());
-            if (acToolInstallHookService == null) {
-                throw new PackageException(
-                        "Could not get AceService from OSGI service registry. Make sure the ACTool is installed!");
-            }
-            AcToolInstallHookService acService = (AcToolInstallHookService) getBundleContext().getService(acToolInstallHookService);
-            if (acService == null) {
-                throw new PackageException(
-                        "Could not instanciate AceService. Make sure the ACTool is installed and check the log for errors");
-            }
-
-            try {
-                PersistableInstallationLogger history;
-                try {
-                    history = acService.installYamlFilesFromPackage(context
-                            .getPackage().getArchive(), context.getSession(), context.getOptions().getListener());
-
-                } catch (Exception e) {
-                    // needed as root cause of PackageException is not reliably logged in AEM 6.2
-                    LOG.error("Exception during execution of install hook: " + e, e);
-                    log("Exception while installing configurations: " + e, context.getOptions());
-                    throw new PackageException(e.getMessage(), e);
-                }
-
-                if (!history.isSuccess()) {
-                    throw new PackageException("AC Tool installation failed with "
-                            +history.getErrors().size()+ " errors. Check log for detailed error message(s)!");
-                } else {
-                    log("Installed ACLs successfully through AcToolInstallHook!", context.getOptions());
-                }
-            } finally {
-                getBundleContext().ungetService(acToolInstallHookService);
+            if (!shouldInstallInPhaseInstall(context.getPackage())) {
+                
+                install(context);
             }
             break;
-
+        case INSTALLED:
+            if (shouldInstallInPhaseInstall(context.getPackage())) {
+                install(context);
+            }
+            break;
         default:
             // nothing to do in all other phases
             break;
+        }
+    }
 
+    private boolean shouldInstallInPhaseInstall(PackageProperties properties) {
+        return !Boolean.parseBoolean(properties.getProperty(PROPERTY_ACTOOL_INSTALL_AT_INSTALLED_PHASE));
+    }
+
+    private void install(InstallContext context) throws PackageException {
+        final ProgressTrackerListener listener = context.getOptions().getListener();
+        /*
+         * Workaround for a bug in CQ whereby the package installer goes into a loop if a PackageException is thrown Daycare Ticket:
+         * https://daycare.day.com/home/netcentric/netcentric_de/partner_services/67812.html Granite Bug: GRANITE-7945, fixed in
+         * com.day.jcr.vault, version 2.5.8 (AEM 6.1)
+         */
+        if (alreadyRan) {
+            log("Evading attempt to run the install hook twice due to a bug in CQ.", listener);
+            return;
+        }
+        alreadyRan = true;
+
+        // check if AcTool is installed
+        log("Installing ACLs through AcToolInstallHook in phase " + context.getPhase() + "...", listener);
+        ServiceReference<AcToolInstallHookService> acToolInstallHookService = getServiceReference(AcToolInstallHookService.class);
+        if (acToolInstallHookService == null) {
+            throw new PackageException(
+                    "Could not get AceService from OSGI service registry. Make sure the ACTool is installed!");
+        }
+        AcToolInstallHookService acService = (AcToolInstallHookService) getBundleContext().getService(acToolInstallHookService);
+        if (acService == null) {
+            throw new PackageException(
+                    "Could not instanciate AceService. Make sure the ACTool is installed and check the log for errors");
+        }
+
+        try {
+            PersistableInstallationLogger history;
+            try {
+                history = acService.installYamlFilesFromPackage(context
+                        .getPackage().getArchive(), context.getSession(), context.getOptions().getListener());
+
+            } catch (Exception e) {
+                // needed as root cause of PackageException is not reliably logged in AEM 6.2
+                LOG.error("Exception during execution of install hook: " + e, e);
+                log("Exception while installing configurations: " + e, listener);
+                throw new PackageException(e.getMessage(), e);
+            }
+
+            if (!history.isSuccess()) {
+                throw new PackageException("AC Tool installation failed with "
+                        +history.getErrors().size()+ " errors. Check log for detailed error message(s)!");
+            } else {
+                log("Installed ACLs successfully through AcToolInstallHook!", listener);
+            }
+        } finally {
+            getBundleContext().ungetService(acToolInstallHookService);
         }
     }
 }
