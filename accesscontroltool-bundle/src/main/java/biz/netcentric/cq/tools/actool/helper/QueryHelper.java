@@ -114,7 +114,7 @@ public class QueryHelper {
                         getNodes(session, query, Query.JCR_SQL2):
                         getDistinctParentNodes(session, query, Query.JCR_SQL2);
                 LOG.debug("Query to find ACLs under {} ran in {}ms (count ACLs: {})", path, System.currentTimeMillis()-startTime1, nodesResult.size());
-
+                nodes.addAll(nodesResult);
             }
         } catch (Exception e) {
             throw new IllegalStateException("Could not query repository for existing ACLs: "+e, e);
