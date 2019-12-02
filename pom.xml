@@ -84,6 +84,8 @@
 
     <modules>
         <module>accesscontroltool-bundle</module>
+        <module>accesscontroltool-apps-package</module>
+        <module>accesscontroltool-content-package</module>
         <module>accesscontroltool-package</module>
         <module>accesscontroltool-oakindex-package</module>
         <module>accesscontroltool-exampleconfig-package</module>
@@ -393,8 +395,12 @@
                 <plugin>
                     <groupId>org.apache.jackrabbit</groupId>
                     <artifactId>filevault-package-maven-plugin</artifactId>
-                    <version>1.0.3</version>
+                    <version>1.0.4</version>
                     <extensions>true</extensions>
+                    <configuration>
+                        <group>Netcentric</group>
+                        <filterSource>src/main/META-INF/vault/filter.xml</filterSource>
+                    </configuration>
                 </plugin>
                 <!-- for deploying to AEM -->
                 <plugin>
