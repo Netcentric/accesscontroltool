@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workspaceFilter version="1.0">
+    <!-- generate root nodes below apps in case they don't exist -->
+    <filter root="/apps/netcentric/actool/components"/>
+</workspaceFilter>

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <workspaceFilter version="1.0">
-	<filter root="/apps/netcentric/actool"/>  
-	<filter root="/home/users/system/actool"/>
-	<filter root="/rep:policy" mode="merge"/>
-    <filter root="/rep:repoPolicy" mode="merge"/>
+    <filter root="/apps/netcentric/actool/config"/>
+    <filter root="/apps/netcentric/actool/install"/>
+    <filter root="/etc/packages/Netcentric">
+        <include pattern="/etc/packages/Netcentric/accesscontroltool-(apps|content)-package.*"/>
+    </filter>
 </workspaceFilter>
