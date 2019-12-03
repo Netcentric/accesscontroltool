@@ -14,4 +14,7 @@ public class InvalidAuthorizableException extends AcConfigBeanValidationExceptio
         super(message);
     }
 
+    public InvalidAuthorizableException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

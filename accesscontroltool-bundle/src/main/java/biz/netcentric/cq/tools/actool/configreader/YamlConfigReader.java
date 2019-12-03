@@ -8,14 +8,19 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import javax.jcr.Node;
@@ -31,19 +36,29 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adobe.granite.crypto.CryptoSupport;
+
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
+import biz.netcentric.cq.tools.actool.configmodel.Key;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
+import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidAuthorizableException;
 
 @Component()
 public class YamlConfigReader implements ConfigReader {
+
+    private static final String USER_CONFIG_KEY_PUBLIC = "public";
+
+    private static final String USER_CONFIG_KEY_PRIVATE_PASSWORD = "privatePassword";
+
+    private static final String USER_CONFIG_KEY_PRIVATE = "private";
 
     private static final Logger LOG = LoggerFactory.getLogger(YamlConfigReader.class);
 
@@ -81,6 +96,7 @@ public class YamlConfigReader implements ConfigReader {
     private static final String USER_CONFIG_SOCIAL_CONTENT = "socialContent";
 
     private static final String USER_CONFIG_DISABLED = "disabled";
+    private static final String USER_CONFIG_KEYS = "keys";
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
@@ -88,7 +104,8 @@ public class YamlConfigReader implements ConfigReader {
     @Override
     @SuppressWarnings("rawtypes")
     public AcesConfig getAceConfigurationBeans(final Collection<?> aceConfigData,
-            final AceBeanValidator aceBeanValidator, Session session, String sourceFile) throws RepositoryException, AcConfigBeanValidationException {
+            final AceBeanValidator aceBeanValidator, Session session, String sourceFile)
+            throws RepositoryException, AcConfigBeanValidationException {
 
         final List<LinkedHashMap> aclList = (List<LinkedHashMap>) getConfigSection(Constants.ACE_CONFIGURATION_KEY, aceConfigData);
 
@@ -194,12 +211,16 @@ public class YamlConfigReader implements ConfigReader {
             if ((currentAuthorizableData != null) && !currentAuthorizableData.isEmpty()) {
 
                 for (final Map<String, Object> currentPrincipalDataMap : currentAuthorizableData) {
-                    final AuthorizableConfigBean tmpPrincipalConfigBean = getNewAuthorizableConfigBean();
-                    setupAuthorizableBean(tmpPrincipalConfigBean, currentPrincipalDataMap, currentAuthorizableIdFromYaml, isGroupSection);
-                    if (authorizableValidator != null) {
-                        authorizableValidator.validate(tmpPrincipalConfigBean);
+                    try {
+                        final AuthorizableConfigBean tmpPrincipalConfigBean = getNewAuthorizableConfigBean();
+                        setupAuthorizableBean(tmpPrincipalConfigBean, currentPrincipalDataMap, currentAuthorizableIdFromYaml, isGroupSection);
+                        if (authorizableValidator != null) {
+                            authorizableValidator.validate(tmpPrincipalConfigBean);
+                        }
+                        authorizableBeans.add(tmpPrincipalConfigBean);
+                    } catch (AcConfigBeanValidationException e) {
+                        throw new AcConfigBeanValidationException("Invalid authorizable " + currentAuthorizableIdFromYaml, e);
                     }
-                    authorizableBeans.add(tmpPrincipalConfigBean);
                 }
             }
 
@@ -326,7 +347,7 @@ public class YamlConfigReader implements ConfigReader {
             final AuthorizableConfigBean authorizableConfigBean,
             final Map<String, Object> currentPrincipalDataMap,
             final String authorizableId,
-            boolean isGroupSection) {
+            boolean isGroupSection) throws AcConfigBeanValidationException {
         authorizableConfigBean.setAuthorizableId(authorizableId);
 
         authorizableConfigBean.setName(getMapValueAsString(currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_NAME));
@@ -398,6 +419,33 @@ public class YamlConfigReader implements ConfigReader {
             authorizableConfigBean.setDisabled(getMapValueAsString(currentPrincipalDataMap, USER_CONFIG_DISABLED));
         }
 
+        if (currentPrincipalDataMap.containsKey(USER_CONFIG_KEYS)) {
+            if (!(currentPrincipalDataMap.get(USER_CONFIG_KEYS) instanceof Map)) {
+                throw new InvalidAuthorizableException("Field '" + USER_CONFIG_KEYS + "' must be a map but is a " + currentPrincipalDataMap.get(USER_CONFIG_KEYS).getClass());
+            }
+            try {
+                setupAuthorizableKeys(authorizableConfigBean, (Map<String, Object>)currentPrincipalDataMap.get(USER_CONFIG_KEYS));
+            } catch (InvalidKeyException e) {
+                throw new InvalidAuthorizableException("Invalid key format given", e);
+            }
+        }
+
+    }
+
+    private void setupAuthorizableKeys(final AuthorizableConfigBean authorizableConfigBean, Map<String, Object> keys) throws InvalidKeyException, InvalidAuthorizableException {
+        Map<String, Key> parsedKeys = new HashMap<>();
+        for (Entry<String, Object> entry : keys.entrySet()) {
+            // ensure correct format
+            if (!(entry.getValue() instanceof Map)) {
+                throw new InvalidAuthorizableException("Field '" + entry.getKey() + "' must be a map but is a " + entry.getValue().getClass());
+            }
+            // map is nested
+            Map<String, String> keyFields = (Map<String, String>)entry.getValue();
+            // TODO: make sure that all fields are strings
+            Key key = new Key(keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_PUBLIC));
+            parsedKeys.put(entry.getKey(), key);
+        }
+        authorizableConfigBean.setKeys(parsedKeys);
     }
 
     protected String getMapValueAsString(

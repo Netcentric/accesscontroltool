@@ -1,0 +1,11 @@
+- user_config:
+
+    - test-user:
+
+       - name: Test User
+         isMemberOf: 
+         path: s
+         keys:
+            - key1:
+               - privateKey
+               - publicKey

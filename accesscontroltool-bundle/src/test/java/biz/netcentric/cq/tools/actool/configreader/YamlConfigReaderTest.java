@@ -130,6 +130,22 @@ public class YamlConfigReaderTest {
 
     }
 
+    @Test
+    public void testKeys() throws IOException, AcConfigBeanValidationException {
+        final ConfigReader yamlConfigReader = new YamlConfigReader();
+        final List<Map> yamlList = getYamlList("test-user-with-keys.yaml");
+        yamlConfigReader.getUserConfigurationBeans(yamlList, null);
+        
+        //
+    }
+ 
+    @Test(expected=AcConfigBeanValidationException.class)
+    public void testInvalidKeys() throws IOException, AcConfigBeanValidationException {
+        final ConfigReader yamlConfigReader = new YamlConfigReader();
+        final List<Map> yamlList = getYamlList("test-user-with-invalid-keys.yaml");
+        yamlConfigReader.getUserConfigurationBeans(yamlList, null);
+    }
+
     static List<Map> getYamlList(final String filename) throws IOException {
         final String configString = getTestConfigAsString(filename);
 
