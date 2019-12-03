@@ -24,7 +24,7 @@
 
     <artifactId>accesscontroltool-package</artifactId>
     <packaging>content-package</packaging>
-    <name>Access Control Tool Package - Container</name>
+    <name>Access Control Tool Package</name>
     <description>Container package of the AC Tool containing the bundle, config, apps and content package.</description>
     
     <dependencies>
