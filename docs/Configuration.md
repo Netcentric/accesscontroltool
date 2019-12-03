@@ -81,12 +81,14 @@ property | comment | required
 --- | --- | ---
 name | Works mostly like for groups, except that the string is split up in first and last name using the last space found in string. For instance "Johann Sebastian Bach" will result in first name "Johann Sebastian" and last name "Bach". For names where the split has to be explicitly configured, use a comma: "Van der Broek, Sebastian" will result in first name "Sebastian" and last name "Van der Broek". Sets the properties `profile/familyName` and `profile/givenName` of the user. | optional
 description, path, isMemberOf | Work exactly as for groups | optional
-password | The PW for the user (can only be set for regular users and not for system users). Is given either as plain text (only to be used for test users) or encrypted - use path `/system/console/crypto` on target instance to generate an encrypted password. Encrypted passwords have to be enclose it in brackets and should be quoted in yaml. Encrypted passwords are decrypted using com.adobe.granite.crypto.CryptoSupport by AC Tool during installation. | Optional, if left out the property `rep:password` is not set on user's node (authentication needs to happen without AEM password then, e.g. with LDAP)
+password | The PW for the user (can only be set for regular users and not for system users). Is given either as plain text (only to be used for test users) or encrypted - use path `/system/console/crypto` on target instance to generate an encrypted password. Encrypted passwords have to be enclose it in brackets and should be quoted in yaml. Encrypted passwords are decrypted using com.adobe.granite.crypto.CryptoSupport by AC Tool during installation. | Optional, if left out the property `rep:password` is not set on user's node (authentication needs to happen without AEM password then, e.g. with LDAP) | optional
 isSystemUser | Create users as system user (AEM 6.1 and later) | optional
 disabled | Can be set to `true` or an arbitrary reason string to disable a user. If set to `false` the user will be explicitly enabled (calling `User.disable(null)`). If omitted will not change anything regarding enabled/disabled status of user | optional
 profileContent | Allows to provide [enhanced docview xml](https://jackrabbit.apache.org/filevault/docview.html) that will reset the profile to the given structure after each run | optional
 preferencesContent | Allows to provide [enhanced docview xml](https://jackrabbit.apache.org/filevault/docview.html) that will reset the preferences node to the given structure after each run | optional
 socialContent | Allows to provide [enhanced docview xml](https://jackrabbit.apache.org/filevault/docview.html) that will reset the social node to the given structure after each run | optional
+keys | Public/Private key pairs which will be added to the user's keystore. The keystore is transparently created if it does not exist yet during installation. Useful in the context of configuring [Adobe IO in AEM](https://docs.adobe.com/content/help/en/experience-manager-learn/foundation/authentication/set-up-public-private-keys-for-use-with-aem-and-adobe-io.html) e.g. for [Adobe Launch via Adobe IO](https://helpx.adobe.com/experience-manager/using/aem_launch_adobeio_integration.html) or for the [SAML Integration in AEM](https://helpx.adobe.com/experience-manager/6-5/sites/administering/using/saml-2-0-authenticationhandler.html). In general useful whenever the [AEM KeyStoreService](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/reference-materials/javadoc/com/adobe/granite/keystore/KeyStoreService.html) is being used. This property contains a number of keys, identified via their alias. The format of each key is described below | optional
+
 
 Example:
 
@@ -113,10 +115,34 @@ Example:
       isMemberOf: system-read
       path: system
       isSystemUser: true
+      
+  - userWithKeys:
+    - name 'Test User with Keystore'
+      isSystemUser: true
+      path: system
+      keys:
+         my-alias:
+              private: |
+                  -----BEGIN ENCRYPTED PRIVATE KEY-----
+                  ...
+                  -----END ENCRYPTED PRIVATE KEY-----
+              privatePassword: "{password}"
+              public: |
+                  -----BEGIN PUBLIC KEY-----
+                  ...
+                  -----END PUBLIC KEY-----------
 ```
 
 Group memberships can be set on user entry or group entry or both.
 
+### Configuration of Keys
+Each key entry in the `keys` section has the following properties
+
+property | comment | required
+--- | --- | ---
+private | The encrypted PKCS#8 key in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-11). Non encrypted keys are not supported!| yes
+privatePassword | The key for decrypting the private key. The key itself must be encrypted with the AEM Crypto Support (i.e. encrypted with the AEM master key). Therefore the value must start with `{` | yes
+public | The public DER key in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-13)| yes
 
 ## Configuration of ACEs
 
