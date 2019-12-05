@@ -3,7 +3,8 @@
     and the accompanying materials are made available under the terms of the
     Eclipse Public License v1.0 which accompanies this distribution, and is available
     at http://www.eclipse.org/legal/epl-v10.html -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd ">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd ">
     <modelVersion>4.0.0</modelVersion>
     <!-- ====================================================================== -->
     <!-- P A R E N T P R O J E C T D E S C R I P T I O N -->
@@ -24,6 +25,12 @@
     <description>The OSGi bundle containing all classes of the Access Control Tool.</description>
 
     <dependencies>
+        <!-- due to https://bugs.openjdk.java.net/browse/JDK-8231581 OOTB java is not sufficient -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+            <version>1.64</version>
+        </dependency>
         <!-- OSGi annotations (build time, but only use those compliant with R6) -->
         <dependency>
             <groupId>org.osgi</groupId>
@@ -47,7 +54,7 @@
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.service.cm</artifactId>
         </dependency>
-        <!--  Event Admin-->
+        <!-- Event Admin -->
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.service.event</artifactId>
@@ -117,6 +124,7 @@
             <artifactId>snakeyaml</artifactId>
             <version>1.13</version>
         </dependency>
+        
 
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>
@@ -166,12 +174,12 @@
             <artifactId>com.adobe.granite.jmx</artifactId>
             <optional>true</optional>
         </dependency>
-         <dependency>
+        <dependency>
             <groupId>com.day.cq</groupId>
             <artifactId>cq-security</artifactId>
             <optional>true</optional>
-        </dependency>        
-        
+        </dependency>
+
         <!-- use the uber-jar always as last dependency because a lot of classes are provided also by other artifacts
             It is only used here as replacement for com.adobe.granite:com.adobe.granite.crypto:3.0.0 whose pom.xml is not publicly available -->
         <dependency>
@@ -211,7 +219,7 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <scope>test</scope>
-        </dependency>        
+        </dependency>
         <!-- END: Test Dependencies -->
 
 

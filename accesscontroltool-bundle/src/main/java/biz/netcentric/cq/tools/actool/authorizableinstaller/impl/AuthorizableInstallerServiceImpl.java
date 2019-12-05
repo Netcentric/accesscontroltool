@@ -10,6 +10,7 @@ package biz.netcentric.cq.tools.actool.authorizableinstaller.impl;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.security.cert.Certificate;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -58,6 +59,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.Key;
+import biz.netcentric.cq.tools.actool.configmodel.RandomPassword;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.Constants;
@@ -172,7 +174,7 @@ public class AuthorizableInstallerServiceImpl implements
     }
 
     private void installKeys(Map<String, Key> keys, String userId, Session session, InstallationLogger installLog) throws LoginException, SlingIOException, SecurityException, KeyStoreNotInitialisedException, IOException, GeneralSecurityException {
-        Map<String, Object> authInfo = new HashMap<String, Object>();
+        Map<String, Object> authInfo = new HashMap<>();
         authInfo.put(JcrResourceConstants.AUTHENTICATION_INFO_SESSION, session);
         ResourceResolver resolver = resourceResolverFactory.getResourceResolver(authInfo);
         try {
@@ -189,17 +191,21 @@ public class AuthorizableInstallerServiceImpl implements
                     "Keys are used on the authorizable which require the AEM KeyStore Service which is missing.");
         }
         if (!keyStoreService.keyStoreExists(resourceResolver, userId)) {
-            // TODO: real password?
-            String password = "dummy";
-            keyStoreService.createKeyStore(resourceResolver, userId, password.toCharArray());
-            installLog.addMessage(LOG, "Created new key store for user "+ userId);
+            char[] password = RandomPassword.generate(20);
+            keyStoreService.createKeyStore(resourceResolver, userId, password);
+            installLog.addMessage(LOG, "Created new key store with random password for user  "+ userId);
         }
         for (Entry<String, Key> entry : keys.entrySet()) {
-            keyStoreService.addKeyStoreKeyPair(resourceResolver, userId, entry.getValue().getKeyPair(cryptoSupport), entry.getKey());
-            installLog.addMessage(LOG, "Added key with alias "+ entry.getKey() + " to keystore of " + userId);
+            Certificate certificate = entry.getValue().getCertificate();
+            if (certificate != null) {
+                keyStoreService.addKeyStoreKeyEntry(resourceResolver, userId, entry.getKey(), entry.getValue().getPrivateKey(cryptoSupport), new Certificate[] {certificate});
+            } else {
+                keyStoreService.addKeyStoreKeyPair(resourceResolver, userId, entry.getValue().getKeyPair(cryptoSupport), entry.getKey());
+            }
+            installLog.addMessage(LOG, "Added key with alias "+ entry.getKey() + " to keystore of user " + userId);
         }
-
     }
+
 
     void setUserPassword(final AuthorizableConfigBean authorizableConfigBean,
                              final User authorizableToInstall) throws RepositoryException, AuthorizableCreatorException {

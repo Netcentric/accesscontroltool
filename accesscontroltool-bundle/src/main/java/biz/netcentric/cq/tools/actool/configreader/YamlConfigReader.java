@@ -11,6 +11,9 @@ package biz.netcentric.cq.tools.actool.configreader;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -53,13 +56,6 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidAuthorizableE
 
 @Component()
 public class YamlConfigReader implements ConfigReader {
-
-    private static final String USER_CONFIG_KEY_PUBLIC = "public";
-
-    private static final String USER_CONFIG_KEY_PRIVATE_PASSWORD = "privatePassword";
-
-    private static final String USER_CONFIG_KEY_PRIVATE = "private";
-
     private static final Logger LOG = LoggerFactory.getLogger(YamlConfigReader.class);
 
     protected static final String ACE_CONFIG_PROPERTY_GLOB = "repGlob";
@@ -97,6 +93,11 @@ public class YamlConfigReader implements ConfigReader {
 
     private static final String USER_CONFIG_DISABLED = "disabled";
     private static final String USER_CONFIG_KEYS = "keys";
+
+    private static final String USER_CONFIG_KEY_PUBLIC = "public";
+    private static final String USER_CONFIG_KEY_PRIVATE_PASSWORD = "privatePassword";
+    private static final String USER_CONFIG_KEY_PRIVATE = "private";
+    private static final String USER_CONFIG_KEY_CERTIFICATE = "certificate";
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
@@ -425,14 +426,14 @@ public class YamlConfigReader implements ConfigReader {
             }
             try {
                 setupAuthorizableKeys(authorizableConfigBean, (Map<String, Object>)currentPrincipalDataMap.get(USER_CONFIG_KEYS));
-            } catch (InvalidKeyException e) {
+            } catch (InvalidKeyException | InvalidKeySpecException | NoSuchAlgorithmException | CertificateException | IOException e) {
                 throw new InvalidAuthorizableException("Invalid key format given", e);
             }
         }
 
     }
 
-    private void setupAuthorizableKeys(final AuthorizableConfigBean authorizableConfigBean, Map<String, Object> keys) throws InvalidKeyException, InvalidAuthorizableException {
+    private void setupAuthorizableKeys(final AuthorizableConfigBean authorizableConfigBean, Map<String, Object> keys) throws InvalidKeyException, InvalidAuthorizableException, InvalidKeySpecException, NoSuchAlgorithmException, CertificateException, IOException {
         Map<String, Key> parsedKeys = new HashMap<>();
         for (Entry<String, Object> entry : keys.entrySet()) {
             // ensure correct format
@@ -442,7 +443,12 @@ public class YamlConfigReader implements ConfigReader {
             // map is nested
             Map<String, String> keyFields = (Map<String, String>)entry.getValue();
             // TODO: make sure that all fields are strings
-            Key key = new Key(keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_PUBLIC));
+            final Key key;
+            if (StringUtils.isNotBlank(keyFields.get(USER_CONFIG_KEY_CERTIFICATE))) {
+                key = Key.createFromPrivateKeyAndCertificate(keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_CERTIFICATE));
+            } else {
+                key = Key.createFromKeyPair(keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_PUBLIC));
+            }
             parsedKeys.put(entry.getKey(), key);
         }
         authorizableConfigBean.setKeys(parsedKeys);

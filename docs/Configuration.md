@@ -140,9 +140,10 @@ Each key entry in the `keys` section has the following properties
 
 property | comment | required
 --- | --- | ---
-private | The encrypted PKCS#8 key in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-11). Non encrypted keys are not supported!| yes
-privatePassword | The key for decrypting the private key. The key itself must be encrypted with the AEM Crypto Support (i.e. encrypted with the AEM master key). Therefore the value must start with `{` | yes
-public | The public DER key in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-13)| yes
+private | The encrypted PKCS#8 key in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-11). Non-encrypted keys are not supported for security reasons! | yes
+privatePassword | The key for decrypting the private key. The key itself must be encrypted with the AEM Crypto Support (i.e. encrypted with the AEM master key). Therefore the value must start with `{`. | yes
+public | The public DER key in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-13). . If both `certificate` and `public` are set `certificate` takes precedence. | no (either public or certificate needs to be set)
+certificate | The certificate in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-5.1). If both `certificate` and `public` are set `certificate` takes precedence. | no (either public or certificate needs to be set)
 
 ## Configuration of ACEs
 
