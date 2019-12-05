@@ -63,6 +63,11 @@
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.service.event</artifactId>
         </dependency>
+        <!-- URL Handler -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.url</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.event.dea</artifactId>

@@ -169,6 +169,12 @@
                 <artifactId>org.osgi.service.event</artifactId>
                 <version>1.3.1</version>
             </dependency>
+            <!-- URL Stream Handlers 1.0.0 (https://osgi.org/javadoc/r6/core/org/osgi/service/url/package-summary.html) -->
+            <dependency>
+                <groupId>org.osgi</groupId>
+                <artifactId>org.osgi.service.url</artifactId>
+                <version>1.0.0</version>
+            </dependency>
             <!-- only constants are referenced from there which are inlined during compilation anyways, therefore no runtime dependency -->
             <dependency>
                 <groupId>org.apache.sling</groupId>
