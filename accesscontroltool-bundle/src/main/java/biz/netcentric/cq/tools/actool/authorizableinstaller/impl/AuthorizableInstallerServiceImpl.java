@@ -189,7 +189,7 @@ public class AuthorizableInstallerServiceImpl implements
         if (!keyStoreService.keyStoreExists(resourceResolver, userId)) {
             char[] password = RandomPassword.generate(20);
             keyStoreService.createKeyStore(resourceResolver, userId, password);
-            installLog.addMessage(LOG, "Created new key store with random password for user  "+ userId);
+            installLog.addMessage(LOG, "Created new key store with random password for user  '"+ userId +"'");
         }
         for (Entry<String, Key> entry : keys.entrySet()) {
             Certificate certificate = entry.getValue().getCertificate();
@@ -198,7 +198,7 @@ public class AuthorizableInstallerServiceImpl implements
             } else {
                 keyStoreService.addKeyStoreKeyPair(resourceResolver, userId, entry.getValue().getKeyPair(cryptoSupport), entry.getKey());
             }
-            installLog.addMessage(LOG, "Added key with alias "+ entry.getKey() + " to keystore of user " + userId);
+            installLog.addMessage(LOG, "Added key with alias '"+ entry.getKey() + "' to keystore of user '" + userId + "'");
         }
     }
 
