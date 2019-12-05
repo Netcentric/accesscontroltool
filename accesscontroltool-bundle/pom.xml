@@ -25,11 +25,15 @@
     <description>The OSGi bundle containing all classes of the Access Control Tool.</description>
 
     <dependencies>
-        <!-- due to https://bugs.openjdk.java.net/browse/JDK-8231581 OOTB java is not sufficient -->
+        <!-- due to https://bugs.openjdk.java.net/browse/JDK-8231581 OOTB JRE is not sufficient -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk15on</artifactId>
-            <version>1.64</version>
+        </dependency>
+        <!-- must be direct dependency to be embedded -->
+        <dependency>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <groupId>org.bouncycastle</groupId>
         </dependency>
         <!-- OSGi annotations (build time, but only use those compliant with R6) -->
         <dependency>
@@ -124,7 +128,7 @@
             <artifactId>snakeyaml</artifactId>
             <version>1.13</version>
         </dependency>
-        
+
 
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>
