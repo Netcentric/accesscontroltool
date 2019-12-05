@@ -21,11 +21,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import javax.jcr.AccessDeniedException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFactory;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -97,7 +95,7 @@ public class AuthorizableInstallerServiceImpl implements
             AcConfiguration acConfiguration,
             AuthorizablesConfig authorizablesConfigBeans,
             final Session session, InstallationLogger installLog)
-            throws RepositoryException, AuthorizableCreatorException, SlingIOException, SecurityException, KeyStoreNotInitialisedException, LoginException, IOException, GeneralSecurityException {
+            throws RepositoryException, AuthorizableCreatorException, LoginException, IOException, GeneralSecurityException {
 
         Set<String> authorizablesFromConfigurations = authorizablesConfigBeans.getAuthorizableIds();
         for (AuthorizableConfigBean authorizableConfigBean : authorizablesConfigBeans) {
@@ -114,9 +112,7 @@ public class AuthorizableInstallerServiceImpl implements
             AcConfiguration acConfiguration,
             AuthorizableConfigBean authorizableConfigBean,
             InstallationLogger installLog, Set<String> authorizablesFromConfigurations)
-            throws AccessDeniedException,
-            UnsupportedRepositoryOperationException, RepositoryException,
-            AuthorizableExistsException, AuthorizableCreatorException, SlingIOException, SecurityException, KeyStoreNotInitialisedException, LoginException, IOException, GeneralSecurityException {
+            throws RepositoryException, AuthorizableCreatorException, IOException, GeneralSecurityException, LoginException {
 
         String authorizableId = authorizableConfigBean.getAuthorizableId();
         LOG.debug("- start installation of authorizable: {}", authorizableId);

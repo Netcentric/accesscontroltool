@@ -14,11 +14,7 @@ import java.security.GeneralSecurityException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.apache.sling.api.SlingIOException;
 import org.apache.sling.api.resource.LoginException;
-
-import com.adobe.granite.crypto.CryptoException;
-import com.adobe.granite.keystore.KeyStoreNotInitialisedException;
 
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
@@ -30,5 +26,5 @@ public interface AuthorizableInstallerService {
             AcConfiguration acConfiguration,
             AuthorizablesConfig authorizablesConfigBeans,
             final Session session, InstallationLogger installLog)
-    throws RepositoryException, AuthorizableCreatorException, CryptoException, SlingIOException, SecurityException, KeyStoreNotInitialisedException, LoginException, IOException, GeneralSecurityException;
+    throws RepositoryException, AuthorizableCreatorException, LoginException, IOException, GeneralSecurityException;
 }
