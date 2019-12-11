@@ -23,7 +23,9 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private String authorizableId;
     private String principalName;
 
-    private String name; // (non-technical) name as used in profile
+    // (non-technical) name/email/description (profile properties)
+    private String name; 
+    private String email;
     private String description;
 
     private String[] isMemberOf;
@@ -89,6 +91,14 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getPassword() {

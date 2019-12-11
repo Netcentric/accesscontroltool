@@ -14,11 +14,15 @@ import java.util.Map;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 
 /** Allows to automatically create test users. */
 public class AutoCreateTestUsersConfig {
 
     private static final String KEY_PREFIX = "prefix";
+    private static final String KEY_NAME = "name";
+    private static final String KEY_EMAIL = "email";
+    private static final String KEY_DESCRIPTION = "description";
     private static final String KEY_PASSWORD = "password";
     private static final String KEY_SKIP_FOR_RUNMODES = "skipForRunmodes";
     private static final String KEY_CREATE_FOR_GROUP_NAMES_REG_EX = "createForGroupNamesRegEx";
@@ -27,6 +31,9 @@ public class AutoCreateTestUsersConfig {
     private static final List<String> DEFAULT_PRODUCTION_RUNMODES = Arrays.asList("prod", "production");
 
     private final String prefix;
+    private final String name;
+    private final String description;
+    private final String email;
     private final String password;
     private final List<String> skipForRunmodes;
     private final String createForGroupNamesRegEx;
@@ -38,7 +45,11 @@ public class AutoCreateTestUsersConfig {
                     "When configuring " + GlobalConfiguration.KEY_AUTOCREATE_TEST_USERS + ", " + KEY_PREFIX + " is required");
         }
         this.prefix = (String) map.get(KEY_PREFIX);
-        this.password = map.containsKey(KEY_PASSWORD) ? (String) map.get(KEY_PASSWORD) : null;
+
+        this.name = StringUtils.defaultIfEmpty((String) map.get(KEY_NAME), null);
+        this.description = StringUtils.defaultIfEmpty((String) map.get(KEY_DESCRIPTION), null);
+        this.email = StringUtils.defaultIfEmpty((String) map.get(KEY_EMAIL), null);
+        this.password = StringUtils.defaultIfEmpty((String) map.get(KEY_PASSWORD), null);
 
         Object skipForRunmodesObj = map.get(KEY_SKIP_FOR_RUNMODES);
         if (skipForRunmodesObj instanceof List) {
@@ -84,5 +95,15 @@ public class AutoCreateTestUsersConfig {
         return path;
     }
 
+    public String getName() {
+        return name;
+    }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public String getEmail() {
+        return email;
+    }
 }

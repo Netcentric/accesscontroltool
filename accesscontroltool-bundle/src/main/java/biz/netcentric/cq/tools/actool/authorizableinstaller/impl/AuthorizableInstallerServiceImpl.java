@@ -669,6 +669,14 @@ public class AuthorizableInstallerServiceImpl implements
             }
         }
 
+        String email = principalConfigBean.getEmail();
+        if (StringUtils.isNotBlank(email)) {
+            authorizable.setProperty("profile/email", vf.createValue(email));
+        } else {
+            if (StringUtils.isBlank(profileContent)) {
+                authorizable.removeProperty("profile/email");
+            }
+        }
         String description = principalConfigBean.getDescription();
         if (StringUtils.isNotBlank(description)) {
             authorizable.setProperty("profile/aboutMe", vf.createValue(description));
