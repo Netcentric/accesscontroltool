@@ -9,7 +9,9 @@
 package biz.netcentric.cq.tools.actool.configreader;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -41,6 +43,8 @@ public class TestUserConfigsCreator {
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
     volatile AemCryptoSupport cryptoSupport;
 
+    YamlMacroElEvaluator elEvaluator = null;
+    
     public boolean isSkippedForRunmode(List<String> skipForRunmodes) {
         return slingSettingsService != null && !CollectionUtils.intersection(slingSettingsService.getRunModes(), skipForRunmodes).isEmpty();
     }
@@ -55,15 +59,18 @@ public class TestUserConfigsCreator {
         if (isSkippedForRunmode(autoCreateTestUsersConf.getSkipForRunmodes())) {
             return;
         }
-
+        
         List<AuthorizableConfigBean> testUserConfigBeansToAdd = new ArrayList<>();
         AuthorizablesConfig authorizablesConfig = acConfiguration.getAuthorizablesConfig();
-        for (AuthorizableConfigBean authConfigBean : authorizablesConfig) {
-            if(!authConfigBean.isGroup()) {
+        for (AuthorizableConfigBean groupAuthConfigBean : authorizablesConfig) {
+            if(!groupAuthConfigBean.isGroup()) {
                 continue;
             }
-            String groupId = authConfigBean.getAuthorizableId();
+            String groupId = groupAuthConfigBean.getAuthorizableId();
             if (groupId.matches(autoCreateTestUsersConf.getCreateForGroupNamesRegEx())) {
+                
+                Map<String, Object> vars = getVarsForAuthConfigBean(groupAuthConfigBean);
+                
                 AuthorizableConfigBean testUserConfigBean = new AuthorizableConfigBean();
                 testUserConfigBean.setIsGroup(false);
                 String testUserAuthId = autoCreateTestUsersConf.getPrefix() + groupId;
@@ -71,7 +78,22 @@ public class TestUserConfigsCreator {
                 testUserConfigBean.setPath(autoCreateTestUsersConf.getPath());
                 testUserConfigBean.setIsMemberOf(new String[] { groupId });
 
-                String password = StringUtils.defaultIfEmpty(autoCreateTestUsersConf.getPassword(), testUserAuthId);
+                String name = StringUtils.defaultIfEmpty(autoCreateTestUsersConf.getName(), "Test User %{group.name}");
+                testUserConfigBean.setName(processValue(name, vars));
+
+                if(StringUtils.isNotBlank(autoCreateTestUsersConf.getEmail())) {
+                    testUserConfigBean.setEmail(processValue(autoCreateTestUsersConf.getEmail(), vars));
+                }
+                if(StringUtils.isNotBlank(autoCreateTestUsersConf.getDescription())) {
+                    testUserConfigBean.setDescription(processValue(autoCreateTestUsersConf.getDescription(), vars));
+                }
+                
+                String password = autoCreateTestUsersConf.getPassword();
+                if(StringUtils.isNotBlank(password)) {
+                    password = processValue(password, vars); // allow for pws ala "pw%{group.id}"
+                } else {
+                    password = testUserAuthId;
+                }
 
                 if (password.matches("\\{.+}") && cryptoSupport != null) {
                     try {
@@ -82,6 +104,7 @@ public class TestUserConfigsCreator {
                     }
                 }
                 testUserConfigBean.setPassword(password);
+
                 testUserConfigBeansToAdd.add(testUserConfigBean);
             }
         }
@@ -93,6 +116,30 @@ public class TestUserConfigsCreator {
                         + " (for groups matching " + autoCreateTestUsersConf.getCreateForGroupNamesRegEx() + ")");
 
     }
+
+    Map<String, Object> getVarsForAuthConfigBean(AuthorizableConfigBean groupAuthConfigBean) {
+        Map<String,Object> vars = new HashMap<>();
+        Map<String,String> groupVar = new HashMap<>();
+        String groupId = groupAuthConfigBean.getAuthorizableId();
+        groupVar.put("id", groupId);
+        groupVar.put("name", StringUtils.defaultIfEmpty(groupAuthConfigBean.getName(), groupId));
+        groupVar.put("path", groupAuthConfigBean.getPath());
+        vars.put("group", groupVar);
+        return vars;
+    }
+
+    String processValue(String value, Map<? extends Object, ? extends Object> variables) {
+
+        String elWithDollarExpressions = value.replaceAll("%\\{([^\\}]+)\\}", "\\${$1}");
+        if(elEvaluator==null) {
+            elEvaluator = new YamlMacroElEvaluator();
+        }
+        
+        String interpolatedValue = elEvaluator.evaluateEl(elWithDollarExpressions, String.class, variables);
+        
+        return interpolatedValue;
+    }
+
 
 
 }
