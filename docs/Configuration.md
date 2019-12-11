@@ -80,8 +80,11 @@ Users can be configured in the same way as groups in the **user_config** section
 property | comment | required
 --- | --- | ---
 name | Works mostly like for groups, except that the string is split up in first and last name using the last space found in string. For instance "Johann Sebastian Bach" will result in first name "Johann Sebastian" and last name "Bach". For names where the split has to be explicitly configured, use a comma: "Van der Broek, Sebastian" will result in first name "Sebastian" and last name "Van der Broek". Sets the properties `profile/familyName` and `profile/givenName` of the user. | optional
-description, path, isMemberOf | Work exactly as for groups | optional
-password | The PW for the user (can only be set for regular users and not for system users). Is given either as plain text (only to be used for test users) or encrypted - use path `/system/console/crypto` on target instance to generate an encrypted password. Encrypted passwords have to be enclose it in brackets and should be quoted in yaml. Encrypted passwords are decrypted using com.adobe.granite.crypto.CryptoSupport by AC Tool during installation. | Optional, if left out the property `rep:password` is not set on user's node (authentication needs to happen without AEM password then, e.g. with LDAP) | optional
+path | Works exactly as for groups | optional
+isMemberOf | Works exactly as for groups | optional
+description | Description of the user - will overwrite description in `profileContent` if provided there as well | optional
+email | Email of the user - will overwrite email in `profileContent` if provided there as well | optional
+password | The PW for the user (can only be set for regular users and not for system users). Is given either as plain text (only to be used for test users) or encrypted - use path `/system/console/crypto` on target instance to generate an encrypted password. Encrypted passwords have to be enclose it in brackets and should be quoted in yaml. Encrypted passwords are decrypted using com.adobe.granite.crypto.CryptoSupport by AC Tool during installation. | Optional, if left out the property `rep:password` is not set on user's node (authentication needs to happen without AEM password then, e.g. with LDAP)
 isSystemUser | Create users as system user (AEM 6.1 and later) | optional
 disabled | Can be set to `true` or an arbitrary reason string to disable a user. If set to `false` the user will be explicitly enabled (calling `User.disable(null)`). If omitted will not change anything regarding enabled/disabled status of user | optional
 profileContent | Allows to provide [enhanced docview xml](https://jackrabbit.apache.org/filevault/docview.html) that will reset the profile to the given structure after each run | optional

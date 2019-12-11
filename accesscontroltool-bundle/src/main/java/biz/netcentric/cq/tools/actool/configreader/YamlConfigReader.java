@@ -91,6 +91,9 @@ public class YamlConfigReader implements ConfigReader {
     private static final String USER_CONFIG_PREFERENCES_CONTENT = "preferencesContent";
     private static final String USER_CONFIG_SOCIAL_CONTENT = "socialContent";
 
+    private static final String USER_CONFIG_PROPERTY_EMAIL = "email";
+    
+    
     private static final String USER_CONFIG_DISABLED = "disabled";
     private static final String USER_CONFIG_KEYS = "keys";
 
@@ -353,9 +356,11 @@ public class YamlConfigReader implements ConfigReader {
 
         authorizableConfigBean.setName(getMapValueAsString(currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_NAME));
 
+        authorizableConfigBean.setEmail(getMapValueAsString(
+                currentPrincipalDataMap, USER_CONFIG_PROPERTY_EMAIL));
         authorizableConfigBean.setDescription(getMapValueAsString(
                 currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_DESCRIPTION));
-
+        
         String externalIdVal = getMapValueAsString(currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_EXTERNAL_ID);
         if (StringUtils.isNotBlank(externalIdVal)) {
             authorizableConfigBean.setExternalId(externalIdVal);
