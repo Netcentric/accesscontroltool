@@ -75,7 +75,7 @@ The property 'migrateFrom' allows to migrate a group name without loosing their 
 
 In general it is best practice to not generate regular users by the AC Tool but use other mechanism (e.g. LDAP) to create users. However, it can be useful to create system users (e.g. for replication agents or OSGi service authentiation) or test users on staging environments.
 
-Users can be configured in the same way as groups in the **user_config** section. A user record in the configuration file starts with the user id followed by some indented data records containing properties. The users created through the AC Tool usually have a principal name equal to the given user id (except if externalId is provided, then the principal name is derived from that).
+Users can be configured in the same way as groups  but in the **user_config** section. A user record in the configuration file starts with the user id followed by some indented data records containing properties. The users created through the AC Tool usually have a principal name equal to the given user id (except if externalId is provided, then the principal name is derived from that).
 
 property | comment | required
 --- | --- | ---
@@ -84,7 +84,7 @@ path | Works exactly as for groups | optional
 isMemberOf | Works exactly as for groups | optional
 description | Description of the user - will overwrite description in `profileContent` if provided there as well | optional
 email | Email of the user - will overwrite email in `profileContent` if provided there as well | optional
-password | The PW for the user (can only be set for regular users and not for system users). Is given either as plain text (only to be used for test users) or encrypted - use path `/system/console/crypto` on target instance to generate an encrypted password. Encrypted passwords have to be enclose it in brackets and should be quoted in yaml. Encrypted passwords are decrypted using com.adobe.granite.crypto.CryptoSupport by AC Tool during installation. | Optional, if left out the property `rep:password` is not set on user's node (authentication needs to happen without AEM password then, e.g. with LDAP)
+password | The PW for the user (can only be set for regular users and not for system users). Is given either as plain text (only to be used for test users) or encrypted - use path `/system/console/crypto` on target instance to generate an encrypted password. Encrypted passwords have to be enclosed in brackets and should be quoted in yaml. Encrypted passwords are decrypted using com.adobe.granite.crypto.CryptoSupport by AC Tool during installation. | Optional, if left out the property `rep:password` is not set on user's node (authentication needs to happen without AEM password then, e.g. with LDAP)
 isSystemUser | Create users as system user (AEM 6.1 and later) | optional
 disabled | Can be set to `true` or an arbitrary reason string to disable a user. If set to `false` the user will be explicitly enabled (calling `User.disable(null)`). If omitted will not change anything regarding enabled/disabled status of user | optional
 profileContent | Allows to provide [enhanced docview xml](https://jackrabbit.apache.org/filevault/docview.html) that will reset the profile to the given structure after each run | optional
@@ -143,10 +143,12 @@ Each key entry in the `keys` section has the following properties
 
 property | comment | required
 --- | --- | ---
-private | The encrypted PKCS#8 key in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-11). Non-encrypted keys are not supported for security reasons! | yes
+private | The encrypted PKCS#8 key in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-11). Non-encrypted keys are not supported for security reasons! The symmetrical encryption requires the privatePassword to be decrypted. | yes
 privatePassword | The password for decrypting the private key. The password itself must be encrypted with the AEM Crypto Support (i.e. encrypted with the AEM master key of the according instance). Therefore the value must start with `{`. | yes
 public | The public DER key in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-13). . If both `certificate` and `public` are set `certificate` takes precedence. | no (either public or certificate needs to be set)
 certificate | The certificate in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-5.1). If both `certificate` and `public` are set `certificate` takes precedence. | no (either public or certificate needs to be set)
+
+Usually keys are stage/environment-specific i.e. listed in run-mode specific yaml fragments. At least the privatePassword differs (due to the different Crypto Support master kes).
 
 ## Configuration of ACEs
 
