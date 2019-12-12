@@ -10,10 +10,15 @@ package biz.netcentric.cq.tools.actool.configmodel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
+
+import com.adobe.granite.crypto.CryptoSupport;
 
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElement;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementVisitor;
@@ -52,6 +57,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private String disabled;
 
     private boolean virtual;
+    private Map<String, Key> keys;
 
     public String getAuthorizableId() {
         return authorizableId;
@@ -273,6 +279,14 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.virtual = virtual;
     }
 
+    public Map<String, Key> getKeys() {
+        return keys;
+    }
+
+    public void setKeys(Map<String, Key> keys) {
+        this.keys = keys;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -281,6 +295,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
         sb.append("path: " + path + "\n");
         sb.append("isMemberOf: " + getIsMemberOfString() + "\n");
         sb.append("members: " + getMembersString() + "\n");
+        sb.append("keys:" + getKeys());
         return sb.toString();
     }
 

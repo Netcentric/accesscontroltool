@@ -8,18 +8,22 @@
  */
 package biz.netcentric.cq.tools.actool.authorizableinstaller.impl;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.cert.Certificate;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import javax.jcr.AccessDeniedException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFactory;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -31,6 +35,11 @@ import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
+import org.apache.sling.api.SlingIOException;
+import org.apache.sling.api.resource.LoginException;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.apache.sling.jcr.resource.JcrResourceConstants;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
@@ -38,12 +47,17 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adobe.granite.keystore.KeyStoreNotInitialisedException;
+import com.adobe.granite.keystore.KeyStoreService;
+
 import biz.netcentric.cq.tools.actool.aem.AemCryptoSupport;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableInstallerService;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
+import biz.netcentric.cq.tools.actool.configmodel.Key;
+import biz.netcentric.cq.tools.actool.configmodel.RandomPassword;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.Constants;
@@ -69,13 +83,19 @@ public class AuthorizableInstallerServiceImpl implements
 
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
     volatile AemCryptoSupport cryptoSupport;
+    
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
+    volatile KeyStoreService keyStoreService;
+    
+    @Reference
+    ResourceResolverFactory resourceResolverFactory;
 
     @Override
     public void installAuthorizables(
             AcConfiguration acConfiguration,
             AuthorizablesConfig authorizablesConfigBeans,
             final Session session, InstallationLogger installLog)
-            throws RepositoryException, AuthorizableCreatorException {
+            throws RepositoryException, AuthorizableCreatorException, LoginException, IOException, GeneralSecurityException {
 
         Set<String> authorizablesFromConfigurations = authorizablesConfigBeans.getAuthorizableIds();
         for (AuthorizableConfigBean authorizableConfigBean : authorizablesConfigBeans) {
@@ -92,9 +112,7 @@ public class AuthorizableInstallerServiceImpl implements
             AcConfiguration acConfiguration,
             AuthorizableConfigBean authorizableConfigBean,
             InstallationLogger installLog, Set<String> authorizablesFromConfigurations)
-            throws AccessDeniedException,
-            UnsupportedRepositoryOperationException, RepositoryException,
-            AuthorizableExistsException, AuthorizableCreatorException {
+            throws RepositoryException, AuthorizableCreatorException, IOException, GeneralSecurityException, LoginException {
 
         String authorizableId = authorizableConfigBean.getAuthorizableId();
         LOG.debug("- start installation of authorizable: {}", authorizableId);
@@ -146,7 +164,44 @@ public class AuthorizableInstallerServiceImpl implements
             migrateFromOldGroup(authorizableConfigBean, userManager, installLog);
         }
 
+        if (authorizableConfigBean.getKeys() != null) {
+            installKeys(authorizableConfigBean.getKeys(), authorizableId, session, installLog);
+        }
     }
+
+    private void installKeys(Map<String, Key> keys, String userId, Session session, InstallationLogger installLog) throws LoginException, SlingIOException, SecurityException, KeyStoreNotInitialisedException, IOException, GeneralSecurityException {
+        Map<String, Object> authInfo = new HashMap<>();
+        authInfo.put(JcrResourceConstants.AUTHENTICATION_INFO_SESSION, session);
+        ResourceResolver resolver = resourceResolverFactory.getResourceResolver(authInfo);
+        try {
+            installKeys(keys, userId, resolver, installLog);
+        } finally {
+            // the underlying session is not closed(!)
+            resolver.close();
+        }
+    }
+
+    private void installKeys(Map<String, Key> keys, String userId, ResourceResolver resourceResolver, InstallationLogger installLog) throws SlingIOException, SecurityException, KeyStoreNotInitialisedException, IOException, GeneralSecurityException {
+        if (keyStoreService == null) {
+            throw new IllegalStateException(
+                    "Keys are used on the authorizable which require the AEM KeyStore Service which is missing.");
+        }
+        if (!keyStoreService.keyStoreExists(resourceResolver, userId)) {
+            char[] password = RandomPassword.generate(20);
+            keyStoreService.createKeyStore(resourceResolver, userId, password);
+            installLog.addMessage(LOG, "Created new key store with random password for user  '"+ userId +"'");
+        }
+        for (Entry<String, Key> entry : keys.entrySet()) {
+            Certificate certificate = entry.getValue().getCertificate();
+            if (certificate != null) {
+                keyStoreService.addKeyStoreKeyEntry(resourceResolver, userId, entry.getKey(), entry.getValue().getPrivateKey(cryptoSupport), new Certificate[] {certificate});
+            } else {
+                keyStoreService.addKeyStoreKeyPair(resourceResolver, userId, entry.getValue().getKeyPair(cryptoSupport), entry.getKey());
+            }
+            installLog.addMessage(LOG, "Added key with alias '"+ entry.getKey() + "' to keystore of user '" + userId + "'");
+        }
+    }
+
 
     void setUserPassword(final AuthorizableConfigBean authorizableConfigBean,
                              final User authorizableToInstall) throws RepositoryException, AuthorizableCreatorException {

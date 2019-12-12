@@ -8,10 +8,13 @@
  */
 package biz.netcentric.cq.tools.actool.authorizableinstaller;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import com.adobe.granite.crypto.CryptoException;
+import org.apache.sling.api.resource.LoginException;
 
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
@@ -23,5 +26,5 @@ public interface AuthorizableInstallerService {
             AcConfiguration acConfiguration,
             AuthorizablesConfig authorizablesConfigBeans,
             final Session session, InstallationLogger installLog)
-    throws RepositoryException, AuthorizableCreatorException, CryptoException;
+    throws RepositoryException, AuthorizableCreatorException, LoginException, IOException, GeneralSecurityException;
 }

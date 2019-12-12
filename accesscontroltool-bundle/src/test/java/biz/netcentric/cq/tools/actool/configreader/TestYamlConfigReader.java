@@ -12,6 +12,7 @@ import java.util.Map;
 
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
 /** Subclass of YamlConfigReader only used for unit tests. Overrides bean setup-methods from YamlConfigReader to set up TestAceBean and
  * TestAuthorizableConfigBean in order to set the assertedExceptionString set in test yaml files for later evaluation in unit tests. Also
@@ -36,7 +37,7 @@ public class TestYamlConfigReader extends YamlConfigReader {
             final AuthorizableConfigBean authorizableConfigBean,
             final Map<String, Object> currentPrincipalDataMap,
             final String authorizableId,
-            boolean isGroupSection) {
+            boolean isGroupSection) throws AcConfigBeanValidationException {
         super.setupAuthorizableBean(authorizableConfigBean, currentPrincipalDataMap, authorizableId, isGroupSection);
         ((TestAuthorizableConfigBean) authorizableConfigBean).setAssertedExceptionString(getMapValueAsString(
                 currentPrincipalDataMap, ASSERTED_EXCEPTION));
