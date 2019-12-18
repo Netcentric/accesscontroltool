@@ -45,7 +45,7 @@ public interface AceServiceMBean {
     String applyRestrictedToPaths(@Name("configurationRootPath") @Description("The configuration root path") String configurationRootPath,
             @Name("paths") @Description("comma separated list of paths to apply the configuration to, other paths will be skipped") String restrictedToPaths);
 
-    @Description("Applies the ACE configuration if it has not changed")
+    @Description("Applies the ACE configuration, but restricted to given paths and depending on third parameter, only if config has changed.")
     public String applyRestrictedToPaths(@Name("configurationRootPath") @Description("The configuration root path") String configurationRootPath,
             @Name("paths") @Description("comma separated list of paths to apply the configuration to, other paths will be skipped") String restrictedToPaths, 
             @Name("skipIfConfigUnchanged") @Description("If true, will only apply config if it has changed") boolean skipIfConfigUnchanged);
