@@ -235,6 +235,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     /** Common entry point for JMX and install hook */
+    // TODO: should not be exported as using non-API class PersistableInstallationLogger / https://github.com/Netcentric/accesscontroltool/issues/394
     public void installConfigurationFiles(PersistableInstallationLogger installLog, Map<String, String> configurationFileContentsByFilename,
             String[] restrictedToPaths, Session session, boolean skipIfConfigUnchanged)
             throws Exception {
