@@ -1,20 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-    (C) Copyright 2019 Netcentric AG.
-
-    All rights reserved. This program and the accompanying materials
-    are made available under the terms of the Eclipse Public License v1.0
-    which accompanies this distribution, and is available at
-    http://www.eclipse.org/legal/epl-v10.html
--->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<!-- (C) Copyright 2015 Netcentric AG. All rights reserved. This program and the accompanying materials are made available under the terms of 
+    the Eclipse Public License v1.0 which accompanies this distribution, and is available at http://www.eclipse.org/legal/epl-v10.html -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <!-- ====================================================================== -->
     <!-- P A R E N T P R O J E C T D E S C R I P T I O N -->
     <!-- ====================================================================== -->
     <parent>
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
-        <artifactId>accesscontroltool</artifactId>
+        <artifactId>accesscontroltool-install-packages</artifactId>
         <version>2.5.0-SNAPSHOT</version>
     </parent>
 
@@ -22,10 +17,10 @@
     <!-- P R O J E C T D E S C R I P T I O N -->
     <!-- ====================================================================== -->
 
-    <artifactId>accesscontroltool-content-package</artifactId>
+    <artifactId>accesscontroltool-cr-package</artifactId>
     <packaging>content-package</packaging>
-    <name>Access Control Tool Package - Content</name>
-    <description>Content package of the AC Tool containing the system user and ACLs for it.</description>
+    <name>Access Control Tool Package (Cloud Ready)</name>
+    <description>Container package of the AC Tool containing the bundle, config, apps and content package.</description>
 
     <build>
         <plugins>
@@ -33,25 +28,29 @@
                 <groupId>org.apache.jackrabbit</groupId>
                 <artifactId>filevault-package-maven-plugin</artifactId>
                 <configuration>
-                    <packageType>content</packageType>
-                    <properties>
-                        <acHandling>merge_preserve</acHandling>
-                    </properties>
+                    <embeddeds combine.children="append">
+                        <embedded>
+                            <artifactId>accesscontroltool-startuphook-bundle</artifactId>
+                            <target>/apps/netcentric/actool/install/27</target>
+                        </embedded>
+                    </embeddeds>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>com.day.jcr.vault</groupId>
-                <artifactId>content-package-maven-plugin</artifactId>
-                <configuration>
-                    <targetURL>http://${crx.host}:${crx.port}/crx/packmgr/service.jsp</targetURL>
-                </configuration>
-            </plugin>
-            
         </plugins>
     </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>accesscontroltool-startuphook-bundle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+    
+    <!-- NOTE 'Cr' in profile names (to install cloud ready instead of regular package) -->
     <profiles>
         <profile>
-            <id>autoInstallPackage</id>
+            <id>autoInstallCrPackage</id>
             <build>
                 <plugins>
                     <plugin>
@@ -71,7 +70,7 @@
             </build>
         </profile>
         <profile>
-            <id>autoInstallPackagePublish</id>
+            <id>autoInstallCrPackagePublish</id>
             <build>
                 <plugins>
                     <plugin>

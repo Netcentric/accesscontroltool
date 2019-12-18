@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.AccessDeniedException;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
@@ -38,12 +37,13 @@ import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
+import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.startlevel.FrameworkStartLevel;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
@@ -72,6 +72,7 @@ import biz.netcentric.cq.tools.actool.helper.AclBean;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.PurgeHelper;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
+import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
@@ -118,6 +119,9 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ConfigurationAdmin configAdmin;
 
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    private AcConfigChangeTracker acConfigChangeTracker;
+    
     private String configuredAcConfigurationRootPath;
 
     private boolean intermediateSaves;
@@ -126,7 +130,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             description="Service that installs groups & ACEs according to textual configuration files",
             id = CONFIG_PID)
     protected static @interface Configuration {
-        @AttributeDefinition(name="Configuration storage path", description="CRX path where ACE configuration gets stored")
+        @AttributeDefinition(name="Configuration path", description="JCR path where the AC Tool YAML configuration files are stored")
         String AceService_configurationPath() default "";
         
         @AttributeDefinition(name="Use intermediate saves", description="Saves ACLs for each path individually - this can be used to avoid problems with large changesets and MongoDB (OAK-5557), however the rollback is disabled then.")
@@ -134,8 +138,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     @Activate
-    public void activate(Configuration configuration) throws Exception {
-        LOG.debug("Activated AceService!");
+    public void activate(Configuration configuration, BundleContext bundleContext) throws Exception {
         configuredAcConfigurationRootPath = configuration.AceService_configurationPath();
         intermediateSaves = configuration.intermediateSaves();
 
@@ -148,13 +151,16 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 intermediateSaves = PropertiesUtil.toBoolean(legacyProps.get(LEGACY_PROPERTY_INTERMEDIATE_SAVES), false);
             }
         }
+
+        LOG.info("Activated AC Tool at start level "+RuntimeHelper.getCurrentStartLevel(bundleContext));
+
     }
 
     @Override
     public InstallationLog apply() {
-        return apply(getConfiguredAcConfigurationRootPath(), null);
+        return apply(null, null);
     }
-
+    
     @Override
     public InstallationLog apply(String configurationRootPath) {
         return apply(configurationRootPath, null);
@@ -162,30 +168,39 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
     @Override
     public InstallationLog apply(String[] restrictedToPaths) {
-        return apply(getConfiguredAcConfigurationRootPath(), restrictedToPaths);
+        return apply(null, restrictedToPaths);
     }
 
     @Override
     public InstallationLog apply(String configurationRootPath, String[] restrictedToPaths) {
+        return apply(configurationRootPath, restrictedToPaths, false);
+    }
+
+    @Override
+    public InstallationLog apply(String configurationRootPath, String[] restrictedToPaths, boolean skipIfConfigUnchanged) {
 
         PersistableInstallationLogger installLog = new PersistableInstallationLogger();
 
+        if(StringUtils.isBlank(configurationRootPath)) {
+            configurationRootPath = getConfiguredAcConfigurationRootPath();
+        }
+        
         Session session = null;
         try {
             session = repository.loginService(Constants.USER_AC_SERVICE, null);
             
             // get config file contents from JCR
-            Map<String, String> newestConfigurations;
+            Map<String, String> configFiles;
             try {
-                newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configurationRootPath, session);
+                configFiles = configFilesRetriever.getConfigFileContentFromNode(configurationRootPath, session);
             } catch (Exception e) {
                 installLog.addError("Could not retrieve configuration from path "+configurationRootPath+": "+e.getMessage(), e);
                 persistHistory(installLog);
                 return installLog;
             }
-            
+
             // install config files
-            installConfigurationFiles(installLog, newestConfigurations, restrictedToPaths, session);
+            installConfigurationFiles(installLog, configFiles, restrictedToPaths, session, skipIfConfigUnchanged);
             
         } catch (AuthorizableCreatorException e) {
             // exception was added to history in installConfigurationFiles() before it was saved
@@ -207,22 +222,38 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         return installLog;
     }
 
-    /** Common entry point for JMX and install hook, 
-     * TODO: should not be exported as using non-API class PersistableInstllationLogger */
+
+    // called from install hook, skipIfConfigUnchanged always false
     @Override
     public void installConfigurationFiles(PersistableInstallationLogger installLog, Map<String, String> configurationFileContentsByFilename,
             String[] restrictedToPaths, Session session)
             throws Exception {
+        installConfigurationFiles(installLog, configurationFileContentsByFilename, restrictedToPaths, session, false);
+    }
+
+    /** Common entry point for JMX and install hook */
+    public void installConfigurationFiles(PersistableInstallationLogger installLog, Map<String, String> configurationFileContentsByFilename,
+            String[] restrictedToPaths, Session session, boolean skipIfConfigUnchanged)
+            throws Exception {
+
+        boolean configsIdenticalToLastExecution = acConfigChangeTracker.configIsUnchangedComparedToLastExecution(configurationFileContentsByFilename, restrictedToPaths, session);
+        if(skipIfConfigUnchanged && configsIdenticalToLastExecution) {
+            installLog.addMessage(LOG, "Config files are identical to last execution");
+            // returning outside of below try will not persist history (this is the desired behaviour for this case)
+            return;
+        }
 
         String origThreadName = Thread.currentThread().getName();
-
         try {
+            
+
             Thread.currentThread().setName(origThreadName + "-ACTool-Config-Worker");
             StopWatch sw = new StopWatch();
             sw.start();
 
             installLog.addMessage(LOG, "*** Applying AC Tool Configuration using v" + getVersion() + "... ");
 
+            
             if (configurationFileContentsByFilename != null) {
 
                 installLog.setConfigFileContentsByName(configurationFileContentsByFilename);
@@ -238,9 +269,8 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             }
             sw.stop();
             long executionTime = sw.getTime();
-            // TODO: log rather via installLog
-            LOG.info("Successfully applied AC Tool configuration in " + msHumanReadable(executionTime));
             installLog.setExecutionTime(executionTime);
+            installLog.addMessage(LOG, "Successfully applied AC Tool configuration in " + msHumanReadable(executionTime));
         } catch (Exception e) {
             installLog.addError("Could not process yaml files", e); // ensure exception is added to installLog before it's persisted in log in finally clause
             throw e; // handling is different depending on JMX or install hook case
@@ -574,11 +604,8 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
     }
 
-    private void installMergedConfigurations(
-            InstallationLogger installLog,
-            AcConfiguration acConfiguration, String[] restrictedToPaths, Session session) throws ValueFormatException,
-            RepositoryException, Exception {
-
+    private void installMergedConfigurations(InstallationLogger installLog, AcConfiguration acConfiguration, 
+            String[] restrictedToPaths, Session session) throws ValueFormatException,  RepositoryException, Exception {
 
         installLog.addVerboseMessage(LOG, "Starting installation of merged configurations...");
 
@@ -874,5 +901,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     public AcInstallationHistoryPojo execute(String configurationRootPath, String[] restrictedToPaths) {
         return apply(configurationRootPath, restrictedToPaths);
     }
+
 
 }

@@ -60,10 +60,9 @@ public class AcHistoryServiceImpl implements AcHistoryService {
             id="biz.netcentric.cq.tools.actool.history.impl.AcHistoryServiceImpl")
     protected static @interface Configuration {
         @AttributeDefinition(name="ACL number of histories to save")
-        int AceService_nrOfSavedHistories() default 5;
+        int AceService_nrOfSavedHistories() default 7;
     }
 
-    
     @Activate
     public void activate(Configuration configuration)
             throws Exception {

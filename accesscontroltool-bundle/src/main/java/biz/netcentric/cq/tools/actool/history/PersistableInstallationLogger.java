@@ -196,8 +196,7 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
     @Override
     @SuppressWarnings("unchecked")
     public String getMessageHistory() {
-        return getMessageString(getMessageSet(warnings, messages,
-                errors));
+        return getMessageString(getMessageSet(warnings, messages, errors));
     }
 
     /* (non-Javadoc)

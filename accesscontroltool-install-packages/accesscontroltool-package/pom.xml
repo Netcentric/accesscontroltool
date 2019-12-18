@@ -14,8 +14,8 @@
     <!-- ====================================================================== -->
     <parent>
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
-        <artifactId>accesscontroltool</artifactId>
-        <version>2.4.2-SNAPSHOT</version>
+        <artifactId>accesscontroltool-install-packages</artifactId>
+        <version>2.5.0-SNAPSHOT</version>
     </parent>
 
     <!-- ====================================================================== -->
@@ -26,36 +26,7 @@
     <packaging>content-package</packaging>
     <name>Access Control Tool Package</name>
     <description>Container package of the AC Tool containing the bundle, config, apps and content package.</description>
-    
-    <dependencies>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>accesscontroltool-bundle</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>accesscontroltool-apps-package</artifactId>
-            <version>${project.version}</version>
-            <type>content-package</type>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>accesscontroltool-content-package</artifactId>
-            <version>${project.version}</version>
-            <type>content-package</type>
-        </dependency>
-        <!-- due to https://bugs.openjdk.java.net/browse/JDK-8231581 OOTB JRE is not sufficient -->
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcpkix-jdk15on</artifactId>
-        </dependency>
-        <!-- must be direct dependency to be embedded -->
-        <dependency>
-            <artifactId>bcprov-jdk15on</artifactId>
-            <groupId>org.bouncycastle</groupId>
-        </dependency>
-    </dependencies>
+
     <build>
         <plugins>
             <plugin>
@@ -81,8 +52,8 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>        
-        
+            </plugin>
+            
             <plugin>
                 <groupId>org.apache.jackrabbit</groupId>
                 <artifactId>filevault-package-maven-plugin</artifactId>
@@ -93,44 +64,6 @@
                         <installPathRegex>/apps/netcentric/actool/(config|install)/.*</installPathRegex>
                         <waitForOsgiEventsQuietInSec>5</waitForOsgiEventsQuietInSec>
                     </properties>
-                    <embeddeds>
-                        <embedded>
-                            <artifactId>accesscontroltool-bundle</artifactId>
-                        </embedded>
-                        <embedded>
-                            <artifactId>snakeyaml</artifactId>
-                        </embedded>
-                        <embedded>
-                            <artifactId>bcprov-jdk15on</artifactId>
-                        </embedded>
-                        <embedded>
-                            <artifactId>bcpkix-jdk15on</artifactId>
-                        </embedded>
-                    </embeddeds>
-                    <embeddedTarget>/apps/netcentric/actool/install</embeddedTarget>
-                    <subPackages>
-                        <subPackage>
-                            <artifactId>accesscontroltool-apps-package</artifactId>
-                        </subPackage>
-                        <subPackage>
-                            <artifactId>accesscontroltool-content-package</artifactId>
-                        </subPackage>
-                    </subPackages>
-                    <!-- is still mixed due to the contained content package -->
-                    <packageType>mixed</packageType>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>default-analyze-classes</id>
-                        <phase>invalid</phase>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>com.day.jcr.vault</groupId>
-                <artifactId>content-package-maven-plugin</artifactId>
-                <configuration>
-                    <targetURL>http://${crx.host}:${crx.port}/crx/packmgr/service.jsp</targetURL>
                 </configuration>
             </plugin>
             

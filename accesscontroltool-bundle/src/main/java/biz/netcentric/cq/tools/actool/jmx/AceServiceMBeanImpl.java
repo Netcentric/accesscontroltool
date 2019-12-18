@@ -73,6 +73,12 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
     }
 
     @Override
+    public String applyRestrictedToPaths(String configurationRootPath, String paths, boolean skipIfConfigUnchanged) {
+        String[] restrictedToPaths = commaSeparatedStringToArr(paths);
+        return acInstallationService.apply(configurationRootPath, restrictedToPaths, skipIfConfigUnchanged).toString();
+    }
+   
+    @Override
     public String purgeACL(final String path) {
         return acInstallationService.purgeACL(path);
     }
@@ -169,5 +175,6 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
     public String getVersion() {
         return acInstallationService.getVersion();
     }
+
 
 }

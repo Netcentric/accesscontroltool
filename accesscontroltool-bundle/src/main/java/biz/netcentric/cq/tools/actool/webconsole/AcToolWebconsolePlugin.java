@@ -53,6 +53,7 @@ public class AcToolWebconsolePlugin extends HttpServlet {
     public static final String CATEGORY = "Main";
     
     public static final String PARAM_CONFIGURATION_ROOT_PATH = "configurationRootPath";
+    public static final String PARAM_APPLY_ONLY_IF_CHANGED = "applyOnlyIfChanged";
     public static final String PARAM_BASE_PATHS = "basePaths";
     public static final String PARAM_SHOW_LOG_NO = "showLogNo";
     public static final String PARAM_SHOW_LOG_VERBOSE = "showLogVerbose";
@@ -158,13 +159,16 @@ public class AcToolWebconsolePlugin extends HttpServlet {
         RequestParameters reqParams = RequestParameters.fromRequest(req, acInstallationService);
         LOG.info("Received POST request to apply AC Tool config with configurationRootPath={} basePaths={}", reqParams.configurationRootPath, reqParams.basePaths);
         
-        InstallationLog log = acInstallationService.apply(reqParams.configurationRootPath, reqParams.getBasePathsArr());
+        InstallationLog log = acInstallationService.apply(reqParams.configurationRootPath, reqParams.getBasePathsArr(), reqParams.applyOnlyIfChanged);
+        
+        String msg = log.getMessageHistory().trim();
+        msg = msg.contains("\n") ? StringUtils.substringAfterLast(msg, "\n") : msg; 
         
         PrintWriter pw = resp.getWriter();
         resp.setContentType("text/plain");
         if(((PersistableInstallationLogger)log).isSuccess()) {
             resp.setStatus(HttpServletResponse.SC_OK);
-            pw.println("Applied AC Tool config from "+reqParams.configurationRootPath+".");
+            pw.println("Applied AC Tool config from "+reqParams.configurationRootPath+":\n"+msg);
         } else {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             pw.println("Error while applying AC Tool config from "+reqParams.configurationRootPath);
@@ -191,6 +195,7 @@ public class AcToolWebconsolePlugin extends HttpServlet {
             writer.print(escapeHtml(reqParams.configurationRootPath));
         }
         writer.println("' class='input' size='70'>");
+        writer.print("<input type='checkbox' name='" + PARAM_APPLY_ONLY_IF_CHANGED + "' value='true'"+(reqParams.applyOnlyIfChanged?" checked='checked'":"")+" /> apply only if config changed");
         writer.closeTd();
         
         writer.openTd();
@@ -219,7 +224,7 @@ public class AcToolWebconsolePlugin extends HttpServlet {
 
         writer.tr();
         writer.openTd();
-        String onClick = "$('#applySpinner').show(); var b=$('#applyButton'); b.prop('disabled', true); b.html(' Applying AC Tool Configuration... '); var fd=$('#acForm').serialize();$.post('"+LABEL+"', fd).done(function(){alert('Config successfully applied')}).fail(function(){alert('Config could not be applied - check log for errors')}).always(function() { location.href='"+LABEL+"?"+PARAM_SHOW_LOG_NO+"=1&'+fd; }); return false";
+        String onClick = "$('#applySpinner').show(); var b=$('#applyButton'); b.prop('disabled', true); b.html(' Applying AC Tool Configuration... '); var fd=$('#acForm').serialize();$.post('"+LABEL+"', fd).done(function(text){alert(text)}).fail(function(){alert('Config could not be applied - check log for errors')}).always(function(text) { var ll=text.indexOf('identical to last execution')===-1?'"+PARAM_SHOW_LOG_NO+"=1&':'';location.href='"+LABEL+"?'+ll+fd; }); return false";
         writer.println("<button id='applyButton' onclick=\""+onClick+"\"> Apply AC Tool Configuration </button>");
         writer.closeTd();
         writer.openTd();
@@ -246,9 +251,9 @@ public class AcToolWebconsolePlugin extends HttpServlet {
                     configRootPath,
                     StringUtils.isNotBlank(basePathsParam) ? Arrays.asList(basePathsParam.split(" *, *")): null,
                     Integer.parseInt(getParam(req, PARAM_SHOW_LOG_NO, "0")),
-                    Boolean.valueOf(req.getParameter(PARAM_SHOW_LOG_VERBOSE))
+                    Boolean.valueOf(req.getParameter(PARAM_SHOW_LOG_VERBOSE)), 
+                    Boolean.valueOf(req.getParameter(PARAM_APPLY_ONLY_IF_CHANGED))
             );
-
             return result;
         }
         
@@ -256,13 +261,15 @@ public class AcToolWebconsolePlugin extends HttpServlet {
         private final List<String> basePaths;
         private final int showLogNo;
         private final boolean showLogVerbose;
+        private final boolean applyOnlyIfChanged;
 
-        RequestParameters(String configurationRootPath, List<String> basePaths, int showLogNo, boolean showLogVerbose) {
+        RequestParameters(String configurationRootPath, List<String> basePaths, int showLogNo, boolean showLogVerbose, boolean applyOnlyIfChanged) {
             super();
             this.configurationRootPath = configurationRootPath;
             this.basePaths = basePaths;
             this.showLogNo = showLogNo;
             this.showLogVerbose = showLogVerbose;
+            this.applyOnlyIfChanged = applyOnlyIfChanged;
         }
 
         String[] getBasePathsArr() {

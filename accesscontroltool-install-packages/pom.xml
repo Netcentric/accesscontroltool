@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    (C) Copyright 2015 Netcentric AG.
+
+    All rights reserved. This program and the accompanying materials
+    are made available under the terms of the Eclipse Public License v1.0
+    which accompanies this distribution, and is available at
+    http://www.eclipse.org/legal/epl-v10.html
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <!-- ====================================================================== -->
+    <!-- P A R E N T P R O J E C T D E S C R I P T I O N -->
+    <!-- ====================================================================== -->
+    <parent>
+        <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
+        <artifactId>accesscontroltool</artifactId>
+        <version>2.5.0-SNAPSHOT</version>
+    </parent>
+
+    <!-- ====================================================================== -->
+    <!-- P R O J E C T D E S C R I P T I O N -->
+    <!-- ====================================================================== -->
+
+    <artifactId>accesscontroltool-install-packages</artifactId>
+    <packaging>pom</packaging>
+    <name>Access Control Tool Install Packages</name>
+    <description>Container package of the AC Tool containing the bundle, config, apps and content package.</description>
+    
+    <modules>
+        <module>accesscontroltool-package</module>
+        <module>accesscontroltool-cr-package</module>
+    </modules>
+
+    
+    <dependencies>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>accesscontroltool-bundle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>accesscontroltool-apps-package</artifactId>
+            <version>${project.version}</version>
+            <type>content-package</type>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>accesscontroltool-content-package</artifactId>
+            <version>${project.version}</version>
+            <type>content-package</type>
+        </dependency>
+        <!-- due to https://bugs.openjdk.java.net/browse/JDK-8231581 OOTB JRE is not sufficient -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+        </dependency>
+        <!-- must be direct dependency to be embedded -->
+        <dependency>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <groupId>org.bouncycastle</groupId>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.jackrabbit</groupId>
+                <artifactId>filevault-package-maven-plugin</artifactId>
+                <configuration>
+                    <filterSource>../src/main/META-INF/vault/filter.xml</filterSource>
+                    <jcrRootSourceDirectory>../src/main/jcr_root</jcrRootSourceDirectory>
+                    <metaInfVaultDirectory>../src/main/META-INF/vault</metaInfVaultDirectory>
+                    <embeddeds>
+                        <embedded>
+                            <artifactId>accesscontroltool-bundle</artifactId>
+                        </embedded>
+                        <embedded>
+                            <artifactId>snakeyaml</artifactId>
+                        </embedded>
+                        <embedded>
+                            <artifactId>bcprov-jdk15on</artifactId>
+                        </embedded>
+                        <embedded>
+                            <artifactId>bcpkix-jdk15on</artifactId>
+                        </embedded>
+                    </embeddeds>
+                    <embeddedTarget>/apps/netcentric/actool/install</embeddedTarget>
+                    <subPackages>
+                        <subPackage>
+                            <artifactId>accesscontroltool-apps-package</artifactId>
+                        </subPackage>
+                        <subPackage>
+                            <artifactId>accesscontroltool-content-package</artifactId>
+                        </subPackage>
+                    </subPackages>
+                    <!-- is still mixed due to the contained content package -->
+                    <packageType>mixed</packageType>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>default-analyze-classes</id>
+                        <phase>invalid</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.day.jcr.vault</groupId>
+                <artifactId>content-package-maven-plugin</artifactId>
+                <configuration>
+                    <targetURL>http://${crx.host}:${crx.port}/crx/packmgr/service.jsp</targetURL>
+                </configuration>
+            </plugin>
+            
+        </plugins>
+    </build>
+
+</project>

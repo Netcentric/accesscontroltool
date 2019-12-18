@@ -32,12 +32,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
+import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
-import biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook;
 import biz.netcentric.cq.tools.actool.jmx.AceServiceMBeanImpl;
 import biz.netcentric.cq.tools.actool.webconsole.AcToolWebconsolePlugin;
 
 public class HistoryUtils {
+
+    private static final String AC_TOOL_STARTUPHOOK_CLASS = "biz.netcentric.cq.tools.actool.startuphook.impl.AcToolStartupHookServiceImpl";
 
     private static final Logger LOG = LoggerFactory.getLogger(HistoryUtils.class);
 
@@ -49,6 +51,7 @@ public class HistoryUtils {
     private static final String PROPERTY_SLING_RESOURCE_TYPE = "sling:resourceType";
     public static final String ACHISTORY_ROOT_NODE = "achistory";
     public static final String STATISTICS_ROOT_NODE = "var/statistics";
+    public static final String ACHISTORY_PATH = "/"+ HistoryUtils.STATISTICS_ROOT_NODE + "/" + HistoryUtils.ACHISTORY_ROOT_NODE;
 
     public static final String PROPERTY_TIMESTAMP = "timestamp";
     private static final String PROPERTY_MESSAGES = "messages";
@@ -94,10 +97,12 @@ public class HistoryUtils {
             name += "_via_jmx";
         } else if(isInStrackTracke(stackTrace, AcToolWebconsolePlugin.class)) {
             name += "_via_webconsole";
+        } else if(isInStrackTracke(stackTrace, AC_TOOL_STARTUPHOOK_CLASS)) {
+            name += "_via_startup_hook_at_start_level_"+RuntimeHelper.getCurrentStartLevel();
         } else {
             name += "_via_api";
         }
-        
+
         Node newHistoryNode = safeGetNode(acHistoryRootNode, name, NODETYPE_NT_UNSTRUCTURED);
         String path = newHistoryNode.getPath();
         setHistoryNodeProperties(newHistoryNode, installLog);
@@ -116,13 +121,17 @@ public class HistoryUtils {
                     previousHistoryNode.getName());
         }
 
-        installLog.addMessage(LOG, "Saved history in node: " + path);
+        // Explicitly not adding this to install log (as it has been saved already, regular log is sufficient)
+        LOG.info("Saved history in node: {}", path);
         return newHistoryNode;
     }
 
     private static boolean isInStrackTracke(StackTraceElement[] stackTrace, Class<?> classToSearch) {
+        return isInStrackTracke(stackTrace, classToSearch.getName());
+    }
+    private static boolean isInStrackTracke(StackTraceElement[] stackTrace, String classToSearch) {
         for (StackTraceElement stackTraceElement : stackTrace) {
-            if(classToSearch.getName().equals(stackTraceElement.getClassName())) { 
+            if(classToSearch.equals(stackTraceElement.getClassName())) { 
                 return true;
             }
         }

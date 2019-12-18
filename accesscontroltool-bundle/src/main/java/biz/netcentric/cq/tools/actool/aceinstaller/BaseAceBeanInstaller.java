@@ -39,6 +39,7 @@ import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.ContentHelper;
 import biz.netcentric.cq.tools.actool.helper.RestrictionsHolder;
+import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 /** Base Class */
@@ -57,10 +58,12 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
 
-        final Set<String> paths = pathBasedAceMapFromConfig.keySet();
+        Set<String> paths = pathBasedAceMapFromConfig.keySet();
 
         history.addVerboseMessage(LOG, "Found " + paths.size() + "  paths in config");
         LOG.trace("Paths with ACEs: {}", paths);
+        
+        paths = filterReadOnlyPaths(paths, history, session);
 
         if (intermediateSaves) {
             history.addMessage(LOG, "Will save ACL for each path to session due to configuration option intermediateSaves=true - "
@@ -69,7 +72,7 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
 
         // loop through all nodes from config
         for (final String path : paths) {
-
+            
             final Set<AceBean> aceBeanSetFromConfig = pathBasedAceMapFromConfig
                     .get(path); // Set which holds the AceBeans of the current path in configuration
 
@@ -109,6 +112,26 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
                 + history.getCountActionCacheHit() + "/" + history.getCountActionCacheMiss() + ")");
         history.addMessage(LOG, "*** Finished installation of " + paths.size() + " ACLs in "
                 + msHumanReadable(stopWatch.getTime()));
+    }
+
+    private Set<String> filterReadOnlyPaths(Set<String> paths, InstallationLogger history, Session session) {
+
+        boolean isCompositeNodeStore = RuntimeHelper.isCompositeNodeStore(session);
+        if (isCompositeNodeStore) {
+            Set<String> pathsToKeep = new TreeSet<String>();
+            Set<String> readOnlyPaths = new TreeSet<String>();
+            for (final String path : paths) {
+                if (path != null && (path.startsWith("/apps") || path.startsWith("/libs"))) {
+                    readOnlyPaths.add(path);
+                } else {
+                    pathsToKeep.add(path);
+                }
+            }
+            history.addMessage(LOG, "Ignoring " + readOnlyPaths.size() + " ACLs in /apps and /libs because they are ready-only (Composite NodeStore)");
+            return pathsToKeep;
+        } else {
+            return paths;
+        }
     }
 
     /** Installs a full set of ACE beans that form an ACL for the path

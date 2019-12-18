@@ -45,8 +45,12 @@ public interface AceServiceMBean {
     String applyRestrictedToPaths(@Name("configurationRootPath") @Description("The configuration root path") String configurationRootPath,
             @Name("paths") @Description("comma separated list of paths to apply the configuration to, other paths will be skipped") String restrictedToPaths);
 
-    @Description("Purges the AccessControlList of the given path, if existing")
+    @Description("Applies the ACE configuration if it has not changed")
+    public String applyRestrictedToPaths(@Name("configurationRootPath") @Description("The configuration root path") String configurationRootPath,
+            @Name("paths") @Description("comma separated list of paths to apply the configuration to, other paths will be skipped") String restrictedToPaths, 
+            @Name("skipIfConfigUnchanged") @Description("If true, will only apply config if it has changed") boolean skipIfConfigUnchanged);
 
+    @Description("Purges the AccessControlList of the given path, if existing")
     String purgeACL(@Name("path") final String path);
 
     @Description("Purges all AccessControlLists under the given path and its subpaths, if existing")
