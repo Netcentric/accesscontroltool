@@ -17,7 +17,7 @@
     <!-- P R O J E C T D E S C R I P T I O N -->
     <!-- ====================================================================== -->
 
-    <artifactId>accesscontroltool-cr-package</artifactId>
+    <artifactId>accesscontroltool-cloud-package</artifactId>
     <packaging>content-package</packaging>
     <name>Access Control Tool Package (Cloud Ready)</name>
     <description>Container package of the AC Tool containing the bundle, config, apps and content package.</description>
@@ -47,10 +47,10 @@
         </dependency>
     </dependencies>
     
-    <!-- NOTE 'Cr' in profile names (to install cloud ready instead of regular package) -->
+    <!-- NOTE 'Cloud' in profile names (to install cloud ready instead of regular package) -->
     <profiles>
         <profile>
-            <id>autoInstallCrPackage</id>
+            <id>autoInstallCloudPackage</id>
             <build>
                 <plugins>
                     <plugin>
@@ -70,7 +70,7 @@
             </build>
         </profile>
         <profile>
-            <id>autoInstallCrPackagePublish</id>
+            <id>autoInstallCloudPackagePublish</id>
             <build>
                 <plugins>
                     <plugin>

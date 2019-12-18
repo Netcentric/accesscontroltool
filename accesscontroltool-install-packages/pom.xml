@@ -29,7 +29,7 @@
     
     <modules>
         <module>accesscontroltool-package</module>
-        <module>accesscontroltool-cr-package</module>
+        <module>accesscontroltool-cloud-package</module>
     </modules>
 
     

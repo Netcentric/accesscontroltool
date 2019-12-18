@@ -53,7 +53,7 @@ public class AcConfigChangeTracker {
     private String createExecutionKey(Map<String, String> configFiles, String[] restrictedToPaths) {
         String restrictedToPathsKey = restrictedToPaths==null || restrictedToPaths.length==0 ? "ALL_PATHS" : StringUtils.join(restrictedToPaths, "+");
         String effectiveRootPathOfConfigs = StringUtils.getCommonPrefix(configFiles.keySet().toArray(new String[configFiles.size()]));
-        String executionKey = "hash("+StringUtils.removeEnd(effectiveRootPathOfConfigs, "/").replace('/', '\\') + ", " + restrictedToPathsKey.replace('/', '\\').replace(':', '_')+")";
+        String executionKey = "hash("+StringUtils.removeEnd(effectiveRootPathOfConfigs, "/").replace('/', '\\') + "," + restrictedToPathsKey.replace('/', '\\').replace(':', '_')+")";
         return executionKey;
     }
 
@@ -66,7 +66,7 @@ public class AcConfigChangeTracker {
         return md5(buf.toString());
     }
     
-    public String md5(String input) throws Exception {
+    private String md5(String input) throws Exception {
         MessageDigest md = MessageDigest.getInstance("MD5");
         byte[] hashInBytes = md.digest(input.getBytes(StandardCharsets.UTF_8));
 

@@ -37,9 +37,9 @@ import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
+import org.apache.sling.settings.SlingSettingsService;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.startlevel.FrameworkStartLevel;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -122,6 +122,9 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private AcConfigChangeTracker acConfigChangeTracker;
     
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    private SlingSettingsService slingSettingsService;
+    
     private String configuredAcConfigurationRootPath;
 
     private boolean intermediateSaves;
@@ -130,7 +133,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             description="Service that installs groups & ACEs according to textual configuration files",
             id = CONFIG_PID)
     protected static @interface Configuration {
-        @AttributeDefinition(name="Configuration path", description="JCR path where the AC Tool YAML configuration files are stored")
+        @AttributeDefinition(name="Configuration path", description="JCR root path where the AC Tool YAML configuration files are stored (directly in this folder and in sub folders that may contain a runmode)")
         String AceService_configurationPath() default "";
         
         @AttributeDefinition(name="Use intermediate saves", description="Saves ACLs for each path individually - this can be used to avoid problems with large changesets and MongoDB (OAK-5557), however the rollback is disabled then.")
@@ -252,8 +255,8 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             sw.start();
 
             installLog.addMessage(LOG, "*** Applying AC Tool Configuration using v" + getVersion() + "... ");
+            installLog.addMessage(LOG, "Running on "+slingSettingsService.getSlingId());
 
-            
             if (configurationFileContentsByFilename != null) {
 
                 installLog.setConfigFileContentsByName(configurationFileContentsByFilename);
@@ -373,7 +376,9 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         }
         boolean isRelevant = false;
         for (String restrictedToPath : restrictedToPaths) {
-            if (path.matches("^" + restrictedToPath + "(/.*|$)")) {
+            boolean isRegEx = StringUtils.containsAny(restrictedToPath, new char[] {'*', '^', '$', '+'});
+            String regexStr = isRegEx ? restrictedToPath : "^" + restrictedToPath + "(/.*|$)";
+            if (path.matches(regexStr)) {
                 isRelevant = true;
             }
         }

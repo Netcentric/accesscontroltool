@@ -10,6 +10,7 @@ package biz.netcentric.cq.tools.actool.startuphook.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import javax.jcr.Node;
@@ -33,12 +34,13 @@ import biz.netcentric.cq.tools.actool.api.AcInstallationService;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
 import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
-import biz.netcentric.cq.tools.actool.impl.AcConfigChangeTracker;
 
 @Component
 public class AcToolStartupHookServiceImpl {
     private static final Logger LOG = LoggerFactory.getLogger(AcToolStartupHookServiceImpl.class);
 
+    private static final String AC_ROOT_PATH_IN_APPS = "/apps/netcentric";
+    
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private AcInstallationService acInstallationService;
 
@@ -77,6 +79,10 @@ public class AcToolStartupHookServiceImpl {
 
             isCompositeNodeStore = RuntimeHelper.isCompositeNodeStore(session);
             LOG.info("Repo is running with Composite NodeStore: " + isCompositeNodeStore);
+            
+            if(!isCompositeNodeStore) {
+                return Collections.emptyList();
+            }
 
             NodeIterator nodes = session.getRootNode().getNodes();
             List<String> relevantPathsForInstallation = new ArrayList<>();
@@ -94,6 +100,12 @@ public class AcToolStartupHookServiceImpl {
                 }
                 relevantPathsForInstallation.add(node.getPath());
             }
+            
+            // also allow 
+            //    root path
+            relevantPathsForInstallation.add("^/$");
+            //    empty path (repo level restrictions)
+            relevantPathsForInstallation.add("^$");
 
             return relevantPathsForInstallation;
 
@@ -111,13 +123,12 @@ public class AcToolStartupHookServiceImpl {
 
         if (isCloudReady) {
             Session session = null;
-            String rootPathInApps = "/apps/netcentric";
             try {
                 session = repository.loginService(Constants.USER_AC_SERVICE, null);
                 Node acHistory = session.getNode(HistoryUtils.ACHISTORY_PATH);
 
                 if(isCompositeNodeStore) {
-                    String pathInApps = rootPathInApps + "/" + HistoryUtils.ACHISTORY_ROOT_NODE;
+                    String pathInApps = AC_ROOT_PATH_IN_APPS + "/" + HistoryUtils.ACHISTORY_ROOT_NODE;
                     if(session.nodeExists(pathInApps)) {
                         LOG.info("Copying history from apps {}", pathInApps);
                         NodeIterator nodesInAppsIt = session.getNode(pathInApps).getNodes();
@@ -126,14 +137,15 @@ public class AcToolStartupHookServiceImpl {
                             String historyNodeInVarPath = acHistory.getPath() + "/"+ historyNodeInApps.getName();
                             if(!session.nodeExists(historyNodeInVarPath)) {
                                 LOG.info(" Node {}", historyNodeInApps.getPath());
-                                RuntimeHelper.copyNode(historyNodeInApps, acHistory);
+                                session.getWorkspace().copy(historyNodeInApps.getPath(), historyNodeInVarPath);
                             }
                         }
                     }
                 } else {
-                    Node ncNodeInApps = session.getNode(rootPathInApps);
-                    LOG.info("Copying history from {} to  {}", acHistory.getPath(), ncNodeInApps.getPath());
-                    RuntimeHelper.copyNode(acHistory, ncNodeInApps);
+                    Node ncNodeInApps = session.getNode(AC_ROOT_PATH_IN_APPS);
+                    String targetPath = ncNodeInApps.getPath() + "/" + acHistory.getName();
+                    LOG.info("Copying history from {} to  {}", acHistory.getPath(), targetPath);
+                    session.getWorkspace().copy(acHistory.getPath(), targetPath);
                 }
 
                 session.save();

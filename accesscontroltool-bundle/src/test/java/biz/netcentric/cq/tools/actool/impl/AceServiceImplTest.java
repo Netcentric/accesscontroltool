@@ -44,6 +44,25 @@ public class AceServiceImplTest {
     }
 
     @Test
+    public void testIsRelevantPathWithRegEx() {
+
+        String[] restrictedToPaths = new String[] { "/content/site1", "^/$", "^$" };
+        
+        // regex (for repo level restrition)
+        assertTrue(aceServiceImpl.isRelevantPath("", restrictedToPaths));
+        // regex (for root only)
+        assertTrue(aceServiceImpl.isRelevantPath("/", restrictedToPaths));
+        
+        // other paths
+        assertTrue(aceServiceImpl.isRelevantPath("/content/site1", restrictedToPaths));
+        assertFalse(aceServiceImpl.isRelevantPath("/content/site1ButNotSameRoot", restrictedToPaths));
+        assertTrue(aceServiceImpl.isRelevantPath("/content/site1/page", restrictedToPaths));
+
+        assertFalse(aceServiceImpl.isRelevantPath("/content/site2", restrictedToPaths));
+
+    }
+    
+    @Test
     public void testCollectPrincipalsToBeMigrated() {
         AuthorizablesConfig authorizablesConfig = new AuthorizablesConfig();
 

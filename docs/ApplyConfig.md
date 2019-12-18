@@ -57,6 +57,9 @@ A Felix Web Console UI is available at "Main" -> "AC Tool". The web console prov
 
 See [JMX apply() method](Jmx.md).
 
+## Automatically during startup
+
+When using the composite node store [1] with immutable containers (and immutable /apps and /libs paths), the AC tool can be automatically triggered upon startup. To enable that trigger, use the package `accesscontroltool-cloud-package` instead of `accesscontroltool-package`.
 
 ### Curl calls
 

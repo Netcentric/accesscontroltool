@@ -39,8 +39,6 @@ import biz.netcentric.cq.tools.actool.webconsole.AcToolWebconsolePlugin;
 
 public class HistoryUtils {
 
-    private static final String AC_TOOL_STARTUPHOOK_CLASS = "biz.netcentric.cq.tools.actool.startuphook.impl.AcToolStartupHookServiceImpl";
-
     private static final Logger LOG = LoggerFactory.getLogger(HistoryUtils.class);
 
     public static final String LOG_FILE_NAME = "actool.log";
@@ -60,6 +58,8 @@ public class HistoryUtils {
     private static final String PROPERTY_INSTALLATION_DATE = "installationDate";
     public static final String PROPERTY_INSTALLED_FROM = "installedFrom";
 
+    private static final String AC_TOOL_STARTUPHOOK_CLASS = "biz.netcentric.cq.tools.actool.startuphook.impl.AcToolStartupHookServiceImpl";
+    private static final String BUNDLE_START_TASK_CLASS = "org.apache.sling.installer.core.impl.tasks.BundleStartTask";
 
     public static Node getAcHistoryRootNode(final Session session)
             throws RepositoryException {
@@ -98,7 +98,11 @@ public class HistoryUtils {
         } else if(isInStrackTracke(stackTrace, AcToolWebconsolePlugin.class)) {
             name += "_via_webconsole";
         } else if(isInStrackTracke(stackTrace, AC_TOOL_STARTUPHOOK_CLASS)) {
-            name += "_via_startup_hook_at_start_level_"+RuntimeHelper.getCurrentStartLevel();
+            if(isInStrackTracke(stackTrace, BUNDLE_START_TASK_CLASS)) {
+                name += "_via_pckmgr_installation_of_startup_hook";
+            } else {
+                name += "_via_startup_hook_at_start_level_"+RuntimeHelper.getCurrentStartLevel();
+            }
         } else {
             name += "_via_api";
         }
