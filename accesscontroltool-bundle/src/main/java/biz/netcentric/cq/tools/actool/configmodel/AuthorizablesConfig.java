@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /** User and group part of the AC Tool configuration (natural ordered set of AuthorizableConfigBeans). */
 public class AuthorizablesConfig extends LinkedHashSet<AuthorizableConfigBean> {

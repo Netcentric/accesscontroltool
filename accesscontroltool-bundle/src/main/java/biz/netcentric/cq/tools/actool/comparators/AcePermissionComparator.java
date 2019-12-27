@@ -10,7 +10,7 @@ package biz.netcentric.cq.tools.actool.comparators;
 
 import java.util.Comparator;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 

@@ -8,7 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.webconsole;
 
-import static org.apache.commons.lang.StringEscapeUtils.escapeHtml;
+import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -21,7 +21,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
@@ -192,7 +192,7 @@ public class AcToolWebconsolePlugin extends HttpServlet {
         writer.openTd();
         writer.print("<input type='text' name='" + PARAM_CONFIGURATION_ROOT_PATH + "' value='");
         if ( reqParams.configurationRootPath != null ) {
-            writer.print(escapeHtml(reqParams.configurationRootPath));
+            writer.print(escapeHtml4(reqParams.configurationRootPath));
         }
         writer.println("' class='input' size='70'>");
         writer.print("<input type='checkbox' name='" + PARAM_APPLY_ONLY_IF_CHANGED + "' value='true'"+(reqParams.applyOnlyIfChanged?" checked='checked'":"")+" /> apply only if config changed");
@@ -211,7 +211,7 @@ public class AcToolWebconsolePlugin extends HttpServlet {
         writer.openTd();
         writer.print("<input type='text' name='" + PARAM_BASE_PATHS + "' value='");
         if ( reqParams.basePaths != null ) {
-            writer.print(escapeHtml(StringUtils.join(reqParams.basePaths, ",")));
+            writer.print(escapeHtml4(StringUtils.join(reqParams.basePaths, ",")));
         }
         writer.println("' class='input' size='70'>");
         writer.closeTd();
@@ -335,7 +335,7 @@ public class AcToolWebconsolePlugin extends HttpServlet {
 
         void td(final String label, int colspan) {
             openTd(colspan);
-            pw.print(escapeHtml(label));
+            pw.print(escapeHtml4(label));
             closeTd();
         }
     
@@ -353,7 +353,7 @@ public class AcToolWebconsolePlugin extends HttpServlet {
         void tableHeader(String title, int colspan, boolean escape) {
             tr();
             pw.print("<th class='content container' colspan='"+colspan+"'>");
-            pw.print(escape ? escapeHtml(title): title);
+            pw.print(escape ? escapeHtml4(title): title);
             pw.println("</th>");
             closeTr();
         }

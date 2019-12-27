@@ -27,8 +27,8 @@ import javax.el.MapELResolver;
 import javax.el.ValueExpression;
 import javax.el.VariableMapper;
 
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.el.ExpressionFactoryImpl;
 
 /** Evaluates expressions that may contain variables from for loops.
@@ -103,12 +103,12 @@ public class YamlMacroElEvaluator {
                         StringUtils.class.getMethod("substringBefore", new Class<?>[] { String.class, String.class }),
                         StringUtils.class.getMethod("substringAfterLast", new Class<?>[] { String.class, String.class }),
                         StringUtils.class.getMethod("substringBeforeLast", new Class<?>[] { String.class, String.class }),
-                        StringUtils.class.getMethod("contains", new Class<?>[] { String.class, String.class }),
-                        StringUtils.class.getMethod("endsWith", new Class<?>[] { String.class, String.class }),
-                        StringUtils.class.getMethod("startsWith", new Class<?>[] { String.class, String.class }),
+                        StringUtils.class.getMethod("contains", new Class<?>[] { CharSequence.class, CharSequence.class }),
+                        StringUtils.class.getMethod("endsWith", new Class<?>[] { CharSequence.class, CharSequence.class }),
+                        StringUtils.class.getMethod("startsWith", new Class<?>[] { CharSequence.class, CharSequence.class }),
                         StringUtils.class.getMethod("replace", new Class<?>[] { String.class, String.class, String.class }),
-                        StringUtils.class.getMethod("length", new Class<?>[] { String.class }),
-                        StringUtils.class.getMethod("defaultIfEmpty", new Class<?>[] { String.class, String.class }),
+                        StringUtils.class.getMethod("length", new Class<?>[] { CharSequence.class }),
+                        StringUtils.class.getMethod("defaultIfEmpty", new Class<?>[] { CharSequence.class, CharSequence.class }),
 
                         YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("containsItem", new Class<?>[] { List.class, String.class })
                        
