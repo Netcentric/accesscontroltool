@@ -158,7 +158,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             }
         }
 
-        LOG.info("Activated AC Tool at start level "+RuntimeHelper.getCurrentStartLevel(bundleContext));
+        LOG.info("Activated AC Tool at start level "+RuntimeHelper.getCurrentStartLevel(bundleContext) + " default config path: "+configuredAcConfigurationRootPath);
 
     }
 

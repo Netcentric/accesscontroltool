@@ -1,15 +1,9 @@
 package biz.netcentric.cq.tools.actool.helper.runtime;
 
-import java.util.Set;
-
 import javax.jcr.Node;
-import javax.jcr.NodeIterator;
-import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.apache.sling.settings.SlingSettingsService;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.FrameworkUtil;
@@ -21,7 +15,7 @@ import org.slf4j.LoggerFactory;
 public class RuntimeHelper {
     public static final Logger LOG = LoggerFactory.getLogger(RuntimeHelper.class);
 
-    private static final String RUNMODE_CLOUD_READY = "cloud-ready";
+    private static final String INSTALLER_CORE_BUNDLE_SYMBOLIC_ID = "org.apache.sling.installer.core";
 
     public static boolean isCompositeNodeStore(Session session) {
         
@@ -53,11 +47,17 @@ public class RuntimeHelper {
         return bundleContext.getBundle(Constants.SYSTEM_BUNDLE_ID).adapt(FrameworkStartLevel.class).getStartLevel();
     }
     
-    public static boolean isCloudReadyInstance(SlingSettingsService settingsService) {
-        Set<String> runModes = settingsService.getRunModes();
-        boolean isCloudReady = runModes.contains(RUNMODE_CLOUD_READY);
-        return isCloudReady;
+    public static boolean isCloudReadyInstance() {
+        
+        boolean isCloudReadyInstance = true;
+        Bundle[] bundles = FrameworkUtil.getBundle(RuntimeHelper.class).getBundleContext().getBundles();
+        for (Bundle bundle : bundles) {
+            if(INSTALLER_CORE_BUNDLE_SYMBOLIC_ID.equals(bundle.getSymbolicName())) {
+                isCloudReadyInstance = false;
+                break;
+            }
+        }
+        return isCloudReadyInstance;
     }
-    
 
 }

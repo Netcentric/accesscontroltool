@@ -89,7 +89,7 @@
         <module>accesscontroltool-startuphook-bundle</module>
         <module>accesscontroltool-apps-package</module>
         <module>accesscontroltool-content-package</module>
-        <module>accesscontroltool-install-packages</module>
+        <module>accesscontroltool-package</module>
         <module>accesscontroltool-oakindex-package</module>
         <module>accesscontroltool-exampleconfig-package</module>
     </modules>

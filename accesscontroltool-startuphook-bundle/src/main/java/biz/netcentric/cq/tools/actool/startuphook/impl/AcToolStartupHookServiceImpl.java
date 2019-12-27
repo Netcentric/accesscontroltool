@@ -27,6 +27,9 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.Designate;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,10 +39,21 @@ import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
 import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
 
 @Component
+@Designate(ocd=AcToolStartupHookServiceImpl.Config.class)
 public class AcToolStartupHookServiceImpl {
     private static final Logger LOG = LoggerFactory.getLogger(AcToolStartupHookServiceImpl.class);
 
     private static final String AC_ROOT_PATH_IN_APPS = "/apps/netcentric";
+
+    @ObjectClassDefinition(name = "AC Tool Startup Hook", description = "Applies AC Tool config automatically upon startup (depending on configuration/runtime)")
+    public static @interface Config {
+        public enum StartupHookActivation {
+            ALWAYS, CLOUD_ONLY, NEVER;
+        }
+
+        @AttributeDefinition(name = "Activation Mode", description = "Apply on startup - CLOUD_ONLY autodetects the cloud (by missing OSGi installer bundle) and only runs on startup if deployed in the cloud. ALWAYS can be useful for local testing. NEVER disables AC Tool runs on startup entirely.")
+        StartupHookActivation activationMode() default StartupHookActivation.CLOUD_ONLY;
+    }
     
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private AcInstallationService acInstallationService;
@@ -53,23 +67,39 @@ public class AcToolStartupHookServiceImpl {
     private boolean isCompositeNodeStore;
 
     @Activate
-    public void activate( BundleContext bundleContext) {
+    public void activate(BundleContext bundleContext, Config config) {
 
-        LOG.info("Running AcTool Startup Hook (start level: {} runmodes: {})", RuntimeHelper.getCurrentStartLevel(bundleContext),
+        boolean isCloudReady = RuntimeHelper.isCloudReadyInstance();
+        Config.StartupHookActivation activationMode = config.activationMode();
+        LOG.info("AcTool Startup Hook (start level: {}  isCloudReady: {}  activationMode: {}  runmodes: {})", 
+                RuntimeHelper.getCurrentStartLevel(bundleContext),
+                isCloudReady,
+                activationMode,
                 settingsService.getRunModes());
 
-        try {
-            List<String> relevantPathsForInstallation = getRelevantPathsForInstallation();
-            LOG.info("Relevant paths for installation: " + relevantPathsForInstallation);
+        boolean applyOnStartup = (activationMode == Config.StartupHookActivation.ALWAYS) 
+                || (isCloudReady && activationMode == Config.StartupHookActivation.CLOUD_ONLY);
 
-            acInstallationService.apply(null, relevantPathsForInstallation.toArray(new String[relevantPathsForInstallation.size()]), true);
-            LOG.info("AC Tool done. (start level " + RuntimeHelper.getCurrentStartLevel(bundleContext) + ")");
+        if(applyOnStartup) {
+            
+            try {
 
-        } catch (RepositoryException e) {
-            LOG.error("Exception while triggering AC Tool on startup: " + e, e);
+                List<String> relevantPathsForInstallation = getRelevantPathsForInstallation();
+                LOG.info("Running AcTool with "
+                        + (relevantPathsForInstallation.isEmpty() ? "all paths" : "paths " + relevantPathsForInstallation) + "...");
+                acInstallationService.apply(null, relevantPathsForInstallation.toArray(new String[relevantPathsForInstallation.size()]),
+                        true);
+                LOG.info("AC Tool Startup Hook done. (start level " + RuntimeHelper.getCurrentStartLevel(bundleContext) + ")");
+
+                copyAcHistoryToOrFromApps(isCloudReady);
+
+            } catch (RepositoryException e) {
+                LOG.error("Exception while triggering AC Tool on startup: " + e, e);
+            }
+        } else {
+            LOG.debug("Skipping AcTool Startup Hook: activationMode: {} isCloudReady: {}", activationMode, isCloudReady);
         }
 
-        copyAcHistoryToApps();
     }
 
     private List<String> getRelevantPathsForInstallation() throws RepositoryException {
@@ -116,36 +146,32 @@ public class AcToolStartupHookServiceImpl {
         }
     }
 
-    private void copyAcHistoryToApps() {
+    private void copyAcHistoryToOrFromApps(boolean isCloudReady) {
 
-        boolean isCloudReady = RuntimeHelper.isCloudReadyInstance(settingsService);
-        LOG.info("copyAcHistoryToApps(): isCloudReady: {} isCompositeNodeStore: {}, runmodes: {}", isCloudReady, isCompositeNodeStore, settingsService.getRunModes());
-
-        if (isCloudReady) {
+        if(isCloudReady) {
             Session session = null;
             try {
                 session = repository.loginService(Constants.USER_AC_SERVICE, null);
-                Node acHistory = session.getNode(HistoryUtils.ACHISTORY_PATH);
 
                 if(isCompositeNodeStore) {
+                    LOG.info("Restoring history from /apps to /var");
                     String pathInApps = AC_ROOT_PATH_IN_APPS + "/" + HistoryUtils.ACHISTORY_ROOT_NODE;
                     if(session.nodeExists(pathInApps)) {
-                        LOG.info("Copying history from apps {}", pathInApps);
                         NodeIterator nodesInAppsIt = session.getNode(pathInApps).getNodes();
                         while(nodesInAppsIt.hasNext()) {
                             Node historyNodeInApps = nodesInAppsIt.nextNode();
-                            String historyNodeInVarPath = acHistory.getPath() + "/"+ historyNodeInApps.getName();
+                            String historyNodeInVarPath = HistoryUtils.ACHISTORY_PATH + "/"+ historyNodeInApps.getName();
                             if(!session.nodeExists(historyNodeInVarPath)) {
-                                LOG.info(" Node {}", historyNodeInApps.getPath());
+                                LOG.info("   restoring history node {} to {}", historyNodeInApps.getPath(), historyNodeInVarPath);
                                 session.getWorkspace().copy(historyNodeInApps.getPath(), historyNodeInVarPath);
                             }
                         }
                     }
                 } else {
-                    Node ncNodeInApps = session.getNode(AC_ROOT_PATH_IN_APPS);
-                    String targetPath = ncNodeInApps.getPath() + "/" + acHistory.getName();
-                    LOG.info("Copying history from {} to  {}", acHistory.getPath(), targetPath);
-                    session.getWorkspace().copy(acHistory.getPath(), targetPath);
+                    LOG.info("Saving history in /apps (to make it accessible later when running in composite node store)");
+                    String targetPath = AC_ROOT_PATH_IN_APPS + "/" + HistoryUtils.ACHISTORY_ROOT_NODE;
+                    LOG.info("   copying node {} to {}", HistoryUtils.ACHISTORY_PATH, targetPath);
+                    session.getWorkspace().copy(HistoryUtils.ACHISTORY_PATH, targetPath);
                 }
 
                 session.save();
@@ -157,6 +183,7 @@ public class AcToolStartupHookServiceImpl {
                 }
             }
         }
+
     }
 
 }
