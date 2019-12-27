@@ -10,7 +10,9 @@ package biz.netcentric.cq.tools.actool.history.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.LinkedHashSet;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -33,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
 import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
+import biz.netcentric.cq.tools.actool.history.AcToolExecution;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.jmx.AceServiceMBeanImpl;
 import biz.netcentric.cq.tools.actool.webconsole.AcToolWebconsolePlugin;
@@ -57,6 +60,7 @@ public class HistoryUtils {
     public static final String PROPERTY_SUCCESS = "success";
     private static final String PROPERTY_INSTALLATION_DATE = "installationDate";
     public static final String PROPERTY_INSTALLED_FROM = "installedFrom";
+    public static final String PROPERTY_STARTLEVEL = "startlevel";
 
     private static final String AC_TOOL_STARTUPHOOK_CLASS = "biz.netcentric.cq.tools.actool.startuphook.impl.AcToolStartupHookServiceImpl";
     private static final String BUNDLE_START_TASK_CLASS = "org.apache.sling.installer.core.impl.tasks.BundleStartTask";
@@ -64,10 +68,8 @@ public class HistoryUtils {
     public static Node getAcHistoryRootNode(final Session session)
             throws RepositoryException {
         final Node rootNode = session.getRootNode();
-        Node statisticsRootNode = safeGetNode(rootNode, STATISTICS_ROOT_NODE,
-                NODETYPE_NT_UNSTRUCTURED);
-        Node acHistoryRootNode = safeGetNode(statisticsRootNode,
-                ACHISTORY_ROOT_NODE, "sling:OrderedFolder");
+        Node statisticsRootNode = safeGetNode(rootNode, STATISTICS_ROOT_NODE, NODETYPE_NT_UNSTRUCTURED);
+        Node acHistoryRootNode = safeGetNode(statisticsRootNode, ACHISTORY_ROOT_NODE, "sling:OrderedFolder");
         return acHistoryRootNode;
     }
 
@@ -92,19 +94,19 @@ public class HistoryUtils {
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         
         if (StringUtils.isNotBlank(installLog.getCrxPackageName())) {
-            name += "_via_hook_in_" + installLog.getCrxPackageName();
+            name += AcToolExecutionImpl.TRIGGER_SEPARATOR_IN_NODE_NAME+ "hook_in_" + installLog.getCrxPackageName();
         } else if(isInStrackTracke(stackTrace, AceServiceMBeanImpl.class)) {
-            name += "_via_jmx";
+            name += AcToolExecutionImpl.TRIGGER_SEPARATOR_IN_NODE_NAME+ "jmx";
         } else if(isInStrackTracke(stackTrace, AcToolWebconsolePlugin.class)) {
-            name += "_via_webconsole";
+            name += AcToolExecutionImpl.TRIGGER_SEPARATOR_IN_NODE_NAME+ "webconsole";
         } else if(isInStrackTracke(stackTrace, AC_TOOL_STARTUPHOOK_CLASS)) {
             if(isInStrackTracke(stackTrace, BUNDLE_START_TASK_CLASS)) {
-                name += "_via_pckmgr_installation_of_startup_hook";
+                name += AcToolExecutionImpl.TRIGGER_SEPARATOR_IN_NODE_NAME+ "startup_hook_pckmgr)";
             } else {
-                name += "_via_startup_hook_at_start_level_"+RuntimeHelper.getCurrentStartLevel();
+                name += AcToolExecutionImpl.TRIGGER_SEPARATOR_IN_NODE_NAME+ "startup_hook";
             }
         } else {
-            name += "_via_api";
+            name += AcToolExecutionImpl.TRIGGER_SEPARATOR_IN_NODE_NAME+ "api";
         }
 
         Node newHistoryNode = safeGetNode(acHistoryRootNode, name, NODETYPE_NT_UNSTRUCTURED);
@@ -161,13 +163,11 @@ public class HistoryUtils {
         historyNode.setProperty(PROPERTY_INSTALLATION_DATE, installLog
                 .getInstallationDate().toString());
         historyNode.setProperty(PROPERTY_SUCCESS, installLog.isSuccess());
-        historyNode.setProperty(PROPERTY_EXECUTION_TIME,
-                installLog.getExecutionTime());
-
-        historyNode.setProperty(PROPERTY_TIMESTAMP, installLog
-                .getInstallationDate().getTime());
-        historyNode.setProperty(PROPERTY_SLING_RESOURCE_TYPE,
-                "/apps/netcentric/actool/components/historyRenderer");
+        historyNode.setProperty(PROPERTY_EXECUTION_TIME, installLog.getExecutionTime());
+        historyNode.setProperty(PROPERTY_STARTLEVEL, RuntimeHelper.getCurrentStartLevel());
+        
+        historyNode.setProperty(PROPERTY_TIMESTAMP, installLog.getInstallationDate().getTime());
+        historyNode.setProperty(PROPERTY_SLING_RESOURCE_TYPE, "/apps/netcentric/actool/components/historyRenderer");
 
         Map<String, String> configFileContentsByName = installLog.getConfigFileContentsByName();
         if (configFileContentsByName != null) {
@@ -224,28 +224,24 @@ public class HistoryUtils {
      * @throws RepositoryException
      * @throws PathNotFoundException
      */
-    static String[] getHistoryInfos(final Session session)
+    static List<AcToolExecution> getAcToolExecutions(final Session session)
             throws RepositoryException, PathNotFoundException {
         Node acHistoryRootNode = getAcHistoryRootNode(session);
-        Set<String> messages = new LinkedHashSet<String>();
-        int cnt = 1;
-        for (NodeIterator iterator = acHistoryRootNode.getNodes(); iterator
-                .hasNext();) {
+        
+        Set<AcToolExecution> historyInfos = new TreeSet<>();
+
+        for (NodeIterator iterator = acHistoryRootNode.getNodes(); iterator.hasNext();) {
             Node node = (Node) iterator.next();
-            if (node != null && node.getName().startsWith("history_")) {
-                String successStatusString = "failed";
-                if (node.getProperty(PROPERTY_SUCCESS).getBoolean()) {
-                    successStatusString = "ok";
-                }
-                String installationDate = node.getProperty(
-                        PROPERTY_INSTALLATION_DATE).getString();
-                messages.add(cnt + ". " + node.getPath() + " " + "" + "("
-                        + installationDate + ")" + "(" + successStatusString
-                        + ")");
+
+            if (node != null && node.getName().startsWith(HISTORY_NODE_NAME_PREFIX)) {
+
+                historyInfos.add(new AcToolExecutionImpl(node.getPath(), 
+                        new Date(node.getProperty(PROPERTY_TIMESTAMP).getLong())
+                        , node.getProperty(PROPERTY_SUCCESS).getBoolean()));
             }
-            cnt++;
+
         }
-        return messages.toArray(new String[messages.size()]);
+        return new ArrayList<>(historyInfos);
     }
 
     public static String getLogTxt(final Session session, final String path, boolean includeVerbose) {
@@ -265,8 +261,8 @@ public class HistoryUtils {
 
         StringBuilder sb = new StringBuilder();
         try {
-            Node acHistoryRootNode = getAcHistoryRootNode(session);
-            Node historyNode = acHistoryRootNode.getNode(path);
+
+            Node historyNode = path.startsWith("/") ? session.getNode(path) : getAcHistoryRootNode(session).getNode(path);
 
             if (historyNode != null) {
                 sb.append("Installation triggered: "

@@ -12,6 +12,7 @@ import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,6 +32,7 @@ import biz.netcentric.cq.tools.actool.api.AcInstallationService;
 import biz.netcentric.cq.tools.actool.api.InstallationLog;
 import biz.netcentric.cq.tools.actool.dumpservice.ConfigDumpService;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
+import biz.netcentric.cq.tools.actool.history.AcToolExecution;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl;
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceInternal;
@@ -103,14 +105,14 @@ public class AcToolWebconsolePlugin extends HttpServlet {
     }
 
     private void printInstallationLogsSection(PrintWriter out, RequestParameters reqParams) {
-        String[] installationLogPaths = acHistoryService.getInstallationLogPaths();
         
+        List<AcToolExecution> acToolExecutions = acHistoryService.getAcToolExecutions();
 
         final HtmlWriter writer = new HtmlWriter(out);
         writer.openTable();
         writer.tableHeader("Previous Logs", 1);
 
-        if(installationLogPaths==null) {
+        if(acToolExecutions.isEmpty()) {
             writer.tr();
             writer.td("No logs found on this instance (yet)");
             writer.closeTr();
@@ -118,26 +120,26 @@ public class AcToolWebconsolePlugin extends HttpServlet {
             return;
         }
         
-        for (int i=0; i<installationLogPaths.length; i++) {
-            String installationLogPath = installationLogPaths[i];
-            String logLabel = StringUtils.substringAfterLast(installationLogPath, "/");
-            String linkToLog = LABEL+"?showLogNo="+(i+1);
+        for (int i=1; i <= acToolExecutions.size(); i++) {
+            AcToolExecution acToolExecution = acToolExecutions.get(i-1);
+            String logLabel = getExecutionLabel(acToolExecution);
+            String linkToLog = LABEL+"?showLogNo="+i;
             writer.tr();
             writer.openTd();
-            writer.println(markFailureRed(logLabel)+" [<a href='"+linkToLog+"'>short</a>] [<a href='"+linkToLog+"&showLogVerbose=true'>verbose</a>]");
+            writer.println(logLabel+" [<a href='"+linkToLog+"'>short</a>] [<a href='"+linkToLog+"&showLogVerbose=true'>verbose</a>]");
             writer.closeTd();
             writer.closeTr();
         }
         writer.closeTable();
         
-        if(reqParams.showLogNo > 0 && reqParams.showLogNo <= installationLogPaths.length) {
+        if(reqParams.showLogNo > 0 && reqParams.showLogNo <= acToolExecutions.size()) {
             
-            String installationLogPath = installationLogPaths[reqParams.showLogNo-1];
-            String logLabel = StringUtils.substringAfterLast(installationLogPath, "/");
+            AcToolExecution acToolExecution = acToolExecutions.get(reqParams.showLogNo-1);
+            String logLabel = getExecutionLabel(acToolExecution);
             String logHtml = acHistoryService.getLogFromHistory(reqParams.showLogNo, true, reqParams.showLogVerbose);
             
             writer.openTable();
-            writer.tableHeader("Log of "+markFailureRed(logLabel), 1, false);
+            writer.tableHeader(logLabel, 1, false);
             writer.tr();
             writer.openTd();
             writer.println(logHtml);
@@ -148,9 +150,16 @@ public class AcToolWebconsolePlugin extends HttpServlet {
 
     }
 
+    private String getExecutionLabel(AcToolExecution acToolExecution) {
+        return getDateFormat().format(acToolExecution.getInstallationDate()) + " via "+ acToolExecution.getTrigger() + ": "+getExecutionStatusHtml(acToolExecution);
+    }
 
-    private String markFailureRed(String logLabel) {
-        return logLabel.replace("(failed)", "<span style='color:red'>(failed)</span>");
+    private SimpleDateFormat getDateFormat() {
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    }
+
+    private String getExecutionStatusHtml(AcToolExecution acToolExecution) {
+        return acToolExecution.isSuccess() ? "SUCCESS": "<span style='color:red;font-weight: bold;'>FAILED</span>";
     }
 
     @Override

@@ -8,13 +8,19 @@
  */
 package biz.netcentric.cq.tools.actool.history;
 
+import java.util.List;
+
 public interface AcHistoryService {
 
     public void persistHistory(PersistableInstallationLogger history);
 
     public void persistAcePurgeHistory(PersistableInstallationLogger history);
 
-    public String[] getInstallationLogPaths();
+    /**
+     * Returns history items of previous runs
+     * @return Set of AcToolExecutions
+     */
+    public List<AcToolExecution> getAcToolExecutions();
 
     public String getLastInstallationHistory();
 
@@ -22,4 +28,10 @@ public interface AcHistoryService {
 
     public boolean wasLastPersistHistoryCallSuccessful();
 
+    /**
+     * @deprecated Use {@link #getAcToolExecutions()} instead
+     * @return
+     */
+    public String[] getInstallationLogPaths();
+    
 }

@@ -10,6 +10,9 @@ package biz.netcentric.cq.tools.actool.history;
 
 import java.sql.Timestamp;
 
+/**
+ * Represents one log line of an execution of the AC Tool.
+ */
 public class HistoryEntry {
 
     private Timestamp timestamp;
@@ -52,7 +55,6 @@ public class HistoryEntry {
 		return "HistoryEntry [timestamp=" + timestamp + ", message=" + message
 				+ ", index=" + index + "]";
 	}
-    
-    
+
 
 }
