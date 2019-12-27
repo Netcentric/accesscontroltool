@@ -55,7 +55,7 @@ public class UploadListenerServiceImpl implements UploadListenerService, EventHa
 
     private ServiceRegistration eventHandlerServiceRegistration;
 
-    @ObjectClassDefinition(name = "AC Configuration Upload Listener Service", 
+    @ObjectClassDefinition(name = "AC Tool Configuration Upload Listener Service", 
             description="Listens for ACL configuration uploads and triggers ACL Service.",
             id="biz.netcentric.cq.tools.actool.configuploadlistener.impl.UploadListenerServiceImpl")
     protected static @interface Configuration {

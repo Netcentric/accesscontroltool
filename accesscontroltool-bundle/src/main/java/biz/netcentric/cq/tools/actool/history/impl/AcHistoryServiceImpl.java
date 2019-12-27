@@ -55,7 +55,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
 
-    @ObjectClassDefinition(name = "AC History Service", 
+    @ObjectClassDefinition(name = "AC Tool History Service", 
             description="Service that writes & fetches Ac installation histories.",
             id="biz.netcentric.cq.tools.actool.history.impl.AcHistoryServiceImpl")
     protected static @interface Configuration {

@@ -110,7 +110,7 @@ public class DumpServiceImpl implements ConfigDumpService {
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
 
-    @ObjectClassDefinition(name = "AC Dump Service", 
+    @ObjectClassDefinition(name = "AC Tool Dump Service", 
             description="Service that creates dumps of the current AC configurations (groups&ACEs)",
             id="biz.netcentric.cq.tools.actool.dumpservice.impl.DumpServiceImpl")
     protected static @interface Configuration {

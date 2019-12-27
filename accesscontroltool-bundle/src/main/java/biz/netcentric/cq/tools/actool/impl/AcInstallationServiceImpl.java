@@ -22,6 +22,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.RepositoryException;
@@ -30,6 +32,7 @@ import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.jackrabbit.api.security.user.Authorizable;
@@ -129,7 +132,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
     private boolean intermediateSaves;
     
-    @ObjectClassDefinition(name = "AC Installation Service", 
+    @ObjectClassDefinition(name = "AC Tool Installation Service", 
             description="Service that installs groups & ACEs according to textual configuration files",
             id = CONFIG_PID)
     protected static @interface Configuration {
@@ -255,8 +258,8 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             StopWatch sw = new StopWatch();
             sw.start();
 
-            installLog.addMessage(LOG, "*** Applying AC Tool Configuration using v" + getVersion() + "... ");
-            installLog.addMessage(LOG, "Running on "+slingSettingsService.getSlingId());
+            installLog.addMessage(LOG, "*** Applying AC Tool Configuration...");
+            installLog.addMessage(LOG, "Running with v" + getVersion() + " on instance id "+slingSettingsService.getSlingId() + (!ArrayUtils.isEmpty(restrictedToPaths) ? " with restricted paths: "+Arrays.asList(restrictedToPaths) : ""));
 
             if (configurationFileContentsByFilename != null) {
 

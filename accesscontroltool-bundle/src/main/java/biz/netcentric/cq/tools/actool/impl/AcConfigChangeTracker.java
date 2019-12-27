@@ -12,6 +12,7 @@ import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
 import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
 
 /**
@@ -23,7 +24,8 @@ public class AcConfigChangeTracker {
 
     public boolean configIsUnchangedComparedToLastExecution(Map<String, String> configFiles, String[] restrictedToPaths, Session session) {
         
-        String executionKey = createExecutionKey(configFiles, restrictedToPaths);
+
+        String executionKey = createExecutionKey(configFiles, restrictedToPaths, session);
 
         try {
             String hashOfConfigFilesThisExecution = createHashOverConfigFiles(configFiles);
@@ -50,11 +52,16 @@ public class AcConfigChangeTracker {
         return false;
     }
 
-    private String createExecutionKey(Map<String, String> configFiles, String[] restrictedToPaths) {
-        String restrictedToPathsKey = restrictedToPaths==null || restrictedToPaths.length==0 ? "ALL_PATHS" : StringUtils.join(restrictedToPaths, "+");
-        String effectiveRootPathOfConfigs = StringUtils.getCommonPrefix(configFiles.keySet().toArray(new String[configFiles.size()]));
-        String executionKey = "hash("+StringUtils.removeEnd(effectiveRootPathOfConfigs, "/").replace('/', '\\') + "," + restrictedToPathsKey.replace('/', '\\').replace(':', '_')+")";
+    private String createExecutionKey(Map<String, String> configFiles, String[] restrictedToPaths, Session session) {
+        boolean isCompositeNodeStore= RuntimeHelper.isCompositeNodeStore(session);
+        String restrictedToPathsKey = restrictedToPaths==null || restrictedToPaths.length==0 ? "ALL_PATHS" : StringUtils.join(restrictedToPaths, "+").replace("$", "").replace("^", "");
+        String effectiveRootPathOfConfigs = getEffectiveConfigRootPath(configFiles);
+        String executionKey = "hash("+StringUtils.removeEnd(effectiveRootPathOfConfigs, "/").replace('/', '\\') + "," + restrictedToPathsKey.replace('/', '\\').replace(':', '_')+","+(isCompositeNodeStore?"compNodeStore":"stdRepo")+")";
         return executionKey;
+    }
+
+    static String getEffectiveConfigRootPath(Map<String, String> configFiles) {
+        return StringUtils.getCommonPrefix(configFiles.keySet().toArray(new String[configFiles.size()]));
     }
 
     private String createHashOverConfigFiles(Map<String, String> configFiles) throws Exception {
