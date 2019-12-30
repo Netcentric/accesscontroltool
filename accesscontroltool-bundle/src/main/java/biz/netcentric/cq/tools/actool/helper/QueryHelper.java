@@ -31,8 +31,8 @@ import javax.jcr.query.QueryResult;
 import javax.jcr.security.AccessControlList;
 import javax.jcr.security.AccessControlManager;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.time.StopWatch;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

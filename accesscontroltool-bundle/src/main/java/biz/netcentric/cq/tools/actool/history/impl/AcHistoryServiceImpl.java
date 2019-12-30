@@ -10,6 +10,9 @@ package biz.netcentric.cq.tools.actool.history.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -19,7 +22,7 @@ import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.commons.JcrUtils;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.annotations.Activate;
@@ -37,6 +40,7 @@ import com.day.cq.commons.jcr.JcrConstants;
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
+import biz.netcentric.cq.tools.actool.history.AcToolExecution;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.history.impl.AcHistoryServiceImpl.Configuration;
 
@@ -55,15 +59,14 @@ public class AcHistoryServiceImpl implements AcHistoryService {
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
 
-    @ObjectClassDefinition(name = "AC History Service", 
+    @ObjectClassDefinition(name = "AC Tool History Service", 
             description="Service that writes & fetches Ac installation histories.",
             id="biz.netcentric.cq.tools.actool.history.impl.AcHistoryServiceImpl")
     protected static @interface Configuration {
         @AttributeDefinition(name="ACL number of histories to save")
-        int AceService_nrOfSavedHistories() default 5;
+        int AceService_nrOfSavedHistories() default 7;
     }
 
-    
     @Activate
     public void activate(Configuration configuration)
             throws Exception {
@@ -108,18 +111,37 @@ public class AcHistoryServiceImpl implements AcHistoryService {
 
     @Override
     public String[] getInstallationLogPaths() {
+        
+        List<AcToolExecution> historyItems = getAcToolExecutions();
+        
+        String[] result = new String[historyItems.size()];
+        int count = 0;
+        Iterator<AcToolExecution> historyItemsIt = historyItems.iterator();
+        while(historyItemsIt.hasNext()) {
+            count++;
+            result[count-1] = count + ". "+historyItemsIt.next().toString();
+        }
+        return result;
+
+    }
+
+    @Override
+    public List<AcToolExecution> getAcToolExecutions() {
+        
         Session session = null;
         try {
             session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            return HistoryUtils.getHistoryInfos(session);
+            List<AcToolExecution> historyItems = HistoryUtils.getAcToolExecutions(session);
+            return historyItems;
+            
         } catch (RepositoryException e) {
-            LOG.error("RepositoryException: ", e);
+            LOG.error("Could not get history items: "+e, e);
+            return Collections.<AcToolExecution>emptyList();
         } finally {
             if (session != null) {
                 session.logout();
             }
         }
-        return null;
     }
 
     private String getLogHtml(Session session, String path, boolean includeVerbose) {
@@ -194,18 +216,13 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         try {
             session = repository.loginService(Constants.USER_AC_SERVICE, null);
 
-            Node statisticsRootNode = HistoryUtils.getAcHistoryRootNode(session);
-            NodeIterator it = statisticsRootNode.getNodes();
-            int cnt = 1;
-
-            while (it.hasNext()) {
-                Node historyNode = it.nextNode();
-
-                if ((historyNode != null) && (cnt == n)) {
-                    history = inHtmlFormat ? getLogHtml(session, historyNode.getName(), includeVerbose) : getLogTxt(session, historyNode.getName(), includeVerbose);
-                }
-                cnt++;
+            List<AcToolExecution> acToolExecutions = HistoryUtils.getAcToolExecutions(session);
+            if(n <= acToolExecutions.size()) {
+                AcToolExecution acToolExecution =  acToolExecutions.get(n-1);
+                String path = acToolExecution.getLogsPath();
+                history = inHtmlFormat ? getLogHtml(session, path, includeVerbose) : getLogTxt(session, path, includeVerbose);
             }
+
         } catch (RepositoryException e) {
             LOG.error("RepositoryException: ", e);
         } finally {
@@ -280,4 +297,5 @@ public class AcHistoryServiceImpl implements AcHistoryService {
     public boolean wasLastPersistHistoryCallSuccessful() {
         return wasLastPersistHistoryCallSuccessful;
     }
+
 }

@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-@Version("2.0.1")
+@Version("2.1.0")
 package biz.netcentric.cq.tools.actool.api;
 
 import org.osgi.annotation.versioning.Version;

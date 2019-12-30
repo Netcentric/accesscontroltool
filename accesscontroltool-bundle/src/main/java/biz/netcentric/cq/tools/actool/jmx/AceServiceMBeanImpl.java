@@ -12,8 +12,8 @@ import java.util.Set;
 
 import javax.management.NotCompliantMBeanException;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.time.StopWatch;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -72,6 +72,12 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
         return acInstallationService.apply(configurationRootPath, restrictedToPaths).toString();
     }
 
+    @Override
+    public String applyRestrictedToPaths(String configurationRootPath, String paths, boolean skipIfConfigUnchanged) {
+        String[] restrictedToPaths = commaSeparatedStringToArr(paths);
+        return acInstallationService.apply(configurationRootPath, restrictedToPaths, skipIfConfigUnchanged).toString();
+    }
+   
     @Override
     public String purgeACL(final String path) {
         return acInstallationService.purgeACL(path);
@@ -169,5 +175,6 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
     public String getVersion() {
         return acInstallationService.getVersion();
     }
+
 
 }

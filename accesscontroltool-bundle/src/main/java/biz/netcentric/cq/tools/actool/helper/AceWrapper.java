@@ -15,7 +15,7 @@ import javax.jcr.Value;
 import javax.jcr.ValueFormatException;
 import javax.jcr.security.Privilege;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 
 /** Wraps an {@link JackrabbitAccessControlEntry} and stores an additional path information. Created and used during the reading of ACEs

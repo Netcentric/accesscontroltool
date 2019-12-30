@@ -11,7 +11,7 @@ import static org.junit.Assert.assertTrue;
 
 import javax.jcr.Session;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 import org.mockito.Mock;
 

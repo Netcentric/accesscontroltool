@@ -39,6 +39,17 @@ public interface AcInstallationService {
      * @return the installation log */
     public InstallationLog apply(String configurationRootPath, String[] restrictedToPaths);
 
+
+    /** Applies the configuration as stored at the given configurationRootPath to the repository, but only apply ACEs to given
+     * restrictedToPaths.
+     * 
+     * @param restrictedToPaths only apply ACLs to root paths as given
+     * @param configurationRootPath the root path for configuration files
+     * @param skipIfConfigUnchanged will check if the config is unchanged compared to last execution with same parameters
+     * @return the installation log */
+    public InstallationLog apply(String configurationRootPath, String[] restrictedToPaths, boolean skipIfConfigUnchanged);
+
+    
     /** purges all acls of the node specified by path (no deletion of acls of subnodes)
      *
      * @param path the path from which to purge the ACL

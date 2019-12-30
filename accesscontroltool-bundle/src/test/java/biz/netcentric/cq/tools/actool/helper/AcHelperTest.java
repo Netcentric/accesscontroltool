@@ -10,7 +10,7 @@ package biz.netcentric.cq.tools.actool.helper;
 
 import static biz.netcentric.cq.tools.actool.helper.AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE;
 import static biz.netcentric.cq.tools.actool.helper.AcHelper.ACE_ORDER_NONE;
-import static org.apache.commons.lang.StringUtils.rightPad;
+import static org.apache.commons.lang3.StringUtils.rightPad;
 import static org.junit.Assert.assertEquals;
 
 import java.util.LinkedHashMap;

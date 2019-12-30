@@ -12,7 +12,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /** "ace_config" part of the AC Tool configuration (natural ordered set of AceBeans). */
 public class AcesConfig extends LinkedHashSet<AceBean> {
