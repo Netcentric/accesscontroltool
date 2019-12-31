@@ -289,7 +289,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         }
 
         installLog.addMessage(LOG, "Saved history in node: " + purgeHistoryNode.getPath());
-        HistoryUtils.setHistoryNodeProperties(purgeHistoryNode, installLog);
+        HistoryUtils.setHistoryNodeProperties(purgeHistoryNode, installLog, "purge");
         return historyNode;
     }
 
