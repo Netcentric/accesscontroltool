@@ -53,7 +53,7 @@
     <profiles>
     
         <profile>
-            <id>autoInstallPackage</id>
+            <id>autoInstallExamplePackage</id>
             <build>
                 <plugins>
                     <plugin>
@@ -74,7 +74,7 @@
         </profile>
         
         <profile>
-            <id>autoInstallPackagePublish</id>
+            <id>autoInstallExamplePackagePublish</id>
             <build>
                 <plugins>
                     <plugin>
