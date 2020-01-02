@@ -59,6 +59,10 @@ public interface AceServiceMBean {
     @Description("Purges all authorizables contained in configuration files and all their ACEs from the system")
     public String purgeAllAuthorizablesFromConfiguration();
 
+    @Description("Purges all authorizables contained in configuration root location and all their ACEs from the system")
+    public String purgeAllAuthorizablesFromConfiguration(@Name("configurationRootPath") @Description("The configuration root path") String configurationRootPath);
+
+    
     @Description("Returns a configuration dump containing all groups and all ACLs ordered by path")
     public String pathBasedDump();
 

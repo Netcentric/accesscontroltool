@@ -22,8 +22,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.RepositoryException;
@@ -128,7 +126,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingSettingsService slingSettingsService;
     
-    private String configuredAcConfigurationRootPath;
+    private List<String> configurationRootPaths;
 
     private boolean intermediateSaves;
     
@@ -136,29 +134,42 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             description="Service that installs groups & ACEs according to textual configuration files",
             id = CONFIG_PID)
     protected static @interface Configuration {
-        @AttributeDefinition(name="Configuration path", description="JCR root path where the AC Tool YAML configuration files are stored (directly in this folder and in sub folders that may contain a runmode)")
-        String AceService_configurationPath() default "";
         
+        @AttributeDefinition(name="Configuration path(s)", description="JCR path(s) where the config files reside (usually it's just one, can be multiple for multitenant setups)")
+        String[] configurationRootPaths() default {};
+
         @AttributeDefinition(name="Use intermediate saves", description="Saves ACLs for each path individually - this can be used to avoid problems with large changesets and MongoDB (OAK-5557), however the rollback is disabled then.")
         boolean intermediateSaves() default false;
     }
 
     @Activate
     public void activate(Configuration configuration, BundleContext bundleContext) throws Exception {
-        configuredAcConfigurationRootPath = configuration.AceService_configurationPath();
+        Dictionary<String, Object> configDict = configAdmin.getConfiguration(CONFIG_PID).getProperties();
+        
+        configurationRootPaths = new ArrayList<String>();
+        if(!ArrayUtils.isEmpty(configuration.configurationRootPaths())) {
+            configurationRootPaths.addAll(Arrays.asList(configuration.configurationRootPaths()));
+        } else {
+            if (configDict != null && configDict.get(LEGACY_PROPERTY_CONFIGURATION_PATH)!=null) {
+                // Fallback to old (non-array) root paths property
+                LOG.warn("Using legacy property PID '{}' is deprecated, use 'configurationRootPaths' instead. ", LEGACY_PROPERTY_CONFIGURATION_PATH);
+                configurationRootPaths.add(PropertiesUtil.toString(configDict.get(LEGACY_PROPERTY_CONFIGURATION_PATH), ""));
+            }
+        }
+        
         intermediateSaves = configuration.intermediateSaves();
 
-        // only fall back to legacy config if new config does not exist
-        if (configAdmin.getConfiguration(CONFIG_PID).getProperties() == null) {
+        // Fallback to old PID: only fall back to legacy config if new config does not exist
+        if (configDict == null) {
             Dictionary<String, Object> legacyProps = configAdmin.getConfiguration(LEGACY_CONFIG_PID).getProperties();
             if (legacyProps != null) {
                 LOG.warn("Using legacy configuration PID '{}'. Please remove this and switch to the new one with PID '{}',", LEGACY_CONFIG_PID, CONFIG_PID);
-                configuredAcConfigurationRootPath = PropertiesUtil.toString(legacyProps.get(LEGACY_PROPERTY_CONFIGURATION_PATH), "");
+                configurationRootPaths = Arrays.asList(PropertiesUtil.toString(legacyProps.get(LEGACY_PROPERTY_CONFIGURATION_PATH), ""));
                 intermediateSaves = PropertiesUtil.toBoolean(legacyProps.get(LEGACY_PROPERTY_INTERMEDIATE_SAVES), false);
             }
         }
 
-        LOG.info("Activated AC Tool at start level "+RuntimeHelper.getCurrentStartLevel(bundleContext) + " default config path: "+configuredAcConfigurationRootPath);
+        LOG.info("Activated AC Tool at start level "+RuntimeHelper.getCurrentStartLevel(bundleContext) + " default config path: "+configurationRootPaths);
 
     }
 
@@ -185,12 +196,15 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     @Override
     public InstallationLog apply(String configurationRootPath, String[] restrictedToPaths, boolean skipIfConfigUnchanged) {
 
-        PersistableInstallationLogger installLog = new PersistableInstallationLogger();
-
         if(StringUtils.isBlank(configurationRootPath)) {
-            configurationRootPath = getConfiguredAcConfigurationRootPath();
+            if(configurationRootPaths.size() == 1) {
+                configurationRootPath = configurationRootPaths.get(0);
+            } else {
+                return applyMultipleConfigurations(restrictedToPaths, skipIfConfigUnchanged);
+            }
         }
         
+        PersistableInstallationLogger installLog = new PersistableInstallationLogger();
         Session session = null;
         try {
             session = repository.loginService(Constants.USER_AC_SERVICE, null);
@@ -226,6 +240,16 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             }
         }
         return installLog;
+    }
+
+    private InstallationLog applyMultipleConfigurations(String[] restrictedToPaths, boolean skipIfConfigUnchanged) {
+        PersistableInstallationLogger overviewInstallLog = new PersistableInstallationLogger();
+        overviewInstallLog.addMessage(LOG, "Applying multiple configs (this log only shows what was applied, check the individual logs for details)");
+        for(String rootPath: configurationRootPaths) {
+            overviewInstallLog.addMessage(LOG, "Applying config at root path "+rootPath);
+            apply(rootPath, restrictedToPaths, skipIfConfigUnchanged);
+        }
+        return overviewInstallLog;
     }
 
 
@@ -636,19 +660,26 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     @Override
     public boolean isReadyToStart() {
         Session session = null;
-        String rootPath = getConfiguredAcConfigurationRootPath();
-        try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            boolean isReadyToStart = !configFilesRetriever.getConfigFileContentFromNode(rootPath, session).isEmpty();
-            return isReadyToStart;
-        } catch (Exception e) {
-            LOG.warn("Could not retrieve config file content for root path " + configuredAcConfigurationRootPath);
-            return false;
-        } finally {
-            if (session != null) {
-                session.logout();
+        
+        boolean isReadyToStart = false;
+        for(String configRootPath: configurationRootPaths) {
+            try {
+                session = repository.loginService(Constants.USER_AC_SERVICE, null);
+                boolean thisConfigIsReadyToStart = !configFilesRetriever.getConfigFileContentFromNode(configRootPath, session).isEmpty();
+                LOG.debug("Config {} is ready to start: {}", configRootPath, thisConfigIsReadyToStart);
+                isReadyToStart |= thisConfigIsReadyToStart;
+
+            } catch (Exception e) {
+                LOG.warn("Could not retrieve config file content for root path " + configRootPath);
+                return false;
+            } finally {
+                if (session != null) {
+                    session.logout();
+                }
             }
         }
+        
+        return isReadyToStart;
     }
 
     @Override
@@ -710,12 +741,22 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
     @Override
     public String purgeAuthorizablesFromConfig() {
+        List<String> resultMessages = new ArrayList<String>();
+        for(String configRootPath: configurationRootPaths) {
+            LOG.info("Purging authorizables for root path {}", configRootPath);
+            resultMessages.add(purgeAuthorizablesFromConfig(configRootPath));
+        }
+        return StringUtils.join(resultMessages, "\n");
+    }
+    
+    @Override
+    public String purgeAuthorizablesFromConfig(String configRootPath) {
         Session session = null;
         String message = "";
         try {
             session = repository.loginService(Constants.USER_AC_SERVICE, null);
 
-            Set<String> authorizabesFromConfigurations = getAllAuthorizablesFromConfig(session);
+            Set<String> authorizabesFromConfigurations = getAllAuthorizablesFromConfig(session, configRootPath);
             message = purgeAuthorizables(authorizabesFromConfigurations, session);
             PersistableInstallationLogger installLog = new PersistableInstallationLogger();
             installLog.addMessage(LOG, "purge method: purgAuthorizablesFromConfig()");
@@ -853,8 +894,13 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     @Override
+    @Deprecated
     public String getConfiguredAcConfigurationRootPath() {
-        return configuredAcConfigurationRootPath;
+        return !configurationRootPaths.isEmpty() ? configurationRootPaths.get(0): null;
+    }
+
+    public List<String> getConfigurationRootPaths() {
+        return configurationRootPaths;
     }
 
     @Override
@@ -864,9 +910,13 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         Set<String> paths = new LinkedHashSet<String>();
         try {
             session = repository.loginService(Constants.USER_AC_SERVICE, null);
-            paths = configFilesRetriever.getConfigFileContentFromNode(configuredAcConfigurationRootPath, session).keySet();
+            
+            for(String configRootPath: configurationRootPaths) {
+                paths.addAll(configFilesRetriever.getConfigFileContentFromNode(configRootPath, session).keySet());
+            }
+            
         } catch (Exception e) {
-            LOG.warn("Could not retrieve config file content for root path " + configuredAcConfigurationRootPath + ": e=" + e, e);
+            LOG.warn("Could not retrieve config file content for root paths " + configurationRootPaths + ": e=" + e, e);
         } finally {
             if (session != null) {
                 session.logout();
@@ -875,11 +925,10 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         return paths;
     }
 
-    public Set<String> getAllAuthorizablesFromConfig(Session session)
+    public Set<String> getAllAuthorizablesFromConfig(Session session, String configRootPath)
             throws Exception {
         PersistableInstallationLogger history = new PersistableInstallationLogger();
-        Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configuredAcConfigurationRootPath,
-                session);
+        Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configRootPath, session);
         AcConfiguration acConfiguration = configurationMerger.getMergedConfigurations(newestConfigurations, history, configReader, session);
         Set<String> allAuthorizablesFromConfig = acConfiguration.getAuthorizablesConfig().getAuthorizableIds();
         return allAuthorizablesFromConfig;
