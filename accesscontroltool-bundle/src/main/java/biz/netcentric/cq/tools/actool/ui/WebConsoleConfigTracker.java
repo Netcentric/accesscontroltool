@@ -1,9 +1,11 @@
 package biz.netcentric.cq.tools.actool.ui;
 
+import java.io.IOException;
+import java.util.Dictionary;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.oak.commons.PropertiesUtil;
-import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.cm.ConfigurationEvent;
 import org.osgi.service.cm.ConfigurationListener;
@@ -39,22 +41,27 @@ public class WebConsoleConfigTracker implements ConfigurationListener {
 
     @Activate
     private void updateConfig() {
-        Configuration webconsoleConfig = getConfigForPid(CONSOLE_PID);
-        if(webconsoleConfig != null) {
-            webConsoleRoot = (String)  webconsoleConfig.getProperties().get(CONSOLE_ROOT_PROP);
-        }
-        webConsoleRoot = StringUtils.defaultIfBlank(webConsoleRoot, CONSOLE_ROOT_DEFAULT);
+        try {
+            Dictionary<String, Object> webconsoleConfig = configAdmin.getConfiguration(CONSOLE_PID).getProperties();
+            if(webconsoleConfig != null) {
+                webConsoleRoot = (String) webconsoleConfig.get(CONSOLE_ROOT_PROP);
+            }
+            webConsoleRoot = StringUtils.defaultIfBlank(webConsoleRoot, CONSOLE_ROOT_DEFAULT);
 
-        Configuration webconsoleSecProviderConfig = getConfigForPid(CONSOLE_SEC_PROVIDER_PID);
-        if(webconsoleSecProviderConfig != null) {
-            allowedUsers = PropertiesUtil.toStringArray(webconsoleSecProviderConfig.getProperties().get(CONSOLE_SEC_PROVIDER_USERS_PROP));
-            allowedGroups = PropertiesUtil.toStringArray(webconsoleSecProviderConfig.getProperties().get(CONSOLE_SEC_PROVIDER_GROUPS_PROP));
-        }
-        if(LOG.isDebugEnabled()) {
-            LOG.debug("webConsoleRoot: {} allowedUsers: {} allowedGroups: {}", 
-                    webConsoleRoot, 
-                    ArrayUtils.toString(allowedUsers), 
-                    ArrayUtils.toString(allowedGroups));
+            Dictionary<String, Object> webconsoleSecProviderConfig = configAdmin.getConfiguration(CONSOLE_SEC_PROVIDER_PID).getProperties();
+            if(webconsoleSecProviderConfig != null) {
+                allowedUsers = PropertiesUtil.toStringArray(webconsoleSecProviderConfig.get(CONSOLE_SEC_PROVIDER_USERS_PROP));
+                allowedGroups = PropertiesUtil.toStringArray(webconsoleSecProviderConfig.get(CONSOLE_SEC_PROVIDER_GROUPS_PROP));
+            }
+            if(LOG.isDebugEnabled()) {
+                LOG.debug("webConsoleRoot: {} allowedUsers: {} allowedGroups: {}", 
+                        webConsoleRoot, 
+                        ArrayUtils.toString(allowedUsers), 
+                        ArrayUtils.toString(allowedGroups));
+            }
+            
+        } catch (IOException e) {
+            LOG.warn("Could not update config: "+e, e);
         }
     }
 
@@ -78,19 +85,4 @@ public class WebConsoleConfigTracker implements ConfigurationListener {
         return allowedGroups;
     }
 
-    private Configuration getConfigForPid(String pid) {
-        
-        try {
-            Configuration[] configs = configAdmin.listConfigurations("(service.pid="+pid+")");
-            if(configs!=null && configs.length>0) {
-                return configs[0];
-            } else {
-                return null;
-            }            
-        } catch (Exception e) {
-            throw new IllegalStateException("Could retrieve configs for PID"+pid+": "+e, e);
-        }
-    }
-
-    
 }

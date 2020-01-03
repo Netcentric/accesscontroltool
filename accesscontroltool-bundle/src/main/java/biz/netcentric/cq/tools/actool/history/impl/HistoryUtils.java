@@ -20,6 +20,7 @@ import java.util.TreeSet;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.ValueFormatException;
@@ -34,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
+import biz.netcentric.cq.tools.actool.configuploadlistener.impl.UploadListenerServiceImpl;
 import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
 import biz.netcentric.cq.tools.actool.history.AcToolExecution;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
@@ -63,6 +65,9 @@ public class HistoryUtils {
     public static final String PROPERTY_INSTALLED_FROM = "installedFrom";
     public static final String PROPERTY_STARTLEVEL = "startlevel";
     public static final String PROPERTY_TRIGGER = "trigger";
+    public static final String PROPERTY_CONFIG_ROOT_PATH = "configurationRootPath";
+    public static final String PROPERTY_ACL_CHANGES = "aclsChanges";
+    public static final String PROPERTY_AUTHORIZABLES_CHANGES = "authorizableChanges";
 
     private static final String AC_TOOL_STARTUPHOOK_CLASS = "biz.netcentric.cq.tools.actool.startuphook.impl.AcToolStartupHookServiceImpl";
     private static final String BUNDLE_START_TASK_CLASS = "org.apache.sling.installer.core.impl.tasks.BundleStartTask";
@@ -97,11 +102,13 @@ public class HistoryUtils {
         
         String trigger;
         if (StringUtils.isNotBlank(installLog.getCrxPackageName())) {
-            trigger = "hook_in_" + installLog.getCrxPackageName();
+            trigger = "installhook";
         } else if(isInStrackTracke(stackTrace, AceServiceMBeanImpl.class)) {
             trigger = "jmx";
         } else if(isInStrackTracke(stackTrace, AcToolTouchUiServlet.class)) {
             trigger = "aem_admin_ui";
+        } else if(isInStrackTracke(stackTrace, UploadListenerServiceImpl.class)) {
+            trigger = "changelistener";
         } else if(isInStrackTracke(stackTrace, AcToolWebconsolePlugin.class)) {
             trigger = "webconsole";
         } else if(isInStrackTracke(stackTrace, AC_TOOL_STARTUPHOOK_CLASS)) {
@@ -173,17 +180,21 @@ public class HistoryUtils {
         historyNode.setProperty(PROPERTY_STARTLEVEL, RuntimeHelper.getCurrentStartLevel());
         historyNode.setProperty(PROPERTY_TRIGGER, trigger);
         
+        historyNode.setProperty(PROPERTY_ACL_CHANGES, (long) installLog.getCountAclsChanged());
+        historyNode.setProperty(PROPERTY_AUTHORIZABLES_CHANGES, (long) installLog.getCountAuthorizablesCreated() + installLog.getCountAuthorizablesMoved());
+
+        Set<String> configFiles = installLog.getConfigFileContentsByName().keySet();
+        String effectiveConfigRootPath = StringUtils.removeEnd(StringUtils.getCommonPrefix(configFiles.toArray(new String[configFiles.size()])), "/");
+        historyNode.setProperty(PROPERTY_CONFIG_ROOT_PATH, effectiveConfigRootPath);
+        
         historyNode.setProperty(PROPERTY_TIMESTAMP, installLog.getInstallationDate().getTime());
         historyNode.setProperty(PROPERTY_SLING_RESOURCE_TYPE, "/apps/netcentric/actool/components/historyRenderer");
 
         Map<String, String> configFileContentsByName = installLog.getConfigFileContentsByName();
         if (configFileContentsByName != null) {
-            String commonPrefix = StringUtils
-                    .getCommonPrefix(configFileContentsByName.keySet().toArray(new String[configFileContentsByName.size()]));
             String crxPackageName = installLog.getCrxPackageName(); // for install hook case
-            historyNode.setProperty(PROPERTY_INSTALLED_FROM, StringUtils.defaultString(crxPackageName) + commonPrefix);
+            historyNode.setProperty(PROPERTY_INSTALLED_FROM, StringUtils.defaultString(crxPackageName));
         }
-
     }
 
     /**
@@ -242,9 +253,14 @@ public class HistoryUtils {
 
             if (node != null && node.getName().startsWith(HISTORY_NODE_NAME_PREFIX)) {
 
+                String configRoot = node.hasProperty(PROPERTY_CONFIG_ROOT_PATH)? node.getProperty(PROPERTY_CONFIG_ROOT_PATH).getString() : null;
+                int authorizableChanges = node.hasProperty(PROPERTY_AUTHORIZABLES_CHANGES) ? (int) node.getProperty(PROPERTY_AUTHORIZABLES_CHANGES).getLong() : -1;
+                int aclChanges = node.hasProperty(PROPERTY_ACL_CHANGES) ? (int) node.getProperty(PROPERTY_ACL_CHANGES).getLong() : -1;
+
                 historyInfos.add(new AcToolExecutionImpl(node.getPath(), 
-                        new Date(node.getProperty(PROPERTY_TIMESTAMP).getLong())
-                        , node.getProperty(PROPERTY_SUCCESS).getBoolean()));
+                        new Date(node.getProperty(PROPERTY_TIMESTAMP).getLong()), 
+                        node.getProperty(PROPERTY_SUCCESS).getBoolean(),
+                        configRoot, authorizableChanges, aclChanges));
             }
 
         }

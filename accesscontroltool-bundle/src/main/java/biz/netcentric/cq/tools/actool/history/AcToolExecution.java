@@ -14,4 +14,10 @@ public interface AcToolExecution {
     public boolean isSuccess();
 
     public String getTrigger();
+    
+    public String getConfigurationRootPath();
+    
+    public int getAuthorizableChanges();
+
+    public int getAclChanges();
 }

@@ -162,8 +162,14 @@ public class AcToolUiService {
     }
 
     private String getExecutionLabel(AcToolExecution acToolExecution) {
-        return getDateFormat().format(acToolExecution.getInstallationDate()) + " via " + acToolExecution.getTrigger() + ": "
-                + getExecutionStatusHtml(acToolExecution);
+        int authorizableChanges = acToolExecution.getAuthorizableChanges();
+        int aclChanges = acToolExecution.getAclChanges();
+        String changedStr = (authorizableChanges > -1 && aclChanges > -1) ? " ("+authorizableChanges+" authorizables/"+aclChanges+" ACLs changed)":"";
+        String configRootPath = acToolExecution.getConfigurationRootPath();
+        return getDateFormat().format(acToolExecution.getInstallationDate()) 
+                + (configRootPath != null ? " " + configRootPath : "")
+                + " via " + acToolExecution.getTrigger() + ": "
+                + getExecutionStatusHtml(acToolExecution)+changedStr;
     }
 
     private SimpleDateFormat getDateFormat() {

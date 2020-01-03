@@ -13,13 +13,19 @@ public class AcToolExecutionImpl implements AcToolExecution, Comparable<AcToolEx
     private final Date installationDate;
     private final boolean isSuccess;
     private final String trigger;
+    private final String configurationRootPath;
+    private final int authorizableChanges;
+    private final int aclChanges;
     
-    public AcToolExecutionImpl(String path, Date installationDate, boolean isSuccess) {
+    public AcToolExecutionImpl(String path, Date installationDate, boolean isSuccess, String configurationRootPath, int authorizableChanges, int aclChanges) {
         super();
         this.path = path;
         this.installationDate = installationDate;
         this.isSuccess = isSuccess;
-        this.trigger = StringUtils.substringAfter(path, TRIGGER_SEPARATOR_IN_NODE_NAME);
+        this.trigger = StringUtils.substringAfter(path, TRIGGER_SEPARATOR_IN_NODE_NAME); // best backwards-compatible way to obtain the trigger
+        this.configurationRootPath = configurationRootPath;
+        this.authorizableChanges = authorizableChanges;
+        this.aclChanges = aclChanges; 
     }
 
     @Override
@@ -42,6 +48,18 @@ public class AcToolExecutionImpl implements AcToolExecution, Comparable<AcToolEx
 
     public String getTrigger() {
         return trigger;
+    }
+
+    public String getConfigurationRootPath() {
+        return configurationRootPath;
+    }
+
+    public int getAuthorizableChanges() {
+        return authorizableChanges;
+    }
+
+    public int getAclChanges() {
+        return aclChanges;
     }
 
     @Override
