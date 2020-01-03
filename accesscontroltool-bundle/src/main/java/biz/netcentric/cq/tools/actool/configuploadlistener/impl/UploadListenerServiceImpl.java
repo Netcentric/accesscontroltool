@@ -24,6 +24,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
@@ -41,7 +42,7 @@ import biz.netcentric.cq.tools.actool.configuploadlistener.UploadListenerService
 import biz.netcentric.cq.tools.actool.configuploadlistener.impl.UploadListenerServiceImpl.Configuration;
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl;
 
-@Component
+@Component(configurationPolicy=ConfigurationPolicy.REQUIRE, immediate=true)
 @Designate(ocd=Configuration.class)
 public class UploadListenerServiceImpl implements UploadListenerService {
     private static final Logger LOG = LoggerFactory.getLogger(UploadListenerServiceImpl.class);
@@ -77,7 +78,7 @@ public class UploadListenerServiceImpl implements UploadListenerService {
     
     @Activate
     public void activate(BundleContext bundleContext, Configuration configuration) throws Exception {
-        
+
         this.configurationPaths = ((AcInstallationServiceImpl) acInstallationService).getConfigurationRootPaths();
         
         if (StringUtils.equals(configuration.AceUploadListener_setStatusService(), "enabled")) {
@@ -151,7 +152,7 @@ public class UploadListenerServiceImpl implements UploadListenerService {
         
         @Override
         public void handleEvent(org.osgi.service.event.Event event) {
-            LOG.debug("UploadListener Event Handler triggered for event '{}'", event);
+            LOG.trace("UploadListener Event Handler triggered for event '{}'", event);
             // check if triggered from local instance (in case of clustered environment)
             // http://sling.apache.org/documentation/the-sling-engine/resources.html#osgi-event-admin
             if (event.getProperty(DEAConstants.PROPERTY_APPLICATION) != null) {
@@ -163,10 +164,9 @@ public class UploadListenerServiceImpl implements UploadListenerService {
             // if it ends with .yaml and has resource type nt:file
             if (path != null && path.endsWith(".yaml")) {
                 // check resource type
-                String resourceType = (String)event.getProperty(SlingConstants.PROPERTY_RESOURCE_TYPE);
+                String resourceType = (String) event.getProperty(SlingConstants.PROPERTY_RESOURCE_TYPE);
                 if (resourceType != null && resourceType.equals("nt:file")) {
-                    // most probably an updated yaml file
-                    LOG.info("There are new or changed YAML files. Triggering execution of actool with a delay of {} milliseconds.", executionDelayInMs);
+                    LOG.debug("Received change event for yaml file {}", path);
                     // we need to trigger the installation in a new thread, otherwise it may be blacklisted (http://felix.apache.org/documentation/subprojects/apache-felix-event-admin.html)
                     // also delay processing until all YAML files have been placed there
                     scheduleExecution();
@@ -181,7 +181,7 @@ public class UploadListenerServiceImpl implements UploadListenerService {
         private synchronized void scheduleExecution() {
             if(!isScheduled) {
                 final ScheduleOptions options = scheduler.AT(new Date(System.currentTimeMillis() + executionDelayInMs));
-                options.name("UploadListenerServiceImpl: trigger installation service");
+                options.name("UploadListener-Process-Change");
                 scheduler.schedule(this, options);
                 isScheduled = true;
                 LOG.debug("Scheduled execution for path {}", configurationRootPath);
