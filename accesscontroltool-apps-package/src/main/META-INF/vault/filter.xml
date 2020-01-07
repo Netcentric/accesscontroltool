@@ -2,4 +2,7 @@
 <workspaceFilter version="1.0">
     <!-- generate root nodes below apps in case they don't exist -->
     <filter root="/apps/netcentric/actool/components"/>
+    <filter root="/apps/netcentric/actool/content"/>
+    <filter root="/apps/netcentric/actool/clientlibs"/>
+    <filter root="/apps/cq/core/content/nav/tools/security/actool"/>
 </workspaceFilter>

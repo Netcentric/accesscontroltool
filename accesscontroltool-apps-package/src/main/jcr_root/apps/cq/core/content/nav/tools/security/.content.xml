@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:rep="internal"
+        jcr:primaryType="sling:OrderedFolder"
+        sling:orderBefore="deployment">
+    <actool xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0" 
+        jcr:primaryType="nt:unstructured" 
+        sling:orderBefore="oauth"
+        jcr:title="Netcentric AC Tool" 
+        jcr:description="Setting up rights &amp; roles from code" 
+        href="/mnt/overlay/netcentric/actool/content/overview.html/actool"
+        icon="briefcase" 
+        id="granite-security-actool" />
+</jcr:root>
