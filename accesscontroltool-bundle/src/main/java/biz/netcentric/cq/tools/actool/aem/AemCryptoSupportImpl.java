@@ -10,6 +10,7 @@ package biz.netcentric.cq.tools.actool.aem;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +22,7 @@ public class AemCryptoSupportImpl implements AemCryptoSupport {
 
     private static final Logger LOG = LoggerFactory.getLogger(AemCryptoSupportImpl.class);
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private CryptoSupport cryptoSupport;
 
     public String unprotect(String password) {

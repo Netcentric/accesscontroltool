@@ -87,7 +87,7 @@ public class AuthorizableInstallerServiceImpl implements
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
     volatile KeyStoreService keyStoreService;
     
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     ResourceResolverFactory resourceResolverFactory;
 
     @Override

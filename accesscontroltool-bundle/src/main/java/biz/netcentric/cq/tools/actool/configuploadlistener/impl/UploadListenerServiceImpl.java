@@ -42,7 +42,7 @@ import biz.netcentric.cq.tools.actool.configuploadlistener.UploadListenerService
 import biz.netcentric.cq.tools.actool.configuploadlistener.impl.UploadListenerServiceImpl.Configuration;
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl;
 
-@Component(configurationPolicy=ConfigurationPolicy.REQUIRE, immediate=true)
+@Component(configurationPolicy=ConfigurationPolicy.REQUIRE)
 @Designate(ocd=Configuration.class)
 public class UploadListenerServiceImpl implements UploadListenerService {
     private static final Logger LOG = LoggerFactory.getLogger(UploadListenerServiceImpl.class);

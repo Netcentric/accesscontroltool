@@ -13,6 +13,7 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.url.AbstractURLStreamHandlerService;
 import org.osgi.service.url.URLConstants;
 import org.osgi.service.url.URLStreamHandlerService;
@@ -28,7 +29,7 @@ import org.osgi.service.url.URLStreamHandlerService;
 @Component(property = URLConstants.URL_HANDLER_PROTOCOL+"=jcrinstall")
 public class JcrInstallUrlHandler extends AbstractURLStreamHandlerService implements URLStreamHandlerService {
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ResourceResolverFactory resolverFactory;
 
     private ResourceResolver resolver;
