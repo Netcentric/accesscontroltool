@@ -59,7 +59,7 @@ public class AcToolTouchUiServlet extends SlingAllMethodsServlet {
     @Override
     protected void doPost(SlingHttpServletRequest req, SlingHttpServletResponse resp) throws ServletException, IOException {
 
-        if (!mayApplyConfig(req)) {
+        if (!mayApplyConfig(req.getResourceResolver().adaptTo(User.class))) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not have sufficent permissions to apply the configuration");
             return;
         }
@@ -68,10 +68,9 @@ public class AcToolTouchUiServlet extends SlingAllMethodsServlet {
         LOG.debug("Applied AC tool config via Touch UI by user {}", req.getUserPrincipal());
     }
 
-    public boolean mayApplyConfig(SlingHttpServletRequest request) {
+    private boolean mayApplyConfig(User requestUser) {
 
         try {
-            User requestUser = request.getResourceResolver().adaptTo(User.class);
 
             if (requestUser != null) {
                 if (StringUtils.equals(requestUser.getID(), "admin")) {

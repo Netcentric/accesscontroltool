@@ -8,6 +8,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -15,17 +16,20 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.felix.webconsole.WebConsoleConstants;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.api.AcInstallationService;
 import biz.netcentric.cq.tools.actool.api.InstallationLog;
 import biz.netcentric.cq.tools.actool.dumpservice.ConfigDumpService;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
 import biz.netcentric.cq.tools.actool.history.AcToolExecution;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
+import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl;
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceInternal;
 
 @Component(service = { AcToolUiService.class })
@@ -88,18 +92,22 @@ public class AcToolUiService {
         }
     }
 
+    public String getWebConsoleRoot(HttpServletRequest req) {
+        return (String) req.getAttribute(WebConsoleConstants.ATTR_APP_ROOT);
+    }
+    
     private void renderUi(HttpServletRequest req, HttpServletResponse resp, String postPath, boolean isTouchUi)
             throws IOException, UnsupportedEncodingException {
         RequestParameters reqParams = RequestParameters.fromRequest(req, acInstallationService);
 
         final PrintWriter out = resp.getWriter();
 
-        printForm(out, reqParams, postPath, isTouchUi);
+        printForm(out, reqParams, postPath, isTouchUi, getWebConsoleRoot(req));
 
         printInstallationLogsSection(out, reqParams, isTouchUi);
 
         if(!isTouchUi) {
-            String jmxUrl = webConsoleConfig.getWebConsoleRoot() + "/jmx/"
+            String jmxUrl = getWebConsoleRoot(req) + "/jmx/"
                     + URLEncoder.encode("biz.netcentric.cq.tools:type=ACTool", StandardCharsets.UTF_8.toString());
             out.println("More operations are available at <a href='" + jmxUrl + "' "+forceValidLink(isTouchUi)+">AC Tool JMX Bean</a><br/>\n<br/>\n");
         }
@@ -180,7 +188,7 @@ public class AcToolUiService {
         return acToolExecution.isSuccess() ? "SUCCESS" : "<span style='color:red;font-weight: bold;'>FAILED</span>";
     }
 
-    private void printForm(final PrintWriter out, RequestParameters reqParams, String postPath, boolean isTouchUI) throws IOException {
+    private void printForm(final PrintWriter out, RequestParameters reqParams, String postPath, boolean isTouchUI, String webConsoleRoot) throws IOException {
         final HtmlWriter writer = new HtmlWriter(out, isTouchUI);
 
         printCss(isTouchUI, writer);
@@ -191,8 +199,13 @@ public class AcToolUiService {
 
         writer.tr();
         writer.openTd();
-        writer.print("<b>Configuration Root Path</b><br/> (default from <a href='" + webConsoleConfig.getWebConsoleRoot()
-                + "/configMgr/biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl' "+forceValidLink(isTouchUI)+">OSGi config</a>)");
+        writer.print("<b>Configuration Root Path</b>");
+        
+        if(!isTouchUI) {
+            writer.print("<br/> (default from <a href='" + webConsoleRoot
+            + "/configMgr/biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl' "+forceValidLink(isTouchUI)+">OSGi config</a>)");
+        }
+        
         writer.closeTd();
         writer.openTd();
         writer.print("<input type='text' name='" + PARAM_CONFIGURATION_ROOT_PATH + "' value='");
@@ -269,5 +282,53 @@ public class AcToolUiService {
     private String forceValidLink(boolean isTouchUI) {
         return isTouchUI ? "x-cq-linkchecker='valid'": "";
     }
-    
+
+    static class RequestParameters {
+
+        static RequestParameters fromRequest(HttpServletRequest req, AcInstallationService acInstallationService) {
+            String configRootPath = getParam(req, AcToolUiService.PARAM_CONFIGURATION_ROOT_PATH,
+                    ((AcInstallationServiceImpl) acInstallationService).getConfiguredAcConfigurationRootPath());
+            String basePathsParam = req.getParameter(AcToolUiService.PARAM_BASE_PATHS);
+            RequestParameters result = new RequestParameters(
+                    configRootPath,
+                    StringUtils.isNotBlank(basePathsParam) ? Arrays.asList(basePathsParam.split(" *, *")) : null,
+                    Integer.parseInt(getParam(req, AcToolUiService.PARAM_SHOW_LOG_NO, "0")),
+                    Boolean.valueOf(req.getParameter(AcToolUiService.PARAM_SHOW_LOG_VERBOSE)),
+                    Boolean.valueOf(req.getParameter(AcToolUiService.PARAM_APPLY_ONLY_IF_CHANGED)));
+            return result;
+        }
+
+        final String configurationRootPath;
+        final List<String> basePaths;
+        final int showLogNo;
+        final boolean showLogVerbose;
+        final boolean applyOnlyIfChanged;
+
+        public RequestParameters(String configurationRootPath, List<String> basePaths, int showLogNo, boolean showLogVerbose,
+                boolean applyOnlyIfChanged) {
+            super();
+            this.configurationRootPath = configurationRootPath;
+            this.basePaths = basePaths;
+            this.showLogNo = showLogNo;
+            this.showLogVerbose = showLogVerbose;
+            this.applyOnlyIfChanged = applyOnlyIfChanged;
+        }
+
+        public String[] getBasePathsArr() {
+            if (basePaths == null) {
+                return null;
+            } else {
+                return basePaths.toArray(new String[basePaths.size()]);
+            }
+        }
+
+        static String getParam(final HttpServletRequest req, final String name, final String defaultValue) {
+            String result = req.getParameter(name);
+            if (result == null) {
+                result = defaultValue;
+            }
+            return result;
+        }
+
+    }
 }

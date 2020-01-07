@@ -176,6 +176,12 @@
             <artifactId>org.apache.sling.servlets.annotations</artifactId>
             <version>1.2.4</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.webconsole</artifactId>
+            <version>4.2.16</version>
+            <optional>true</optional>
+        </dependency>
 
         <!-- START: Optional AEM dependencies -->
         <dependency>
