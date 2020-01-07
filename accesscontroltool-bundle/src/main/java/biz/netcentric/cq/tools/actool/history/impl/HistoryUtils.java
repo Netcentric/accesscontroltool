@@ -20,7 +20,6 @@ import java.util.TreeSet;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
-import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.ValueFormatException;
@@ -35,7 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
-import biz.netcentric.cq.tools.actool.configuploadlistener.impl.UploadListenerServiceImpl;
+import biz.netcentric.cq.tools.actool.configuploadlistener.impl.UploadListenerServiceImpl.AcToolConfigUpdateListener;
 import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
 import biz.netcentric.cq.tools.actool.history.AcToolExecution;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
@@ -107,7 +106,7 @@ public class HistoryUtils {
             trigger = "jmx";
         } else if(isInStrackTracke(stackTrace, AcToolTouchUiServlet.class)) {
             trigger = "aem_admin_ui";
-        } else if(isInStrackTracke(stackTrace, UploadListenerServiceImpl.class)) {
+        } else if(isInStrackTracke(stackTrace, AcToolConfigUpdateListener.class)) {
             trigger = "changelistener";
         } else if(isInStrackTracke(stackTrace, AcToolWebconsolePlugin.class)) {
             trigger = "webconsole";

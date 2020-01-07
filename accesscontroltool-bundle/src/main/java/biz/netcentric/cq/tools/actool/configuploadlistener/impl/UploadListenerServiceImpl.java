@@ -110,7 +110,7 @@ public class UploadListenerServiceImpl implements UploadListenerService {
         }
     }
 
-    private final class AcToolConfigUpdateListener implements Runnable, EventHandler {
+    public final class AcToolConfigUpdateListener implements Runnable, EventHandler {
         
         private final String configurationRootPath;
         private ServiceRegistration<EventHandler> eventListenerRegistration;
