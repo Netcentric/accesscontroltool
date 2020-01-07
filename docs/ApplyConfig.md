@@ -71,11 +71,9 @@ curl -sS --retry 1 -u ${CQ_ADMINUSER}:${CQ_ADMINPW} -X POST "http://${CQ_SERVER}
     
 ## Upload Listener Service
 
-The Upload Listener Service allows to configure the NodeEvent Listener.
+The Upload Listener Service allows to automatically apply the configuration upon changes in the yaml files in CRX. It registers a JCR listener per configured path in `AC Tool Installation Service` and applies the corresponding changes with a configured delay (to aggregate multiple change events into installation). By default it is disabled.
 
-If enabled each new upload of a project specific configuration file triggers the installation. Before a new installation starts, a dump (groups & ACLs) gets created and stored under the backups-node.
-
-It can be enabled/disabled in the OSGi console (AC Configuration Upload Listener Service). The listener path is configured in AC Installation Service.
+NOTE: Usually it is better to rely on the install hook and manual executions via the user interface when needed.
 
 <img src="images/upload-listener.png">
 

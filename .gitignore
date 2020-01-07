@@ -11,3 +11,5 @@ target
 .DS_Store
 atlassian-ide-plugin.xml
 .sass-cache
+**/jcr_root/META-INF
+**/jcr_root/WEB-INF

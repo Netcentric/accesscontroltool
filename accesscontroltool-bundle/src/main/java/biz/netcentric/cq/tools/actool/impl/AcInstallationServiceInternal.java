@@ -52,11 +52,17 @@ public interface AcInstallationServiceInternal extends AcInstallationService {
      * @return set containing paths */
     public Set<String> getCurrentConfigurationPaths();
 
-    /** Purges all authorizables form configuration with their ACEs (effectively purges everything contained in configuration)
+    /** Purges all authorizables from configuration (all configured config roots) with their ACEs (effectively purges everything contained in configuration)
      * 
      * @return result message */
     public String purgeAuthorizablesFromConfig();
 
+    /** Purges all authorizables from configuration for given root path with their ACEs
+     * 
+     * @param configurationRootPath the config root path to collect the authorizables from
+     * @return result message */
+    public String purgeAuthorizablesFromConfig(String configurationRootPath);
+    
     /** Returns the version of the AC Tool. */
     public String getVersion();
 }

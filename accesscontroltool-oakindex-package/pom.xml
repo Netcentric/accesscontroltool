@@ -112,7 +112,7 @@
     </build>
     <profiles>
         <profile>
-            <id>autoInstallPackage</id>
+            <id>autoInstallOakIndexPackage</id>
             <build>
                 <plugins>
                     <plugin>
@@ -132,7 +132,7 @@
             </build>
         </profile>
         <profile>
-            <id>autoInstallPackagePublish</id>
+            <id>autoInstallOakIndexPackagePublish</id>
             <build>
                 <plugins>
                     <plugin>
