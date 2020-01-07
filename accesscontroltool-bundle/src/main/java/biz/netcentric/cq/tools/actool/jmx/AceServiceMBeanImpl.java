@@ -157,6 +157,10 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
     public String purgeAllAuthorizablesFromConfiguration() {
         return acInstallationService.purgeAuthorizablesFromConfig();
     }
+    @Override
+    public String purgeAllAuthorizablesFromConfiguration(String configurationRootPath) {
+        return acInstallationService.purgeAuthorizablesFromConfig(configurationRootPath);
+    }
 
     @Override
     public String purgeAuthorizables(String authorizableIds) {
@@ -175,6 +179,8 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
     public String getVersion() {
         return acInstallationService.getVersion();
     }
+
+
 
 
 }

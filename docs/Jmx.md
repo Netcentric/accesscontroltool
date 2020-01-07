@@ -3,7 +3,7 @@
 The JMX interface offers the possibility to trigger the functions offered by the ACE service. These are:
 
 * starting a new installation of the newest configuration files in CRX.
-* purging of ACLs (of a single node or recursively for all subnodes)
+* purging of ACLs (of a single node or recursively for all sub nodes)
 * deletion of single ACEs
 * purging users/groups from the instance (including all related ACEs).
 * creation of dumps (ordered by path or by group)
@@ -12,22 +12,18 @@ The JMX interface offers the possibility to trigger the functions offered by the
 Also important status messages are shown here:
 
 * configuration files that are taken into account
-* display of the paths of last 5 history logs saved in CTX and a success status of each of those installation
+* display of the paths of last 5 history logs saved in CRX and a success status of each of those installation
 * readiness for installation (if at least one configuration file is stored in CRX)
 * execution status of service
 
-<img src="images/ac-service.png">
-    
+<img src="images/jmx-interface.png">
+
 ## Operations
 
 ### apply()
 
-This will apply the configuration files listed on top respecting the [run mode semantics](Configuration.md).    
+This will apply the configuration files under the configured roots in OSGi config `AC Tool Installation Service`. The files to be applied are listed in the UI and respect the [run mode semantics](Configuration.md).
 Before installing a new configuration on an instance a validation of the data stored in the configuration file takes place. In case an issue gets detected the installation does not get performed.
-
-The path of the config files is configured in OSGi - AC Installation Service.
-
-<img src="images/installation-service.png">
 
 ### apply(configurationRootPath), applyRestrictedToPaths(paths), applyRestrictedToPaths(configurationRootPath, paths)
 
