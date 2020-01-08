@@ -37,13 +37,13 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
 
         switch (context.getPhase()) {
         case PREPARE:
-            if (!shouldInstallInPhaseInstall(context.getPackage())) {
+            if (!shouldInstallInPhaseInstalled(context.getPackage())) {
                 
                 install(context);
             }
             break;
         case INSTALLED:
-            if (shouldInstallInPhaseInstall(context.getPackage())) {
+            if (shouldInstallInPhaseInstalled(context.getPackage())) {
                 install(context);
             }
             break;
@@ -53,7 +53,7 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
         }
     }
 
-    private boolean shouldInstallInPhaseInstall(PackageProperties properties) {
+    private boolean shouldInstallInPhaseInstalled(PackageProperties properties) {
         return Boolean.parseBoolean(properties.getProperty(PROPERTY_ACTOOL_INSTALL_AT_INSTALLED_PHASE));
     }
     private boolean forceInstallHookInCloud(PackageProperties properties) {
