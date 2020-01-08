@@ -376,14 +376,14 @@ public class YamlConfigReader implements ConfigReader {
                 currentPrincipalDataMap.get(GROUP_CONFIG_PROPERTY_IS_MEMBER_OF) : 
                     currentPrincipalDataMap.get(GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY);
         if(isMemberOfVal instanceof String) {
-            authorizableConfigBean.setIsMemberOf(((String) isMemberOfVal).trim().split(" *, *"));
+            authorizableConfigBean.setIsMemberOf(((String) isMemberOfVal).trim().split("\\s*,\\s*"));
         } else if(isMemberOfVal instanceof List) {
             authorizableConfigBean.setIsMemberOf((List<String>) isMemberOfVal);
         }
 
         Object membersVal = currentPrincipalDataMap.get(GROUP_CONFIG_PROPERTY_MEMBERS);
         if(membersVal instanceof String) {
-            authorizableConfigBean.setMembers(((String) membersVal).trim().split(" *, *"));
+            authorizableConfigBean.setMembers(((String) membersVal).trim().split("\\s*,\\s*"));
         } else if(membersVal instanceof List) {
             List<String> membersList = (List<String>) membersVal;
             authorizableConfigBean.setMembers(membersList.toArray(new String[membersList.size()]));
