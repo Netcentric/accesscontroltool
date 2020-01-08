@@ -49,6 +49,8 @@ Although it is not necessary that the YAML files are covered by the filter rules
 
 The installation takes place in phase "PREPARE" by default, i.e. before any other content from the package has been installed. Optionally you can make the hook kick in in phase "INSTALLED" (i.e. after the content has been installed) by additionally setting the package property `actool.atinstalledphase` to `true`. This is helpful if the initial content on which you want to set ACEs is created via classical package content (instead of inline yaml `initialContent`). That is only properly supported since AEM 6.4.2 (for details look at [issue 287](https://github.com/Netcentric/accesscontroltool/issues/287)) and since ACTool 2.4.0.
 
+An install hook is ignored in the cloud because the startup hook is to be used for that use case (the package property `actool.forceInstallHookInCloud` can be used force excution).
+
 ## Web Console
 
 A Felix Web Console UI is available at "Main" -> "AC Tool". The web console provides fewer operations as JMX, but for manual testing it provides better usability for applying config changes continuously. 
