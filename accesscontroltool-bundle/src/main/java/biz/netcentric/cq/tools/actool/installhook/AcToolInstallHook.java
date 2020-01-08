@@ -26,7 +26,7 @@ import biz.netcentric.cq.tools.actool.installhook.impl.OsgiAwareInstallHook;
 public class AcToolInstallHook extends OsgiAwareInstallHook {
 
     private static final Logger LOG = LoggerFactory.getLogger(AcToolInstallHook.class);
-    private static final String PROPERTY_ACTOOL_INSTALL_AT_INSTALLED_PHASE = "actool.atinstalledphase";
+    private static final String PROPERTY_ACTOOL_INSTALL_AT_INSTALLED_PHASE = "actool.atInstalledPhase";
     private static final String PROPERTY_ACTOOL_FORCE_INSTALLHOOK_IN_CLOUD = "actool.forceInstallHookInCloud";
 
     private boolean alreadyRan = false;
@@ -54,7 +54,7 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
     }
 
     private boolean shouldInstallInPhaseInstall(PackageProperties properties) {
-        return !Boolean.parseBoolean(properties.getProperty(PROPERTY_ACTOOL_INSTALL_AT_INSTALLED_PHASE));
+        return Boolean.parseBoolean(properties.getProperty(PROPERTY_ACTOOL_INSTALL_AT_INSTALLED_PHASE));
     }
     private boolean forceInstallHookInCloud(PackageProperties properties) {
         return Boolean.parseBoolean(properties.getProperty(PROPERTY_ACTOOL_FORCE_INSTALLHOOK_IN_CLOUD));
