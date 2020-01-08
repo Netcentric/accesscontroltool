@@ -841,8 +841,6 @@ public class AuthorizableInstallerServiceImpl implements
 
             Authorizable authorizable = userManager.getAuthorizable(memberOfAuthorizable);
 
-            // validation
-
             // if authorizable is existing in system
             if (authorizable != null) {
 
@@ -850,10 +848,8 @@ public class AuthorizableInstallerServiceImpl implements
                 if (authorizable.isGroup()) {
                     authorizableSet.add(authorizable.getID());
                 } else {
-                    String message = "Failed to add authorizable "
-                            + authorizablelId + " to autorizable " + memberOfAuthorizable
-                            + "! Authorizable is not a group";
-                    throw new AuthorizableCreatorException(message);
+                    throw new AuthorizableCreatorException("Invalid isMemberOf in in config of '"+authorizablelId+"': "
+                            + "Cannot add '"+memberOfAuthorizable+"' because it is a user and not a group!");
                 }
                 // if authorizable doesn't exist yet, it gets created and the
                 // current authorizable gets added as a member
@@ -861,27 +857,17 @@ public class AuthorizableInstallerServiceImpl implements
                 // check if authorizable is contained in any of the
                 // configurations
 
-                AuthorizableConfigBean configBeanForIsMemberOf = authorizablesConfig
-                        .getAuthorizableConfig(memberOfAuthorizable);
+                AuthorizableConfigBean configBeanForIsMemberOf = authorizablesConfig.getAuthorizableConfig(memberOfAuthorizable);
 
                 if (configBeanForIsMemberOf != null) {
-
 
                     Group newGroup = (Group) createNewGroup(userManager, authorizablesConfig, configBeanForIsMemberOf, installLog, session);
 
                     authorizableSet.add(newGroup.getID());
                     LOG.info("Created group to be able to add {} to group {} ", authorizablelId, memberOfAuthorizable);
                 } else {
-                    String message = "Failed to add group: "
-                            + authorizablelId
-                            + " as member to authorizable: "
-                            + memberOfAuthorizable
-                            + ". Neither found this authorizable ("
-                            + memberOfAuthorizable
-                            + ") in any of the configurations nor installed in the system!";
-                    LOG.error(message);
-
-                    throw new AuthorizableCreatorException(message);
+                    throw new AuthorizableCreatorException("Invalid isMemberOf group '"+memberOfAuthorizable+"' in config of '"+authorizablelId+"': "
+                            + "Neither found '"+memberOfAuthorizable+"' as already existing group in repository nor in AC Tool config itself!");
                 }
             }
         }
