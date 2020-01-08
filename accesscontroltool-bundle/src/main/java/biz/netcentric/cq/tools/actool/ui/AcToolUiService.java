@@ -128,7 +128,7 @@ public class AcToolUiService {
 
         final HtmlWriter writer = new HtmlWriter(out, isTouchUi);
         writer.openTable("previousLogs");
-        writer.tableHeader("Previous Logs", 1);
+        writer.tableHeader("Previous Logs", 5);
 
         if (acToolExecutions.isEmpty()) {
             writer.tr();
@@ -140,12 +140,22 @@ public class AcToolUiService {
 
         for (int i = 1; i <= acToolExecutions.size(); i++) {
             AcToolExecution acToolExecution = acToolExecutions.get(i - 1);
-            String logLabel = i + ": " + getExecutionLabel(acToolExecution);
             String linkToLog = PAGE_NAME + "?showLogNo=" + i;
             writer.tr();
             writer.openTd();
-            writer.println(
-                    logLabel + " [<a href='" + linkToLog + "'>short</a>] [<a href='" + linkToLog + "&showLogVerbose=true'>verbose</a>]");
+            writer.println(getExecutionDateStr(acToolExecution));
+            writer.closeTd();
+            writer.openTd();
+            writer.println(StringUtils.defaultString(acToolExecution.getConfigurationRootPath(), ""));
+            writer.closeTd();
+            writer.openTd();
+            writer.println("via " + StringUtils.defaultString(acToolExecution.getTrigger(), "<unknown>"));
+            writer.closeTd();
+            writer.openTd();
+            writer.println(getExecutionStatusStr(acToolExecution));
+            writer.closeTd();
+            writer.openTd();
+            writer.println("[<a href='" + linkToLog + "'>short</a>] [<a href='" + linkToLog + "&showLogVerbose=true'>verbose</a>]");
             writer.closeTd();
             writer.closeTr();
         }
@@ -170,14 +180,24 @@ public class AcToolUiService {
     }
 
     private String getExecutionLabel(AcToolExecution acToolExecution) {
+        String statusString = getExecutionStatusStr(acToolExecution);
+        String configRootPath = acToolExecution.getConfigurationRootPath();
+        return getExecutionDateStr(acToolExecution) 
+                + (configRootPath != null ? " " + configRootPath : "")
+                + " via " + acToolExecution.getTrigger() + ": "
+                + statusString;
+    }
+
+    private String getExecutionDateStr(AcToolExecution acToolExecution) {
+        return getDateFormat().format(acToolExecution.getInstallationDate());
+    }
+
+    private String getExecutionStatusStr(AcToolExecution acToolExecution) {
         int authorizableChanges = acToolExecution.getAuthorizableChanges();
         int aclChanges = acToolExecution.getAclChanges();
         String changedStr = (authorizableChanges > -1 && aclChanges > -1) ? " ("+authorizableChanges+" authorizables/"+aclChanges+" ACLs changed)":"";
-        String configRootPath = acToolExecution.getConfigurationRootPath();
-        return getDateFormat().format(acToolExecution.getInstallationDate()) 
-                + (configRootPath != null ? " " + configRootPath : "")
-                + " via " + acToolExecution.getTrigger() + ": "
-                + getExecutionStatusHtml(acToolExecution)+changedStr;
+        String statusString = getExecutionStatusHtml(acToolExecution)+changedStr;
+        return statusString;
     }
 
     private SimpleDateFormat getDateFormat() {
@@ -245,7 +265,7 @@ public class AcToolUiService {
 
         writer.tr();
         writer.openTd();
-        String onClick = "var as=$('#applySpinner');as.show(); var b=$('#applyButton');b.prop('disabled', true); oldL = b.text();b.text(' Applying AC Tool Configuration... ');var f=$('#acForm');var fd=f.serialize();$.post(f.attr('action'), fd).done(function(text){alert(text)}).fail(function(){alert('Config could not be applied - check log for errors')}).always(function(text) { var ll=text&amp;&amp;text.indexOf&amp;&amp;text.indexOf('identical to last execution')===-1?'"
+        String onClick = "var as=$('#applySpinner');as.show(); var b=$('#applyButton');b.prop('disabled', true); oldL = b.text();b.text(' Applying AC Tool Configuration... ');var f=$('#acForm');var fd=f.serialize();$.post(f.attr('action'), fd).done(function(text){alert(text)}).fail(function(xhr){alert(xhr.status===403?'Permission Denied':'Config could not be applied - check log for errors')}).always(function(text) { var ll=text&amp;&amp;text.indexOf&amp;&amp;text.indexOf('identical to last execution')===-1?'"
                 + PARAM_SHOW_LOG_NO + "=1&':'';as.hide();b.text(oldL);b.prop('disabled', false);location.href='" + PAGE_NAME + "?'+ll+fd; });return false";
         writer.println("<button " + getCoralButtonAtts(isTouchUI) + " id='applyButton' onclick=\"" + onClick + "\"> Apply AC Tool Configuration </button>");
         writer.closeTd();
@@ -267,9 +287,7 @@ public class AcToolUiService {
         StringBuilder css = new StringBuilder();
         // spinner css
         css.append(".spinner{display:inline-block;position:relative;width:32px;height:32px}.spinner div{display:inline-block;position:absolute;left:3px;width:7px;background:#777;animation:spinner 1.2s cubic-bezier(0,.5,.5,1) infinite}.spinner div:nth-child(1){left:3px;animation-delay:-.24s}.spinner div:nth-child(2){left:13px;animation-delay:-.12s}.spinner div:nth-child(3){left:23px;animation-delay:0}@keyframes spinner{0%{top:3px;height:26px}100%,50%{top:10px;height:13px}}");
-        if(isTouchUI) {
-            css.append("#previousLogs td {height: 1.5rem}");
-        } else {
+        if(!isTouchUI) {
             css.append("#applyButton {margin:10px 4px 10px 4px}");
         }
         writer.println("<style>"+css+"</style>");

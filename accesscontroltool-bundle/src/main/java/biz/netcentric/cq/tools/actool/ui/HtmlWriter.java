@@ -44,11 +44,11 @@ class HtmlWriter {
     }
 
     void openTd() {
-        openTd(1);
+        openTd(0);
     }
 
     void openTd(int colspan) {
-        pw.print("<td " + (isTouchUi ? "is='coral-table-cell'" : " class='content'") + " colspan='" + colspan + "'>");
+        pw.print("<td " + (isTouchUi ? "is='coral-table-cell'" : " class='content'") + (colspan>0?" colspan='" + colspan + "'":"")+">");
     }
 
     void closeTd() {

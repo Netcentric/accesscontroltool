@@ -182,9 +182,7 @@ public class HistoryUtils {
         historyNode.setProperty(PROPERTY_ACL_CHANGES, (long) installLog.getCountAclsChanged());
         historyNode.setProperty(PROPERTY_AUTHORIZABLES_CHANGES, (long) installLog.getCountAuthorizablesCreated() + installLog.getCountAuthorizablesMoved());
 
-        Set<String> configFiles = installLog.getConfigFileContentsByName().keySet();
-        String effectiveConfigRootPath = StringUtils.removeEnd(StringUtils.getCommonPrefix(configFiles.toArray(new String[configFiles.size()])), "/");
-        historyNode.setProperty(PROPERTY_CONFIG_ROOT_PATH, effectiveConfigRootPath);
+        historyNode.setProperty(PROPERTY_CONFIG_ROOT_PATH, getEffectiveConfigRootPath(installLog));
         
         historyNode.setProperty(PROPERTY_TIMESTAMP, installLog.getInstallationDate().getTime());
         historyNode.setProperty(PROPERTY_SLING_RESOURCE_TYPE, "/apps/netcentric/actool/components/historyRenderer");
@@ -194,6 +192,14 @@ public class HistoryUtils {
             String crxPackageName = installLog.getCrxPackageName(); // for install hook case
             historyNode.setProperty(PROPERTY_INSTALLED_FROM, StringUtils.defaultString(crxPackageName));
         }
+    }
+
+    private static String getEffectiveConfigRootPath(PersistableInstallationLogger installLog) {
+        Set<String> configFiles = installLog.getConfigFileContentsByName().keySet();
+        String effectiveConfigRootPath = StringUtils.getCommonPrefix(configFiles.toArray(new String[configFiles.size()]));
+        effectiveConfigRootPath = StringUtils.removeStart(effectiveConfigRootPath, "//jcr_root");
+        effectiveConfigRootPath = StringUtils.removeEnd(effectiveConfigRootPath, "/");
+        return effectiveConfigRootPath;
     }
 
     /**
