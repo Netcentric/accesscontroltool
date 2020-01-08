@@ -37,6 +37,10 @@
                     <packageType>application</packageType>
                     <!-- filter roots are not given in any dependency  -->
                     <failOnDependencyErrors>false</failOnDependencyErrors>
+                    <properties>
+                        <!-- ACLs are included to show AC Tool by default only to admin -->
+                        <acHandling>merge_preserve</acHandling>
+                    </properties>
                 </configuration>
             </plugin>
             <plugin>
