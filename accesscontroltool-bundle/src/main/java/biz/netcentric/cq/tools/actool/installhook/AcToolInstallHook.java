@@ -17,6 +17,7 @@ import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.installhook.impl.AcToolInstallHookService;
 import biz.netcentric.cq.tools.actool.installhook.impl.OsgiAwareInstallHook;
@@ -25,7 +26,8 @@ import biz.netcentric.cq.tools.actool.installhook.impl.OsgiAwareInstallHook;
 public class AcToolInstallHook extends OsgiAwareInstallHook {
 
     private static final Logger LOG = LoggerFactory.getLogger(AcToolInstallHook.class);
-    private static final String PROPERTY_ACTOOL_INSTALL_AT_INSTALLED_PHASE = "actool.atinstalledphase";
+    private static final String PROPERTY_ACTOOL_INSTALL_AT_INSTALLED_PHASE = "actool.atInstalledPhase";
+    private static final String PROPERTY_ACTOOL_FORCE_INSTALLHOOK_IN_CLOUD = "actool.forceInstallHookInCloud";
 
     private boolean alreadyRan = false;
 
@@ -35,13 +37,13 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
 
         switch (context.getPhase()) {
         case PREPARE:
-            if (!shouldInstallInPhaseInstall(context.getPackage())) {
+            if (!shouldInstallInPhaseInstalled(context.getPackage())) {
                 
                 install(context);
             }
             break;
         case INSTALLED:
-            if (shouldInstallInPhaseInstall(context.getPackage())) {
+            if (shouldInstallInPhaseInstalled(context.getPackage())) {
                 install(context);
             }
             break;
@@ -51,10 +53,13 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
         }
     }
 
-    private boolean shouldInstallInPhaseInstall(PackageProperties properties) {
-        return !Boolean.parseBoolean(properties.getProperty(PROPERTY_ACTOOL_INSTALL_AT_INSTALLED_PHASE));
+    private boolean shouldInstallInPhaseInstalled(PackageProperties properties) {
+        return Boolean.parseBoolean(properties.getProperty(PROPERTY_ACTOOL_INSTALL_AT_INSTALLED_PHASE));
     }
-
+    private boolean forceInstallHookInCloud(PackageProperties properties) {
+        return Boolean.parseBoolean(properties.getProperty(PROPERTY_ACTOOL_FORCE_INSTALLHOOK_IN_CLOUD));
+    }
+    
     private void install(InstallContext context) throws PackageException {
         final ProgressTrackerListener listener = context.getOptions().getListener();
         /*
@@ -67,6 +72,11 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
             return;
         }
         alreadyRan = true;
+        
+        if(RuntimeHelper.isCloudReadyInstance() && !forceInstallHookInCloud(context.getPackage())) {
+            log("InstallHook is skipped by default in cloud (use package property 'actool.forceInstallHookInCloud = true' to force run)", listener);
+            return;
+        }
 
         // check if AcTool is installed
         log("Installing ACLs through AcToolInstallHook in phase " + context.getPhase() + "...", listener);
