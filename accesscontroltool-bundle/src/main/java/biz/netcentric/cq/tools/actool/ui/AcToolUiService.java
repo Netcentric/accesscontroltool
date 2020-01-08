@@ -196,7 +196,7 @@ public class AcToolUiService {
         int authorizableChanges = acToolExecution.getAuthorizableChanges();
         int aclChanges = acToolExecution.getAclChanges();
         String changedStr = (authorizableChanges > -1 && aclChanges > -1) ? " ("+authorizableChanges+" authorizables/"+aclChanges+" ACLs changed)":"";
-        String statusString = getExecutionStatusHtml(acToolExecution)+changedStr;
+        String statusString = getExecutionStatusHtml(acToolExecution) + (acToolExecution.isSuccess() ? changedStr : "");
         return statusString;
     }
 
