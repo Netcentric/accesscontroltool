@@ -59,17 +59,21 @@ A Felix Web Console UI is available at "Main" -> "AC Tool". The web console prov
 
 See [JMX apply() method](Jmx.md).
 
-## Automatically during startup
-
-When using the composite node store [1] with immutable containers (and immutable /apps and /libs paths), the AC tool can be automatically triggered upon startup. To enable that trigger, use the package `accesscontroltool-cloud-package` instead of `accesscontroltool-package`.
-
-### Curl calls
+**Curl call**
 
 Trigger the 'apply' method of the AC JMX service through HTTP Post
 
 ```
 curl -sS --retry 1 -u ${CQ_ADMINUSER}:${CQ_ADMINPW} -X POST "http://${CQ_SERVER}:${CQ_PORT}/system/console/jmx/biz.netcentric.cq.tools:type=ACTool/op/apply/"
 ```
+
+## Startup Hook
+
+When using the [Sling Feature Model](https://sling.apache.org/documentation/development/feature-model.html), the AC tool is automatically triggered upon startup. The startup hook is auto-activated for the case the [Sling OSGi installer](https://sling.apache.org/documentation/bundles/osgi-installer.html) is not present which is usually the case when using the Sling Feature Model. The behaviour can be configured via OSGi config `AC Tool Startup Hook` (PID `biz.netcentric.cq.tools.actool.startuphook.impl.AcToolStartupHookServiceImpl`) but the default is usually correct.
+
+The AC Tool also handles a [composite node store](https://jackrabbit.apache.org/oak/docs/nodestore/compositens.html) repository correctly (it will automatically only run with paths that are not ready-only).
+
+The avoid overhead for the case a configuration has already been applied, an md5 checksum is created over all configuration files and the configuration is only applied for the case the checksum has changed.
     
 ## Upload Listener Service
 
