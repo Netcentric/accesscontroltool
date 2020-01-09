@@ -4,5 +4,10 @@
     <filter root="/apps/netcentric/actool/components"/>
     <filter root="/apps/netcentric/actool/content"/>
     <filter root="/apps/netcentric/actool/clientlibs"/>
-    <filter root="/apps/cq/core/content/nav/tools/security/actool"/>
+    <filter root="/apps/cq/core/content/nav">
+        <include pattern="/apps/cq/core/content/nav"/>
+        <include pattern="/apps/cq/core/content/nav/tools"/>
+        <include pattern="/apps/cq/core/content/nav/tools/security"/>
+        <include pattern="/apps/cq/core/content/nav/tools/security/actool"/>
+    </filter>
 </workspaceFilter>
