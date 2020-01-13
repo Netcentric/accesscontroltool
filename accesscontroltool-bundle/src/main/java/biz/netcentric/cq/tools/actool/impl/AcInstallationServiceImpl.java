@@ -38,7 +38,7 @@ import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
-import org.apache.sling.settings.SlingSettingsService;
+import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.cm.ConfigurationAdmin;
@@ -124,7 +124,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     private AcConfigChangeTracker acConfigChangeTracker;
     
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    private SlingSettingsService slingSettingsService;
+    private ExtendedSlingSettingsService slingSettingsService;
     
     private List<String> configurationRootPaths;
 

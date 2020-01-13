@@ -21,7 +21,6 @@ import javax.jcr.Session;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.oak.spi.security.authorization.accesscontrol.AccessControlConstants;
 import org.apache.sling.jcr.api.SlingRepository;
-import org.apache.sling.settings.SlingSettingsService;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -61,9 +60,6 @@ public class AcToolStartupHookServiceImpl {
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
 
-    @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    private SlingSettingsService settingsService;
-
     private boolean isCompositeNodeStore;
 
     @Activate
@@ -71,11 +67,10 @@ public class AcToolStartupHookServiceImpl {
 
         boolean isCloudReady = RuntimeHelper.isCloudReadyInstance();
         Config.StartupHookActivation activationMode = config.activationMode();
-        LOG.info("AcTool Startup Hook (start level: {}  isCloudReady: {}  activationMode: {}  runmodes: {})", 
+        LOG.info("AcTool Startup Hook (start level: {}  isCloudReady: {}  activationMode: {})", 
                 RuntimeHelper.getCurrentStartLevel(bundleContext),
                 isCloudReady,
-                activationMode,
-                settingsService.getRunModes());
+                activationMode);
 
         boolean applyOnStartup = (activationMode == Config.StartupHookActivation.ALWAYS) 
                 || (isCloudReady && activationMode == Config.StartupHookActivation.CLOUD_ONLY);

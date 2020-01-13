@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 import javax.jcr.Session;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.sling.settings.SlingSettingsService;
+import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
@@ -51,7 +51,7 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
     YamlMacroChildNodeObjectsProvider yamlMacroChildNodeObjectsProvider;
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    private SlingSettingsService slingSettingsService;
+    private ExtendedSlingSettingsService slingSettingsService;
     
     @Override
     public List<Map> processMacros(List<Map> yamlList, InstallationLogger installLog, Session session) {

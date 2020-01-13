@@ -31,7 +31,7 @@ import java.util.regex.Matcher;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.apache.sling.settings.SlingSettingsService;
+import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -57,7 +57,7 @@ public class YamlMacroProcessorTest {
     Session session;
 
     @Mock
-    SlingSettingsService slingSettingsService;
+    ExtendedSlingSettingsService slingSettingsService;
     
     @InjectMocks
     YamlMacroProcessorImpl yamlMacroProcessor = new YamlMacroProcessorImpl();
