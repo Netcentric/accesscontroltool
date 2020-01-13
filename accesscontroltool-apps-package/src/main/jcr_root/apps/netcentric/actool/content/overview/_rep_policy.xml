@@ -9,4 +9,8 @@
         jcr:primaryType="rep:GrantACE"
         rep:principalName="admin"
         rep:privileges="{Name}[jcr:read]"/>
+    <allow2
+        jcr:primaryType="rep:GrantACE"
+        rep:principalName="administrators"
+        rep:privileges="{Name}[jcr:read]"/>
 </jcr:root>
