@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <workspaceFilter version="1.0">
     <filter root="/apps/netcentric/actool/config"/>
+    <filter root="/apps/netcentric/actool/config.dev"/>
+    <filter root="/apps/netcentric/actool/config.stage"/>
+    <filter root="/apps/netcentric/actool/config.prod"/>
     <filter root="/apps/netcentric/actool/install"/>
     <filter root="/etc/packages/Netcentric">
         <include pattern="/etc/packages/Netcentric/accesscontroltool-(apps|content)-package.*"/>

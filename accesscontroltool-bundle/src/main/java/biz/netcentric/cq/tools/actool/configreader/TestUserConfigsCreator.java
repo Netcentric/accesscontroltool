@@ -15,7 +15,7 @@ import java.util.Map;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.sling.settings.SlingSettingsService;
+import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
@@ -38,7 +38,7 @@ public class TestUserConfigsCreator {
     private static final Logger LOG = LoggerFactory.getLogger(TestUserConfigsCreator.class);
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    SlingSettingsService slingSettingsService;
+    ExtendedSlingSettingsService slingSettingsService;
 
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
     volatile AemCryptoSupport cryptoSupport;
