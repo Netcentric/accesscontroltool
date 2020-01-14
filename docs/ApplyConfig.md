@@ -55,6 +55,10 @@ An install hook is ignored in the cloud because the startup hook is to be used f
 
 A Felix Web Console UI is available at "Main" -> "AC Tool". The web console provides fewer operations as JMX, but for manual testing it provides better usability for applying config changes continuously. 
 
+## Touch UI
+
+The same interface as available via Web Console is also available via Touch UI at `Tools -> Security -> Netcentric AC Tool` if you are admin on the instance. When using [AEM as a Cloud Service](https://www.adobe.com/marketing/experience-manager/cloud-service.html), the console will be available if you are in the admin group for the AEM env as set up in [adminconsole](https://adminconsole.adobe.com/).
+
 ## JMX
 
 See [JMX apply() method](Jmx.md).
@@ -74,7 +78,14 @@ When using the [Sling Feature Model](https://sling.apache.org/documentation/deve
 The AC Tool also handles a [composite node store](https://jackrabbit.apache.org/oak/docs/nodestore/compositens.html) repository correctly (it will automatically only run with paths that are not ready-only).
 
 The avoid overhead for the case a configuration has already been applied, an md5 checksum is created over all configuration files and the configuration is only applied for the case the checksum has changed.
-    
+
+### AEM as a Cloud Service
+
+[AEM as a Cloud Service](https://www.adobe.com/marketing/experience-manager/cloud-service.html) is a Sling Feature Model-based setup. When using the AC Tool with that setup no changes are required except to use the latest version of the AC Tool that supports it:
+
+* For local development using the SDK, keep the [install hook](ApplyConfig.md#installation-hook) configured as is (this will help to automatically apply the config upon local installations). In the cloud, the install hook is automatically skipped.
+* For cloud installation (incl. production deployment), the [startup hook](ApplyConfig.md#startup-hook) will automatically become active. Use [Touch UI](ApplyConfig.md#touch-ui) to validate your results there.
+
 ## Upload Listener Service
 
 The Upload Listener Service allows to automatically apply the configuration upon changes in the yaml files in CRX. It registers a JCR listener per configured path in `AC Tool Installation Service` and applies the corresponding changes with a configured delay (to aggregate multiple change events into installation). By default it is disabled.
