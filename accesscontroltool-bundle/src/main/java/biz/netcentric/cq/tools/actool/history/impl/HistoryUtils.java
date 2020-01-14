@@ -56,6 +56,9 @@ public class HistoryUtils {
     public static final String STATISTICS_ROOT_NODE = "var/statistics";
     public static final String ACHISTORY_PATH = "/"+ HistoryUtils.STATISTICS_ROOT_NODE + "/" + HistoryUtils.ACHISTORY_ROOT_NODE;
 
+    private static final String AC_ROOT_PATH_IN_APPS = "/apps/netcentric";
+    public static final String AC_HISTORY_PATH_IN_APPS = AC_ROOT_PATH_IN_APPS + "/" + ACHISTORY_ROOT_NODE;
+    
     public static final String PROPERTY_TIMESTAMP = "timestamp";
     private static final String PROPERTY_MESSAGES = "messages";
     private static final String PROPERTY_EXECUTION_TIME = "executionTime";
@@ -114,7 +117,13 @@ public class HistoryUtils {
             if(isInStrackTracke(stackTrace, BUNDLE_START_TASK_CLASS)) {
                 trigger = "startup_hook_pckmgr)";
             } else {
-                trigger = "startup_hook";
+                // if the history is not yet copied to apps, it's the image build
+                boolean isImageBuild = RuntimeHelper.isCloudReadyInstance() && !session.itemExists(AC_HISTORY_PATH_IN_APPS);
+                if(isImageBuild) {
+                    trigger = "startup_hook_image_build";
+                } else {
+                    trigger = "startup_hook";
+                }
             }
         } else {
             name += trigger = "api";

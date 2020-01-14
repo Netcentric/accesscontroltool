@@ -42,8 +42,6 @@ import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
 public class AcToolStartupHookServiceImpl {
     private static final Logger LOG = LoggerFactory.getLogger(AcToolStartupHookServiceImpl.class);
 
-    private static final String AC_ROOT_PATH_IN_APPS = "/apps/netcentric";
-
     @ObjectClassDefinition(name = "AC Tool Startup Hook", description = "Applies AC Tool config automatically upon startup (depending on configuration/runtime)")
     public static @interface Config {
         public enum StartupHookActivation {
@@ -150,9 +148,9 @@ public class AcToolStartupHookServiceImpl {
 
                 if(isCompositeNodeStore) {
                     LOG.info("Restoring history from /apps to /var");
-                    String pathInApps = AC_ROOT_PATH_IN_APPS + "/" + HistoryUtils.ACHISTORY_ROOT_NODE;
-                    if(session.nodeExists(pathInApps)) {
-                        NodeIterator nodesInAppsIt = session.getNode(pathInApps).getNodes();
+
+                    if(session.nodeExists(HistoryUtils.AC_HISTORY_PATH_IN_APPS)) {
+                        NodeIterator nodesInAppsIt = session.getNode(HistoryUtils.AC_HISTORY_PATH_IN_APPS).getNodes();
                         while(nodesInAppsIt.hasNext()) {
                             Node historyNodeInApps = nodesInAppsIt.nextNode();
                             String historyNodeInVarPath = HistoryUtils.ACHISTORY_PATH + "/"+ historyNodeInApps.getName();
@@ -164,9 +162,8 @@ public class AcToolStartupHookServiceImpl {
                     }
                 } else {
                     LOG.info("Saving history in /apps (to make it accessible later when running in composite node store)");
-                    String targetPath = AC_ROOT_PATH_IN_APPS + "/" + HistoryUtils.ACHISTORY_ROOT_NODE;
-                    LOG.info("   copying node {} to {}", HistoryUtils.ACHISTORY_PATH, targetPath);
-                    session.getWorkspace().copy(HistoryUtils.ACHISTORY_PATH, targetPath);
+                    LOG.info("   copying node {} to {}", HistoryUtils.ACHISTORY_PATH, HistoryUtils.AC_HISTORY_PATH_IN_APPS);
+                    session.getWorkspace().copy(HistoryUtils.ACHISTORY_PATH, HistoryUtils.AC_HISTORY_PATH_IN_APPS);
                 }
 
                 session.save();
