@@ -79,20 +79,14 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <slf4j.version>1.7.6</slf4j.version>
-        <bnd.version>4.1.0</bnd.version>
+        <bnd.version>4.3.1</bnd.version>
         <bouncycastle.version>1.64</bouncycastle.version>
         <java.target.version>7</java.target.version>
+        <!-- https://maven.apache.org/guides/mini/guide-reproducible-builds.html -->
+        <project.build.outputTimestamp>2020-01-15T08:04:00Z</project.build.outputTimestamp>
     </properties>
 
-    <modules>
-        <module>accesscontroltool-bundle</module>
-        <module>accesscontroltool-startuphook-bundle</module>
-        <module>accesscontroltool-apps-package</module>
-        <module>accesscontroltool-content-package</module>
-        <module>accesscontroltool-package</module>
-        <module>accesscontroltool-oakindex-package</module>
-        <module>accesscontroltool-exampleconfig-package</module>
-    </modules>
+    
 
     <dependencyManagement>
         <dependencies>
@@ -370,12 +364,12 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.1.1</version>
+                    <version>3.2.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.0</version>
+                    <version>3.8.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -403,17 +397,17 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.0.1</version>
+                    <version>3.2.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-source-plugin</artifactId>
-                    <version>3.0.1</version>
+                    <version>3.2.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
-                    <version>3.0.0-M2</version>
+                    <version>3.0.0-M3</version>
                 </plugin>
                 <plugin>
                     <groupId>org.sonatype.plugins</groupId>
@@ -422,8 +416,8 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.sling</groupId>
-                    <artifactId>maven-sling-plugin</artifactId>
-                    <version>2.3.8</version>
+                    <artifactId>sling-maven-plugin</artifactId>
+                    <version>2.4.2</version>
                     <configuration>
                         <username>${crx.username}</username>
                         <password>${crx.password}</password>
@@ -438,12 +432,18 @@
                 <plugin>
                     <groupId>org.apache.jackrabbit</groupId>
                     <artifactId>filevault-package-maven-plugin</artifactId>
-                    <version>1.0.4</version>
+                    <version>1.1.0</version>
                     <extensions>true</extensions>
                     <configuration>
                         <group>Netcentric</group>
                         <filterSource>src/main/META-INF/vault/filter.xml</filterSource>
                     </configuration>
+                    <executions>
+                        <execution>
+                            <id>default-analyze-classes</id>
+                            <phase>invalid</phase>
+                        </execution>
+                    </executions>
                 </plugin>
                 <!-- for deploying to AEM -->
                 <plugin>
@@ -454,6 +454,7 @@
                         <failOnError>true</failOnError>
                         <username>${crx.username}</username>
                         <password>${crx.password}</password>
+                        <targetURL>http://${crx.host}:${crx.port}/crx/packmgr/service.jsp</targetURL>
                     </configuration>
                 </plugin>
                 <!--This plugin's configuration is used to store Eclipse m2e settings
@@ -491,7 +492,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-release-plugin</artifactId>
-                    <version>2.5.3</version>
+                    <version>3.0.0-M1</version>
                     <configuration>
                         <autoVersionSubmodules>true</autoVersionSubmodules>
                         <tagNameFormat>@{project.version}</tagNameFormat>
@@ -564,6 +565,14 @@
             </plugin>
         </plugins>
     </build>
+    
+    <modules>
+        <module>accesscontroltool-bundle</module>
+        <module>accesscontroltool-startuphook-bundle</module>
+        <module>accesscontroltool-apps-package</module>
+        <module>accesscontroltool-content-package</module>
+        <module>accesscontroltool-package</module>
+    </modules>
 
     <profiles>
 
@@ -592,32 +601,103 @@
                     </plugin>
                 </plugins>
             </build>
+            <!-- always build everything with a release -->
+            <modules>
+                <module>accesscontroltool-oakindex-package</module>
+                <module>accesscontroltool-exampleconfig-package</module>
+            </modules>
         </profile>
 
+        <!-- profiles for optional modules -->
+        <profile>
+            <id>exampleconfig</id>
+            <modules>
+                <module>accesscontroltool-exampleconfig-package</module>
+            </modules>
+        </profile>
+        
+        <profile>
+            <id>oakindex</id>
+            <modules>
+                <module>accesscontroltool-oakindex-package</module>
+            </modules>
+        </profile>
+        
+        <!-- deployment profiles -->
         <profile>
             <id>autoInstallBundle</id>
             <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.sling</groupId>
-                        <artifactId>maven-sling-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>install-bundle</id>
-                                <goals>
-                                    <goal>install</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <slingUrl>http://${crx.host}:${crx.port}/apps/netcentric/actool/install</slingUrl>
-                            <usePut>true</usePut>
-                        </configuration>
-                    </plugin>
-                </plugins>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.sling</groupId>
+                            <artifactId>maven-sling-plugin</artifactId>
+                            <executions>
+                                <execution>
+                                    <id>install-bundle</id>
+                                    <goals>
+                                        <goal>install</goal>
+                                    </goals>
+                                </execution>
+                            </executions>
+                            <configuration>
+                                <slingUrl>http://${crx.host}:${crx.port}/apps/netcentric/actool/install</slingUrl>
+                                <usePut>true</usePut>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
             </build>
         </profile>
-
+        <profile>
+            <id>autoInstallPackage</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>com.day.jcr.vault</groupId>
+                            <artifactId>content-package-maven-plugin</artifactId>
+                            <executions>
+                                <execution>
+                                    <id>install-content-package</id>
+                                    <phase>install</phase>
+                                    <goals>
+                                        <goal>install</goal>
+                                    </goals>
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
+                 </pluginManagement>
+            </build>
+        </profile>
+        <profile>
+            <id>autoInstallPackagePublish</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>com.day.jcr.vault</groupId>
+                            <artifactId>content-package-maven-plugin</artifactId>
+                            <executions>
+                                <execution>
+                                    <id>install-content-package-publish</id>
+                                    <phase>install</phase>
+                                    <goals>
+                                        <goal>install</goal>
+                                    </goals>
+                                    <configuration>
+                                        <targetURL>http://${publish.crx.host}:${publish.crx.port}/crx/packmgr/service.jsp</targetURL>
+                                        <username>${publish.crx.username}</username>
+                                        <password>${publish.crx.password}</password>
+                                    </configuration>
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
     </profiles>
 
 </project>

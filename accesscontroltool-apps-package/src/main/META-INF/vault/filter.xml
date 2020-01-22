@@ -1,13 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <workspaceFilter version="1.0">
     <!-- generate root nodes below apps in case they don't exist -->
+    <filter root="/apps/netcentric">
+        <include pattern="/apps/netcentric" />
+        <include pattern="/apps/netcentric/actool" />
+    </filter>
     <filter root="/apps/netcentric/actool/components"/>
     <filter root="/apps/netcentric/actool/content"/>
     <filter root="/apps/netcentric/actool/clientlibs"/>
-    <filter root="/apps/cq/core/content/nav">
+    <filter root="/apps/cq">
+        <include pattern="/apps/cq"/>
+        <include pattern="/apps/cq/core"/>
+        <include pattern="/apps/cq/core/content"/>
         <include pattern="/apps/cq/core/content/nav"/>
         <include pattern="/apps/cq/core/content/nav/tools"/>
         <include pattern="/apps/cq/core/content/nav/tools/security"/>
-        <include pattern="/apps/cq/core/content/nav/tools/security/actool"/>
+        <include pattern="/apps/cq/core/content/nav/tools/security/actool(/.*)?"/>
     </filter>
 </workspaceFilter>

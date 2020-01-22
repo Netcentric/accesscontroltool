@@ -124,71 +124,21 @@
                             <artifactId>accesscontroltool-content-package</artifactId>
                         </subPackage>
                     </subPackages>
-                    <!-- is still mixed due to the contained content package -->
+                    <!-- is still mixed due to the contained content package (https://issues.apache.org/jira/browse/JCRVLT-401)  -->
                     <packageType>mixed</packageType>
+                    <validatorsSettings>
+                        <!-- due to include/exclude being used (https://issues.apache.org/jira/browse/JCRVLT-403) -->
+                        <jackrabbit-packagetype>
+                            <defaultSeverity>warn</defaultSeverity>
+                        </jackrabbit-packagetype>
+                    </validatorsSettings>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>default-analyze-classes</id>
-                        <phase>invalid</phase>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>com.day.jcr.vault</groupId>
                 <artifactId>content-package-maven-plugin</artifactId>
-                <configuration>
-                    <targetURL>http://${crx.host}:${crx.port}/crx/packmgr/service.jsp</targetURL>
-                </configuration>
             </plugin>
             
         </plugins>
     </build>
-    <profiles>
-        <profile>
-            <id>autoInstallPackage</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.day.jcr.vault</groupId>
-                        <artifactId>content-package-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>install-content-package</id>
-                                <phase>install</phase>
-                                <goals>
-                                    <goal>install</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>autoInstallPackagePublish</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.day.jcr.vault</groupId>
-                        <artifactId>content-package-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>install-content-package-publish</id>
-                                <phase>install</phase>
-                                <goals>
-                                    <goal>install</goal>
-                                </goals>
-                                <configuration>
-                                    <targetURL>http://${publish.crx.host}:${publish.crx.port}/crx/packmgr/service.jsp</targetURL>
-                                    <username>${publish.crx.username}</username>
-                                    <password>${publish.crx.password}</password>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>
