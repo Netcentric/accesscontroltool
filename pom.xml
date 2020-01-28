@@ -79,7 +79,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <slf4j.version>1.7.6</slf4j.version>
-        <bnd.version>4.3.1</bnd.version>
+        <bnd.version>5.0.0</bnd.version>
         <bouncycastle.version>1.64</bouncycastle.version>
         <java.target.version>7</java.target.version>
         <!-- https://maven.apache.org/guides/mini/guide-reproducible-builds.html -->
