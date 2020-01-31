@@ -121,11 +121,11 @@
                 <version>2.5.10</version>
                 <scope>provided</scope>
             </dependency>
-            <!-- OSGi annotations (build time only) -->
+            <!-- OSGi annotations (affects run time compatibility due to emitted osgi.extender headers), must be compatible with DS 1.3 (AEM 6.1) -->
             <dependency>
                 <groupId>org.osgi</groupId>
                 <artifactId>org.osgi.service.component.annotations</artifactId>
-                <version>1.4.0</version>
+                <version>1.3.0</version>
             </dependency>
             <dependency>
                 <groupId>org.osgi</groupId>
