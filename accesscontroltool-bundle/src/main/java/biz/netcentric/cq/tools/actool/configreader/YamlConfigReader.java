@@ -389,8 +389,9 @@ public class YamlConfigReader implements ConfigReader {
             authorizableConfigBean.setMembers(membersList.toArray(new String[membersList.size()]));
         }
         
-        authorizableConfigBean.setPath(getMapValueAsString(
-                currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_PATH));
+        
+        authorizableConfigBean.setPath(normalizePath(getMapValueAsString(
+                currentPrincipalDataMap, GROUP_CONFIG_PROPERTY_PATH)));
 
         authorizableConfigBean.setMigrateFrom(getMapValueAsString(currentPrincipalDataMap,
                 GROUP_CONFIG_PROPERTY_MIGRATE_FROM));
@@ -466,6 +467,18 @@ public class YamlConfigReader implements ConfigReader {
             return currentAceDefinition.get(propertyName).toString();
         }
         return "";
+    }
+    
+    /**
+     * Normalize paths by removing superfluous "/" at the end to prevent unnecessary change detection
+     * @param path
+     * @return the normalized path
+     */
+    private static String normalizePath(String path) {
+        if (path.endsWith("/") && path.length() > 1) {
+            return path.substring(0, path.length() - 1);
+        }
+        return path;
     }
 
 }

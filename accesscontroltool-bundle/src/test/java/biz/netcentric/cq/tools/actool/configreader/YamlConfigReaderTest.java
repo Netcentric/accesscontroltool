@@ -127,6 +127,10 @@ public class YamlConfigReaderTest {
         AuthorizableConfigBean secondGroup = groupsIt.next();
         assertEquals("groupB", secondGroup.getAuthorizableId());
         assertArrayEquals(new String[] {"groupA"}, secondGroup.getMembers());
+        
+        AuthorizableConfigBean thirdGroup = groupsIt.next();
+        assertEquals("groupC", thirdGroup.getAuthorizableId());
+        assertEquals("/home/groups/g", thirdGroup.getPath()); // strip "/" at the end
 
     }
 
@@ -135,8 +139,6 @@ public class YamlConfigReaderTest {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
         final List<Map> yamlList = getYamlList("test-user-with-keys.yaml");
         yamlConfigReader.getUserConfigurationBeans(yamlList, null);
-        
-        //
     }
  
     @Test(expected=AcConfigBeanValidationException.class)

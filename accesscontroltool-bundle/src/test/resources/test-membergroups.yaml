@@ -23,7 +23,7 @@
        - name: 
          isMemberOf:
          members: groupA,groupB 
-         path: /home/groups/g
+         path: /home/groups/g/
          
     - groupD:
        - name: 
