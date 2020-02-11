@@ -475,7 +475,7 @@ public class YamlConfigReader implements ConfigReader {
      * @return the normalized path
      */
     private static String normalizePath(String path) {
-        if (path.endsWith("/")) {
+        if (path.endsWith("/") && path.length() > 1) {
             return path.substring(0, path.length() - 1);
         }
         return path;
