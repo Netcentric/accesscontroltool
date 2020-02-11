@@ -296,8 +296,6 @@ Import-Package: org.apache.jackrabbit.oak.spi.security.authentication.external;r
                         <goals>
                             <goal>baseline</goal>
                         </goals>
-<<<<<<< Upstream, based on develop
-=======
                         <configuration>
                             <fullReport>true</fullReport>
                             <!-- ignore Bundle-Version header for baseline, i.e. no enforcement of specific bundle versions -->
@@ -305,7 +303,6 @@ Import-Package: org.apache.jackrabbit.oak.spi.security.authentication.external;r
                                 <diffignore>Bundle-Version</diffignore>
                             </diffignores>
                         </configuration>
->>>>>>> 979faf0 skip bundle version baseline (only package versions)
                     </execution>
                 </executions>
             </plugin>
