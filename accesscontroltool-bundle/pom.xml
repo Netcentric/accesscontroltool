@@ -322,7 +322,7 @@ Import-Package: org.apache.jackrabbit.oak.spi.security.authentication.external;r
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
                     <excludePackageNames>
-                        *.impl,*.aceinstaller,*.aceservice,*.aem,*.authorizableinstaller,*.comparators,*.components,*.configmodel,*.configreader,*configupdatelistener,*.dumpservice,*.healthcheck,*.helper,*.history,*.installationhistory,*.jmx,*.validators*
+                        *.impl,*.aceinstaller,*.aceservice,*.aem,*.authorizableinstaller,*.comparators,*.components,*.configmodel,*.configreader,*configupdatelistener,*.dumpservice,*.healthcheck,*.helper,*.history,*.installationhistory,*.jmx,*.validators*,*.ui
                     </excludePackageNames>
                 </configuration>
             </plugin>
