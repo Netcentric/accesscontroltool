@@ -148,7 +148,7 @@ privatePassword | The password for decrypting the private key. The password itse
 public | The public DER key in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-13). . If both `certificate` and `public` are set `certificate` takes precedence. | no (either public or certificate needs to be set)
 certificate | The certificate in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-5.1). If both `certificate` and `public` are set `certificate` takes precedence. | no (either public or certificate needs to be set)
 
-Usually keys are stage/environment-specific i.e. listed in run-mode specific yaml fragments. At least the privatePassword differs (due to the different Crypto Support master kes).
+Usually keys are stage/environment-specific i.e. listed in run-mode specific yaml fragments. At least the privatePassword differs (due to the different Crypto Support master keys).
 
 ## Configuration of ACEs
 
