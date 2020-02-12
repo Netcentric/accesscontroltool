@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/Netcentric/accesscontroltool.svg?branch=develop)](https://travis-ci.org/Netcentric/accesscontroltool)
+[![Build Status](https://travis-ci.org/Netcentric/accesscontroltool.svg?branch=develop)](https://travis-ci.org/Netcentric/accesscontroltool) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/biz.netcentric.cq.tools.accesscontroltool/accesscontroltool/badge.svg)](https://maven-badges.herokuapp.com/maven-central/biz.netcentric.cq.tools.accesscontroltool/accesscontroltool)
 
 Access Control Tool for Adobe Experience Manager
 ================================================
