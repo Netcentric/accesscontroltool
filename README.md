@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/Netcentric/accesscontroltool.svg?branch=develop)](https://travis-ci.org/Netcentric/accesscontroltool) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/biz.netcentric.cq.tools.accesscontroltool/accesscontroltool/badge.svg)](https://maven-badges.herokuapp.com/maven-central/biz.netcentric.cq.tools.accesscontroltool/accesscontroltool)
+[![Build Status](https://travis-ci.org/Netcentric/accesscontroltool.svg?branch=develop)](https://travis-ci.org/Netcentric/accesscontroltool) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/biz.netcentric.cq.tools.accesscontroltool/accesscontroltool/badge.svg)](https://maven-badges.herokuapp.com/maven-central/biz.netcentric.cq.tools.accesscontroltool/accesscontroltool) [![License](https://img.shields.io/badge/License-EPL%201.0-red.svg)](https://opensource.org/licenses/EPL-1.0)
 
 Access Control Tool for Adobe Experience Manager
 ================================================
