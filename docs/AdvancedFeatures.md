@@ -248,7 +248,7 @@ To configure permissions for already existing users, it's best to create a custo
 This is not an option for the [`everyone` group](https://jackrabbit.apache.org/oak/docs/security/user/default.html#Everyone_Group) as it is neither allowed to put groups/users as members to this group (because implicitly every principal is member of this group) nor to put this group as member to another group (to prevent cycles, compare with [OAK-7323](https://issues.apache.org/jira/browse/OAK-7323)).
 Also in case of using [Sling Service Authentication bound to principals](https://sling.apache.org/documentation/the-sling-engine/service-authentication.html#service-user-mappings)(available since AEM 6.4) you cannot use group memberships, as the principal mapping does not consider (transitive) group memberships. Those mappings can be identified by looking up the according `org.apache.sling.serviceusermapping.impl.ServiceUserMapperImpl.amended` configuration instance with its `user.mapping` property. It that has the format `<service-name>[:<subservice-name>]="["<principal name>{","<principal name>}"]"` (look for square brackets) it is a principal mapping.
 
-In those cases just list the built-in user in the YAML file (with the correct path and system user flag) and leverage `unmanagedAcePathsRegex` as outlined below. 
+In those cases just list the built-in authorizable (user/group) in the YAML file (with the correct authorizable id) and leverage `unmanagedAcePathsRegex` as outlined below. No other properties need to be set on the authorizable as this is in fact not touched by the ACTool.
 
 ### Configure memberships of/towards externally managed groups
 
