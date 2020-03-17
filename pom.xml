@@ -432,11 +432,20 @@
                 <plugin>
                     <groupId>org.apache.jackrabbit</groupId>
                     <artifactId>filevault-package-maven-plugin</artifactId>
-                    <version>1.1.0</version>
+                    <version>1.1.1-SNAPSHOT</version>
                     <extensions>true</extensions>
                     <configuration>
                         <group>Netcentric</group>
                         <filterSource>src/main/META-INF/vault/filter.xml</filterSource>
+                        <validatorsSettings>
+                            <netcentric-aem-classification>
+                                <defaultSeverity>warn</defaultSeverity>
+                                <options>
+                                  <!-- references the classification.map from the ThreadContextClassLoader, might contain multiple maps (comma-separated) -->
+                                  <maps>tccl:biz/netcentric/filevault/validator/maps/aem-classification-map-deprecations/coral2deprecations.map,tccl:biz/netcentric/filevault/validator/maps/aem-classification-map-deprecations/graniteuideprecations.map,tccl:biz/netcentric/filevault/validator/maps/aem-classification-map-repo-annotations.map</maps>
+                                </options>
+                            </netcentric-aem-classification>
+                        </validatorsSettings>
                     </configuration>
                     <executions>
                         <execution>
@@ -444,6 +453,24 @@
                             <phase>invalid</phase>
                         </execution>
                     </executions>
+                    <dependencies>
+                        <dependency>
+                            <groupId>biz.netcentric.filevault.validator</groupId>
+                            <artifactId>aem-classification-validator</artifactId>
+                            <version>1.0.0</version>
+                        </dependency>
+                        <!-- the dependency containing the actual classification map -->
+                        <dependency>
+                            <groupId>biz.netcentric.filevault.validator.maps</groupId>
+                            <artifactId>aem-classification-map-repo-annotations</artifactId>
+                            <version>6.5.3.0</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>biz.netcentric.filevault.validator.maps</groupId>
+                            <artifactId>aem-classification-map-deprecations</artifactId>
+                            <version>6.5.0.0</version>
+                        </dependency>
+                    </dependencies>
                 </plugin>
                 <!-- for deploying to AEM -->
                 <plugin>
