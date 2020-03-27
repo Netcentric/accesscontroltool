@@ -43,7 +43,7 @@ property | comment | required
 name | Name of the group as shown in UI. Sets the property `profile/givenName` of that group. | optional
 description | Description of the group | optional
 externalId | Required for AC setups since AEM 6.2 SP1 that synchronize groups from LDAP to AEM. The value has to be in format LDAP-DN;IDP-NAME where LDAP-DN is the full distinguished name and IDP-NAME is configured in OSGI config PID org.apache.jackrabbit.oak.security.authentication.ldap.impl.LdapIdentityProvider property "provider-name". Example: `externalId: "cn=group-name,ou=mydepart,ou=Groups,dc=comp,dc=com;IDPNAME"`. Since v1.9.3 | optional
-path | Path of the intermediate node either relative or absolute. If relative, `/home/groups` is automatically prefixed. By default some implementation specific path is choosen. Usually the full group path is the (intermediate) path concatenated with the authorizable id  | optional
+path | Path of the intermediate node either relative or absolute. If relative, `/home/groups` is automatically prefixed. By default some implementation specific path is choosen. Usually the full group path is the (intermediate) path concatenated with a [randomized authorizable id](https://jackrabbit.apache.org/oak/docs/apidocs/org/apache/jackrabbit/oak/security/user/RandomAuthorizableNodeName.html).  | optional
 isMemberOf | Comma-separated list (String in YAML) of groups this groups is a member of. Alternatively can be provided as yaml list. | optional
 memberOf | same meaning as `isMemberOf`. This property is *deprecated*, please use `isMemberOf` instead. | optional
 members | Comma-separated list (String in YAML) of groups that are member of this group. Alternatively can be provided as yaml list. Allows to specify the relationship from the other side compared to `isMemberOf`. **NOTE**: The `isMemberOf` configuration should be preferred over `members` if possible for better readability. Since `isMemberOf` shows what a group inherits, `members` would only show on the other side where permissions get pushed to. Also choosing one approach makes the config files consistent. `members` should therefore only be used in special cases where it is not possible to use `isMemberOf`, e.g. to push rights to a group that is not in the configuration and hence that group can not be annotated with `isMemberOf` | optional
@@ -80,7 +80,7 @@ Users can be configured in the same way as groups  but in the **user_config** se
 property | comment | required
 --- | --- | ---
 name | Works mostly like for groups, except that the string is split up in first and last name using the last space found in string. For instance "Johann Sebastian Bach" will result in first name "Johann Sebastian" and last name "Bach". For names where the split has to be explicitly configured, use a comma: "Van der Broek, Sebastian" will result in first name "Sebastian" and last name "Van der Broek". Sets the properties `profile/familyName` and `profile/givenName` of the user. | optional
-path | Works exactly as for groups | optional
+path | Works exactly as for groups, except that the automatic prefix in case of relative paths is `/home/users`. | optional
 isMemberOf | Works exactly as for groups | optional
 description | Description of the user - will overwrite description in `profileContent` if provided there as well | optional
 email | Email of the user - will overwrite email in `profileContent` if provided there as well | optional
