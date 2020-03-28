@@ -10,9 +10,10 @@ package biz.netcentric.cq.tools.actool.helper;
 
 import static biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger.msHumanReadable;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -34,6 +35,7 @@ import javax.jcr.security.AccessControlManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
+import org.apache.jackrabbit.util.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +53,7 @@ public class QueryHelper {
      * @param session the JCR session
      * @param excludePaths paths which are excluded from search
      * @return all rep:policy nodes delivered by query */
-    public static Set<Node> getRepPolicyNodes(final Session session,
+    public static Set<String> getRepPolicyNodePaths(final Session session,
             final List<String> excludePaths) {
         NodeIterator nodeIt = null;
         try {
@@ -60,7 +62,7 @@ public class QueryHelper {
             LOG.error("Exception: {}", e);
         }
 
-        Set<String> paths = new TreeSet<String>();
+        Set<String> rootChildrenPaths = new TreeSet<String>();
         while (nodeIt.hasNext()) {
             String currentPath = null;
             Node currentNode = nodeIt.nextNode();
@@ -73,26 +75,26 @@ public class QueryHelper {
             try {
                 if (!currentNode.hasProperty("rep:AuthorizableFolder")) {
                     if (!excludePaths.contains(currentPath)) {
-                        paths.add(currentPath);
+                        rootChildrenPaths.add(currentPath);
                     }
                 }
             } catch (RepositoryException e) {
                 LOG.error("Exception: {}", e);
             }
         }
-        Set<Node> nodes = new LinkedHashSet<Node>();
+        Set<String> paths = new HashSet<>();
         try {
             // get the rep:policy node of "/", if existing
             if (session.nodeExists(ROOT_REP_POLICY_NODE)) {
-                nodes.add(session.getNode(ROOT_REP_POLICY_NODE));
+                paths.add(ROOT_REP_POLICY_NODE);
             }
             if (session.nodeExists(ROOT_REPO_POLICY_NODE)) {
-                nodes.add(session.getNode(ROOT_REPO_POLICY_NODE));
+                paths.add(ROOT_REPO_POLICY_NODE);
             }
 
             // get the rep:policy node of "/home", if existing
             if (session.nodeExists(HOME_REP_POLICY)) {
-                nodes.add(session.getNode(HOME_REP_POLICY));
+                paths.add(HOME_REP_POLICY);
             }
 
             boolean indexForRepACLExists = session.nodeExists(OAK_INDEX_PATH_REP_ACL);
@@ -102,7 +104,7 @@ public class QueryHelper {
                     "SELECT ace.* FROM [rep:ACE] AS ace WHERE ace.[rep:principalName] IS NOT NULL AND ISDESCENDANTNODE(ace, [%s])";
             LOG.debug("Query to obtain all ACLs: {}", queryForAClNodes);
             
-            for (String path : paths) {
+            for (String path : rootChildrenPaths) {
                 if(StringUtils.equals(path, ROOT_REP_POLICY_NODE) || StringUtils.equals(path, ROOT_REPO_POLICY_NODE)) {
                     continue;
                 }
@@ -110,57 +112,61 @@ public class QueryHelper {
                 String query = String.format(queryForAClNodes, path);
 
                 long startTime1 = System.currentTimeMillis();
-                Set<Node> nodesResult = indexForRepACLExists ? 
-                        getNodes(session, query, Query.JCR_SQL2):
-                        getDistinctParentNodes(session, query, Query.JCR_SQL2);
+                Set<String> nodesResult = indexForRepACLExists ? 
+                        getNodePathsFromQuery(session, query, Query.JCR_SQL2):
+                        getDistinctParentNodePathsFromQuery(session, query, Query.JCR_SQL2);
                 LOG.debug("Query to find ACLs under {} ran in {}ms (count ACLs: {})", path, System.currentTimeMillis()-startTime1, nodesResult.size());
-                nodes.addAll(nodesResult);
+                paths.addAll(nodesResult);
             }
         } catch (Exception e) {
             throw new IllegalStateException("Could not query repository for existing ACLs: "+e, e);
         }
-        return nodes;
+        return paths;
     }
 
     /** Get Nodes with XPATH Query. */
-    public static Set<Node> getNodes(final Session session,
+    public static Set<String> getNodePathsFromQuery(final Session session,
             final String xpathQuery) throws InvalidQueryException,
             RepositoryException {
-        Set<Node> nodes = getNodes(session, xpathQuery, Query.XPATH);
-        return nodes;
+        return getNodePathsFromQuery(session, xpathQuery, Query.XPATH);
     }
 
     
-    public static Set<Node> getDistinctParentNodes(final Session session,final String queryStatement, String queryLanguageType) throws InvalidQueryException,  RepositoryException {
-        Set<Node> nodes = getNodes(session, queryStatement, queryLanguageType);
-        Set<Node> parentNodes = new HashSet<>();
+    public static Set<String> getDistinctParentNodePathsFromQuery(final Session session,final String queryStatement, String queryLanguageType) throws InvalidQueryException,  RepositoryException {
+        Set<String> paths = getNodePathsFromQuery(session, queryStatement, queryLanguageType);
+        Set<String> parentPaths = new HashSet<>();
 
-        for (Node node : nodes) {
-            parentNodes.add(node.getParent());
+        for (String path : paths) {
+            parentPaths.add(Text.getRelativeParent(path, 1));
         }
 
-        return parentNodes;
+        return parentPaths;
     }
 
     
     /** @param session the jcr session
      * @param queryStatement - ex. "SELECT * FROM [rep:ACL]"
      * @param queryLanguageType - ex. Query.JCR_SQL2 */
-    public static Set<Node> getNodes(final Session session,
-            final String queryStatement, String queryLanguageType) throws InvalidQueryException,
-            RepositoryException {
-        Set<Node> nodes = new HashSet<Node>();
-
+    public static NodeIterator getNodesFromQuery(final Session session,
+            final String queryStatement, String queryLanguageType) throws RepositoryException {
         Query query = session.getWorkspace().getQueryManager().createQuery(queryStatement, queryLanguageType);
         QueryResult queryResult = query.execute();
-        NodeIterator nit = queryResult.getNodes();
+        return queryResult.getNodes();
+    }
 
+    /** @param session the jcr session
+     * @param queryStatement - ex. "SELECT * FROM [rep:ACL]"
+     * @param queryLanguageType - ex. Query.JCR_SQL2 */
+    public static Set<String> getNodePathsFromQuery(final Session session,
+            final String queryStatement, String queryLanguageType) throws RepositoryException {
+        Set<String> paths = new HashSet<>();
+        NodeIterator nit = getNodesFromQuery(session, queryStatement, queryLanguageType);
         while (nit.hasNext()) {
             // get the next rep:policy node
             Node node = nit.nextNode();
-            nodes.add(node);
+            paths.add(node.getPath());
         }
-        return nodes;
+        return paths;
     }
 
     public static Set<AclBean> getAuthorizablesAcls(final Session session,
@@ -172,7 +178,7 @@ public class QueryHelper {
         StopWatch sw = new StopWatch();
         sw.start();
         
-        Set<Node> nodeSet = new LinkedHashSet<Node>();
+        Collection<Node> nodes = new LinkedList<>();
 
         Iterator<String> authorizablesIdIterator = authorizableIds.iterator();
 
@@ -186,11 +192,15 @@ public class QueryHelper {
 
             String query = queryStringBuilder.toString();
 
-            Set<Node> resultNodes = getNodes(session, query, Query.JCR_SQL2);
+            NodeIterator nit = getNodesFromQuery(session, query, Query.JCR_SQL2);
+            Collection<Node> resultNodes = new LinkedList<>();
+            while (nit.hasNext()) {
+                resultNodes.add(nit.nextNode());
+            }
             LOG.trace("Querying AclBeans with {} returned {} results", query, resultNodes.size());
-            nodeSet.addAll(resultNodes);
+            nodes.addAll(resultNodes);
         }
-        Set<AclBean> resultBeans = buildAclBeansFromNodeSet(session, nodeSet, principalIdsToBeFilled);
+        Set<AclBean> resultBeans = buildAclBeansFromNodes(session, nodes, principalIdsToBeFilled);
 
         sw.stop();
         LOG.debug("Found {} AclBeans in {}", resultBeans.size(), msHumanReadable(sw.getTime()));
@@ -198,14 +208,14 @@ public class QueryHelper {
         return resultBeans;
     }
 
-    private static Set<AclBean> buildAclBeansFromNodeSet(final Session session,
-            Set<Node> nodeSet, Set<String> principalIdsToBeFilled) throws UnsupportedRepositoryOperationException,
+    private static Set<AclBean> buildAclBeansFromNodes(final Session session,
+            Collection<Node> nodes, Set<String> principalIdsToBeFilled) throws UnsupportedRepositoryOperationException,
             RepositoryException, PathNotFoundException, AccessDeniedException,
             ItemNotFoundException {
         AccessControlManager aMgr = session.getAccessControlManager();
         AccessControlList acl;
         Set<AclBean> aclSet = new TreeSet<AclBean>(); // use natural ordering
-        for (Node allowOrDenyNode : nodeSet) {
+        for (Node allowOrDenyNode : nodes) {
             String principalId = allowOrDenyNode.getProperty("rep:principalName").getValue().getString();
             principalIdsToBeFilled.add(principalId);
             Node aclNode = allowOrDenyNode.getParent();

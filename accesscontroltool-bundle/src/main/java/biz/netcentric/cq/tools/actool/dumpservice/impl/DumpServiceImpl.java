@@ -36,7 +36,6 @@ import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.nodetype.NoSuchNodeTypeException;
 import javax.jcr.security.AccessControlEntry;
 import javax.jcr.version.VersionException;
-import javax.servlet.ServletOutputStream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
@@ -51,7 +50,7 @@ import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.jackrabbit.oak.spi.security.principal.EveryonePrincipal;
 import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
-import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.jackrabbit.util.Text;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -348,19 +347,19 @@ public class DumpServiceImpl implements ConfigDumpService {
             throws RepositoryException {
 
         List<String> excludeNodesList = Arrays.asList(queryExcludePaths);
-        Set<Node> resultNodeSet = QueryHelper.getRepPolicyNodes(session, excludeNodesList);
+        Set<String> resultPaths = QueryHelper.getRepPolicyNodePaths(session, excludeNodesList);
         Set<AclBean> accessControBeanSet = new LinkedHashSet<AclBean>();
 
         // assemble big query result set using the query results of the child
         // paths of jcr:root node
-        for (Node node : resultNodeSet) {
+        for (String path : resultPaths) {
             try {
-                String path = !Constants.REPO_POLICY_NODE.equals(node.getName())
-                        ? node.getParent().getPath()
+                String contextPath = !Constants.REPO_POLICY_NODE.equals(Text.getName(path))
+                        ? Text.getRelativeParent(path, 1)
                         : null /*  repo policies are accessed by using a null path */;
 
-                JackrabbitAccessControlList jackrabbitAcl = AccessControlUtils.getAccessControlList(session, path);
-                AclBean aclBean = new AclBean(jackrabbitAcl, path);
+                JackrabbitAccessControlList jackrabbitAcl = AccessControlUtils.getAccessControlList(session, contextPath);
+                AclBean aclBean = new AclBean(jackrabbitAcl, contextPath);
                 accessControBeanSet.add(aclBean);
             } catch (AccessDeniedException e) {
                 LOG.error("AccessDeniedException: {}", e);

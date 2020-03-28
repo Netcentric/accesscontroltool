@@ -9,7 +9,6 @@
 package biz.netcentric.cq.tools.actool.configreader;
 
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -22,11 +21,9 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
-import java.util.regex.Pattern;
+import java.util.Set;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.query.InvalidQueryException;
@@ -38,8 +35,6 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.adobe.granite.crypto.CryptoSupport;
 
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
@@ -287,16 +282,16 @@ public class YamlConfigReader implements ConfigReader {
             RepositoryException {
         // perform query using the path containing wildcards
         final String query = "/jcr:root" + tmpAclBean.getJcrPath();
-        final Set<Node> result = QueryHelper.getNodes(session, query);
+        final Set<String> result = QueryHelper.getNodePathsFromQuery(session, query);
 
         if (result.isEmpty()) {
             return;
         }
-        for (final Node node : result) {
+        for (final String path : result) {
             // ignore rep:policy nodes
-            if (!node.getPath().contains("/rep:policy")) {
+            if (!path.contains("/rep:policy")) {
                 final AceBean replacementBean = tmpAclBean.clone();
-                replacementBean.setJcrPath(node.getPath());
+                replacementBean.setJcrPath(path);
 
                 if (aceSet.add(replacementBean)) {
                     LOG.info("Wildcard replacement: Cloned " + tmpAclBean + " to " + replacementBean);
