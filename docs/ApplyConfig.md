@@ -51,7 +51,7 @@ The installation takes place in phase "PREPARE" by default, i.e. before any othe
 
 An install hook is ignored in the cloud because the startup hook is to be used for that use case (the package property `actool.forceInstallHookInCloud` can be used force excution).
 
-**Notice:** Packages with install hooks can only be installed by admin users (compare with [JCRVLT-427](https://issues.apache.org/jira/browse/JCRVLT-427))! This is either user with name `admin`, `system` or every member of group `administrators`.
+**Notice:** Packages with install hooks can only be installed by admin users (compare with [JCRVLT-427](https://issues.apache.org/jira/browse/JCRVLT-427))! This is either user with id `admin`, `system` or every member of group `administrators`.
 
 ## Web Console
 
