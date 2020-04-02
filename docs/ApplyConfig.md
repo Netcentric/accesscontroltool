@@ -51,6 +51,8 @@ The installation takes place in phase "PREPARE" by default, i.e. before any othe
 
 An install hook is ignored in the cloud because the startup hook is to be used for that use case (the package property `actool.forceInstallHookInCloud` can be used force excution).
 
+**Notice:** Packages with install hooks can only be installed by admin users (compare with [JCRVLT-427](https://issues.apache.org/jira/browse/JCRVLT-427))! This is either user with id `admin`, `system` or every member of group `administrators`.
+
 ## Web Console
 
 A Felix Web Console UI is available at "Main" -> "AC Tool". The web console provides fewer operations as JMX, but for manual testing it provides better usability for applying config changes continuously. 
