@@ -35,8 +35,8 @@ public class WebConsoleConfigTracker implements ConfigurationListener {
     @Activate
     private void updateConfig() {
         try {
-
-            Dictionary<String, Object> webconsoleSecProviderConfig = configAdmin.getConfiguration(CONSOLE_SEC_PROVIDER_PID).getProperties();
+            // make sure that you don't overwrite the binding!
+            Dictionary<String, Object> webconsoleSecProviderConfig = configAdmin.getConfiguration(CONSOLE_SEC_PROVIDER_PID, null).getProperties();
             if(webconsoleSecProviderConfig != null) {
                 allowedUsers = PropertiesUtil.toStringArray(webconsoleSecProviderConfig.get(CONSOLE_SEC_PROVIDER_USERS_PROP));
                 allowedGroups = PropertiesUtil.toStringArray(webconsoleSecProviderConfig.get(CONSOLE_SEC_PROVIDER_GROUPS_PROP));
