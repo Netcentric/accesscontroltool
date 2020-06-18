@@ -90,7 +90,7 @@ disabled | Can be set to `true` or an arbitrary reason string to disable a user.
 profileContent | Allows to provide [enhanced docview xml](https://jackrabbit.apache.org/filevault/docview.html) that will reset the profile to the given structure after each run | optional
 preferencesContent | Allows to provide [enhanced docview xml](https://jackrabbit.apache.org/filevault/docview.html) that will reset the preferences node to the given structure after each run | optional
 socialContent | Allows to provide [enhanced docview xml](https://jackrabbit.apache.org/filevault/docview.html) that will reset the social node to the given structure after each run | optional
-keys | Public/Private key pairs which will be added to the user's keystore. The keystore is transparently created if it does not exist yet during installation (with a random password). Useful in the context of configuring [Adobe IO in AEM](https://docs.adobe.com/content/help/en/experience-manager-learn/foundation/authentication/set-up-public-private-keys-for-use-with-aem-and-adobe-io.html) e.g. for [Adobe Launch via Adobe IO](https://helpx.adobe.com/experience-manager/using/aem_launch_adobeio_integration.html) or for the [SAML Integration in AEM](https://helpx.adobe.com/experience-manager/6-5/sites/administering/using/saml-2-0-authenticationhandler.html). In general useful whenever the [AEM KeyStoreService](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/reference-materials/javadoc/com/adobe/granite/keystore/KeyStoreService.html) is being used. This property contains a number of keys, identified via their alias. The format of each key is described below | optional
+keys | Public/Private key pairs which will be added to the user's keystore. The keystore is transparently created if it does not exist yet during installation (with a random password). Useful in the context of configuring [Adobe IO in AEM](https://docs.adobe.com/content/help/en/experience-manager-learn/foundation/authentication/set-up-public-private-keys-for-use-with-aem-and-adobe-io.html) e.g. for [Adobe Launch via Adobe IO](https://helpx.adobe.com/experience-manager/using/aem_launch_adobeio_integration.html) or for the [SAML Integration in AEM](https://helpx.adobe.com/experience-manager/6-5/sites/administering/using/saml-2-0-authenticationhandler.html). In general useful whenever the [AEM KeyStoreService](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/reference-materials/javadoc/com/adobe/granite/keystore/KeyStoreService.html) is being used. This property contains a number of keys, identified via their alias. The format of each key is described below. All encrypted private keys are stored not decrypted in the (encrypted) keystore. That means after they have been imported in AEM only the keystore password is necessary to access those.  | optional
 
 
 Example:
@@ -139,16 +139,22 @@ Example:
 Group memberships can be set on user entry or group entry or both.
 
 ### Configuration of Keys
-Each key entry in the `keys` section has the following properties
+Each key entry in the `keys` section stands for a key alias in the key store. The alias name is given by the section name. As aliases are converted to lower-case only lower-case characters should be used. Each key section has the
+ following properties
 
 property | comment | required
 --- | --- | ---
 private | The encrypted PKCS#8 key in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-11). Non-encrypted keys are not supported for security reasons! The symmetrical encryption requires the privatePassword to be decrypted. | yes
-privatePassword | The password for decrypting the private key. The password itself must be encrypted with the AEM Crypto Support (i.e. encrypted with the AEM master key of the according instance). Therefore the value must start with `{`. | yes
+privatePassword | The password for decrypting the private key. The password itself must be encrypted with the AEM Crypto Support (i.e. encrypted with the AEM master key of the according instance). Therefore the value must start with `{`. Once the key is added to the keystore this password is no longer relevant as there the private key is encrypted with the password of the AEM keystore itself. | yes
 public | The public DER key in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-13). . If both `certificate` and `public` are set `certificate` takes precedence. | no (either public or certificate needs to be set)
 certificate | The certificate in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-5.1). If both `certificate` and `public` are set `certificate` takes precedence. | no (either public or certificate needs to be set)
 
-Usually keys are stage/environment-specific i.e. listed in run-mode specific yaml fragments. At least the privatePassword differs (due to the different Crypto Support master keys).
+It is recommended to store the values for `private`, `public` and `certificate` in the [YAML literal style](https://yaml.org/spec/1.2/spec.html#id2795688) for readability reasons.
+
+#### Creation of key pair
+The key pair can be created e.g. with `ssh-keygen -m PKCS8`. Afterwards the public key needs to be converted to the right format with `ssh-keygen -f <public-key>.pub -e -m PEM >pubkey.pem`.
+
+Usually keys are stage/environment-specific i.e. listed in run-mode specific yaml fragments. At least the encrypted `privatePassword` normally differs (due to the different Crypto Support master keys).
 
 ## Configuration of ACEs
 
