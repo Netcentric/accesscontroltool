@@ -49,8 +49,12 @@ public class ExtendedSlingSettingsServiceImpl implements ExtendedSlingSettingsSe
         if(isCloudReady) {
             extendedRunmodes.add(ADDITIONAL_RUNMODE_CLOUD);
         }
-        List<String> additionalRunmodes = Arrays.asList(config.additionalRunmodes());
-        extendedRunmodes.addAll(additionalRunmodes);
+
+        if (config.additionalRunmodes() != null) {
+            List<String> additionalRunmodes = Arrays.asList(config.additionalRunmodes());
+            extendedRunmodes.addAll(additionalRunmodes);
+        }
+
         LOG.info("Default runmodes: {} Extended Runmodes: {}  isCloudReady: {}", defaultRunmodes, extendedRunmodes, isCloudReady);
     }
     
