@@ -79,12 +79,13 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <slf4j.version>1.7.6</slf4j.version>
-        <bnd.version>4.1.0</bnd.version>
+        <bnd.version>5.1.1</bnd.version>
         <bouncycastle.version>1.64</bouncycastle.version>
         <java.target.version>7</java.target.version>
     </properties>
 
     <modules>
+        <module>target-osgi-environment</module>
         <module>accesscontroltool-bundle</module>
         <module>accesscontroltool-startuphook-bundle</module>
         <module>accesscontroltool-apps-package</module>
@@ -365,6 +366,11 @@
                 <plugin>
                     <groupId>biz.aQute.bnd</groupId>
                     <artifactId>bnd-baseline-maven-plugin</artifactId>
+                    <version>${bnd.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>biz.aQute.bnd</groupId>
+                    <artifactId>bnd-resolver-maven-plugin</artifactId>
                     <version>${bnd.version}</version>
                 </plugin>
                 <plugin>
