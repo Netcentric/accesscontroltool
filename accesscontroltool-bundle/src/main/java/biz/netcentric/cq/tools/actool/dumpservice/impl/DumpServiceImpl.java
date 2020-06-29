@@ -140,7 +140,7 @@ public class DumpServiceImpl implements ConfigDumpService {
         Session session = null;
         try {
 
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            session = repository.loginService(null, null);
             String dump = getCompleteDump(AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE, session);
             persistDump(dump, session);
             return dump;
@@ -160,7 +160,7 @@ public class DumpServiceImpl implements ConfigDumpService {
         Session session = null;
         try {
 
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            session = repository.loginService(null, null);
             String dump = getCompleteDump(AcHelper.PRINCIPAL_BASED_ORDER, AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE, session);
             persistDump(dump, session);
             return dump;
