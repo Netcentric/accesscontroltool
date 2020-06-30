@@ -38,7 +38,7 @@ The package is available from [the Maven Central repository](https://repo1.maven
 To retrieve all ACLs in the system, an oak index for node type `rep:ACL` is 
 
 * required for versions < 2.4.0 (otherwise the performance degrades significantly)
-* beneficial for large installations for versions >= 2.4.0 (see #386, most installations will be fine without index)
+* beneficial for large installations for versions >= 2.4.0 (see [#386](https://github.com/Netcentric/accesscontroltool/issues/386), most installations will be fine without index)
 
 You can get the ZIP file via [Maven](https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-oakindex-package/). Install it e.g. via CRX package manager.
 
