@@ -20,13 +20,21 @@ For some features the order of configuration files is relevant - the AC Tool ord
 
 ## Run modes 
 
-In general the parent node may specify required Sling run modes being separated by a dot (```.```). Folder names can contain runmodes in the same way as OSGi configurations ([installation of OSGi bundles through JCR packages in Sling](http://sling.apache.org/documentation/bundles/jcr-installer-provider.html)) using a `.` (e.g. `myproject.author` will only become active on author). Additionally, multiple runmodes combinations can be given separated by comma to avoid duplication of configuration (e.g. `myproject.author.test,author.dev` will be active on authors of dev and test environment only).
+In general the parent node may specify a run mode spec (required run modes) after the first dot (```.```) of the YAMLs parent folder name. Run modes can be given in the same way as in the [JCR Provider of the OSGi Installer](http://sling.apache.org/documentation/bundles/jcr-installer-provider.html)) using a `.` (AND operator, e.g. `myproject.author` will only become active on author). Additionally, multiple runmodes combinations can be given separated by comma (OR operator, binds less than AND) to avoid duplication of configuration (e.g. `myproject.author.test,author.dev` will be active on authors of dev and test environment only). Also each run mode can be negated by preceding it with a `-` (binds more than AND). The full grammar of the run mode spec looks like this in EBNF:
+
+```
+run mode spec ::= conjunctions { "," conjunctions }
+conjunctions ::= conjunction { '.' conjunction }
+conjunction ::= notrunmode | runmode
+notrunmode ::= '-' runmode
+```
 
 Examples:
 
-* project.author: runs on "author" run mode only
-* project.author.dev: runs only when run modes "author" and "dev" are present
-* project.author.test,author.dev: requires run mode "author" and either "test" or "dev" to be present
+* `project.author`: runs on "author" run mode only
+* `project.author.dev`: runs only when run modes "author" and "dev" are present
+* `project.author.test,author.dev`: requires run mode "author" and either "test" or "dev" to be present
+* `project.-prod`: runs on any environment except for those which have the "prod" run mode
 
 ## Overall structure a of an AC configuration file
 

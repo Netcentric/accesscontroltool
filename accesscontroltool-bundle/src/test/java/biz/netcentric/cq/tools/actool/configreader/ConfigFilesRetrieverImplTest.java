@@ -16,38 +16,25 @@ import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 
+import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsServiceImpl;
+
 public class ConfigFilesRetrieverImplTest {
 
-    @Test
-    public void testExtractSimpleRunModesFromName() {
-        Assert.assertThat(ConfigFilesRetrieverImpl
-                .extractRunModesFromName(""), Matchers
-                .hasSize(0));
-        Assert.assertThat(ConfigFilesRetrieverImpl
-                .extractRunModesFromName("namewithoutrunmodes"), Matchers
-                .hasSize(0));
-        Assert.assertThat(ConfigFilesRetrieverImpl
-                .extractRunModesFromName("name.runmode1"), Matchers
-                .contains(Matchers.contains("runmode1")));
-        Assert.assertThat(ConfigFilesRetrieverImpl
-                .extractRunModesFromName("name.runmode1.runmode2"), Matchers
-                .contains(Matchers.containsInAnyOrder("runmode1", "runmode2")));
-        // this specifies an empty run mode
-        Assert.assertThat(ConfigFilesRetrieverImpl
-                .extractRunModesFromName("namewithoutrunmodes."), Matchers.contains(Matchers.contains("")));
-    }
+    private ExtendedSlingSettingsServiceImpl slingSettings;
 
     @Test
-    public void testExtractRunModesFromNameWithAndAndOr() {
+    public void testExtractRunModeSpecFromName() {
         Assert.assertThat(ConfigFilesRetrieverImpl
-                .extractRunModesFromName("name.runmode1,runmode2"), Matchers
-                .containsInAnyOrder(Matchers.contains("runmode1"), Matchers.contains("runmode2")));
-        Assert.assertThat(
-                ConfigFilesRetrieverImpl
-                        .extractRunModesFromName("name.runmode1.runmode1a,runmode2.runmode2a"),
-                Matchers
-                        .containsInAnyOrder(Matchers.containsInAnyOrder("runmode1", "runmode1a"),
-                                Matchers.containsInAnyOrder("runmode2", "runmode2a")));
+                .extractRunModeSpecFromName(""), Matchers.equalTo(""));
+        Assert.assertThat(ConfigFilesRetrieverImpl
+                .extractRunModeSpecFromName("namewithoutrunmodes"), Matchers.equalTo(""));
+        Assert.assertThat(ConfigFilesRetrieverImpl
+                .extractRunModeSpecFromName("name.runmode1"), Matchers.equalTo("runmode1"));
+        Assert.assertThat(ConfigFilesRetrieverImpl
+                .extractRunModeSpecFromName("name.runmode1.runmode2"), Matchers.equalTo("runmode1.runmode2"));
+        // this specifies an empty run mode
+        Assert.assertThat(ConfigFilesRetrieverImpl
+                .extractRunModeSpecFromName("namewithoutrunmodes."), Matchers.equalTo(""));
     }
 
     @Test
@@ -55,17 +42,18 @@ public class ConfigFilesRetrieverImplTest {
         Set<String> currentRunmodes = new HashSet<String>(
                 Arrays.asList("samplecontent", "author", "netcentric", "crx3tar", "crx2", "local"));
 
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("", "fragments", currentRunmodes)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test", "fragments", currentRunmodes)));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments", currentRunmodes)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.publish", currentRunmodes)));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.author", currentRunmodes)));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.samplecontent", currentRunmodes)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yam", "fragments.samplecontent", currentRunmodes)));
+        slingSettings = new ExtendedSlingSettingsServiceImpl(currentRunmodes);
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("", "fragments", slingSettings)));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test", "fragments", slingSettings)));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments", slingSettings)));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.publish", slingSettings)));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.author", slingSettings)));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.samplecontent", slingSettings)));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yam", "fragments.samplecontent", slingSettings)));
         Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.samplecontent.publish",
-                currentRunmodes)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.foo.publish", currentRunmodes)));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.samplecontent.local", currentRunmodes)));
+                slingSettings)));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.foo.publish", slingSettings)));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.samplecontent.local", slingSettings)));
 
     }
 
@@ -73,16 +61,16 @@ public class ConfigFilesRetrieverImplTest {
     public void testIsRelevantConfigurationWithOrCombinations() {
         Set<String> currentRunmodes = new HashSet<String>(
                 Arrays.asList("samplecontent", "author", "netcentric", "crx3tar", "crx2", "local"));
-
+        slingSettings = new ExtendedSlingSettingsServiceImpl(currentRunmodes);
         // testing 'or' combinations with
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.dev,local", currentRunmodes)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.int,prod", currentRunmodes)));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.dev,local", slingSettings)));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.int,prod", slingSettings)));
 
         // combined 'and' and 'or'
         Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.author.dev,author.local",
-                currentRunmodes)));
+                slingSettings)));
         Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.publish.dev,publish.local",
-                currentRunmodes)));
+                slingSettings)));
     }
 
 }
