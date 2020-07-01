@@ -3,12 +3,10 @@ package biz.netcentric.cq.tools.actool.configreader;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 import javax.jcr.Node;
@@ -16,17 +14,17 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.commons.JcrUtils;
 import org.apache.jackrabbit.vault.fs.io.Archive;
 import org.apache.jackrabbit.vault.fs.io.Archive.Entry;
 import org.apache.sling.jcr.api.SlingRepository;
-import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService;
 
 @Component()
 public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
@@ -41,16 +39,12 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
 
     @Override
     public Map<String, String> getConfigFileContentFromNode(String rootPath, Session session) throws Exception {
-
-
         Node rootNode = session.getNode(rootPath);
-
         if (rootNode == null) {
             throw new IllegalArgumentException("No configuration path configured! please check the configuration of AcService!");
         }
         Map<String, String> configurations = getConfigurations(new NodeInJcr(rootNode));
         return configurations;
-
     }
 
     @Override
@@ -66,8 +60,6 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
     private Map<String, String> getConfigurations(PackageEntryOrNode configFileOrDir) throws Exception {
         Map<String, String> configs = new TreeMap<String, String>();
 
-        Set<String> currentRunModes = slingSettingsService.getRunModes();
-
         for (PackageEntryOrNode entry : configFileOrDir.getChildren()) {
             if (entry.isDirectory()) {
                 Map<String, String> resultsFromDir = getConfigurations(entry);
@@ -75,7 +67,7 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
                 continue;
             }
 
-            if (isRelevantConfiguration(entry.getName(), configFileOrDir.getName(), currentRunModes)) {
+            if (isRelevantConfiguration(entry.getName(), configFileOrDir.getName(), slingSettingsService)) {
                 LOG.debug("Found relevant YAML file {}", entry.getName());
                 configs.put(entry.getPath(), entry.getContentAsString());
             }
@@ -84,68 +76,37 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
         return configs;
     }
 
-    static boolean isRelevantConfiguration(final String entryName, final String parentName, final Set<String> currentRunModes) {
+    static boolean isRelevantConfiguration(final String entryName, final String parentName, ExtendedSlingSettingsService slingSettings) {
         if (!entryName.endsWith(".yaml") && !entryName.equals("config") /* name 'config' without .yaml allowed for backwards compatibility */) {
             return false;
         }
 
         // extract runmode from parent name (if parent has "." in it)
-        Set<Set<String>> requiredRunModes = extractRunModesFromName(parentName);
-        if (requiredRunModes.isEmpty()) {
+        String runModeSpec = extractRunModeSpecFromName(parentName);
+        if (runModeSpec.isEmpty()) {
             LOG.debug("Install file '{}', because parent name '{}' does not have a run mode specified.",
                     entryName, parentName);
             return true;
         }
 
-        // check the OR concatenated run modes
-        for (Set<String> andRunModes : requiredRunModes) {
-        	// within each OR section is a number of AND concatenated run modes
-        	boolean restrictionFulfilled = true;
-        	for (String andRunMode : andRunModes) {
-        		// all must be fulfilled
-        		if (!currentRunModes.contains(andRunMode)) {
-        			restrictionFulfilled = false;
-        			break;
-        		}
-        	}
-        	if (restrictionFulfilled) {
-        		LOG.debug("The following run modes are all set: {}, there proceed installing file '{}'", StringUtils.join(andRunModes,","), entryName);
-        		return true;
-        	}
+        // check run mode spec
+        final boolean restrictionFulfilled = slingSettings.isMatchingRunModeSpec(runModeSpec);
+        if (restrictionFulfilled) {
+            LOG.debug("The relevant run modes are all set, therefore proceed installing file '{}'", entryName);
+        } else {
+            LOG.debug("The run mode restrictions could not be fullfilled, therefore not installing file '{}'", entryName);
         }
-        LOG.debug("The run mode restrictions could not be fullfilled, therefore not installing file '{}'", entryName);
-        return false;
+        return restrictionFulfilled;
     }
 
-    /**
-     * 
-     * @param name a name containing a number of runmodes concatenated with AND and OR. The name must stick to the following grammar
-     * <pre>&lt;somename&gt;['.'{&lt;runmode&gt;'.'|&lt;runmode&gt;','}]</pre>
-     * The separator '.' means AND, "," means OR.
-     * As usual in most programming languages the AND has a higher precendence.
-     * @return the run modes being extracted from the given name 
-     * (the outer set of run modes represent OR concatenated run modes, the inner set AND concatenated run modes)
-     */
-    static Set<Set<String>> extractRunModesFromName(final String name) {
-        Set<Set<String>> requiredRunModes = new HashSet<Set<String>>();
-
+    static String extractRunModeSpecFromName(final String name) {
         // strip prefix as the name starts usually with config.
         int positionDot = name.indexOf(".");
         if (positionDot == -1) {
-        	return requiredRunModes;
+            return "";
         }
         
-        String allSegments = name.substring(positionDot + 1);
-        String[] orSegments = allSegments.split(",");
-        for (String orSegment : orSegments) {
-        	Set<String> andRunModes = new HashSet<String>();
-        	String[] andSegments = orSegment.split("\\.");
-        	for (String andSegment : andSegments) {
-        		andRunModes.add(andSegment);
-        	}
-        	requiredRunModes.add(andRunModes);
-        }
-        return requiredRunModes;
+        return name.substring(positionDot + 1);
     }
 
     /** Internal representation of either a package entry or a node to be able to use one algorithm for both InstallHook/JMX scenarios. */
