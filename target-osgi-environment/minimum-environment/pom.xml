@@ -50,6 +50,7 @@
                             <goal>index</goal>
                         </goals>
                         <configuration>
+                            <attach>false</attach>
                             <includeGzip>false</includeGzip>
                             <scopes>compile,runtime,provided</scopes>
                         </configuration>
