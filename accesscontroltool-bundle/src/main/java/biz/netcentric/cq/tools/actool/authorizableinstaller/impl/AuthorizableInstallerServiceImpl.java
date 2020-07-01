@@ -170,16 +170,17 @@ public class AuthorizableInstallerServiceImpl implements
         }
 
         if (authorizableConfigBean.getKeys() != null) {
-            installKeys(authorizableConfigBean.isKeyStoreReset(), (User)authorizableToInstall,  authorizableConfigBean.getKeys(), authorizableId, session, installLog);
+            installKeys(authorizableConfigBean.isAppendToKeyStore(), (User)authorizableToInstall,  authorizableConfigBean.getKeys(), authorizableId, session, installLog);
         }
     }
 
-    private void installKeys(boolean resetKeyStore, User user, Map<String, Key> keys, String userId, Session session, InstallationLogger installLog) throws LoginException, SlingIOException, SecurityException, KeyStoreNotInitialisedException, IOException, GeneralSecurityException, UnsupportedRepositoryOperationException, RepositoryException {
+    private void installKeys(boolean appendToKeyStore, User user, Map<String, Key> keys, String userId, Session session, InstallationLogger installLog) throws LoginException, SlingIOException, SecurityException, KeyStoreNotInitialisedException, IOException, GeneralSecurityException, UnsupportedRepositoryOperationException, RepositoryException {
         Map<String, Object> authInfo = new HashMap<>();
         authInfo.put(JcrResourceConstants.AUTHENTICATION_INFO_SESSION, session);
         ResourceResolver resolver = resourceResolverFactory.getResourceResolver(authInfo);
         try {
-            if (resetKeyStore) {
+            if (!appendToKeyStore) {
+                // always remove old store to start from scratch
                 removeKeyStore(resolver, user, installLog);
             }
             installKeys(keys, userId, resolver, installLog);

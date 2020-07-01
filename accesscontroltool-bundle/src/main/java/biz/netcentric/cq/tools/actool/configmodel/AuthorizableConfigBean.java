@@ -57,7 +57,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private String disabled;
 
     private boolean virtual;
-    private boolean keyStoreReset;
+    private boolean appendToKeyStore;
     private Map<String, Key> keys;
 
     public String getAuthorizableId() {
@@ -288,12 +288,12 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.keys = keys;
     }
 
-    public boolean isKeyStoreReset() {
-        return keyStoreReset;
+    public boolean isAppendToKeyStore() {
+        return appendToKeyStore;
     }
 
-    public void setKeyStoreReset(boolean keyStoreReset) {
-        this.keyStoreReset = keyStoreReset;
+    public void setAppendToKeyStore(boolean appendToKeyStore) {
+        this.appendToKeyStore = appendToKeyStore;
     }
 
     @Override
@@ -304,7 +304,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
         sb.append("path: " + path + "\n");
         sb.append("isMemberOf: " + getIsMemberOfString() + "\n");
         sb.append("members: " + getMembersString() + "\n");
-        sb.append("keyStoreReset: " + isKeyStoreReset() + "\n");
+        sb.append("appendToKeyStore: " + isAppendToKeyStore() + "\n");
         sb.append("keys:" + getKeys());
         return sb.toString();
     }
