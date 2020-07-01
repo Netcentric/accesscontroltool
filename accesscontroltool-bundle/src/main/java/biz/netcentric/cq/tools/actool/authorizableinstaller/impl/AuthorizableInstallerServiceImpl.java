@@ -24,6 +24,7 @@ import java.util.regex.Pattern;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFactory;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -37,6 +38,8 @@ import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.apache.sling.api.SlingIOException;
 import org.apache.sling.api.resource.LoginException;
+import org.apache.sling.api.resource.PersistenceException;
+import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.jcr.resource.JcrResourceConstants;
@@ -77,6 +80,8 @@ public class AuthorizableInstallerServiceImpl implements
     // not using org.apache.jackrabbit.oak.spi.security.authentication.external.basic.DefaultSyncContext.REP_EXTERNAL_ID since it is an
     // optional dependency and not available in AEM 6.1
     public static final String REP_EXTERNAL_ID = "rep:externalId";
+
+    private static final String USER_KEYSTORE_FOLDER = "keystore";
 
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policyOption=ReferencePolicyOption.GREEDY)
     ExternalGroupInstallerServiceImpl externalGroupCreatorService;
@@ -165,19 +170,34 @@ public class AuthorizableInstallerServiceImpl implements
         }
 
         if (authorizableConfigBean.getKeys() != null) {
-            installKeys(authorizableConfigBean.getKeys(), authorizableId, session, installLog);
+            installKeys(authorizableConfigBean.isAppendToKeyStore(), (User)authorizableToInstall,  authorizableConfigBean.getKeys(), authorizableId, session, installLog);
         }
     }
 
-    private void installKeys(Map<String, Key> keys, String userId, Session session, InstallationLogger installLog) throws LoginException, SlingIOException, SecurityException, KeyStoreNotInitialisedException, IOException, GeneralSecurityException {
+    private void installKeys(boolean appendToKeyStore, User user, Map<String, Key> keys, String userId, Session session, InstallationLogger installLog) throws LoginException, SlingIOException, SecurityException, KeyStoreNotInitialisedException, IOException, GeneralSecurityException, UnsupportedRepositoryOperationException, RepositoryException {
         Map<String, Object> authInfo = new HashMap<>();
         authInfo.put(JcrResourceConstants.AUTHENTICATION_INFO_SESSION, session);
         ResourceResolver resolver = resourceResolverFactory.getResourceResolver(authInfo);
         try {
+            if (!appendToKeyStore) {
+                // always remove old store to start from scratch
+                removeKeyStore(resolver, user, installLog);
+            }
             installKeys(keys, userId, resolver, installLog);
         } finally {
             // the underlying session is not closed(!)
             resolver.close();
+        }
+    }
+
+    private void removeKeyStore(ResourceResolver resolver, User user, InstallationLogger installLog) throws UnsupportedRepositoryOperationException, RepositoryException, PersistenceException {
+        String keyStorePath = user.getPath() + "/" + USER_KEYSTORE_FOLDER;
+        Resource keyStoreResource = resolver.getResource(keyStorePath);
+        if (keyStoreResource != null) {
+            installLog.addMessage(LOG, "Deleting old key store for user  '"+ user.getID() +"'");
+            resolver.delete(keyStoreResource);
+        } else {
+            installLog.addMessage(LOG, "No key store for user  '"+ user.getID() +"' found to delete");
         }
     }
 
