@@ -258,7 +258,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
             Session newSession = null;
             try {
 
-                newSession = slingRepository.loginService(Constants.USER_AC_SERVICE, null);
+                newSession = slingRepository.loginService(null, null);
                 Session relevantSessionToUse;
                 if (newSession.nodeExists(origAceBean.getJcrPath())) {
                     // a new session is needed to ensure no pending changes are introduced (even if there would not be real pending changes

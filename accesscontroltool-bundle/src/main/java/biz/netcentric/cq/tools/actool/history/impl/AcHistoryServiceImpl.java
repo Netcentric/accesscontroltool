@@ -84,7 +84,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         Session session = null;
         try {
 
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            session = repository.loginService(null, null);
             Node historyNode = HistoryUtils.persistHistory(session, installLog, nrOfSavedHistories);
 
             String mergedAndProcessedConfig = installLog.getMergedAndProcessedConfig();
@@ -130,7 +130,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         
         Session session = null;
         try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            session = repository.loginService(null, null);
             List<AcToolExecution> historyItems = HistoryUtils.getAcToolExecutions(session);
             return historyItems;
             
@@ -157,7 +157,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         Session session = null;
         String history = "";
         try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            session = repository.loginService(null, null);
 
             Node statisticsRootNode = HistoryUtils.getAcHistoryRootNode(session);
             NodeIterator it = statisticsRootNode.getNodes();
@@ -214,7 +214,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         Session session = null;
         String history = "";
         try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            session = repository.loginService(null, null);
 
             List<AcToolExecution> acToolExecutions = HistoryUtils.getAcToolExecutions(session);
             if(n <= acToolExecutions.size()) {
@@ -238,7 +238,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         Session session = null;
 
         try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            session = repository.loginService(null, null);
             Node acHistoryRootNode = HistoryUtils.getAcHistoryRootNode(session);
             NodeIterator nodeIterator = acHistoryRootNode.getNodes();
             Set<Node> historyNodes = new TreeSet<Node>(

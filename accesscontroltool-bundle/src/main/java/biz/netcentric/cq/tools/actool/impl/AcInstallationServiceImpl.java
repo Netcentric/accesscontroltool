@@ -207,7 +207,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         PersistableInstallationLogger installLog = new PersistableInstallationLogger();
         Session session = null;
         try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            session = repository.loginService(null, null);
             
             // get config file contents from JCR
             Map<String, String> configFiles;
@@ -664,7 +664,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         boolean isReadyToStart = false;
         for(String configRootPath: configurationRootPaths) {
             try {
-                session = repository.loginService(Constants.USER_AC_SERVICE, null);
+                session = repository.loginService(null, null);
                 boolean thisConfigIsReadyToStart = !configFilesRetriever.getConfigFileContentFromNode(configRootPath, session).isEmpty();
                 LOG.debug("Config {} is ready to start: {}", configRootPath, thisConfigIsReadyToStart);
                 isReadyToStart |= thisConfigIsReadyToStart;
@@ -688,7 +688,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         String message = "";
         boolean flag = true;
         try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            session = repository.loginService(null, null);
             PurgeHelper.purgeAcl(session, path);
             session.save();
         } catch (Exception e) {
@@ -717,7 +717,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         String message = "";
         boolean flag = true;
         try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            session = repository.loginService(null, null);
             message = PurgeHelper.purgeACLs(session, path);
             PersistableInstallationLogger installLog = new PersistableInstallationLogger();
             installLog.addMessage(LOG, "purge method: purgeACLs()");
@@ -754,7 +754,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         Session session = null;
         String message = "";
         try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            session = repository.loginService(null, null);
 
             Set<String> authorizabesFromConfigurations = getAllAuthorizablesFromConfig(session, configRootPath);
             message = purgeAuthorizables(authorizabesFromConfigurations, session);
@@ -778,7 +778,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         Session session = null;
         String message = "";
         try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            session = repository.loginService(null, null);
             Set<String> authorizablesSet = new HashSet<String>(Arrays.asList(authorizableIds));
             message = purgeAuthorizables(authorizablesSet, session);
             PersistableInstallationLogger installLog = new PersistableInstallationLogger();
@@ -909,7 +909,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         Session session = null;
         Set<String> paths = new LinkedHashSet<String>();
         try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            session = repository.loginService(null, null);
             
             for(String configRootPath: configurationRootPaths) {
                 paths.addAll(configFilesRetriever.getConfigFileContentFromNode(configRootPath, session).keySet());

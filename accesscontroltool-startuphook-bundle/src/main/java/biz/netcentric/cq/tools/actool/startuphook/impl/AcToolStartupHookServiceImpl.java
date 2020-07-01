@@ -98,7 +98,7 @@ public class AcToolStartupHookServiceImpl {
     private List<String> getRelevantPathsForInstallation() throws RepositoryException {
         Session session = null;
         try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            session = repository.loginService(null, null);
 
             isCompositeNodeStore = RuntimeHelper.isCompositeNodeStore(session);
             LOG.info("Repo is running with Composite NodeStore: " + isCompositeNodeStore);
@@ -144,7 +144,7 @@ public class AcToolStartupHookServiceImpl {
         if(isCloudReady) {
             Session session = null;
             try {
-                session = repository.loginService(Constants.USER_AC_SERVICE, null);
+                session = repository.loginService(null, null);
 
                 if(isCompositeNodeStore) {
                     LOG.info("Restoring history from /apps to /var");

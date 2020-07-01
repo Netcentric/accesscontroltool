@@ -74,7 +74,7 @@ public class RestrictionValidationTest {
             AcConfigBeanValidationException {
 
         initMocks(this);
-        doReturn(session).when(repository).loginService(Constants.USER_AC_SERVICE, null);
+        doReturn(session).when(repository).loginService(null, null);
 
         accessControlPolicy = mock(AccessControlList.class,
                 withSettings().extraInterfaces(JackrabbitAccessControlList.class));

@@ -70,7 +70,7 @@ public class LastRunSuccessHealthCheck implements HealthCheck {
         Session session = null;
 
         try {
-            session = repository.loginService(Constants.USER_AC_SERVICE, null);
+            session = repository.loginService(null, null);
 
             Node statisticsRootNode = HistoryUtils.getAcHistoryRootNode(session);
             NodeIterator it = statisticsRootNode.getNodes();
