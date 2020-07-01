@@ -91,6 +91,7 @@ public class YamlConfigReader implements ConfigReader {
     
     private static final String USER_CONFIG_DISABLED = "disabled";
     private static final String USER_CONFIG_KEYS = "keys";
+    private static final String USER_CONFIG_KEYSTORE_RESET = "resetKeyStore";
 
     private static final String USER_CONFIG_KEY_PUBLIC = "public";
     private static final String USER_CONFIG_KEY_PRIVATE_PASSWORD = "privatePassword";
@@ -421,6 +422,7 @@ public class YamlConfigReader implements ConfigReader {
             authorizableConfigBean.setDisabled(getMapValueAsString(currentPrincipalDataMap, USER_CONFIG_DISABLED));
         }
 
+        authorizableConfigBean.setKeyStoreReset(Boolean.valueOf(getMapValueAsString(currentPrincipalDataMap, USER_CONFIG_KEYSTORE_RESET)));
         if (currentPrincipalDataMap.containsKey(USER_CONFIG_KEYS)) {
             if (!(currentPrincipalDataMap.get(USER_CONFIG_KEYS) instanceof Map)) {
                 throw new InvalidAuthorizableException("Field '" + USER_CONFIG_KEYS + "' must be a map but is a " + currentPrincipalDataMap.get(USER_CONFIG_KEYS).getClass());
