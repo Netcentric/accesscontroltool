@@ -294,7 +294,7 @@ Bundle-SymbolicName: biz.netcentric.cq.tools.accesscontroltool.bundle
 # export all versioned packages by default
 -exportcontents: ${packages;VERSIONED}
 # broad version range for jackrabbit oak versions (as long as we need to support Oak < 1.7.12, see https://github.com/Netcentric/accesscontroltool/issues/435 and https://issues.apache.org/jira/browse/OAK-6945
-Import-Package: org.apache.jackrabbit.oak.spi.security.authentication.external;resolution:=optional;version="[0,2)",org.apache.jackrabbit.oak.spi.security.authentication.external.basic;resolution:=optional;version="[0,2)",org.apache.jackrabbit.oak.*;version="[0,2)",com.adobe.granite.crypto;resolution:=optional,com.adobe.granite.jmx.annotation;resolution:=optional,com.day.cq.security.util;resolution:=optional,* ]]></bnd>
+Import-Package: org.apache.jackrabbit.oak.spi.security.authentication.external;resolution:=optional;version="[0,3)",org.apache.jackrabbit.oak.spi.security.authentication.external.basic;resolution:=optional;version="[0,2)",org.apache.jackrabbit.oak.*;version="[0,2)",com.adobe.granite.crypto;resolution:=optional,com.adobe.granite.jmx.annotation;resolution:=optional,com.day.cq.security.util;resolution:=optional,* ]]></bnd>
                 </configuration>
                 <executions>
                     <execution>
@@ -315,6 +315,42 @@ Import-Package: org.apache.jackrabbit.oak.spi.security.authentication.external;r
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>biz.aQute.bnd</groupId>
+                <artifactId>bnd-resolver-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>resolve-against-minimum</id>
+                        <goals>
+                            <goal>resolve</goal>
+                        </goals>
+                        <phase>verify</phase>
+                        <configuration>
+                            <bndruns>
+                                <include>minimum-aem.bndrun</include>
+                            </bndruns>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>resolve-against-maximum</id>
+                        <goals>
+                            <goal>resolve</goal>
+                        </goals>
+                        <phase>verify</phase>
+                        <configuration>
+                            <bndruns>
+                                <include>maximum-aem.bndrun</include>
+                            </bndruns>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <useMavenDependencies>true</useMavenDependencies>
+                    <failOnChanges>false</failOnChanges><!-- reuse for multiple bundles which all require different minimum container -->
+                    <writeOnChanges>false</writeOnChanges>
+                    
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
