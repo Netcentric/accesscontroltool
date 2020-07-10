@@ -9,6 +9,7 @@ import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.apache.sling.serviceusermapping.ServiceUserMapped;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
@@ -33,6 +34,9 @@ public class JcrInstallUrlHandler extends AbstractURLStreamHandlerService implem
     private ResourceResolverFactory resolverFactory;
 
     private ResourceResolver resolver;
+    
+    @Reference
+    ServiceUserMapped serviceUserMappingAvailable;
 
     @Activate
     public void activate() throws LoginException {
