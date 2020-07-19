@@ -30,6 +30,8 @@ If a user is a member of more than one group, the deny statements from one group
 
 Before applying a configuration to production it should have been thoroughly tested on a dedicated test instance. In general there should always be a test instance available on which a full production copy of the access configuration is available/testable. Keep the access control configuration of production and test systems in sync.
 
+For automated testing of expected cq:actions (not jcr:privileges) for certain paths and authorizables, the [access-control-validator](https://github.com/Netcentric/access-control-validator) tool can be used.
+
 ## Consider access rights when designing you content structure
 
 Make access rights one of the main drivers of your information architecture.
