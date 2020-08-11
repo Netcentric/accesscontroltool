@@ -36,7 +36,7 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(YamlMacroProcessorImpl.class);
 
     private final Pattern forLoopPattern = Pattern.compile(
-            "for +(\\w+)( +with +content)? +in +(?:\\[([,/\\s\\w\\-\\.]+)\\]|children +of +([^\\s]+)|(\\$\\{[^\\}]+\\}))",
+            "for +(\\w+)( +with +content)? +in +(?:\\[([,/\\s\\w\\-\\.:]+)\\]|children +of +([^\\s]+)|(\\$\\{[^\\}]+\\}))",
             Pattern.CASE_INSENSITIVE);
     private final Pattern ifPattern = Pattern.compile("if +(\\$\\{[^\\}]+\\})", Pattern.CASE_INSENSITIVE);
 
