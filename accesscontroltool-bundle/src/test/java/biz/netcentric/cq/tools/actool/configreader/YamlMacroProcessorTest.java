@@ -134,6 +134,25 @@ public class YamlMacroProcessorTest {
         final Set<AceBean> group2 = aces.filterByAuthorizableId("content-BRAND-MKT-2-writer");
         assertEquals("Number of ACEs for groupB", 2, group2.size());
     }
+    
+    /** @see <a href=
+     *      "https://github.com/Netcentric/accesscontroltool/issues/452">https://github.com/Netcentric/accesscontroltool/issues/452</a> */
+    @Test
+    public void testAceLoopWithColon() throws IOException, AcConfigBeanValidationException, RepositoryException {
+
+        List<Map> yamlList = getYamlList("test-loop-with-colon.yaml");
+
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+
+        AcesConfig aces = readAceConfigs(yamlList);
+        assertEquals("Number of ACEs", 2, aces.size());
+        final Set<AceBean> groups1 = aces.filterByAuthorizableId("content-tags-project1-reader");
+        assertEquals("Number of ACEs for project1", 1, groups1.size());
+        assertEquals("/content/cq:tags/project1", groups1.iterator().next().getJcrPath());
+        final Set<AceBean> groups2 = aces.filterByAuthorizableId("content-tags-project2-reader");
+        assertEquals("Number of ACEs for project2", 1, groups2.size());
+        assertEquals("/content/cq:tags/project2", groups2.iterator().next().getJcrPath());
+    }
 
     /** @see <a href=
      *      "https://github.com/Netcentric/accesscontroltool/issues/330">https://github.com/Netcentric/accesscontroltool/issues/330</a> */
