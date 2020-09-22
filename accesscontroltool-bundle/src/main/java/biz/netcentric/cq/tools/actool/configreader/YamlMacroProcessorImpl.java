@@ -40,7 +40,7 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
             Pattern.CASE_INSENSITIVE);
     private final Pattern ifPattern = Pattern.compile("if +(\\$\\{[^\\}]+\\})", Pattern.CASE_INSENSITIVE);
 
-    final Pattern variableDefPattern = Pattern.compile("DEF +([a-z0-9]+)=(?:\\[(.+)\\]|(\"?)([^\"]*)(\\3))",
+    final Pattern variableDefPattern = Pattern.compile("DEF +([a-z0-9_]+)=(?:\\[(.+)\\]|(\"?)([^\"]*)(\\3))",
             Pattern.CASE_INSENSITIVE);
 
     private static final String COMMA_SEPARATED_LIST_SPLITTER = "\\s*,\\s*";
