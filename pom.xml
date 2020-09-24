@@ -254,7 +254,7 @@
             <dependency>
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
-                <version>1.13</version>
+                <version>1.27</version>
                 <type>bundle</type>
             </dependency>
             <!-- due to https://bugs.openjdk.java.net/browse/JDK-8231581 OOTB JRE is not sufficient -->
