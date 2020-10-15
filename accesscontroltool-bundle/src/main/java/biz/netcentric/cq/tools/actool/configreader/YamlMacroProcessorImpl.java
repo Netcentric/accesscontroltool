@@ -35,15 +35,17 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(YamlMacroProcessorImpl.class);
 
-    private final Pattern forLoopPattern = Pattern.compile(
+    private static final Pattern FOR_LOOP_PATTERN = Pattern.compile(
             "for +(\\w+)( +with +content)? +in +(?:\\[([,/\\s\\w\\-\\.:]+)\\]|children +of +([^\\s]+)|(\\$\\{[^\\}]+\\}))",
             Pattern.CASE_INSENSITIVE);
-    private final Pattern ifPattern = Pattern.compile("if +(\\$\\{[^\\}]+\\})", Pattern.CASE_INSENSITIVE);
+    private static final Pattern IF_PATTERN = Pattern.compile("if +(\\$\\{[^\\}]+\\})", Pattern.CASE_INSENSITIVE);
 
-    final Pattern variableDefPattern = Pattern.compile("DEF +([a-z0-9_]+)=(?:\\[(.+)\\]|(\"?)([^\"]*)(\\3))",
+    private static final String VARIABLE_DEF_BASE_PATTERN = "DEF +([a-z0-9_]+)=";
+    static final Pattern VARIABLE_DEF_PATTERN_COMPLEX_VAL_FROM_YAML = Pattern.compile(VARIABLE_DEF_BASE_PATTERN, Pattern.CASE_INSENSITIVE);
+    static final Pattern VARIABLE_DEF_PATTERN_ONE_LINE = Pattern.compile(VARIABLE_DEF_BASE_PATTERN+"(?:\\[(.+)\\]|(\"?)([^\"]*)(\\3))",
             Pattern.CASE_INSENSITIVE);
 
-    private static final String COMMA_SEPARATED_LIST_SPLITTER = "\\s*,\\s*";
+    static final String COMMA_SEPARATED_LIST_SPLITTER = "\\s*,\\s*";
 
     YamlMacroElEvaluator elEvaluator = new YamlMacroElEvaluator();
 
@@ -77,9 +79,9 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
         } else if (o instanceof String) {
             String str = (String) o;
 
-            Matcher variableDefMatcher = variableDefPattern.matcher(str);
+            Matcher variableDefMatcher = VARIABLE_DEF_PATTERN_ONE_LINE.matcher(str);
             if (variableDefMatcher.find()) {
-                return evaluateDefStatement(variables, variableDefMatcher);
+                return evaluateDefStatementOneLine(variables, variableDefMatcher);
             }
 
             String result = elEvaluator.evaluateEl(str, String.class, variables);
@@ -102,16 +104,23 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
             for (Object key : map.keySet()) {
                 Object objVal = map.get(key);
 
-                Matcher forMatcher = forLoopPattern.matcher(key.toString());
+                String string = key.toString();
+                Matcher forMatcher = FOR_LOOP_PATTERN.matcher(string);
                 if (forMatcher.matches()) {
                     // map is skipped and value returned directly
                     return evaluateForStatement(variables, objVal, forMatcher, installLog, session);
                 }
 
-                Matcher ifMatcher = ifPattern.matcher(key.toString());
+                Matcher ifMatcher = IF_PATTERN.matcher(string);
                 if (ifMatcher.matches()) {
                     // map is skipped and value returned directly
                     return evaluateIfStatement(variables, objVal, ifMatcher, installLog, session);
+                }
+                
+                Matcher complexVarDefMatcher = VARIABLE_DEF_PATTERN_COMPLEX_VAL_FROM_YAML.matcher(string);
+                if (complexVarDefMatcher.matches()) {
+                    // map is skipped and value returned directly
+                    return evaluateDefStatementComplex(variables, complexVarDefMatcher, objVal);
                 }
 
                 // default: transform both key and value
@@ -129,7 +138,7 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
         }
     }
 
-    private Object evaluateDefStatement(Map<String, Object> variables, Matcher variableDefMatcher) {
+    private Object evaluateDefStatementOneLine(Map<String, Object> variables, Matcher variableDefMatcher) {
         String varName = variableDefMatcher.group(1);
         String varValueArr = variableDefMatcher.group(2);
         String varValueStr = variableDefMatcher.group(4);
@@ -154,6 +163,12 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
         return null;
     }
 
+    private Object evaluateDefStatementComplex(Map<String, Object> variables, Matcher variableDefMatcher, Object varComplexValueFromYaml) {
+        String varName = variableDefMatcher.group(1);
+        variables.put(varName, varComplexValueFromYaml);
+        return null;
+    }
+
     private Object evaluateForStatement(Map<String, Object> variables, Object objVal, Matcher forMatcher,
             InstallationLogger installLog, Session session) {
         String varName = StringUtils.trim(forMatcher.group(1));
@@ -171,6 +186,14 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
             iterationValues = yamlMacroChildNodeObjectsProvider.getValuesForPath(pathOfChildrenOfClause, installLog, session, StringUtils.isNotBlank(withClause));
         } else if(variableForInClause!=null) {
             iterationValues = elEvaluator.evaluateEl(variableForInClause, List.class, variables);
+            if(iterationValues == null) {
+                if(variableForInClause.contains(".") || variableForInClause.contains("[")) {
+                    return null;
+                } else {
+                    throw new IllegalStateException("LOOP over EL ${"+variableForInClause+"} is null");
+                }
+                
+            }
         } else {
             throw new IllegalStateException("None of the loop type variables were set even though RegEx matched");
         }

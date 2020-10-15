@@ -150,6 +150,8 @@ Expressions are evaluated using javax.el expression language. The following util
 - startsWith(str,fragmentStr) 
 - length(str)
 - defaultIfEmpty(str,default)
+- keys(map)
+- values(map)
 
 ## Variables
 
@@ -179,8 +181,42 @@ Variables can also be declared to be an array and used in a loop:
     - FOR arrVal IN ${testArr}:
 ```
 
+There is also a multi-line variant of the DEF statement that allows to define complex structures directly in yaml using a `DEF varName=:`syntax:
+
+```
+# list
+- DEF simpleArray=:
+     - val1
+     - val2
+     - val3
+- FOR loopVar IN ${simpleArray}:    
+       - group-${loopVar}:   
+          - name: "Group ${loopVar}"
+
+# list of objects
+- DEF listOfMaps=:
+     - key1: obj1val1
+       key2: obj1val2
+       key3: obj1val3
+     - key1: obj2val1
+       key2: obj2val2
+       key3: obj2val3
+- FOR loopVar IN ${listOfMaps}:  
+    - group-${loopVar.key1}: 
+       - name: "Group ${loopVar.key2} ${loopVar.key3}"
+
+# map (functions keys() or values() can be used to loop over map)
+- DEF simpleMap=:
+     key1: mapval1
+     key2: mapval2
+     key3: mapval3
+- FOR loopVar IN ${keys(simpleMap)}:
+   - group-${loopVar}:
+      - name: "Value ${simpleMap[loopVar]}"
+```
+
 NOTE: The scope of a variable is limited to:
- * the lines in the very same yaml file following the definition till it is either redefined or the end of the yaml file is reached (this limitation will supposably be lifted with [#257][i257]);
+ * the lines in the very same yaml file following the definition till it is either redefined or the end of the yaml file is reached (this limitation will supposedly be lifted with [#257][i257])
  * `FOR` loop in which variable is defined or re-defined.
  
 ### Predefined variables 

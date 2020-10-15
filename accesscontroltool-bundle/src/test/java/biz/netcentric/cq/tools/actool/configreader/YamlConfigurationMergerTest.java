@@ -74,7 +74,7 @@ public class YamlConfigurationMergerTest {
                 groupBConfig.getMembers());
     }
 
-    @Test(expected = AcConfigBeanValidationException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testReadInvalidYaml1() throws IOException, RepositoryException, AcConfigBeanValidationException {
         getAcConfigurationForFile(getConfigurationMerger(), session, "test-invalid1.yaml");
     }
