@@ -463,6 +463,23 @@ public class YamlMacroProcessorTest {
         assertNotNull(groups.getAuthorizableConfig("testgroup-runmode2"));
         assertNotNull(groups.getAuthorizableConfig("testgroup-runmode3"));
 
-    }       
-    
+    }
+
+    @Test
+    public void testDefWithUnderscore() throws Exception {
+
+        List<Map> yamlList = getYamlList("test-def-with-underscore.yaml");
+
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+
+        AuthorizablesConfig groups = readGroupConfigs(yamlList);
+        assertEquals(3, groups.size());
+        
+        assertNotNull(groups.getAuthorizableConfig("content-tags-test1-reader"));
+        assertNotNull(groups.getAuthorizableConfig("content-tags-test2-reader"));
+        assertNotNull(groups.getAuthorizableConfig("content-tags-test3-reader"));
+
+    }
+
+
 }
