@@ -345,7 +345,7 @@ public class AcToolUiService {
             if (result == null) {
                 result = defaultValue;
             }
-            return result;
+            return result.trim();
         }
 
     }
