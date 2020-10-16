@@ -1,0 +1,81 @@
+
+#
+# (C) Copyright 2020 Netcentric AG.
+#
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+
+- DEF simpleArray=:
+     - val1
+     - val2
+     - val3
+
+- DEF simpleMap=:
+     key1: mapval1
+     key2: mapval2
+     key3: mapval3
+
+- DEF listOfMaps=:
+
+     - key1: obj1val1
+       key2: obj1val2
+       key3: obj1val3
+
+     - key1: obj2val1
+       key2: obj2val2
+       key3: obj2val3
+
+     - key1: obj3val1
+       key2: obj3val2
+       key3: obj3val3
+
+- DEF strMapping=:
+     obj1val3: mapped-obj1val3
+     obj2val3: mapped-obj2val3
+     obj3val3: mapped-obj3val3
+
+- DEF veryComplexYaml=:
+     topLevelKey: 
+         - first
+         - second
+         - key1: val1
+           key2: val2
+           key3:
+             - firstDeep
+             - keyInSecondDeep: value-buried-deep-in-structure
+         - 
+            - deepListVal1
+            - deepListVal2
+            - deepListVal3
+
+
+- group_config:
+
+    - FOR loopVar1 IN ${simpleArray}:
+    
+       - group-type1-${loopVar1}:
+   
+          - name: "Type1 ${loopVar1}"
+            description: "${veryComplexYaml.topLevelKey[2].key3[1].keyInSecondDeep}"
+
+    - FOR loopVar2 IN ${keys(simpleMap)}:
+    
+       - group-type2-${loopVar2}:
+   
+          - name: "Type2 ${simpleMap[loopVar2]}"
+
+    - FOR loopVar3 IN ${listOfMaps}:
+    
+       - group-type3-${loopVar3.key1}:
+   
+          - name: "Type3 ${loopVar3.key2} ${loopVar3.key3}"
+            description: "${loopVar3.key3} => ${strMapping[loopVar3.key3]}"
+
+    - FOR loopVar4 IN ${veryComplexYaml.topLevelKey[3]}:
+    
+       - group-type4-${loopVar4}:
+   
+          - name: "Type4 ${loopVar4}"

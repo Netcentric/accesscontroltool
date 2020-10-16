@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +29,6 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.ConstructorException;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
@@ -106,7 +104,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             } catch (ClassCastException e) {
                 throw new NoListOnTopLevelException("Each yaml file must contain a list on the top level but the yaml at " + sourceFile + " does not.", e);
             } catch (YAMLException e) {
-                throw new NoListOnTopLevelException("Invalid yaml, please check format of " + sourceFile, e);
+                throw new IllegalArgumentException("Invalid yaml source file " + sourceFile + ": "+ e, e);
             }
             yamlRootList = yamlMacroProcessor.processMacros(yamlRootList, installLog, session);
             // set merged config per file to ensure it is there in case of validation errors (for success, the actual merged config is set

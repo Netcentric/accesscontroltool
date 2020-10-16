@@ -10,6 +10,7 @@ package biz.netcentric.cq.tools.actool.configreader;
 
 import java.beans.FeatureDescriptor;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -110,9 +111,9 @@ public class YamlMacroElEvaluator {
                         StringUtils.class.getMethod("length", new Class<?>[] { CharSequence.class }),
                         StringUtils.class.getMethod("defaultIfEmpty", new Class<?>[] { CharSequence.class, CharSequence.class }),
 
-                        YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("containsItem", new Class<?>[] { List.class, String.class })
-                       
-
+                        YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("containsItem", new Class<?>[] { List.class, String.class }),
+                        YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("keys", new Class<?>[] { Map.class }),
+                        YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("values", new Class<?>[] { Map.class })
                 };
                 for (Method method : exportedMethods) {
                     functionMap.put(method.getName(), method);
@@ -136,6 +137,12 @@ public class YamlMacroElEvaluator {
             return list.contains(element);
         }
 
+        public static List<Object> keys(Map<Object,Object> map) {
+            return new ArrayList<>(map.keySet());
+        }
+        public static List<Object> values(Map<Object,Object> map) {
+            return new ArrayList<>(map.values());
+        }
     }
 
     class ElVariableMapper extends VariableMapper {

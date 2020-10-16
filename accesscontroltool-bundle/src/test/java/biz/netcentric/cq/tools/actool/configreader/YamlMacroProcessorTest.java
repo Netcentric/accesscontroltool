@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,7 +31,6 @@ import java.util.regex.Matcher;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -43,6 +42,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
+import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
 public class YamlMacroProcessorTest {
@@ -405,7 +405,7 @@ public class YamlMacroProcessorTest {
     @Test
     public void testDefRegEx() throws Exception {
 
-        Matcher matcher = yamlMacroProcessor.variableDefPattern.matcher("DEF test=\"val\"");
+        Matcher matcher = YamlMacroProcessorImpl.VARIABLE_DEF_PATTERN_ONE_LINE.matcher("DEF test=\"val\"");
         
         assertTrue(matcher.find());
         assertEquals("test", matcher.group(1));
@@ -414,7 +414,7 @@ public class YamlMacroProcessorTest {
         assertEquals("val", matcher.group(4));
         assertEquals("\"", matcher.group(5));
         
-        matcher = yamlMacroProcessor.variableDefPattern.matcher("DEF test=val");
+        matcher = YamlMacroProcessorImpl.VARIABLE_DEF_PATTERN_ONE_LINE.matcher("DEF test=val");
 
         assertTrue(matcher.find());
         assertEquals("test", matcher.group(1));
@@ -423,7 +423,7 @@ public class YamlMacroProcessorTest {
         assertEquals("val", matcher.group(4));
         assertEquals("", matcher.group(5));
 
-        matcher = yamlMacroProcessor.variableDefPattern.matcher("DEF test=[val1,val2]");
+        matcher = YamlMacroProcessorImpl.VARIABLE_DEF_PATTERN_ONE_LINE.matcher("DEF test=[val1,val2]");
 
         assertTrue(matcher.find());
         assertEquals("test", matcher.group(1));
@@ -481,5 +481,75 @@ public class YamlMacroProcessorTest {
 
     }
 
+    @Test
+    public void testDefWithComplexStructures() throws Exception {
 
+        List<Map> yamlList = getYamlList("test-def-complex-structure.yaml");
+
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+
+        AuthorizablesConfig groups = readGroupConfigs(yamlList);
+        assertEquals(12, groups.size());
+        
+        AuthorizableConfigBean authorizableConfig1 = groups.getAuthorizableConfig("group-type1-val1");
+        assertNotNull(authorizableConfig1);
+        assertEquals("Type1 val1", authorizableConfig1.getName());
+        assertEquals("value-buried-deep-in-structure", authorizableConfig1.getDescription());
+        
+        assertNotNull(groups.getAuthorizableConfig("group-type1-val2"));
+        assertNotNull(groups.getAuthorizableConfig("group-type1-val3"));
+
+        AuthorizableConfigBean authorizableConfig2 = groups.getAuthorizableConfig("group-type2-key1");
+        assertNotNull(authorizableConfig2);
+        assertEquals("Type2 mapval1", authorizableConfig2.getName());
+        assertNotNull(groups.getAuthorizableConfig("group-type2-key2"));
+        assertNotNull(groups.getAuthorizableConfig("group-type2-key3"));
+        
+        AuthorizableConfigBean authorizableConfig3 = groups.getAuthorizableConfig("group-type3-obj1val1");
+        assertNotNull(authorizableConfig3);
+        assertEquals("Type3 obj1val2 obj1val3", authorizableConfig3.getName());
+        assertEquals("obj1val3 => mapped-obj1val3", authorizableConfig3.getDescription());
+        assertNotNull(groups.getAuthorizableConfig("group-type3-obj2val1"));
+        assertNotNull(groups.getAuthorizableConfig("group-type3-obj3val1"));
+
+        AuthorizableConfigBean authorizableConfig4 = groups.getAuthorizableConfig("group-type4-deepListVal1");
+        assertNotNull(authorizableConfig4);
+        assertEquals("Type4 deepListVal1", authorizableConfig4.getName());
+        assertNotNull(groups.getAuthorizableConfig("group-type4-deepListVal2"));
+        assertNotNull(groups.getAuthorizableConfig("group-type4-deepListVal3"));
+
+    }
+
+    @Test
+    public void testDefWithComplexNestedLoops() throws Exception {
+
+
+        List<Map> yamlList = getYamlList("test-def-complex-nested-loops.yaml");
+
+        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+
+        AcesConfig aceConfigs = readAceConfigs(yamlList);
+        assertEquals(8, aceConfigs.size());
+        Iterator<AceBean> it = aceConfigs.iterator();
+        
+        String[][] expectedVals = new String[][] {
+                new String[] { "/content/base/level1name1", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level1title1\"/>"},
+                new String[] { "/content/base/level1name1/level2name1", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level2title1\"/>"},
+                new String[] { "/content/base/level1name1/level2name1/level3name1", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level3title1\"/>"},
+                new String[] { "/content/base/level1name1/level2name2", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level2title2\"/>"},
+                new String[] { "/content/base/level1name1/level2name3", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level2title3\"/>"},
+                new String[] { "/content/base/level1name1/level2name3/level3name1", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level3title1\"/>"},
+                new String[] { "/content/base/level1name1/level2name3/level3name2", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level3title2\"/>"},
+                new String[] { "/content/base/level1name1/level2name3/level3name3", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level3title3\"/>"},
+        };
+        
+        for(int i=0; i<expectedVals.length && it.hasNext(); i++) {
+            AceBean aceBean = it.next();
+            assertEquals("Expected path for bean "+i, expectedVals[i][0], aceBean.getJcrPath());
+            assertEquals("Expected initial content for bean "+i, expectedVals[i][1], aceBean.getInitialContent());
+        }
+    
+
+    }
+    
 }
