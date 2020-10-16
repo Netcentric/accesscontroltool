@@ -565,11 +565,17 @@ public class YamlMacroProcessorTest {
         yamlList2 = yamlMacroProcessor.processMacros(yamlList2, globalVariables, installLog, session);
         
         AuthorizablesConfig groups = readGroupConfigs(yamlList2);
-        assertEquals(1, groups.size());
+        assertEquals(2, groups.size());
         AuthorizableConfigBean authorizableConfig1 = groups.getAuthorizableConfig("xyz-group-reader");
         assertNotNull(authorizableConfig1);
         assertEquals("Name val1", authorizableConfig1.getName());
-        assertEquals("empty ''", authorizableConfig1.getDescription());
+        assertEquals("varNotGlobal shall be empty: ''", authorizableConfig1.getDescription());
+
+        AuthorizableConfigBean authorizableConfig2 = groups.getAuthorizableConfig("xyz-group-reader2");
+        assertNotNull(authorizableConfig2);
+        assertEquals("global variable can be overridden with local value: 'localValOverridingGlobal'", authorizableConfig2.getName());
+        assertEquals("global variable overridden elsewhere (not in this file) has global val: 'globalVal'", authorizableConfig2.getDescription());
+
     }
 
 }

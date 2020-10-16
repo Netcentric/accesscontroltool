@@ -237,6 +237,8 @@ It is possible to define global variables (that are available across multiple ya
 
 Global variables still only become visible in the order of how the yaml files are processed, therefore it usually makes sense to put them in their own file prefixed with `_` to ensure they are processed at the beginning, e.g. `_globalvars.yaml`.
 
+Local variables override global variables, but only in the same file (and only from the definition of the local variable onwards).
+
 ### Predefined variables 
 
 Some variables are provided by AC Tool by default.

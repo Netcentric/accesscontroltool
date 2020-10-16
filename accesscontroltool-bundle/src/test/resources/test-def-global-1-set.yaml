@@ -13,5 +13,8 @@
          - DEF comlexArr=:
                - val1
                - val2
+         - DEF globalVarToBeOverridden="globalVal"
+         - DEF globalVarOverriddenElsewhere="globalVal"
 
 - DEF varNotGlobal="xyz"
+- DEF globalVarOverriddenElsewhere="localVal"
