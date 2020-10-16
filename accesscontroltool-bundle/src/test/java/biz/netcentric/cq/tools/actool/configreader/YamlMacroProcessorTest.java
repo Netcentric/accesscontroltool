@@ -12,6 +12,7 @@ import static biz.netcentric.cq.tools.actool.configreader.YamlConfigReaderTest.g
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -547,5 +548,28 @@ public class YamlMacroProcessorTest {
     
 
     }
-    
+
+    @Test
+    public void testDefGlobalVars() throws Exception {
+
+        List<Map> yamlList = getYamlList("test-def-global-1-set.yaml");
+
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
+        
+        assertEquals("xyz", globalVariables.get("groupPrefix"));
+        assertEquals(Arrays.asList("val1", "val2"), globalVariables.get("comlexArr"));
+        assertNull(globalVariables.get("varNotGlobal"));
+        
+        List<Map> yamlList2 = getYamlList("test-def-global-2-use.yaml");
+        
+        yamlList2 = yamlMacroProcessor.processMacros(yamlList2, globalVariables, installLog, session);
+        
+        AuthorizablesConfig groups = readGroupConfigs(yamlList2);
+        assertEquals(1, groups.size());
+        AuthorizableConfigBean authorizableConfig1 = groups.getAuthorizableConfig("xyz-group-reader");
+        assertNotNull(authorizableConfig1);
+        assertEquals("Name val1", authorizableConfig1.getName());
+        assertEquals("empty ''", authorizableConfig1.getDescription());
+    }
+
 }
