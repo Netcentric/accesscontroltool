@@ -29,7 +29,12 @@
             <artifactId>accesscontroltool-bundle</artifactId>
             <version>${project.version}</version>
         </dependency>
-        
+        <!-- only used for constant value (no run time dependency)  -->
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-core</artifactId>
+            <optional>true</optional>
+        </dependency>
         <!-- OSGi annotations (build time, but only use those compliant with R6) -->
         <dependency>
             <groupId>org.osgi</groupId>

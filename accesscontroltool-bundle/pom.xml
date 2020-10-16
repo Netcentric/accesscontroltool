@@ -123,11 +123,9 @@
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>jackrabbit-api</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <version>1.27</version>
         </dependency>
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>
@@ -155,13 +153,12 @@
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>oak-core</artifactId>
-            <version>1.2.7</version>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>oak-auth-external</artifactId>
-            <version>1.2.7</version>
             <optional>true</optional>
         </dependency>
 
@@ -173,12 +170,10 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.servlets.annotations</artifactId>
-            <version>1.2.4</version>
         </dependency>
         <dependency>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.webconsole</artifactId>
-            <version>4.2.16</version>
             <optional>true</optional>
         </dependency>
 
