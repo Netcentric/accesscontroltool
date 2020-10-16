@@ -11,23 +11,27 @@ package biz.netcentric.cq.tools.actool.configreader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.jcr.Session;
 
 import org.apache.commons.lang3.StringUtils;
-import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 @Component
@@ -52,25 +56,46 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     YamlMacroChildNodeObjectsProvider yamlMacroChildNodeObjectsProvider;
 
-    @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    private ExtendedSlingSettingsService slingSettingsService;
+
     
     @Override
-    public List<Map> processMacros(List<Map> yamlList, InstallationLogger installLog, Session session) {
-        return (List<Map>) transform(yamlList, installLog, session);
+    public List<Map> processMacros(List<Map> yamlList, Map<String, Object> globalVariables, InstallationLogger installLog, Session session) {
+        Map<String, Object> initialVariables = getLocalVariables(yamlList, globalVariables, installLog, session);
+        return (List<Map>) transform(yamlList, initialVariables, installLog, session);
     }
 
-    private Object transform(Object o, InstallationLogger installLog, Session session) {
-        Map<String, Object> initialVariables = createInitialVariables();
-        return transform(o, initialVariables, installLog, session);
-    }
+    private Map<String, Object> getLocalVariables(List<Map> yamlList, Map<String, Object> globalVariables,
+            InstallationLogger installLog, Session session) {
 
-    private Map<String, Object> createInitialVariables() {
-        Map<String, Object> initialVariables = new LinkedHashMap<String, Object>();
-        if(slingSettingsService != null) {
-            initialVariables.put("RUNMODES", new ArrayList<String>(slingSettingsService.getRunModes()));
+        Set<String> initalGlobalVarNames = new HashSet<>(globalVariables.keySet());
+        
+        // read variables that might be defined in global_config to global variables
+        Iterator<?> topLevelIterator = yamlList.iterator();
+        Object transformedGlobalConfig = null;
+        while (topLevelIterator.hasNext()) {
+            Object obj = topLevelIterator.next();
+            if(obj instanceof Map) {
+                Map map = (Map) obj;
+                if(!map.isEmpty() && Constants.GLOBAL_CONFIGURATION_KEY.equals(map.keySet().iterator().next())) {
+                    transformedGlobalConfig = transform(map, globalVariables, installLog, session);
+                    topLevelIterator.remove();
+                    break;
+                }
+            }
         }
-        return initialVariables;
+        if(transformedGlobalConfig != null) {
+            yamlList.add(0, (Map) transformedGlobalConfig);
+        }
+        
+        for (Entry<String,Object> globalVar : globalVariables.entrySet()) {
+            if(!initalGlobalVarNames.contains(globalVar.getKey())) {
+                installLog.addVerboseMessage(LOG, "Global DEF Statement: "+globalVar.getKey() + "="+globalVar.getValue());
+            }
+        }
+
+        Map<String, Object> localVariables = new LinkedHashMap<String, Object>();
+        localVariables.putAll(globalVariables);
+        return localVariables;
     }
 
     private Object transform(Object o, Map<String, Object> variables, InstallationLogger installLog, Session session) {
@@ -81,7 +106,7 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
 
             Matcher variableDefMatcher = VARIABLE_DEF_PATTERN_ONE_LINE.matcher(str);
             if (variableDefMatcher.find()) {
-                return evaluateDefStatementOneLine(variables, variableDefMatcher);
+                return evaluateDefStatementOneLine(variables, variableDefMatcher, installLog);
             }
 
             String result = elEvaluator.evaluateEl(str, String.class, variables);
@@ -120,7 +145,7 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
                 Matcher complexVarDefMatcher = VARIABLE_DEF_PATTERN_COMPLEX_VAL_FROM_YAML.matcher(string);
                 if (complexVarDefMatcher.matches()) {
                     // map is skipped and value returned directly
-                    return evaluateDefStatementComplex(variables, complexVarDefMatcher, objVal);
+                    return evaluateDefStatementComplex(variables, complexVarDefMatcher, objVal, installLog);
                 }
 
                 // default: transform both key and value
@@ -138,7 +163,7 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
         }
     }
 
-    private Object evaluateDefStatementOneLine(Map<String, Object> variables, Matcher variableDefMatcher) {
+    private Object evaluateDefStatementOneLine(Map<String, Object> variables, Matcher variableDefMatcher, InstallationLogger installLog) {
         String varName = variableDefMatcher.group(1);
         String varValueArr = variableDefMatcher.group(2);
         String varValueStr = variableDefMatcher.group(4);
@@ -158,13 +183,19 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
         } else {
             throw new IllegalStateException("None of the def value types were set even though RegEx matched");
         }
-
+        
+        if(variables.containsKey(varName)) {
+            installLog.addVerboseMessage(LOG, "Overwriting variable '"+varName + "' with "+varValueEvaluated);
+        }
         variables.put(varName, varValueEvaluated);
         return null;
     }
 
-    private Object evaluateDefStatementComplex(Map<String, Object> variables, Matcher variableDefMatcher, Object varComplexValueFromYaml) {
+    private Object evaluateDefStatementComplex(Map<String, Object> variables, Matcher variableDefMatcher, Object varComplexValueFromYaml, InstallationLogger installLog) {
         String varName = variableDefMatcher.group(1);
+        if(variables.containsKey(varName)) {
+            installLog.addVerboseMessage(LOG, "Overwriting variable '"+varName + "' with "+varComplexValueFromYaml);
+        }
         variables.put(varName, varComplexValueFromYaml);
         return null;
     }

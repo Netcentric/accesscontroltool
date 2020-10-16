@@ -12,6 +12,7 @@ import static biz.netcentric.cq.tools.actool.history.PersistableInstallationLogg
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -40,6 +41,7 @@ import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
+import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService;
 import biz.netcentric.cq.tools.actool.validators.AuthorizableValidator;
 import biz.netcentric.cq.tools.actool.validators.ConfigurationsValidator;
 import biz.netcentric.cq.tools.actool.validators.GlobalConfigurationValidator;
@@ -56,6 +58,8 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
 
     private static final Logger LOG = LoggerFactory.getLogger(YamlConfigurationMerger.class);
 
+    public static final String GLOBAL_VAR_RUNMODES = "RUNMODES";
+
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     YamlMacroProcessor yamlMacroProcessor;
 
@@ -68,6 +72,9 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     TestUserConfigsCreator testUserConfigsCreator;
 
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    ExtendedSlingSettingsService slingSettingsService;
+    
     @Override
     public AcConfiguration getMergedConfigurations(
             final Map<String, String> configFileContentByFilename,
@@ -89,6 +96,8 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
 
         final ConfigurationsValidator configurationsValidator = new YamlConfigurationsValidator();
 
+        Map<String, Object> globalVariables = getGlobalVariablesForYamlMacroProcessing();
+        
         for (final Map.Entry<String, String> entry : configFileContentByFilename.entrySet()) {
 
             String sourceFile = entry.getKey();
@@ -106,7 +115,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             } catch (YAMLException e) {
                 throw new IllegalArgumentException("Invalid yaml source file " + sourceFile + ": "+ e, e);
             }
-            yamlRootList = yamlMacroProcessor.processMacros(yamlRootList, installLog, session);
+            yamlRootList = yamlMacroProcessor.processMacros(yamlRootList, globalVariables, installLog, session);
             // set merged config per file to ensure it is there in case of validation errors (for success, the actual merged config is set
             // after this loop)
             installLog.setMergedAndProcessedConfig("# File " + sourceFile + "\n" + yamlParser.dump(yamlRootList));
@@ -201,6 +210,14 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         installLog.addMessage(LOG, "Loaded configuration in " + msHumanReadable(sw.getTime()));
 
         return acConfiguration;
+    }
+
+    private Map<String, Object> getGlobalVariablesForYamlMacroProcessing() {
+        Map<String, Object> globalVariables = new HashMap<>();
+        if(slingSettingsService != null) {
+            globalVariables.put(GLOBAL_VAR_RUNMODES, new ArrayList<String>(slingSettingsService.getRunModes()));
+        }
+        return globalVariables;
     }
 
     AceBeanValidatorImpl getAceBeanValidator(final Set<String> authorizableIdsFromAllConfigs) {

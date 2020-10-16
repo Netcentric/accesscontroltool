@@ -20,6 +20,6 @@ import biz.netcentric.cq.tools.actool.history.InstallationLogger;
  * @author ghenzler */
 public interface YamlMacroProcessor {
 
-    List<Map> processMacros(List<Map> yamlList, InstallationLogger history, Session session);
+    List<Map> processMacros(List<Map> yamlList, Map<String, Object> globalVariables, InstallationLogger history, Session session);
 
 }
