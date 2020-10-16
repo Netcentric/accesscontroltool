@@ -155,6 +155,8 @@ Expressions are evaluated using javax.el expression language. The following util
 
 ## Variables
 
+### Simple variables
+
 Sometimes it can be useful to declare variables to reuse values or to give certain strings an expressive name:
 
 ```
@@ -180,6 +182,7 @@ Variables can also be declared to be an array and used in a loop:
     
     - FOR arrVal IN ${testArr}:
 ```
+### Complex variables with value from yaml structure
 
 There is also a multi-line variant of the DEF statement that allows to define complex structures directly in yaml using a `DEF varName=:`syntax:
 
@@ -215,10 +218,27 @@ There is also a multi-line variant of the DEF statement that allows to define co
       - name: "Value ${simpleMap[loopVar]}"
 ```
 
-NOTE: The scope of a variable is limited to:
- * the lines in the very same yaml file following the definition till it is either redefined or the end of the yaml file is reached (this limitation will supposedly be lifted with [#257][i257])
+### Global variables 
+
+By default, variables are local, this means the scope of a variable is limited to:
+ * the lines in the very same yaml file following the definition till it is either redefined or the end of the yaml file is reached 
  * `FOR` loop in which variable is defined or re-defined.
- 
+
+It is possible to define global variables (that are available across multiple yaml files) as follows:
+
+```
+- global_config:
+     vars:
+         - DEF groupPrefix="xyz"
+         - DEF testArr=:
+                  - val1
+                  - val2
+```
+
+Global variables still only become visible in the order of how the yaml files are processed, therefore it usually makes sense to put them in their own file prefixed with `_` to ensure they are processed at the beginning, e.g. `_globalvars.yaml`.
+
+Local variables override global variables, but only in the same file (and only from the definition of the local variable onwards).
+
 ### Predefined variables 
 
 Some variables are provided by AC Tool by default.

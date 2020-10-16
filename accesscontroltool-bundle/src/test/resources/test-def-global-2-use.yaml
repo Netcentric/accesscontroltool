@@ -1,0 +1,27 @@
+#
+# (C) Copyright 2020 Netcentric AG.
+#
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+- DEF globalVarToBeOverridden="localValOverridingGlobal"
+
+- group_config:
+
+       - ${groupPrefix}-group-reader:
+
+          - name: "Name ${comlexArr[0]}"
+            description: "varNotGlobal shall be empty: '${varNotGlobal}'"
+            isMemberOf: 
+            path: /home/groups/g
+
+
+       - ${groupPrefix}-group-reader2:
+
+          - name: "global variable can be overridden with local value: '${globalVarToBeOverridden}'"
+            description: "global variable overridden elsewhere (not in this file) has global val: '${globalVarOverriddenElsewhere}'"
+            isMemberOf: 
+            path: /home/groups/g
+

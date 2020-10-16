@@ -12,16 +12,15 @@ import static biz.netcentric.cq.tools.actool.configreader.YamlConfigReaderTest.g
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +41,6 @@ import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
-import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
 public class YamlMacroProcessorTest {
@@ -56,15 +54,16 @@ public class YamlMacroProcessorTest {
     @Mock
     Session session;
 
-    @Mock
-    ExtendedSlingSettingsService slingSettingsService;
-    
     @InjectMocks
     YamlMacroProcessorImpl yamlMacroProcessor = new YamlMacroProcessorImpl();
 
+    Map<String, Object> globalVariables = new HashMap<>();
+    
     @Before
     public void setup() {
         initMocks(this);
+        
+        globalVariables.put(YamlConfigurationMerger.GLOBAL_VAR_RUNMODES, Arrays.asList("runmode1", "runmode2", "runmode3"));
     }
 
     @Test
@@ -72,7 +71,7 @@ public class YamlMacroProcessorTest {
 
         List<Map> yamlList = getYamlList("test-loop.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
         assertEquals("Number of groups", 10, groups.size());
@@ -94,7 +93,7 @@ public class YamlMacroProcessorTest {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
         List<Map> yamlList = getYamlList("test-nested-loops.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
 
@@ -108,7 +107,7 @@ public class YamlMacroProcessorTest {
 
         List<Map> yamlList = getYamlList("test-loop.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AcesConfig aces = readAceConfigs(yamlList);
         assertEquals("Number of ACEs", 7, aces.size());
@@ -125,7 +124,7 @@ public class YamlMacroProcessorTest {
 
         List<Map> yamlList = getYamlList("test-loop-with-hyphen.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AcesConfig aces = readAceConfigs(yamlList);
         assertEquals("Number of ACEs", 7, aces.size());
@@ -142,7 +141,7 @@ public class YamlMacroProcessorTest {
 
         List<Map> yamlList = getYamlList("test-loop-with-colon.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AcesConfig aces = readAceConfigs(yamlList);
         assertEquals("Number of ACEs", 2, aces.size());
@@ -161,7 +160,7 @@ public class YamlMacroProcessorTest {
 
         List<Map> yamlList = getYamlList("test-loop-with-special-characters.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AuthorizablesConfig groupConfigs = readGroupConfigs(yamlList);
 
@@ -178,7 +177,7 @@ public class YamlMacroProcessorTest {
 
         List<Map> yamlList = getYamlList("test-nested-loops.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AcesConfig aces = readAceConfigs(yamlList);
         assertEquals("Number of ACEs", 12, aces.size());
@@ -203,7 +202,7 @@ public class YamlMacroProcessorTest {
 
         List<Map> yamlList = getYamlList("test-if.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AcesConfig aces = readAceConfigs(yamlList);
 
@@ -229,7 +228,7 @@ public class YamlMacroProcessorTest {
         doReturn(getExampleValuesForLoopOverChildrenOfPath()).when(yamlMacroChildNodeObjectsProvider)
                 .getValuesForPath(contentLocationChildrenFromYamlFile, installLog, session, false);
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         // new Yaml().dump(yamlList, new PrintWriter(System.out));
 
@@ -256,7 +255,7 @@ public class YamlMacroProcessorTest {
         doReturn(getExampleValuesForLoopOverChildrenOfPath()).when(yamlMacroChildNodeObjectsProvider)
                 .getValuesForPath(contentLocationChildrenFromYamlFile, installLog, session, true);
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         // new Yaml().dump(yamlList, new PrintWriter(System.out));
 
@@ -324,7 +323,7 @@ public class YamlMacroProcessorTest {
 
         List<Map> yamlList = getYamlList("test-system-user.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AuthorizablesConfig users = readUserConfigs(yamlList);
         assertEquals("Number of users", 1, users.size());
@@ -359,7 +358,7 @@ public class YamlMacroProcessorTest {
 
         List<Map> yamlList = getYamlList("test-variables.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         GlobalConfiguration globalConfiguration = readGlobalConfig(yamlList);
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
@@ -377,7 +376,7 @@ public class YamlMacroProcessorTest {
 
         List<Map> yamlList = getYamlList("test-variables-ldap.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
         assertEquals("cn=editor-group,ou=mydepart,ou=Groups,dc=comp,dc=com;IDPNAME",
@@ -390,7 +389,7 @@ public class YamlMacroProcessorTest {
 
         List<Map> yamlList = getYamlList("test-loop-with-variable-evaluating-to-arr.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
         assertEquals("Name of val1", groups.getAuthorizableConfig("content-reader-loop1-val1").getName());
@@ -440,7 +439,7 @@ public class YamlMacroProcessorTest {
 
         List<Map> yamlList = getYamlList("test-array-containsItem-function.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AcesConfig aces = readAceConfigs(yamlList);
         assertEquals("Number of ACEs expected to be 2 and not 4", 2, aces.size());
@@ -452,9 +451,7 @@ public class YamlMacroProcessorTest {
 
         List<Map> yamlList = getYamlList("test-loop-over-runmodes.yaml");
 
-        when(slingSettingsService.getRunModes()).thenReturn(new HashSet<String>(Arrays.asList("runmode1", "runmode2", "runmode3")));
-        
-        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
         assertEquals(3, groups.size());
@@ -470,7 +467,7 @@ public class YamlMacroProcessorTest {
 
         List<Map> yamlList = getYamlList("test-def-with-underscore.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
         assertEquals(3, groups.size());
@@ -486,7 +483,7 @@ public class YamlMacroProcessorTest {
 
         List<Map> yamlList = getYamlList("test-def-complex-structure.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
         assertEquals(12, groups.size());
@@ -526,7 +523,7 @@ public class YamlMacroProcessorTest {
 
         List<Map> yamlList = getYamlList("test-def-complex-nested-loops.yaml");
 
-        yamlList = yamlMacroProcessor.processMacros(yamlList, installLog, session);
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AcesConfig aceConfigs = readAceConfigs(yamlList);
         assertEquals(8, aceConfigs.size());
@@ -551,5 +548,34 @@ public class YamlMacroProcessorTest {
     
 
     }
-    
+
+    @Test
+    public void testDefGlobalVars() throws Exception {
+
+        List<Map> yamlList = getYamlList("test-def-global-1-set.yaml");
+
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
+        
+        assertEquals("xyz", globalVariables.get("groupPrefix"));
+        assertEquals(Arrays.asList("val1", "val2"), globalVariables.get("comlexArr"));
+        assertNull(globalVariables.get("varNotGlobal"));
+        
+        List<Map> yamlList2 = getYamlList("test-def-global-2-use.yaml");
+        
+        yamlList2 = yamlMacroProcessor.processMacros(yamlList2, globalVariables, installLog, session);
+        
+        AuthorizablesConfig groups = readGroupConfigs(yamlList2);
+        assertEquals(2, groups.size());
+        AuthorizableConfigBean authorizableConfig1 = groups.getAuthorizableConfig("xyz-group-reader");
+        assertNotNull(authorizableConfig1);
+        assertEquals("Name val1", authorizableConfig1.getName());
+        assertEquals("varNotGlobal shall be empty: ''", authorizableConfig1.getDescription());
+
+        AuthorizableConfigBean authorizableConfig2 = groups.getAuthorizableConfig("xyz-group-reader2");
+        assertNotNull(authorizableConfig2);
+        assertEquals("global variable can be overridden with local value: 'localValOverridingGlobal'", authorizableConfig2.getName());
+        assertEquals("global variable overridden elsewhere (not in this file) has global val: 'globalVal'", authorizableConfig2.getDescription());
+
+    }
+
 }
