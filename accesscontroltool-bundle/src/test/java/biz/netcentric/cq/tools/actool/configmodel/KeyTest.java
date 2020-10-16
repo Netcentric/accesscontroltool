@@ -9,7 +9,6 @@ import java.security.InvalidKeyException;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCSException;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import biz.netcentric.cq.tools.actool.aem.AemCryptoSupport;
@@ -25,7 +24,6 @@ public class KeyTest {
     }
 
     @Test
-    @Ignore
     public void testEncryptedPkcs8RsaKeyWithPublicKey() throws IOException, GeneralSecurityException, OperatorCreationException, PKCSException {
         try (InputStream inputPkcs8 = this.getClass().getResourceAsStream("example1_rsa_pkcs8");
                 InputStream inputPemDer = this.getClass().getResourceAsStream("example1_rsa_pub")) {
@@ -37,7 +35,6 @@ public class KeyTest {
     }
 
     @Test(expected=InvalidKeyException.class)
-    @Ignore
     public void testEncryptedPkcs8RsaKeyWithUnrelatedCertificate() throws IOException, GeneralSecurityException, OperatorCreationException, PKCSException {
         try (InputStream inputPkcs8 = this.getClass().getResourceAsStream("example1_rsa_pkcs8");
                 InputStream inputPemDer = this.getClass().getResourceAsStream("example5_rsa.crt")) {
