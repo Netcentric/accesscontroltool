@@ -1,5 +1,7 @@
 # Applying ACLs
 
+## General
+
 The following steps are performed:
 
 1. All AC entries are removed from the repository which refer to an authorizable (user/group) being mentioned in the YAML configuration file (no matter to which path those entries refer).
@@ -9,10 +11,22 @@ The following steps are performed:
 If at any point during the installation an exception occurs, no changes get persisted in the system. This prevents ending up having a undefined state in the repository.
 
 During the installation a history containing the most important events gets created and persisted in CRX for later examination.
-The following section explain how you can trigger the installation of ACLs.
 
-    
-## Installation Hook
+## Procedure in AEM as a Cloud Service
+
+Due to usage of a [composite node store](http://jackrabbit.apache.org/oak/docs/nodestore/compositens.html) the installation is slightly more complex in AEMaaCS
+
+1. During Maven build in Cloud Manager the ACLs are applied like outlined above via [Installation Hook](#installation-hook)
+2. Afterwards all mutable content is discarded (authorizables in `/home` and ACEs in mutable content)
+3. During deployment in Cloud Manager the authorizables and ACEs in mutable locations of the repository are installed on the target mutable node store via the [Startup Hook](#startup-hook)
+
+Theoretically step 1 is only necessary if ACEs for immutable content are required, but it is recommended to always use the combination of Installation Hook and Startup Hook for AEMaaCS to be able to use the same package also for installation with a local AEM SDK instance.
+
+## Installation Methods
+
+The following section explain how you can trigger the installation of ACLs.
+  
+### Installation Hook
 
 You can automatically install ACEs and authorizables defined in YAML files within a package using the Content Package Install Hook mechanism.
 If you use the content-package-maven-plugin for building the package, enable the installation hook via: 
@@ -53,15 +67,15 @@ An install hook is ignored in the cloud because the startup hook is to be used f
 
 **Notice:** Packages with install hooks can only be installed by admin users (compare with [JCRVLT-427](https://issues.apache.org/jira/browse/JCRVLT-427))! This is either user with id `admin`, `system` or every member of group `administrators`.
 
-## Web Console
+### Web Console
 
 A Felix Web Console UI is available at "Main" -> "AC Tool". The web console provides fewer operations as JMX, but for manual testing it provides better usability for applying config changes continuously. 
 
-## Touch UI
+### Touch UI
 
 The same interface as available via Web Console is also available via Touch UI at `Tools -> Security -> Netcentric AC Tool` if you are admin on the instance. When using [AEM as a Cloud Service](https://www.adobe.com/marketing/experience-manager/cloud-service.html), the console will be available if you are in the admin group for the AEM env as set up in [adminconsole](https://adminconsole.adobe.com/).
 
-## JMX
+### JMX
 
 See [JMX apply() method](Jmx.md).
 
@@ -73,22 +87,21 @@ Trigger the 'apply' method of the AC JMX service through HTTP Post
 curl -sS --retry 1 -u ${CQ_ADMINUSER}:${CQ_ADMINPW} -X POST "http://${CQ_SERVER}:${CQ_PORT}/system/console/jmx/biz.netcentric.cq.tools:type=ACTool/op/apply/"
 ```
 
-## Startup Hook
+### Startup Hook
 
-When using the [Sling Feature Model](https://sling.apache.org/documentation/development/feature-model.html), the AC tool is automatically triggered upon startup. The startup hook is auto-activated for the case the [Sling OSGi installer](https://sling.apache.org/documentation/bundles/osgi-installer.html) is not present which is usually the case when using the Sling Feature Model. The behaviour can be configured via OSGi config `AC Tool Startup Hook` (PID `biz.netcentric.cq.tools.actool.startuphook.impl.AcToolStartupHookServiceImpl`) but the default is usually correct.
+When using the [Sling Feature Model](https://sling.apache.org/documentation/development/feature-model.html), the AC tool is automatically triggered upon startup. The startup hook is auto-activated for the case the [Sling OSGi installer](https://sling.apache.org/documentation/bundles/osgi-installer.html) is not present which is usually the case when using the Sling Feature Model. The behaviour can be adjusted via OSGi config `AC Tool Startup Hook` (PID `biz.netcentric.cq.tools.actool.startuphook.impl.AcToolStartupHookServiceImpl`) but the default is usually correct.
 
-The AC Tool also handles a [composite node store](https://jackrabbit.apache.org/oak/docs/nodestore/compositens.html) repository correctly (it will automatically only run with paths that are not ready-only).
+The startup hook requires the `AC Tool Installation Service` (PID `biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl`) to be configured correctly, i.e. its configuration path must point to the nodes containing the `YAML` files.
+<img src="images/installation-service.png">
 
-The avoid overhead for the case a configuration has already been applied, an md5 checksum is created over all configuration files and the configuration is only applied for the case the checksum has changed.
+The AC Tool handles a [composite node store](https://jackrabbit.apache.org/oak/docs/nodestore/compositens.html) repository correctly (it will automatically only run with paths that are not ready-only). To avoid overhead for the case a configuration has already been applied, an MD5 checksum is created over all configuration files and the configuration is only applied for the case the checksum has changed.
 
-### AEM as a Cloud Service
+The startup hook is the **only way** to automatically apply ACLs during startup and is therefore necessary for installing authorizables and applying ACEs on mutable content in [AEM as a Cloud Service](https://www.adobe.com/marketing/experience-manager/cloud-service.html).
+This mechanism should be combined with the [Installation Hook](#installation-hook) to also have ACEs on immutable content applied (and to be able to use the same package with a local AEM SDK).
 
-[AEM as a Cloud Service](https://www.adobe.com/marketing/experience-manager/cloud-service.html) is a Sling Feature Model-based setup. When using the AC Tool with that setup no changes are required except to use the latest version of the AC Tool that supports it:
+Use [Touch UI](ApplyConfig.md#touch-ui) to validate your results.
 
-* For local development using the SDK, keep the [install hook](ApplyConfig.md#installation-hook) configured as is (this will help to automatically apply the config upon local installations). In the cloud, the install hook is automatically skipped.
-* For cloud installation (incl. production deployment), the [startup hook](ApplyConfig.md#startup-hook) will automatically become active. Use [Touch UI](ApplyConfig.md#touch-ui) to validate your results there.
-
-## Upload Listener Service
+### Upload Listener Service
 
 The Upload Listener Service allows to automatically apply the configuration upon changes in the yaml files in CRX. It registers a JCR listener per configured path in `AC Tool Installation Service` and applies the corresponding changes with a configured delay (to aggregate multiple change events into installation). By default it is disabled.
 
@@ -96,8 +109,8 @@ NOTE: Usually it is better to rely on the install hook and manual executions via
 
 <img src="images/upload-listener.png">
 
+The upload listener service requires the `AC Tool Installation Service` (PID `biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl`) to be configured correctly, i.e. its configuration path must point to the nodes containing the `YAML` files.
 <img src="images/installation-service.png">
-
 
 
 
