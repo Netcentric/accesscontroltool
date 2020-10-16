@@ -369,7 +369,7 @@
         <repository>
             <id>adobe</id>
             <name>Adobe Public Repository</name>
-            <url>http://repo.adobe.com/nexus/content/groups/public/</url>
+            <url>https://repo.adobe.com/nexus/content/groups/public/</url>
             <layout>default</layout>
         </repository>
     </repositories>
@@ -377,7 +377,7 @@
         <pluginRepository>
             <id>adobe</id>
             <name>Adobe Public Repository</name>
-            <url>http://repo.adobe.com/nexus/content/groups/public/</url>
+            <url>https://repo.adobe.com/nexus/content/groups/public/</url>
             <layout>default</layout>
         </pluginRepository>
     </pluginRepositories>
