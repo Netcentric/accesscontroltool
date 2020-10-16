@@ -143,13 +143,13 @@
         </dependency>
         <dependency>
             <groupId>org.apache.tomcat</groupId>
-            <artifactId>el-api</artifactId>
-            <version>6.0.53</version>
+            <artifactId>tomcat-el-api</artifactId>
+            <version>8.5.59</version>
         </dependency>
         <dependency>
             <groupId>org.apache.tomcat</groupId>
-            <artifactId>jasper-el</artifactId>
-            <version>6.0.53</version>
+            <artifactId>tomcat-jasper-el</artifactId>
+            <version>8.5.58</version>
         </dependency>
 
         <dependency>
@@ -244,27 +244,6 @@
     <!-- ====================================================================== -->
     <build>
         <plugins>
-            <!-- embed el.api and jasper.el (i.e. place them in the classes folder) -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.1.1</version>
-                <executions>
-                    <execution>
-                        <id>unpack-dependencies</id>
-                        <!-- must be prior to process classes (as this is where bnd kicks in) -->
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>unpack-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <includeArtifactIds>el-api,jasper-el</includeArtifactIds>
-                            <excludes>META-INF/**</excludes>
-                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <!-- see https://github.com/apache/felix/tree/trunk/tools/osgicheck-maven-plugin -->
             <plugin>
                 <groupId>org.apache.felix</groupId>
@@ -293,6 +272,8 @@ Bundle-Name: ${project.name}
 Bundle-SymbolicName: biz.netcentric.cq.tools.accesscontroltool.bundle
 # export all versioned packages by default
 -exportcontents: ${packages;VERSIONED}
+# Embed (https://groups.google.com/g/bndtools-users/c/NAdU0_X8OKY)
+-includeresource: tomcat-el-api-[0-9.]*.jar;lib:=true,tomcat-jasper-el-[0-9.]*.jar;lib:=true
 # broad version range for jackrabbit oak versions (as long as we need to support Oak < 1.7.12, see https://github.com/Netcentric/accesscontroltool/issues/435 and https://issues.apache.org/jira/browse/OAK-6945
 Import-Package: org.apache.jackrabbit.oak.spi.security.authentication.external;resolution:=optional;version="[0,3)",org.apache.jackrabbit.oak.spi.security.authentication.external.basic;resolution:=optional;version="[0,2)",org.apache.jackrabbit.oak.*;version="[0,2)",com.adobe.granite.crypto;resolution:=optional,com.adobe.granite.jmx.annotation;resolution:=optional,com.day.cq.security.util;resolution:=optional,* ]]></bnd>
                 </configuration>
