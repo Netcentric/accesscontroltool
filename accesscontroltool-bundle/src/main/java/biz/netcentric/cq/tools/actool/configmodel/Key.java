@@ -253,8 +253,5 @@ public class Key {
             return false;
         }
     }
-    private static String decrypt(byte[] data, PrivateKey privateKey, Cipher cipher) throws InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
-        cipher.init(Cipher.DECRYPT_MODE, privateKey);
-        return new String(cipher.doFinal(data), StandardCharsets.US_ASCII);
-    }
+
 }
