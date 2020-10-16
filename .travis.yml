@@ -10,4 +10,4 @@ addons:
         secure: "UPYVz3yLfAtb0OzVJFNufchYXnD1LEWMy2YEOwYb6Tsm8xx8EcpKSHaSWEvwLTV810OgJ7np2uWfbLuQzQKLey5Rwa6tVLajSqmmbNTbWJ+I2dajOkPb45McEo8iIepd2RBZaKE9/o1vdIv+4X9HOB4Dw16pqHUdWW0Az6pH6SY4pL0vyB1FKzhaBEyb46vY1Gw/n6SVEkmKixmyXQPhXYizGJnlCfr6OxmPpg9U2kTRYb3eODBs874DC49CZmXM7lHsx/i8jgtxN3GbKKloIqDI2TDA3PM3zeSAnehh2W5g25lbeZrS6auS8zOmTudkYaI/K+UVHVt6Olxl9wAmDuDZcZg6PJohRac0km5KWoLsEPTJidWhYuRazxSwlqNQ6rgzS8qShVQAKRDLbaDOlnUadumilT9s85u22MoF4EPXNp47RSvtbwHwQVirjghQBw09ABRP6bHgW7MS1yOJ6ADQU72MoNG3NQ+kjDNcLR+zfV3R1wM+azGLcR3gxJLfybx/8eOxdmOdTgLiJwxhKU0/uIqbGtxs/Dey3T4esYGcxQJ4TbeYng3iIKVbYSTvLaRG1Elgdf0hZhUgvLE5eB2nSYDB71Z9ASnXc/HVU1m7g0cCI6AgeMhVprMDUUFPY6dQoj3NS9WVm0JYfD3yW4NpEr1hODtFGKXlZSYAWlg=" # encrypted value of your token
 script:
   # the following command line builds the project, runs the tests with coverage and then execute the SonarCloud analysis
-  - mvn clean verify sonar:sonar -B -Dsonar.projectKey=Netcentric_accesscontroltool -Pcheck-dependencies,coverage-report
+  - mvn clean verify sonar:sonar -B -Dsonar.projectKey=Netcentric_accesscontroltool -Pdependency-check,coverage-report
