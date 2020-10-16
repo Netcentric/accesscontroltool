@@ -14,7 +14,7 @@
     <version>2.5.6-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>Access Control Tool - Reactor Project</name>
+    <name>Access Control Tool</name>
     <description>Maven Multimodule project for Access Control Tool.</description>
     <url>https://github.com/Netcentric/accesscontroltool</url>
     <organization>
