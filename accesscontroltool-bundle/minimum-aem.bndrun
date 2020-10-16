@@ -13,7 +13,5 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# workaround bug https://github.com/bndtools/bnd/issues/4189
--runrequires: osgi.identity;filter:='(osgi.identity=biz.netcentric.cq.tools.accesscontroltool.bundle)
 -include ../target-osgi-environment/minimum-environment/minimum-aem.bndrun
 
