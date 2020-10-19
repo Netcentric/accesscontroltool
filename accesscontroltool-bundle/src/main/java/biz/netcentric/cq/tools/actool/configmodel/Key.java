@@ -12,6 +12,8 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -20,6 +22,7 @@ import java.security.interfaces.DSAPublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,6 +42,8 @@ import org.bouncycastle.operator.InputDecryptorProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
 import org.bouncycastle.pkcs.PKCSException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.aem.AemCryptoSupport;
 
@@ -49,6 +54,8 @@ public class Key {
 
     private final PKCS8EncryptedPrivateKeyInfo encryptedPrivateKeyInfo;
     private final String encryptedPrivateKeyPassword;
+
+    public static final Logger LOG = LoggerFactory.getLogger(Key.class);
 
     private final PublicKey publicKey;
     private final X509Certificate certificate;
@@ -143,7 +150,7 @@ public class Key {
         }
     }
 
-    static PublicKey getPublicKey(byte[] derPublicKey) throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
+    static PublicKey getPublicKey(byte[] derPublicKey) throws InvalidKeySpecException, NoSuchAlgorithmException {
         X509EncodedKeySpec spec = new X509EncodedKeySpec(derPublicKey);
         try {
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
@@ -156,11 +163,11 @@ public class Key {
 
     static X509Certificate getCertificate(InputStream input) throws CertificateException {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
-        X509Certificate cert = (X509Certificate) cf.generateCertificate(input);
-        return cert;
+        return (X509Certificate) cf.generateCertificate(input);
     }
 
-    private PrivateKey getPrivateKey(String keyPassword) throws IOException, GeneralSecurityException, PKCSException, OperatorCreationException {
+    private PrivateKey getPrivateKey(String keyPassword) throws IOException, PKCSException, OperatorCreationException {
+        // use BouncyCastle due to https://bugs.openjdk.java.net/browse/JDK-8231581
         JceOpenSSLPKCS8DecryptorProviderBuilder jce = new JceOpenSSLPKCS8DecryptorProviderBuilder();
         jce.setProvider(new BouncyCastleProvider());
         InputDecryptorProvider decProv = jce.build(keyPassword.toCharArray());
@@ -204,39 +211,47 @@ public class Key {
                 + ", publicKey=" + publicKey + ", certificate=" + certificate + "]";
     }
 
-    private static boolean isMatchingKeyPair(PublicKey publicKey, PrivateKey privateKey) throws NoSuchAlgorithmException, NoSuchPaddingException {
-        String data = "text";
-        Cipher cipher;
-        cipher = createCipher(publicKey);
+    private static boolean isMatchingKeyPair(PublicKey publicKey, PrivateKey privateKey) throws NoSuchAlgorithmException {
+        if (publicKey instanceof RSAPublicKey) {
+            return isMatchingRsaKeyPair((RSAPublicKey) publicKey, privateKey);
+        } else if (publicKey instanceof DSAPublicKey) {
+            return isMatchingDsaKeyPair((DSAPublicKey) publicKey, privateKey);
+        } else {
+            throw new IllegalArgumentException("Only public keys for RSA and DSA are supported but found: " + publicKey.getClass());
+        }
+    }
+
+    private static boolean isMatchingRsaKeyPair(RSAPublicKey publicKey, PrivateKey privateKey) throws NoSuchAlgorithmException {
+        byte[] data = "test".getBytes(StandardCharsets.US_ASCII);
         try {
-            byte[] encrypted = encrypt(data, publicKey, cipher);
-            String decrypted = decrypt(encrypted, privateKey, cipher);
-            return data.equals(decrypted);
-        } catch (InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
-            e.printStackTrace();
+            Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+            byte[] encrypted = cipher.doFinal(data);
+            cipher.init(Cipher.DECRYPT_MODE, privateKey);
+            byte[] decrypted = cipher.doFinal(encrypted);
+            return Arrays.equals(data, decrypted);
+        } catch (InvalidKeyException | BadPaddingException | IllegalBlockSizeException | NoSuchPaddingException e) {
+            LOG.warn("RSA key pair does not match {}", e, e);
             return false;
         }
     }
 
-    private static Cipher createCipher(PublicKey publicKey) throws NoSuchAlgorithmException, NoSuchPaddingException {
-        final Cipher cipher;
-        if (publicKey instanceof RSAPublicKey) {
-            cipher = Cipher.getInstance("RSA");
-        } else if (publicKey instanceof DSAPublicKey) {
-            cipher = Cipher.getInstance("DSA");
-        } else {
-            throw new IllegalArgumentException("Only public keys for RSA and DSA are supported but found: " + publicKey.getClass());
+    private static boolean isMatchingDsaKeyPair(DSAPublicKey publicKey, PrivateKey privateKey) throws NoSuchAlgorithmException {
+        byte[] data = "test".getBytes(StandardCharsets.US_ASCII);
+        try {
+            Signature dsa = Signature.getInstance("SHA/DSA"); 
+            // first create signature
+            dsa.initSign(privateKey);
+            dsa.update(data);
+            byte[] sig = dsa.sign();
+            // then verify signature
+            dsa.initVerify(publicKey);
+            dsa.update(data);
+            return dsa.verify(sig);
+        } catch (InvalidKeyException | SignatureException e) {
+            LOG.warn("DSA key pair does not match {}", e, e);
+            return false;
         }
-        return cipher;
     }
 
-    private static byte[] encrypt(String data, PublicKey publicKey, Cipher cipher) throws BadPaddingException, IllegalBlockSizeException, InvalidKeyException {
-        cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-        return cipher.doFinal(data.getBytes(StandardCharsets.US_ASCII));
-    }
-
-    private static String decrypt(byte[] data, PrivateKey privateKey, Cipher cipher) throws InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
-        cipher.init(Cipher.DECRYPT_MODE, privateKey);
-        return new String(cipher.doFinal(data), StandardCharsets.US_ASCII);
-    }
 }

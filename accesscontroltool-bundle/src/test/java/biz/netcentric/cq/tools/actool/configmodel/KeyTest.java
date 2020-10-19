@@ -9,12 +9,14 @@ import java.security.InvalidKeyException;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCSException;
-import org.junit.Ignore;
+import org.junit.Before;
 import org.junit.Test;
 
 import biz.netcentric.cq.tools.actool.aem.AemCryptoSupport;
 
 public class KeyTest {
+
+    private AemCryptoSupport cryptoSupport;
 
     private final class SimpleAEMCryptoSupport implements AemCryptoSupport {
 
@@ -24,20 +26,36 @@ public class KeyTest {
         }
     }
 
+    @Before
+    public void setUp() {
+        cryptoSupport = new SimpleAEMCryptoSupport();
+    }
+
     @Test
-    @Ignore
     public void testEncryptedPkcs8RsaKeyWithPublicKey() throws IOException, GeneralSecurityException, OperatorCreationException, PKCSException {
         try (InputStream inputPkcs8 = this.getClass().getResourceAsStream("example1_rsa_pkcs8");
                 InputStream inputPemDer = this.getClass().getResourceAsStream("example1_rsa_pub")) {
             String privateKey = IOUtils.toString(inputPkcs8, StandardCharsets.US_ASCII);
             String publicKey = IOUtils.toString(inputPemDer, StandardCharsets.US_ASCII);
             Key key = Key.createFromKeyPair(privateKey, "{password", publicKey);
-            key.getKeyPair(new SimpleAEMCryptoSupport());
+            key.getKeyPair(cryptoSupport);
+            key.getPrivateKey(cryptoSupport);
+        }
+    }
+
+    @Test
+    public void testEncryptedPkcs8DsaKeyWithPublicKey() throws IOException, GeneralSecurityException, OperatorCreationException, PKCSException {
+        try (InputStream inputPkcs8 = this.getClass().getResourceAsStream("example1_dsa_pkcs8");
+                InputStream inputPemDer = this.getClass().getResourceAsStream("example1_dsa_pub")) {
+            String privateKey = IOUtils.toString(inputPkcs8, StandardCharsets.US_ASCII);
+            String publicKey = IOUtils.toString(inputPemDer, StandardCharsets.US_ASCII);
+            Key key = Key.createFromKeyPair(privateKey, "{password", publicKey);
+            key.getKeyPair(cryptoSupport);
+            key.getPrivateKey(cryptoSupport);
         }
     }
 
     @Test(expected=InvalidKeyException.class)
-    @Ignore
     public void testEncryptedPkcs8RsaKeyWithUnrelatedCertificate() throws IOException, GeneralSecurityException, OperatorCreationException, PKCSException {
         try (InputStream inputPkcs8 = this.getClass().getResourceAsStream("example1_rsa_pkcs8");
                 InputStream inputPemDer = this.getClass().getResourceAsStream("example5_rsa.crt")) {
@@ -102,5 +120,4 @@ public class KeyTest {
             key.getKeyPair(new SimpleAEMCryptoSupport());
         }
     }
-
 }
