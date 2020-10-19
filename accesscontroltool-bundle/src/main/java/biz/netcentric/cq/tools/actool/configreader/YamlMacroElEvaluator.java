@@ -38,7 +38,7 @@ import org.apache.el.ExpressionFactoryImpl;
  * 
  * @author ghenzler */
 public class YamlMacroElEvaluator {
-    
+
     private ExpressionFactory expressionFactory;
     private ELContext context;
 
@@ -47,7 +47,7 @@ public class YamlMacroElEvaluator {
     public YamlMacroElEvaluator() {
 
         expressionFactory = new ExpressionFactoryImpl();
-
+        
         final VariableMapper variableMapper = new ElVariableMapper();
         final ElFunctionMapper functionMapper = new ElFunctionMapper();
         final CompositeELResolver compositeELResolver = new CompositeELResolver();
@@ -72,8 +72,26 @@ public class YamlMacroElEvaluator {
             public VariableMapper getVariableMapper() {
                 return variableMapper;
             }
-        };
 
+            @Override
+            public Object convertToType(Object obj, Class<?> type) {
+                if(obj == null) {
+                    return null;
+                }
+                if(type == null) {
+                    return obj;
+                }
+                if(type.equals(String.class)) {
+                    return String.valueOf(obj);
+                }
+                if(type.isAssignableFrom(obj.getClass())) {
+                    return obj;
+                } else {
+                    // no special conversions supported
+                    throw new IllegalStateException("Cannot convert "+obj.getClass() +" to " + type + " (object: "+obj+")");
+                }
+            }
+        };
     }
 
     public <T> T evaluateEl(String el, Class<T> expectedResultType, Map<? extends Object, ? extends Object> variables) {
