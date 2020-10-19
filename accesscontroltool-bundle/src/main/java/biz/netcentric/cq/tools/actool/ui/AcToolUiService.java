@@ -73,7 +73,7 @@ public class AcToolUiService {
 
         RequestParameters reqParams = RequestParameters.fromRequest(req, acInstallationService);
         LOG.info("Received POST request to apply AC Tool config with configurationRootPath={} basePaths={}",
-                reqParams.configurationRootPath, reqParams.basePaths);
+                escapeHtml4(reqParams.configurationRootPath), reqParams.basePaths);
 
         InstallationLog log = acInstallationService.apply(reqParams.configurationRootPath, reqParams.getBasePathsArr(),
                 reqParams.applyOnlyIfChanged);
@@ -85,7 +85,7 @@ public class AcToolUiService {
         resp.setContentType("text/plain");
         if (((PersistableInstallationLogger) log).isSuccess()) {
             resp.setStatus(HttpServletResponse.SC_OK);
-            pw.println("Applied AC Tool config from " + reqParams.configurationRootPath + ":\n" + msg);
+            pw.println("Applied AC Tool config from " + escapeHtml4(reqParams.configurationRootPath) + ":\n" + msg);
         } else {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             pw.println("Error while applying AC Tool config from " + reqParams.configurationRootPath);
