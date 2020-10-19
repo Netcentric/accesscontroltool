@@ -109,7 +109,7 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
                 return evaluateDefStatementOneLine(variables, variableDefMatcher, installLog);
             }
 
-            String result = elEvaluator.evaluateEl(str, String.class, variables);
+            Object result = elEvaluator.evaluateEl(str, Object.class, variables);
             return result;
 
         } else if (o instanceof Boolean) {
