@@ -5,4 +5,5 @@
         jcr:primaryType="rep:DenyACE"
         rep:principalName="everyone"
         rep:privileges="{Name}[jcr:read]"/>
+    <!-- administrative users never evaluate any ACEs -->
 </jcr:root>
