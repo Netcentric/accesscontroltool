@@ -7,10 +7,13 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import javax.jcr.RepositoryException;
 
 import org.apache.jackrabbit.api.security.user.Authorizable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.helper.Constants;
 
@@ -18,6 +21,8 @@ import biz.netcentric.cq.tools.actool.helper.Constants;
  * Auxiliar class to store a list of non regular members.
  */
 class NotRegularMembers {
+
+    private static final Logger LOG = LoggerFactory.getLogger(NotRegularMembers.class);
 
     private final List<String> members = new CopyOnWriteArrayList<>();
     private final ExecutorService executor = Executors.newFixedThreadPool(10);
@@ -59,6 +64,11 @@ class NotRegularMembers {
     private void waitAllMemberCheckersToFinish() {
         executor.shutdown();
         while (!executor.isTerminated()) {
+            try {
+                executor.awaitTermination(10, TimeUnit.SECONDS);
+            } catch (final InterruptedException e) {
+                LOG.error("Thread executor await termination was interrupted.", e);
+            }
         }
     }
 
