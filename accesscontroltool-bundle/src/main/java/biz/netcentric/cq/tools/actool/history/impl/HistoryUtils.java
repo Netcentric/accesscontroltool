@@ -204,7 +204,11 @@ public class HistoryUtils {
     }
 
     private static String getEffectiveConfigRootPath(PersistableInstallationLogger installLog) {
-        Set<String> configFiles = installLog.getConfigFileContentsByName().keySet();
+        Map<String, String> configFileContentsByName = installLog.getConfigFileContentsByName();
+        if(configFileContentsByName == null) {
+            return null;
+        }
+        Set<String> configFiles = configFileContentsByName.keySet();
         String effectiveConfigRootPath = StringUtils.getCommonPrefix(configFiles.toArray(new String[configFiles.size()]));
         effectiveConfigRootPath = StringUtils.removeStart(effectiveConfigRootPath, "//jcr_root");
         effectiveConfigRootPath = StringUtils.removeEnd(effectiveConfigRootPath, "/");
