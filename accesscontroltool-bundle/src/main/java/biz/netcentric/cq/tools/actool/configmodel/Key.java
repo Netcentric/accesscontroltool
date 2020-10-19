@@ -84,14 +84,10 @@ public class Key {
         if (StringUtils.isBlank(pemPkcs8PrivateKey)) {
             throw new InvalidKeyException("The private key must not be blank!");
         }
-        
         try {
             this.encryptedPrivateKeyInfo = decodePKCS8PEM(pemPkcs8PrivateKey);
         } catch (IOException e) {
             throw new InvalidKeyException("The private key format is wrong", e);
-        }
-        if (encryptedPrivateKeyInfo == null) {
-            throw new InvalidKeyException("The private key is empty");
         }
         // the same as CryptoSupport.isProtected(...) but must work without the dependency
         if (!encryptedPrivateKeyPassword.startsWith("{")) {
