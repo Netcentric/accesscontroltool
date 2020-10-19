@@ -88,10 +88,10 @@ public class AuthorizableInstallerServiceImpl implements
 
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
     volatile AemCryptoSupport cryptoSupport;
-    
+
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
     volatile KeyStoreService keyStoreService;
-    
+
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     ResourceResolverFactory resourceResolverFactory;
 
@@ -141,7 +141,7 @@ public class AuthorizableInstallerServiceImpl implements
 
         if (authorizableToInstall == null) {
             authorizableToInstall = createNewAuthorizable(acConfiguration, authorizableConfigBean, installLog, userManager, session);
-            
+
             installLog.incCountAuthorizablesCreated();
         }
         // if current authorizable from config already exists in repository
@@ -267,7 +267,7 @@ public class AuthorizableInstallerServiceImpl implements
 
             // ensure authorizables from config itself that are added via isMemberOf are not deleted
             relevantMembersInRepo = new HashSet<String>(CollectionUtils.subtract(relevantMembersInRepo, authorizablesFromConfigurations));
-            
+
             // take configuration 'defaultUnmanagedExternalMembersRegex' into account (and remove matching groups from further handling)
             relevantMembersInRepo = removeExternalMembersUnmanagedByConfiguration(acConfiguration, authorizableConfigBean, relevantMembersInRepo,
                     installLog);
@@ -305,22 +305,15 @@ public class AuthorizableInstallerServiceImpl implements
         }
     }
 
-    private Set<String> getDeclaredMembersWithoutRegularUsers(Group installedGroup) throws RepositoryException {
-        Set<String> membersInRepo = new HashSet<String>();
-        Iterator<Authorizable> currentMemberInRepo = installedGroup.getDeclaredMembers();
-        while (currentMemberInRepo.hasNext()) {
-            Authorizable member = currentMemberInRepo.next();
-            if (!isRegularUser(member)) {
-                membersInRepo.add(member.getID());
-            }
-        }
-        return membersInRepo;
-    }
+    private Set<String> getDeclaredMembersWithoutRegularUsers(final Group installedGroup) throws RepositoryException {
+        final NotRegularMembers notRegularMembers = new NotRegularMembers();
 
-    private boolean isRegularUser(Authorizable member) throws RepositoryException { 
-        return member != null && !member.isGroup() // if user
-            && !member.getPath().startsWith(Constants.USERS_ROOT + "/system/") // but not system user
-            && !member.getID().equals(Constants.USER_ANONYMOUS);  // and not anonymous
+        final Iterator<Authorizable> currentMemberInRepo = installedGroup.getDeclaredMembers();
+        while (currentMemberInRepo.hasNext()) {
+            final Authorizable member = currentMemberInRepo.next();
+            notRegularMembers.addOrDiscard(member);
+        }
+        return notRegularMembers.getSet();
     }
 
     private Set<String> removeExternalMembersUnmanagedByConfiguration(AcConfiguration acConfiguration, AuthorizableConfigBean authorizableConfigBean,
@@ -354,7 +347,7 @@ public class AuthorizableInstallerServiceImpl implements
 
     }
 
-    
+
     private void migrateFromOldGroup(AuthorizableConfigBean authorizableConfigBean, UserManager userManager,
             InstallationLogger installLog) throws RepositoryException {
         Authorizable groupForMigration = userManager.getAuthorizable(authorizableConfigBean.getMigrateFrom());
@@ -408,7 +401,7 @@ public class AuthorizableInstallerServiceImpl implements
         String authorizableId = principalConfigBean.getAuthorizableId();
 
         Authorizable existingAuthorizable = userManager.getAuthorizable(authorizableId);
-        
+
         // compare intermediate paths
         String intermediatedPathOfExistingAuthorizable = existingAuthorizable.getPath()
                 .substring(0, existingAuthorizable.getPath().lastIndexOf("/"));
