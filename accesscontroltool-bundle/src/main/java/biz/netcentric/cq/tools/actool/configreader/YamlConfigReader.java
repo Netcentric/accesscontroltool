@@ -14,6 +14,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -98,6 +99,9 @@ public class YamlConfigReader implements ConfigReader {
     private static final String USER_CONFIG_KEY_PRIVATE = "private";
     private static final String USER_CONFIG_KEY_CERTIFICATE = "certificate";
 
+    private static final String USER_CONFIG_IMPERSONATION_ALLOWED_FOR = "impersonationAllowedFor";
+    
+    
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
 
@@ -424,16 +428,28 @@ public class YamlConfigReader implements ConfigReader {
 
         authorizableConfigBean.setAppendToKeyStore(Boolean.valueOf(getMapValueAsString(currentPrincipalDataMap, USER_CONFIG_APPEND_TO_KEYSTORE)));
         if (currentPrincipalDataMap.containsKey(USER_CONFIG_KEYS)) {
-            if (!(currentPrincipalDataMap.get(USER_CONFIG_KEYS) instanceof Map)) {
-                throw new InvalidAuthorizableException("Field '" + USER_CONFIG_KEYS + "' must be a map but is a " + currentPrincipalDataMap.get(USER_CONFIG_KEYS).getClass());
+            Object configObjUserConfigKeys = currentPrincipalDataMap.get(USER_CONFIG_KEYS);
+            if (!(configObjUserConfigKeys instanceof Map)) {
+                throw new InvalidAuthorizableException("Field '" + USER_CONFIG_KEYS + "' must be a map but is a " + configObjUserConfigKeys.getClass());
             }
             try {
-                setupAuthorizableKeys(authorizableConfigBean, (Map<String, Object>)currentPrincipalDataMap.get(USER_CONFIG_KEYS));
+                setupAuthorizableKeys(authorizableConfigBean, (Map<String, Object>) configObjUserConfigKeys);
             } catch (InvalidKeyException | InvalidKeySpecException | NoSuchAlgorithmException | CertificateException | IOException e) {
                 throw new InvalidAuthorizableException("Invalid key format given", e);
             }
         }
 
+        if (currentPrincipalDataMap.containsKey(USER_CONFIG_IMPERSONATION_ALLOWED_FOR)) {
+            Object configObjImpersonationAllowedFor = currentPrincipalDataMap.get(USER_CONFIG_IMPERSONATION_ALLOWED_FOR);
+            if(configObjImpersonationAllowedFor instanceof String) {
+                authorizableConfigBean.setImpersonationAllowedFor(Arrays.asList(((String) configObjImpersonationAllowedFor).trim().split("\\s*,\\s*")));
+            } else if (configObjImpersonationAllowedFor instanceof List) {
+                authorizableConfigBean.setImpersonationAllowedFor((List<String>) configObjImpersonationAllowedFor);
+            } else {
+                throw new InvalidAuthorizableException("Field '" + USER_CONFIG_IMPERSONATION_ALLOWED_FOR + "' must be a list (yaml list or comma-separated string) but is a " + configObjImpersonationAllowedFor.getClass());
+            }
+        }
+        
     }
 
     private void setupAuthorizableKeys(final AuthorizableConfigBean authorizableConfigBean, Map<String, Object> keys) throws InvalidKeyException, InvalidAuthorizableException, InvalidKeySpecException, NoSuchAlgorithmException, CertificateException, IOException {

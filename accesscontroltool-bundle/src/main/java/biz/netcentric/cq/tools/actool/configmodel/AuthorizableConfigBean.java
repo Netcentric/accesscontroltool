@@ -10,15 +10,11 @@ package biz.netcentric.cq.tools.actool.configmodel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
-
-import com.adobe.granite.crypto.CryptoSupport;
 
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElement;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementVisitor;
@@ -59,6 +55,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private boolean virtual;
     private boolean appendToKeyStore;
     private Map<String, Key> keys;
+    private List<String> impersonationAllowedFor;
 
     public String getAuthorizableId() {
         return authorizableId;
@@ -296,6 +293,14 @@ public class AuthorizableConfigBean implements AcDumpElement {
         this.appendToKeyStore = appendToKeyStore;
     }
 
+    public List<String> getImpersonationAllowedFor() {
+        return impersonationAllowedFor;
+    }
+    
+    public void setImpersonationAllowedFor(List<String> impersonationAllowedFor) {
+        this.impersonationAllowedFor = impersonationAllowedFor;
+    }
+    
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -306,6 +311,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
         sb.append("members: " + getMembersString() + "\n");
         sb.append("appendToKeyStore: " + isAppendToKeyStore() + "\n");
         sb.append("keys:" + getKeys());
+        sb.append("impersonationAllowedFor:" + getImpersonationAllowedFor());
         return sb.toString();
     }
 
@@ -324,4 +330,5 @@ public class AuthorizableConfigBean implements AcDumpElement {
     public void accept(final AcDumpElementVisitor acDumpElementVisitor) {
         acDumpElementVisitor.visit(this);
     }
+
 }
