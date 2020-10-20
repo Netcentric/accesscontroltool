@@ -69,11 +69,13 @@ public class AcToolUiService {
         }
     }
 
+    @SuppressWarnings(/* SonarCloud false positive */ {
+            "javasecurity:S5131" /* response is sent as text/plain, it's not interpreted */,
+            "javasecurity:S5145" /* logging the path is fine */ })
     protected void doPost(final HttpServletRequest req, final HttpServletResponse resp) throws IOException, ServletException {
 
         RequestParameters reqParams = RequestParameters.fromRequest(req, acInstallationService);
-        LOG.info("Received POST request to apply AC Tool config with configurationRootPath={} basePaths={}",
-                reqParams.configurationRootPath, reqParams.basePaths);
+        LOG.info("Received POST request to apply AC Tool config with configurationRootPath={} basePaths={}", reqParams.configurationRootPath, reqParams.basePaths);
 
         InstallationLog log = acInstallationService.apply(reqParams.configurationRootPath, reqParams.getBasePathsArr(),
                 reqParams.applyOnlyIfChanged);
@@ -96,8 +98,7 @@ public class AcToolUiService {
         return (String) req.getAttribute(WebConsoleConstants.ATTR_APP_ROOT);
     }
     
-    private void renderUi(HttpServletRequest req, HttpServletResponse resp, String postPath, boolean isTouchUi)
-            throws IOException, UnsupportedEncodingException {
+    private void renderUi(HttpServletRequest req, HttpServletResponse resp, String postPath, boolean isTouchUi) throws IOException {
         RequestParameters reqParams = RequestParameters.fromRequest(req, acInstallationService);
 
         final PrintWriter out = resp.getWriter();
