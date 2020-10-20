@@ -8,6 +8,8 @@
  */
 package biz.netcentric.cq.tools.actool.authorizableinstaller.impl;
 
+import static biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger.msHumanReadable;
+
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.cert.Certificate;
@@ -16,6 +18,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -25,14 +28,18 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
+import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.AuthorizableExistsException;
 import org.apache.jackrabbit.api.security.user.Group;
+import org.apache.jackrabbit.api.security.user.Query;
+import org.apache.jackrabbit.api.security.user.QueryBuilder;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
@@ -102,21 +109,51 @@ public class AuthorizableInstallerServiceImpl implements
             final Session session, InstallationLogger installLog)
             throws RepositoryException, AuthorizableCreatorException, LoginException, IOException, GeneralSecurityException {
 
+        UserManager userManager = AccessControlUtils.getUserManagerAutoSaveDisabled(session);
+
+        Set<String> allGroupsAndSystemUsers = retrieveAllGroupsAndSystemUsers(session, userManager);
+
         Set<String> authorizablesFromConfigurations = authorizablesConfigBeans.getAuthorizableIds();
         for (AuthorizableConfigBean authorizableConfigBean : authorizablesConfigBeans) {
 
             installAuthorizableConfigurationBean(session, acConfiguration,
-                    authorizableConfigBean, installLog, authorizablesFromConfigurations);
+                    authorizableConfigBean, installLog, authorizablesFromConfigurations, allGroupsAndSystemUsers);
         }
 
         installLog.addMessage(LOG, "Created "+installLog.getCountAuthorizablesCreated() + " authorizables (moved "+installLog.getCountAuthorizablesMoved() + " authorizables)");
 
     }
 
+    private Set<String> retrieveAllGroupsAndSystemUsers(final Session session, UserManager userManager) {
+        long currentMillis = System.currentTimeMillis();
+        Set<String> groupsAndSystemUsers = new HashSet<>();
+        try {
+            final Value repGroupValue = session.getValueFactory().createValue("rep:Group");
+            final Value repSystemUserValue = session.getValueFactory().createValue("rep:SystemUser");
+            Iterator<Authorizable> result = userManager.findAuthorizables(new Query() {
+                public <T> void build(QueryBuilder<T> builder) {
+                    builder.setCondition(
+                            builder.or(
+                                builder.eq(JcrConstants.JCR_PRIMARYTYPE, repGroupValue),
+                                builder.eq(JcrConstants.JCR_PRIMARYTYPE, repSystemUserValue)
+                            )
+                        );
+                }
+            });
+            while(result.hasNext()) {
+                groupsAndSystemUsers.add(result.next().getID());
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException("Could not retrieve all groups and system users: "+e, e);
+        }
+        LOG.debug("retrieveAllGroupsAndSystemUsers(): Retrieved {} in {}", groupsAndSystemUsers.size(), msHumanReadable(System.currentTimeMillis() - currentMillis));
+        return groupsAndSystemUsers;
+    }
+
     private void installAuthorizableConfigurationBean(final Session session,
             AcConfiguration acConfiguration,
             AuthorizableConfigBean authorizableConfigBean,
-            InstallationLogger installLog, Set<String> authorizablesFromConfigurations)
+            InstallationLogger installLog, Set<String> authorizablesFromConfigurations, Set<String> allGroupsAndSystemUsers)
             throws RepositoryException, AuthorizableCreatorException, IOException, GeneralSecurityException, LoginException {
 
         String authorizableId = authorizableConfigBean.getAuthorizableId();
@@ -163,7 +200,7 @@ public class AuthorizableInstallerServiceImpl implements
         }
 
         applyGroupMembershipConfigMembers(acConfiguration, authorizableConfigBean, installLog, authorizableId, userManager,
-                authorizablesFromConfigurations);
+                authorizablesFromConfigurations, allGroupsAndSystemUsers);
 
         if (StringUtils.isNotBlank(authorizableConfigBean.getMigrateFrom()) && authorizableConfigBean.isGroup()) {
             migrateFromOldGroup(authorizableConfigBean, userManager, installLog);
@@ -251,10 +288,11 @@ public class AuthorizableInstallerServiceImpl implements
 
     /** This is only relevant for members that point to groups/users not contained in configuration.
      * {@link biz.netcentric.cq.tools.actool.configreader.YamlConfigurationMerger#ensureIsMemberOfIsUsedWherePossible()} ensures that
-     * regular relationships between groups contained in config are kept in isMemberOf */
+     * regular relationships between groups contained in config are kept in isMemberOf 
+     * @param allGroupsAndSystemUsers */
     @SuppressWarnings("unchecked")
     void applyGroupMembershipConfigMembers(AcConfiguration acConfiguration, AuthorizableConfigBean authorizableConfigBean, InstallationLogger installLog,
-            String authorizableId, UserManager userManager, Set<String> authorizablesFromConfigurations) throws RepositoryException {
+            String authorizableId, UserManager userManager, Set<String> authorizablesFromConfigurations, Set<String> allGroupsAndSystemUsers) throws RepositoryException {
         if (authorizableConfigBean.isGroup()) {
 
             Group installedGroup = (Group) userManager.getAuthorizable(authorizableId);
@@ -263,7 +301,7 @@ public class AuthorizableInstallerServiceImpl implements
             Set<String> membersInConfig = membersInConfigArr != null ? new HashSet<String>(Arrays.asList(membersInConfigArr)) : new HashSet<String>();
 
             // initial set without regular users (those are never removed because that relationship is typically managed in AEM UI or LDAP/SAML/SSO/etc. )
-            Set<String> relevantMembersInRepo = getDeclaredMembersWithoutRegularUsers(installedGroup);
+            Set<String> relevantMembersInRepo = getDeclaredMembersWithoutRegularUsers(installedGroup, allGroupsAndSystemUsers);
 
             // ensure authorizables from config itself that are added via isMemberOf are not deleted
             relevantMembersInRepo = new HashSet<String>(CollectionUtils.subtract(relevantMembersInRepo, authorizablesFromConfigurations));
@@ -305,21 +343,24 @@ public class AuthorizableInstallerServiceImpl implements
         }
     }
 
-    private Set<String> getDeclaredMembersWithoutRegularUsers(Group installedGroup) throws RepositoryException {
+    private Set<String> getDeclaredMembersWithoutRegularUsers(Group installedGroup, Set<String> allGroupsAndSystemUsers) throws RepositoryException {
+        long currentMillis = System.currentTimeMillis();
         Set<String> membersInRepo = new HashSet<String>();
         Iterator<Authorizable> currentMemberInRepo = installedGroup.getDeclaredMembers();
+        int countDeclaredMembers = 0;
         while (currentMemberInRepo.hasNext()) {
+            countDeclaredMembers++;
             Authorizable member = currentMemberInRepo.next();
-            if (!isRegularUser(member)) {
+            if (!isRegularUser(member, allGroupsAndSystemUsers)) {
                 membersInRepo.add(member.getID());
             }
         }
+        LOG.debug("getDeclaredMembersWithoutRegularUsers(): for {} filtered {} in {}", installedGroup.getID(), countDeclaredMembers, msHumanReadable(System.currentTimeMillis() - currentMillis));
         return membersInRepo;
     }
 
-    private boolean isRegularUser(Authorizable member) throws RepositoryException { 
-        return member != null && !member.isGroup() // if user
-            && !member.getPath().startsWith(Constants.USERS_ROOT + "/system/") // but not system user
+    private boolean isRegularUser(Authorizable member, Set<String> allGroupsAndSystemUsers) throws RepositoryException { 
+        return member != null && !allGroupsAndSystemUsers.contains(member.getID()) // but not group or system user
             && !member.getID().equals(Constants.USER_ANONYMOUS);  // and not anonymous
     }
 
