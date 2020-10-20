@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -86,6 +87,9 @@ public class AuthorizableInstallerServiceImpl implements
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policyOption=ReferencePolicyOption.GREEDY)
     ExternalGroupInstallerServiceImpl externalGroupCreatorService;
 
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policyOption=ReferencePolicyOption.GREEDY)
+    ImpersonationInstallerServiceImpl impersonationInstallerService;
+    
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
     volatile AemCryptoSupport cryptoSupport;
     
@@ -135,7 +139,7 @@ public class AuthorizableInstallerServiceImpl implements
                         + " does not support setting properties 'members', 'isMemberOf' and 'migrateFrom'");
             }
             // only setting authorizables properties is supported for everyone
-            setAuthorizableProperties(authorizableToInstall, authorizableConfigBean, session, installLog);
+            setAuthorizableProperties(authorizableToInstall, authorizableConfigBean, acConfiguration.getAuthorizablesConfig(), session, installLog);
             return;
         }
 
@@ -147,7 +151,7 @@ public class AuthorizableInstallerServiceImpl implements
         // if current authorizable from config already exists in repository
         else {
             // update name for both groups and users
-            setAuthorizableProperties(authorizableToInstall, authorizableConfigBean, session, installLog);
+            setAuthorizableProperties(authorizableToInstall, authorizableConfigBean, acConfiguration.getAuthorizablesConfig(), session, installLog);
             // update password for users
             if (!authorizableToInstall.isGroup() && !authorizableConfigBean.isSystemUser()
                     && StringUtils.isNotBlank(authorizableConfigBean.getPassword())) {
@@ -694,11 +698,11 @@ public class AuthorizableInstallerServiceImpl implements
 
         addMembersToReferencingAuthorizables(newGroup, authorizablesConfig, principalConfigBean, userManager, session, installLog);
 
-        setAuthorizableProperties(newGroup, principalConfigBean, session, installLog);
+        setAuthorizableProperties(newGroup, principalConfigBean, authorizablesConfig, session, installLog);
         return newGroup;
     }
 
-    void setAuthorizableProperties(Authorizable authorizable, AuthorizableConfigBean principalConfigBean,
+    void setAuthorizableProperties(Authorizable authorizable, AuthorizableConfigBean principalConfigBean, AuthorizablesConfig authorizablesConfig,
             Session session, InstallationLogger installationLog)
             throws RepositoryException {
 
@@ -764,7 +768,7 @@ public class AuthorizableInstallerServiceImpl implements
         String disabled = principalConfigBean.getDisabled();
         if (StringUtils.isNotBlank(disabled)) {
             if (authorizable.isGroup()) {
-                throw new IllegalStateException("Property disabled can only be set on users");
+                throw new IllegalStateException("Property 'disabled' cannot be set on groups");
             }
             // if disabled is set to false, use "reason null" as this will enable the user when calling User.disable()
             String disabledReason = StringUtils.equalsIgnoreCase(disabled, "false") ? null
@@ -782,6 +786,15 @@ public class AuthorizableInstallerServiceImpl implements
             }
             
         }
+        
+        List<String> impersonationAllowedFor = principalConfigBean.getImpersonationAllowedFor();
+        if (impersonationAllowedFor != null) {
+            if (authorizable.isGroup()) {
+                throw new IllegalStateException("Property 'impersonationAllowedFor' cannot be set on groups");
+            }
+            impersonationInstallerService.setupImpersonation((User) authorizable, impersonationAllowedFor, authorizablesConfig, installationLog);
+        }
+
     }
 
     private Authorizable createNewUser(
@@ -808,7 +821,7 @@ public class AuthorizableInstallerServiceImpl implements
         } else {
             newUser = userManager.createUser(authorizableId, password, new PrincipalImpl(authorizableId), intermediatePath);
         }
-        setAuthorizableProperties(newUser, principalConfigBean, session, installLog);
+        setAuthorizableProperties(newUser, principalConfigBean, authorizablesConfig, session, installLog);
 
         addMembersToReferencingAuthorizables(newUser, authorizablesConfig, principalConfigBean, userManager, session, installLog);
 

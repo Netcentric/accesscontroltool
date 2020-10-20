@@ -252,19 +252,19 @@ public class AuthorizableInstallerServiceImplTest {
             authorizableConfig.setName("John Doe");
             authorizableConfig.setDescription("Test Description");
 
-            cut.setAuthorizableProperties(regularUser1, authorizableConfig, session, status);
+            cut.setAuthorizableProperties(regularUser1, authorizableConfig, null, session, status);
 
             verify(regularUser1).setProperty(eq("profile/givenName"), Matchers.argThat(new ValueMatcher("John")));
             verify(regularUser1).setProperty(eq("profile/familyName"), Matchers.argThat(new ValueMatcher("Doe")));
             verify(regularUser1).setProperty(eq("profile/aboutMe"), Matchers.argThat(new ValueMatcher("Test Description")));
 
             authorizableConfig.setName("Van der Broek, Sebastian");
-            cut.setAuthorizableProperties(regularUser1, authorizableConfig, session, status);
+            cut.setAuthorizableProperties(regularUser1, authorizableConfig, null, session, status);
             verify(regularUser1).setProperty(eq("profile/givenName"), Matchers.argThat(new ValueMatcher("Sebastian")));
             verify(regularUser1).setProperty(eq("profile/familyName"), Matchers.argThat(new ValueMatcher("Van der Broek")));
 
             authorizableConfig.setName("Johann Sebastian Bach");
-            cut.setAuthorizableProperties(regularUser1, authorizableConfig, session, status);
+            cut.setAuthorizableProperties(regularUser1, authorizableConfig, null, session, status);
             verify(regularUser1).setProperty(eq("profile/givenName"), Matchers.argThat(new ValueMatcher("Johann Sebastian")));
             verify(regularUser1).setProperty(eq("profile/familyName"), Matchers.argThat(new ValueMatcher("Bach")));
 
