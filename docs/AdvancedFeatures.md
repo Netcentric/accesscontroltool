@@ -171,6 +171,8 @@ Expressions are evaluated using javax.el expression language. The following util
 - `substringBeforeLast(str,separator)`
 - `contains(str,fragmentStr)`
 - `containsItem(array,str)`
+- `containsAnyItem(array,array)`
+- `containsAllItems(array,array)`
 - `endsWith(str,fragmentStr)` 
 - `startsWith(str,fragmentStr)`
 - `length(str)`
