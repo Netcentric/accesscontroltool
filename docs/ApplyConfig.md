@@ -1,8 +1,20 @@
 # Applying ACLs
 
-## General
+* [General Installation](#general-installation)
+* [Installation in AEM as a Cloud Service](#installation-in-aem-as-a-cloud-service)
+* [Installation Methods](#installation-methods)
+  * [Installation Hook](#installation-hook)
+  * [Web Console](#web-console)
+  * [Touch UI](#touch-ui)
+  * [JMX](#jmx)
+  * [Startup Hook](#startup-hook)
+  * [Upload Listener Service](#upload-listener-service)
 
-The following steps are performed:
+<!--- This table of contents has been generated with https://github.com/ekalinin/github-markdown-toc#gh-md-toc -->
+
+## General Installation
+
+The following steps are performed during the installation of authorizables and ACEs:
 
 1. All AC entries are removed from the repository which refer to an authorizable (user/group) being mentioned in the YAML configuration file (no matter to which path those entries refer).
 1. All authorizables being mentioned in the YAML configuration get created (if necessary, i.e. if they do no exist yet).
@@ -12,7 +24,7 @@ If at any point during the installation an exception occurs, no changes get pers
 
 During the installation a history containing the most important events gets created and persisted in CRX for later examination.
 
-## Procedure in AEM as a Cloud Service
+## Installation in AEM as a Cloud Service
 
 Due to usage of a [composite node store](http://jackrabbit.apache.org/oak/docs/nodestore/compositens.html) the installation is slightly more complex in AEMaaCS
 

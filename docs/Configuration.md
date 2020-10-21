@@ -1,20 +1,35 @@
 # Configuration File Format
 
+* [Overview](#overview)
+* [Storage of configurations in JCR](#storage-of-configurations-in-jcr)
+* [Run modes](#run-modes)
+* [Overall structure a of an AC configuration file](#overall-structure-a-of-an-ac-configuration-file)
+* [Configuration of groups](#configuration-of-groups)
+  * [Group migration](#group-migration)
+* [Configuration of users](#configuration-of-users)
+  * [Configuration of Keys](#configuration-of-keys)
+    * [Creation of key pair](#creation-of-key-pair)
+* [Configuration of ACEs](#configuration-of-aces)
+* [Global Configuration](#global-configuration)
+* [Validation](#validation)
+
+<!--- This table of contents has been generated with https://github.com/ekalinin/github-markdown-toc#gh-md-toc -->
+
+## Overview
 For better human readability and easy editing the ACL configuration files use the YAML format.
 
 You can split your configuration to multiple files and directories. See also [best practices](BestPractices.md). Each folder can include one or more Yaml files ("*.yaml").
 The file format is the same for all files.
 
-You can find some examples in [example config package](../accesscontroltool-exampleconfig-package/src/main/jcr_root/apps/netcentric/actool-exampleconfig).
-
-
-## Storage of configurations in CRX
+You can find some examples in [example config package](../accesscontroltool-exampleconfig-package/src/main/jcr_root/apps/netcentric/actool-exampleconfig). The following sections document the most important aspects of the configuration files.
+     
+## Storage of configurations in JCR
 
 This example shows three separate project specific configuration subnodes (multipleFiles, runmodes, simple) each containing one or more configuration files:
 
 <img src="images/crx-storage.png">
 
-The project specific configuration files are stored in CRX under a node which can be set in the OSGi configuration of the AcService (system/console/configMgr). Each folder underneath this location may contain `*.yaml` files that contain AC configuration. You can use a normal content package to deploy the files.
+The project specific configuration files are stored in JCR under a node which can be set in the OSGi configuration of the AcService (system/console/configMgr). Each folder underneath this location may contain `*.yaml` files that contain AC configuration. You can use a normal content package to deploy the files.
 
 For some features the order of configuration files is relevant - the AC Tool orders the files alphabetically according their full path. 
 
@@ -35,6 +50,8 @@ Examples:
 * `project.author.dev`: runs only when run modes "author" and "dev" are present
 * `project.author.test,author.dev`: requires run mode "author" and either "test" or "dev" to be present
 * `project.-prod`: runs on any environment except for those which have the "prod" run mode
+
+**In some cases it may be more appropriate to use the [`RUNMODE` variable](AdvancedFeatures.md#predefined-variables) inside YAML files (e.g. in case the configuration is only slightly different for different run modes). Those variables can be used e.g. in [conditional entries](AdvancedFeatures.md#conditional-entries).**
 
 ## Overall structure a of an AC configuration file
 
