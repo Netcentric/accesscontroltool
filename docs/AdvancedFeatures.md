@@ -1,5 +1,30 @@
 # Advanced features
 
+* [Loops](#loops)
+  * [Nested Loops](#nested-loops)
+  * [Loops derived from content structure](#loops-derived-from-content-structure)
+  * [Loops that traverse the full jcr:content structure](#loops-that-traverse-the-full-jcrcontent-structure)
+* [Conditional entries](#conditional-entries)
+  * [Variables](#variables)
+  * [Simple variables](#simple-variables)
+  * [Complex variables with value from yaml structure](#complex-variables-with-value-from-yaml-structure)
+  * [Global variables](#global-variables)
+  * [Predefined variables](#predefined-variables)
+* [Auto-create test users for groups](#auto-create-test-users-for-groups)
+* [Configure unmanaged aspects](#configure-unmanaged-aspects)
+  * [Configure permissions for built-in users or groups (like anonymous)](#configure-permissions-for-built-in-users-or-groups-like-anonymous)
+  * [Configure memberships of/towards externally managed groups](#configure-memberships-oftowards-externally-managed-groups)
+    * [Examples](#examples)
+  * [Limiting where the AC Tool creates and removes ACEs](#limiting-where-the-ac-tool-creates-and-removes-aces)
+    * [Examples](#examples-1)
+* [Automatically purge obsolete groups and users](#automatically-purge-obsolete-groups-and-users)
+* [Providing Initial Content](#providing-initial-content)
+* [Health Check](#health-check)
+* [Use Manual ACL Ordering](#use-manual-acl-ordering)
+* [Intermediate save() calls during ACL installation](#intermediate-save-calls-during-acl-installation)
+ 
+<!--- This table of contents has been generated with https://github.com/ekalinin/github-markdown-toc#gh-md-toc -->
+
 ## Loops
 
 Configuration sections for groups and ACEs allow to use loops to specify multiple, similar entries. In order to do this, a FOR statement has to be used in place of a group name. The FOR statement names a loop variable and lists the values to iterate over. All the children of the FOR element are repeated once per iteration and all group names and property values of child elements that contain the name of the loop variable within '${' and '}' have that expression substituted with the current value of the loop variable.
@@ -132,26 +157,26 @@ When looping over content structures, entries can be applied conditionally using
             path: /home/groups/global
 ```
 
-Expressions are evaluated using javax.el expression language. The following utility functions are made available to any EL expression used in yaml (if not mentioned otherwise they are imported from commons lang StringUtils):
+Expressions are evaluated using javax.el expression language. The following utility functions are made available to any EL expression used in yaml (if not mentioned otherwise they are imported from [`org.apache.commons.lang3.StringUtils`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringUtils.html)):
 
-- split(str,separator) 
-- join(array,separator)
-- subarray(array,startIndexInclusive,endIndexExclusive) (from ArrayUtils)
-- upperCase(str) 
-- lowerCase(str) 
-- replace(text,searchString,replacement) 
-- substringAfter(str,separator) 
-- substringBefore(str,separator) 
-- substringAfterLast(str,separator) 
-- substringBeforeLast(str,separator) 
-- contains(str,fragmentStr) 
-- containsItem(array,str)
-- endsWith(str,fragmentStr) 
-- startsWith(str,fragmentStr) 
-- length(str)
-- defaultIfEmpty(str,default)
-- keys(map)
-- values(map)
+- `split(str,separator)` 
+- `join(array,separator)`
+- `subarray(array,startIndexInclusive,endIndexExclusive)` (from [`org.apache.commons.lang3.ArrayUtils`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/ArrayUtils.html)
+- `upperCase(str)`
+- `lowerCase(str)`
+- `replace(text,searchString,replacement)`
+- `substringAfter(str,separator)`
+- `substringBefore(str,separator)`
+- `substringAfterLast(str,separator)`
+- `substringBeforeLast(str,separator)`
+- `contains(str,fragmentStr)`
+- `containsItem(array,str)`
+- `endsWith(str,fragmentStr)` 
+- `startsWith(str,fragmentStr)`
+- `length(str)`
+- `defaultIfEmpty(str,default)`
+- `keys(map)`
+- `values(map)`
 
 ## Variables
 
@@ -182,6 +207,7 @@ Variables can also be declared to be an array and used in a loop:
     
     - FOR arrVal IN ${testArr}:
 ```
+
 ### Complex variables with value from yaml structure
 
 There is also a multi-line variant of the DEF statement that allows to define complex structures directly in yaml using a `DEF varName=:`syntax:
@@ -241,11 +267,13 @@ Local variables override global variables, but only in the same file (and only f
 
 ### Predefined variables 
 
-Some variables are provided by AC Tool by default.
+Some variables are provided by default.
 
-property name | description
+variable name | description
 --- | --- 
-RUNMODES | List of activate run modes. Uses `SlingSettingsService#getRunModes` underneath.
+`RUNMODES` | List of active run modes. Uses `SlingSettingsService#getRunModes` underneath. Consider using [run mode specific yaml files](Configuration.md#run-modes) as alternative.
+`env.<envVariableName>` | Environment variable with name `<envVariableName>` as provided by the operating system. Uses [System.getenv()](https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#getenv--). To provide a default use `defaultIfEmpty()` as linked in from StringUtils class: `${defaultIfEmpty(env.my_env_variable, 'default-val')}`. **NOTE: Use this feature sparingly, for most cases the configuration should be self-contained. One use case for this is production passwords (as needed for non-system users like replication receiver)**.
+
 
 ## Auto-create test users for groups
 
@@ -274,13 +302,7 @@ Example:
      name: "TU %{group.name}"
      path: /home/users/myproj-test-users
      skipForRunmodes: prod, preprod
-```
-
-## Referencing OS environment variables
-
-Env variables can be referenced by using `${env.my_env_variable}`. To provide a default use `defaultIfEmpty()` as linked in from StringUtils class: `${defaultIfEmpty(env.my_env_variable, 'default-val')}`.
-
-NOTE: Use this feature sparingly, for most cases the configuration should be self-contained. One use case for this is production passwords (as needed for non-system users like replication receiver). 
+``` 
 
   
 ## Configure unmanaged aspects
