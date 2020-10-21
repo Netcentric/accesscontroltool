@@ -11,6 +11,7 @@ package biz.netcentric.cq.tools.actool.configreader;
 import java.beans.FeatureDescriptor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -130,6 +131,8 @@ public class YamlMacroElEvaluator {
                         StringUtils.class.getMethod("defaultIfEmpty", new Class<?>[] { CharSequence.class, CharSequence.class }),
 
                         YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("containsItem", new Class<?>[] { List.class, String.class }),
+                        YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("containsAllItems", new Class<?>[] { List.class, List.class }),
+                        YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("containsAnyItem", new Class<?>[] { List.class, List.class }),
                         YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("keys", new Class<?>[] { Map.class }),
                         YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("values", new Class<?>[] { Map.class })
                 };
@@ -150,9 +153,16 @@ public class YamlMacroElEvaluator {
         }
         
         //  -- additional functions not available in StringUtils or ArrayUtils
-        
         public static boolean containsItem(List<String> list, String element) {
             return list.contains(element);
+        }
+
+        public static boolean containsAllItems(List<String> list, List<String> items) {
+            return list.containsAll(items);
+        }
+
+        public static boolean containsAnyItem(List<String> list, List<String> items) {
+            return !Collections.disjoint(list, items);
         }
 
         public static List<Object> keys(Map<Object,Object> map) {
