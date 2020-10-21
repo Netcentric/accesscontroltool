@@ -30,7 +30,7 @@ It is also possible to run the AC Tool on **Apache Sling 11** or above (ensure s
 
 # Installation
 
-The package is available from [the Maven Central repository](https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-package/). Install it e.g. via CRX package manager.
+The [content package](https://jackrabbit.apache.org/filevault) is available from [the Maven Central repository](https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-package/). Install it e.g. via AEM's package manager.
 
 ```
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
@@ -39,12 +39,12 @@ The package is available from [the Maven Central repository](https://repo1.maven
 
 ## Oak Index for rep:ACL
 
-To retrieve all ACLs in the system, an oak index for node type `rep:ACL` is 
+To retrieve all ACLs in the system, an Apache Oak index for node type `rep:ACL` is 
 
 * required for versions < 2.4.0 (otherwise the performance degrades significantly)
 * beneficial for large installations for versions >= 2.4.0 (see [#386](https://github.com/Netcentric/accesscontroltool/issues/386), most installations will be fine without index)
 
-You can get the ZIP file via [Maven](https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-oakindex-package/). Install it e.g. via CRX package manager.
+You can get the content package via [Maven](https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-oakindex-package/). Install it e.g. via AEM's package manager.
 
 ```
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
