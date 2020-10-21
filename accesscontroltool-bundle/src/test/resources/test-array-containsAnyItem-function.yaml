@@ -1,0 +1,37 @@
+#
+# (C) Copyright 2015 Netcentric AG.
+#
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+    
+
+- group_config: 
+
+  - testgroup: 
+      - path: /home/groups/test
+
+- DEF relevantNodes=[nodeA,nodeB-similar]
+
+- DEF checkNodes=:
+    - [nodeB,nodeD]
+    # matches (2)
+    - [nodeA,nodeD]
+    # matches (2)
+    - [nodeA,nodeB-similar]
+    # matches (4)
+    - [nodeC,nodeB-similar,nodeA,nodeD]
+
+- ace_config: 
+
+    - testgroup: 
+
+        - FOR items IN ${checkNodes}:
+             - IF ${containsAnyItem(relevantNodes, items)}:
+                  - FOR item IN ${items}:
+                  # generate unique paths here
+                      - path: /content/path/${item}/${items.toString()}
+                        permission: allow
+                        privileges: rep:write

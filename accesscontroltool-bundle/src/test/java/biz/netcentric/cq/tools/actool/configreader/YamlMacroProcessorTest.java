@@ -433,9 +433,8 @@ public class YamlMacroProcessorTest {
 
     }
 
-    
     @Test
-    public void testContainsElementFunction() throws Exception {
+    public void testContainsItemFunction() throws Exception {
 
         List<Map> yamlList = getYamlList("test-array-containsItem-function.yaml");
 
@@ -445,7 +444,27 @@ public class YamlMacroProcessorTest {
         assertEquals("Number of ACEs expected to be 2 and not 4", 2, aces.size());
 
     }    
-    
+
+    @Test
+    public void testContainsAllItemsFunction() throws Exception {
+        List<Map> yamlList = getYamlList("test-array-containsAllItems-function.yaml");
+
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
+
+        AcesConfig aces = readAceConfigs(yamlList);
+        assertEquals("Number of ACEs expected to be 9", 9, aces.size());
+    }
+
+    @Test
+    public void testContainsAnyItemFunction() throws Exception {
+        List<Map> yamlList = getYamlList("test-array-containsAnyItem-function.yaml");
+
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
+
+        AcesConfig aces = readAceConfigs(yamlList);
+        assertEquals("Number of ACEs expected to be 8", 8, aces.size());
+    }
+
     @Test
     public void testLoopOverRunmodes() throws Exception {
 
