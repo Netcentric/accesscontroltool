@@ -51,7 +51,7 @@ Examples:
 * `project.author.test,author.dev`: requires run mode "author" and either "test" or "dev" to be present
 * `project.-prod`: runs on any environment except for those which have the "prod" run mode
 
-**In some cases it may be more appropriate to use the [`RUNMODE` variable](AdvancedFeatures.md#predefined-variables) inside YAML files (e.g. in case the configuration is only slightly different for different run modes). Those variables can be used e.g. in [conditional entries](AdvancedFeatures.md#conditional-entries).**
+**In some cases it may be more appropriate to use the [`RUNMODES` variable](AdvancedFeatures.md#predefined-variables) inside YAML files (e.g. in case the configuration is only slightly different for different run modes). This variable can be used e.g. in [conditional entries](AdvancedFeatures.md#conditional-entries).**
 
 ## Overall structure a of an AC configuration file
 
