@@ -256,7 +256,7 @@ It is possible to define global variables (that are available across multiple ya
 
 ```
 - global_config:
-     vars:
+     - vars:
          - DEF groupPrefix="xyz"
          - DEF testArr=:
                   - val1
