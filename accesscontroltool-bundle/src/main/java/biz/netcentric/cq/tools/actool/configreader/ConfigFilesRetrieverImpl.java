@@ -53,7 +53,7 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
         if (rootEntry == null) {
             throw new IllegalStateException("Invalid package: It does not contain a JCR root element");
         }
-        Map<String, String> configurations = getConfigurations(new EntryInPackage(archive, "/", rootEntry));
+        Map<String, String> configurations = getConfigurations(new EntryInPackage(archive, "", rootEntry));
         return configurations;
     }
 
