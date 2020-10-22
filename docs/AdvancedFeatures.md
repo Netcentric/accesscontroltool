@@ -1,15 +1,16 @@
 # Advanced features
 
+* [Expressions](#expressions)
+* [Variables](#variables)
+  * [Simple variables](#simple-variables)
+  * [Complex variables with value from yaml structure](#complex-variables-with-value-from-yaml-structure)
+  * [Global variables](#global-variables)
+  * [Predefined variables](#predefined-variables)
 * [Loops](#loops)
   * [Nested Loops](#nested-loops)
   * [Loops derived from content structure](#loops-derived-from-content-structure)
   * [Loops that traverse the full jcr:content structure](#loops-that-traverse-the-full-jcrcontent-structure)
 * [Conditional entries](#conditional-entries)
-  * [Variables](#variables)
-  * [Simple variables](#simple-variables)
-  * [Complex variables with value from yaml structure](#complex-variables-with-value-from-yaml-structure)
-  * [Global variables](#global-variables)
-  * [Predefined variables](#predefined-variables)
 * [Auto-create test users for groups](#auto-create-test-users-for-groups)
 * [Configure unmanaged aspects](#configure-unmanaged-aspects)
   * [Configure permissions for built-in users or groups (like anonymous)](#configure-permissions-for-built-in-users-or-groups-like-anonymous)
@@ -24,6 +25,134 @@
 * [Intermediate save() calls during ACL installation](#intermediate-save-calls-during-acl-installation)
  
 <!--- This table of contents has been generated with https://github.com/ekalinin/github-markdown-toc#gh-md-toc -->
+
+
+## Expressions
+
+Expressions are evaluated using [javax.el expression language](https://docs.oracle.com/javaee/6/tutorial/doc/gjddd.html). 
+
+The following utility functions are made available to any EL expression used in YAML
+
+Function Signature | Description
+---|---
+`split(String str, String separator)`|[`StringUtils.split(...)`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringUtils.html#split(java.lang.String,%20java.lang.String))
+`join(Object[] array, String separator)`|[`StringUtils.join(...)`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringUtils.html#join(java.lang.Object[],%20java.lang.String))
+`subarray(String array, startIndexInclusive,endIndexExclusive)`|  [`ArrayUtils.subarray(...)`](https://commons.apache.org/proper/commons-lang/apidocs/org/apache/commons/lang3/ArrayUtils.html#subarray-T:A-int-int-)
+`upperCase(String str)`|[`StringUtils.upperCase(...)`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringUtils.html#upperCase(java.lang.String))
+`lowerCase(String str)`|[`StringUtils.lowerCase(...)`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringUtils.html#lowerCase(java.lang.String))
+`replace(String text, String searchString, String replacement)`|[`StringUtils.replace(...)`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringUtils.html#replace(java.lang.String,%20java.lang.String,%20java.lang.String))
+`substringAfter(String str, String separator)`|[`StringUtils.substringAfter(...)`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringUtils.html#substringAfter(java.lang.String,%20java.lang.String))
+`substringBefore(String str, String separator)`|[`StringUtils.substringBefore(...)`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringUtils.html#substringBefore(java.lang.String,%20java.lang.String))
+`substringAfterLast(String str, String separator)`|[`StringUtils.substringAfterLast(...)`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringUtils.html#substringAfterLast(java.lang.String,%20java.lang.String))
+`substringBeforeLast(String str, String separator)`|[`StringUtils.substringBeforeLast(...)`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringUtils.html#substringBeforeLast(java.lang.String,%20java.lang.String))
+`contains(String str, String fragmentStr)`|[`StringUtils.contains(...)`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringUtils.html#contains(java.lang.CharSequence,%20java.lang.CharSequence))
+`endsWith(String str, String suffix)`|[`StringUtils.endsWith(...)`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringUtils.html#endsWith(java.lang.CharSequence,%20java.lang.CharSequence))
+`startsWith(String str, String prefix)`| [`StringUtils.startsWith(...)`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringUtils.html#startsWith(java.lang.CharSequence,%20java.lang.CharSequence))
+`length(String string)`| [`StringUtils.length(...)`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringUtils.html#length(java.lang.CharSequence))
+`defaultIfEmpty(String str, String default)` | [`StringUtils.defaultIfEmpty(...)`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringUtils.html#defaultIfEmpty(T,%20T))
+`containsItem(List<String> list, String item)`| Returns `true` if the item is contained in the given list.
+`containsAnyItem(List<String> list, List<String> items)`| Returns `true` if any of the items is contained in the given list.
+`containsAllItems(List<String> list, List<String> items)`| Returns `true` if all of the items are contained in the given list (independent of their order).
+`keys(Map<Object, Object> map)`| Returns the list of keys for the given map. The order is non-predictable.
+`values(Map<Object, Object> map)`| Returns all values for the given map. The order is non-predictable.
+
+
+## Variables
+
+### Simple variables
+
+Sometimes it can be useful to declare variables to reuse values or to give certain strings an expressive name:
+
+```
+- DEF groupPrefix="xyz"
+
+- FOR site IN CHILDREN OF /content/myPrj:
+
+    - DEF groupToken="${groupPrefix}-${site.name}"
+
+    - cr-${groupToken}:
+           
+       - name: Content Reader ${site.title}
+         isMemberOf: 
+         path: /home/groups/${groupToken}
+```
+
+DEF entries can be used inside and outside of loops and conditional entries.
+
+Variables can also be declared to be an array and used in a loop:
+
+```
+    - DEF testArr=[val1,val2]
+    
+    - FOR arrVal IN ${testArr}:
+```
+
+### Complex variables with value from yaml structure
+
+There is also a multi-line variant of the DEF statement that allows to define complex structures directly in yaml using a `DEF varName=:`syntax:
+
+```
+# list
+- DEF simpleArray=:
+     - val1
+     - val2
+     - val3
+- FOR loopVar IN ${simpleArray}:    
+       - group-${loopVar}:   
+          - name: "Group ${loopVar}"
+
+# list of objects
+- DEF listOfMaps=:
+     - key1: obj1val1
+       key2: obj1val2
+       key3: obj1val3
+     - key1: obj2val1
+       key2: obj2val2
+       key3: obj2val3
+- FOR loopVar IN ${listOfMaps}:  
+    - group-${loopVar.key1}: 
+       - name: "Group ${loopVar.key2} ${loopVar.key3}"
+
+# map (functions keys() or values() can be used to loop over map)
+- DEF simpleMap=:
+     key1: mapval1
+     key2: mapval2
+     key3: mapval3
+- FOR loopVar IN ${keys(simpleMap)}:
+   - group-${loopVar}:
+      - name: "Value ${simpleMap[loopVar]}"
+```
+
+### Global variables 
+
+By default, variables are local, this means the scope of a variable is limited to:
+ * the lines in the very same yaml file following the definition till it is either redefined or the end of the yaml file is reached 
+ * `FOR` loop in which variable is defined or re-defined.
+
+It is possible to define global variables (that are available across multiple yaml files) as follows:
+
+```
+- global_config:
+     vars:
+         - DEF groupPrefix="xyz"
+         - DEF testArr=:
+                  - val1
+                  - val2
+```
+
+Global variables still only become visible in the order of how the yaml files are processed, therefore it usually makes sense to put them in their own file prefixed with `_` to ensure they are processed at the beginning, e.g. `_globalvars.yaml`.
+
+Local variables override global variables, but only in the same file (and only from the definition of the local variable onwards).
+
+### Predefined variables 
+
+Some variables are provided by default.
+
+variable name | description
+--- | --- 
+`RUNMODES` | List of active run modes. Uses `SlingSettingsService#getRunModes` underneath. Consider using [run mode specific yaml files](Configuration.md#run-modes) as alternative.
+`env.<envVariableName>` | Environment variable with name `<envVariableName>` as provided by the operating system. Uses [System.getenv()](https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#getenv--). To provide a default use `defaultIfEmpty()` as linked in from StringUtils class: `${defaultIfEmpty(env.my_env_variable, 'default-val')}`. **NOTE: Use this feature sparingly, for most cases the configuration should be self-contained. One use case for this is production passwords (as needed for non-system users like replication receiver)**.
+
 
 ## Loops
 
@@ -156,126 +285,6 @@ When looping over content structures, entries can be applied conditionally using
             isMemberOf: 
             path: /home/groups/global
 ```
-
-Expressions are evaluated using javax.el expression language. The following utility functions are made available to any EL expression used in yaml (if not mentioned otherwise they are imported from [`org.apache.commons.lang3.StringUtils`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringUtils.html)):
-
-- `split(str,separator)` 
-- `join(array,separator)`
-- `subarray(array,startIndexInclusive,endIndexExclusive)` (from [`org.apache.commons.lang3.ArrayUtils`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/ArrayUtils.html)
-- `upperCase(str)`
-- `lowerCase(str)`
-- `replace(text,searchString,replacement)`
-- `substringAfter(str,separator)`
-- `substringBefore(str,separator)`
-- `substringAfterLast(str,separator)`
-- `substringBeforeLast(str,separator)`
-- `contains(str,fragmentStr)`
-- `containsItem(array,str)`
-- `containsAnyItem(array,array)`
-- `containsAllItems(array,array)`
-- `endsWith(str,fragmentStr)` 
-- `startsWith(str,fragmentStr)`
-- `length(str)`
-- `defaultIfEmpty(str,default)`
-- `keys(map)`
-- `values(map)`
-
-## Variables
-
-### Simple variables
-
-Sometimes it can be useful to declare variables to reuse values or to give certain strings an expressive name:
-
-```
-- DEF groupPrefix="xyz"
-
-- FOR site IN CHILDREN OF /content/myPrj:
-
-    - DEF groupToken="${groupPrefix}-${site.name}"
-
-    - cr-${groupToken}:
-           
-       - name: Content Reader ${site.title}
-         isMemberOf: 
-         path: /home/groups/${groupToken}
-```
-
-DEF entries can be used inside and outside of loops and conditional entries.
-
-Variables can also be declared to be an array and used in a loop:
-
-```
-    - DEF testArr=[val1,val2]
-    
-    - FOR arrVal IN ${testArr}:
-```
-
-### Complex variables with value from yaml structure
-
-There is also a multi-line variant of the DEF statement that allows to define complex structures directly in yaml using a `DEF varName=:`syntax:
-
-```
-# list
-- DEF simpleArray=:
-     - val1
-     - val2
-     - val3
-- FOR loopVar IN ${simpleArray}:    
-       - group-${loopVar}:   
-          - name: "Group ${loopVar}"
-
-# list of objects
-- DEF listOfMaps=:
-     - key1: obj1val1
-       key2: obj1val2
-       key3: obj1val3
-     - key1: obj2val1
-       key2: obj2val2
-       key3: obj2val3
-- FOR loopVar IN ${listOfMaps}:  
-    - group-${loopVar.key1}: 
-       - name: "Group ${loopVar.key2} ${loopVar.key3}"
-
-# map (functions keys() or values() can be used to loop over map)
-- DEF simpleMap=:
-     key1: mapval1
-     key2: mapval2
-     key3: mapval3
-- FOR loopVar IN ${keys(simpleMap)}:
-   - group-${loopVar}:
-      - name: "Value ${simpleMap[loopVar]}"
-```
-
-### Global variables 
-
-By default, variables are local, this means the scope of a variable is limited to:
- * the lines in the very same yaml file following the definition till it is either redefined or the end of the yaml file is reached 
- * `FOR` loop in which variable is defined or re-defined.
-
-It is possible to define global variables (that are available across multiple yaml files) as follows:
-
-```
-- global_config:
-     vars:
-         - DEF groupPrefix="xyz"
-         - DEF testArr=:
-                  - val1
-                  - val2
-```
-
-Global variables still only become visible in the order of how the yaml files are processed, therefore it usually makes sense to put them in their own file prefixed with `_` to ensure they are processed at the beginning, e.g. `_globalvars.yaml`.
-
-Local variables override global variables, but only in the same file (and only from the definition of the local variable onwards).
-
-### Predefined variables 
-
-Some variables are provided by default.
-
-variable name | description
---- | --- 
-`RUNMODES` | List of active run modes. Uses `SlingSettingsService#getRunModes` underneath. Consider using [run mode specific yaml files](Configuration.md#run-modes) as alternative.
-`env.<envVariableName>` | Environment variable with name `<envVariableName>` as provided by the operating system. Uses [System.getenv()](https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#getenv--). To provide a default use `defaultIfEmpty()` as linked in from StringUtils class: `${defaultIfEmpty(env.my_env_variable, 'default-val')}`. **NOTE: Use this feature sparingly, for most cases the configuration should be self-contained. One use case for this is production passwords (as needed for non-system users like replication receiver)**.
-
 
 ## Auto-create test users for groups
 
