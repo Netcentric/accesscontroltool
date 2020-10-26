@@ -268,7 +268,7 @@ Bundle-SymbolicName: biz.netcentric.cq.tools.accesscontroltool.bundle
 # export all versioned packages by default
 -exportcontents: ${packages;VERSIONED}
 # Embed (https://groups.google.com/g/bndtools-users/c/NAdU0_X8OKY)
--includeresource: tomcat-el-api-[0-9.]*.jar;lib:=true,tomcat-jasper-el-[0-9.]*.jar;lib:=true
+-includeresource: tomcat-el-api-[0-9.]*.jar;lib:=true,tomcat-jasper-el-[0-9.]*.jar;lib:=true,snakeyaml-[0-9.]*.jar;lib:=true
 # broad version range for jackrabbit oak versions (as long as we need to support Oak < 1.7.12, see https://github.com/Netcentric/accesscontroltool/issues/435 and https://issues.apache.org/jira/browse/OAK-6945
 Import-Package: org.apache.jackrabbit.oak.spi.security.authentication.external;resolution:=optional;version="[0,3)",org.apache.jackrabbit.oak.spi.security.authentication.external.basic;resolution:=optional;version="[0,2)",org.apache.jackrabbit.oak.*;version="[0,2)",com.adobe.granite.crypto;resolution:=optional,com.adobe.granite.jmx.annotation;resolution:=optional,com.day.cq.security.util;resolution:=optional,* ]]></bnd>
                 </configuration>
