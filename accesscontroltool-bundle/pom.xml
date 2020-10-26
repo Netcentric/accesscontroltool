@@ -303,6 +303,7 @@ Import-Package: org.apache.jackrabbit.oak.spi.security.authentication.external;r
                         </goals>
                         <phase>verify</phase>
                         <configuration>
+                            <useMavenDependencies>false</useMavenDependencies>
                             <bndruns>
                                 <include>minimum-aem.bndrun</include>
                             </bndruns>
@@ -315,6 +316,7 @@ Import-Package: org.apache.jackrabbit.oak.spi.security.authentication.external;r
                         </goals>
                         <phase>verify</phase>
                         <configuration>
+                            <useMavenDependencies>false</useMavenDependencies>
                             <bndruns>
                                 <include>maximum-aem.bndrun</include>
                             </bndruns>
