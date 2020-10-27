@@ -107,9 +107,6 @@
                             <target>/apps/netcentric/actool/install/27</target>
                         </embedded>
                         <embedded>
-                            <artifactId>snakeyaml</artifactId>
-                        </embedded>
-                        <embedded>
                             <artifactId>bcprov-jdk15on</artifactId>
                         </embedded>
                         <embedded>
