@@ -7,8 +7,9 @@
 * [Configuration of groups](#configuration-of-groups)
   * [Group migration](#group-migration)
 * [Configuration of users](#configuration-of-users)
-  * [Configuration of Keys](#configuration-of-keys)
+  * [Configuration of keys](#configuration-of-keys)
     * [Creation of key pair](#creation-of-key-pair)
+    * [Encrypt private key](#encrypt-private-key)
 * [Configuration of ACEs](#configuration-of-aces)
 * [Global Configuration](#global-configuration)
 * [Validation](#validation)
@@ -164,7 +165,7 @@ Example:
 
 Group memberships can be set on user entry or group entry or both.
 
-### Configuration of Keys
+### Configuration of keys
 Each key entry in the `keys` section stands for a key alias in the key store. The alias name is given by the section name. As aliases are converted to lower-case only lower-case characters should be used. Each key section has the
  following properties
 
@@ -177,10 +178,15 @@ certificate | The certificate in PEM format as defined in [RFC 7468](https://too
 
 It is recommended to store the values for `private`, `public` and `certificate` in the [YAML literal style](https://yaml.org/spec/1.2/spec.html#id2795688) for readability reasons.
 
-#### Creation of key pair
-The key pair can be created e.g. with `ssh-keygen -m PKCS8`. Afterwards the public key needs to be converted to the right format with `ssh-keygen -f <public-key>.pub -e -m PEM >pubkey.pem`.
-
 Usually keys are stage/environment-specific i.e. listed in run-mode specific yaml fragments. At least the encrypted `privatePassword` normally differs (due to the different Crypto Support master keys).
+
+#### Creation of key pair
+The key pair can be created with `openssl` as outlined in https://experienceleague.adobe.com/docs/experience-manager-learn/foundation/authentication/set-up-public-private-keys-for-use-with-aem-and-adobe-io.html?lang=en#setup-public-and-private-keys-for-use-with-adobe-i%2Fo.
+
+#### Encrypt private key
+
+To encrypt an unencrypted private key (in PEM format) you can use
+`openssl pkcs8 -topk8 -in <unencrypted-private-key-file> -out <encrypted-private-key-file>`. It will ask you for the passphrase interactively.
 
 ## Configuration of ACEs
 
