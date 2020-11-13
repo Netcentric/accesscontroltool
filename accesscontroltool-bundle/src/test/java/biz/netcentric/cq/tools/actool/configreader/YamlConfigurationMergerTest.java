@@ -10,13 +10,16 @@ package biz.netcentric.cq.tools.actool.configreader;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.anySet;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
+import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,6 +29,8 @@ import javax.jcr.Session;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.osgi.framework.ServiceReference;
+import org.osgi.service.cm.ConfigurationPlugin;
 
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
@@ -54,7 +59,6 @@ public class YamlConfigurationMergerTest {
         assertEquals(2, groupB.getIsMemberOf().length);
         assertNotNull(groups.getAuthorizableConfig("groupC"));
         assertNotNull(groups.getAuthorizableConfig("groupD"));
-
     }
 
     @Test
@@ -88,7 +92,36 @@ public class YamlConfigurationMergerTest {
     public void testReadEmptyYaml() throws IOException, RepositoryException, AcConfigBeanValidationException {
         getAcConfigurationForFile(getConfigurationMerger(), session, "test-empty.yaml");
     }
-   
+
+    @Test
+    public void testConfigAdminInterpolatorFormat() {
+        assertTrue(YamlConfigurationMerger.CONFIG_ADMIN_INTERPOLATOR_FORMAT.matcher("$[secret:db.password]").matches());
+        assertTrue(YamlConfigurationMerger.CONFIG_ADMIN_INTERPOLATOR_FORMAT.matcher("$[env:PORT;default=8080]").matches());
+        assertTrue(YamlConfigurationMerger.CONFIG_ADMIN_INTERPOLATOR_FORMAT.matcher("$[prop:my.property]").matches());
+        assertTrue(YamlConfigurationMerger.CONFIG_ADMIN_INTERPOLATOR_FORMAT.matcher("$[env:PORT;type=Integer[];delimiter=,;default=8080,8081]").matches());
+        assertFalse(YamlConfigurationMerger.CONFIG_ADMIN_INTERPOLATOR_FORMAT.matcher("${prop:my.property}").matches());
+    }
+
+    @Test
+    public void testPlaceholdersWithoutInterpolationPlugin() throws IOException, RepositoryException, AcConfigBeanValidationException {
+        AcConfiguration acConfiguration = getAcConfigurationForFile(getConfigurationMerger(), session, "test-placeholders.yaml");
+        assertEquals("$[secret:password]", acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("editor").getPassword());
+    }
+
+    @Test
+    public void testPlaceholdersWithInterpolationPlugin() throws IOException, RepositoryException, AcConfigBeanValidationException {
+        YamlConfigurationMerger yamlConfigMerger = getConfigurationMerger();
+        yamlConfigMerger.interpolationPlugin = new ConfigurationPlugin() {
+            // replace all placeholders with value "resolved"
+            @Override
+            public void modifyConfiguration(ServiceReference<?> reference, Dictionary<String, Object> properties) {
+                properties.put(YamlConfigurationAdminPluginScalarConstructor.KEY, "resolved");
+            }
+        };
+        AcConfiguration acConfiguration = getAcConfigurationForFile(yamlConfigMerger, session, "test-placeholders.yaml");
+        assertEquals("resolved", acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("editor").getPassword());
+    }
+
     public static AcConfiguration getAcConfigurationForFile(YamlConfigurationMerger merger, Session session, String testConfigFile)
             throws IOException, RepositoryException, AcConfigBeanValidationException {
         final String config = YamlConfigReaderTest.getTestConfigAsString(testConfigFile);
@@ -101,7 +134,7 @@ public class YamlConfigurationMergerTest {
 
     public static YamlConfigurationMerger getConfigurationMerger() {
         YamlConfigurationMerger merger = spy(new YamlConfigurationMerger());
-        doReturn(null).when(merger).getAceBeanValidator(anySet());
+        doReturn(null).when(merger).getAceBeanValidator(anySetOf(String.class));
         merger.yamlMacroProcessor = new YamlMacroProcessorImpl();
         merger.obsoleteAuthorizablesValidator = new ObsoleteAuthorizablesValidatorImpl();
         merger.virtualGroupProcessor = new VirtualGroupProcessor();

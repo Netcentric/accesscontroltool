@@ -158,16 +158,12 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
 
         @Override
         public String getContentAsString() throws Exception {
-            final InputStream configInputStream = JcrUtils.readFile(node);
-            try {
+            try (InputStream configInputStream = JcrUtils.readFile(node)) {
                 StringWriter writer = new StringWriter();
                 IOUtils.copy(configInputStream, writer, "UTF-8");
                 String configData = writer.toString();
                 LOG.debug("Found configuration data of node: {} with {} bytes", node.getPath(), configData.getBytes());
                 return configData;
-
-            } finally {
-                configInputStream.close();
             }
         }
     }
@@ -195,10 +191,9 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public List<PackageEntryOrNode> getChildren() throws Exception {
 
-            List<PackageEntryOrNode> children = new LinkedList<PackageEntryOrNode>();
+            List<PackageEntryOrNode> children = new LinkedList<>();
             Collection<? extends Entry> entryChildren = entry.getChildren();
             for (Entry childEntry : entryChildren) {
                 children.add(new EntryInPackage(archive, getPath(), childEntry));
@@ -214,13 +209,14 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
         @Override
         public String getContentAsString() throws Exception {
             LOG.debug("Reading YAML file {}", getPath());
-            InputStream input = archive.getInputSource(entry).getByteStream();
-            if (input == null) {
-                throw new IllegalStateException("Could not get input stream from entry " + getPath());
+            try (InputStream input = archive.getInputSource(entry).getByteStream()) {
+                if (input == null) {
+                    throw new IllegalStateException("Could not get input stream from entry " + getPath());
+                }
+                StringWriter writer = new StringWriter();
+                IOUtils.copy(input, writer, "UTF-8");
+                return writer.toString();
             }
-            StringWriter writer = new StringWriter();
-            IOUtils.copy(input, writer, "UTF-8");
-            return writer.toString();
         }
     }
 
