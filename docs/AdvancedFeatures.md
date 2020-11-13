@@ -11,6 +11,7 @@
   * [Loops derived from content structure](#loops-derived-from-content-structure)
   * [Loops that traverse the full jcr:content structure](#loops-that-traverse-the-full-jcrcontent-structure)
 * [Conditional entries](#conditional-entries)
+* [Interpolate values](#interpolate-values)
 * [Auto-create test users for groups](#auto-create-test-users-for-groups)
 * [Configure unmanaged aspects](#configure-unmanaged-aspects)
   * [Configure permissions for built-in users or groups (like anonymous)](#configure-permissions-for-built-in-users-or-groups-like-anonymous)
@@ -286,6 +287,15 @@ When looping over content structures, entries can be applied conditionally using
             path: /home/groups/global
 ```
 
+## Interpolate values
+
+Sometimes configuration values should be obtained from somewhere else and should not appear as literals in the YAML (e.g. to hide sensitive information like passwords or to reuse the same yaml on multiple environments with slight environment adaptations). For that the [Felix Configadmin Interpolation Plugin][felix-interpolation-plugin] is hooked up with the AC Tool to allow to reference Environment Variables, Secrets and Properties (both Framework and Java System Properties). The syntax is described in its [README][felix-interpolation-plugin].
+Both secrets and environment variables can be easily set for AEMaaCS environments via [Cloud Manager API](https://www.adobe.io/apis/experiencecloud/cloud-manager/api-reference.html#/Variables/patchEnvironmentVariables) or with some client like [Adobe IO CLI together with the Cloud Manager Plugin](https://github.com/adobe/aio-cli-plugin-cloudmanager#aio-cloudmanagerenvironmentset-variables-environmentid).
+
+Although AC Tool comes with native support for environment variables already (via the global variable `env.`) the syntax supported by the Felix Configadmin Interpolation Plugin is more powerful and usage of Secrets and Properties is not possible without this feature at all.
+
+*This feature is only available in AEMaaCS and since ACTool 2.7.0*
+
 ## Auto-create test users for groups
 
 It is possible to automatically create test users (since v2.1.0) for groups given in the configuration by providing a yaml hash `autoCreateTestUsers` in `global_config`. The following properties can be configured:
@@ -480,4 +490,4 @@ For large installations (> 1000 groups) that use MongoDB, the system possibly ma
 NOTE: This is never necessary when using TarMK and also it should only be used for MongoMK for large installations that do not contain a fix for OAK-5557 yet as the rollback functionality is lost when enabling intermediate saves.
 
 [i257]: https://github.com/Netcentric/accesscontroltool/issues/257
-
+[felix-interpolation-plugin]: https://github.com/apache/felix-dev/blob/master/configadmin-plugins/interpolation/README.md

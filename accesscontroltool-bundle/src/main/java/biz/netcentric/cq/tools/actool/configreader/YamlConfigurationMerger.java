@@ -19,13 +19,16 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.apache.commons.lang3.time.StopWatch;
+import org.osgi.service.cm.ConfigurationPlugin;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +77,13 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     ExtendedSlingSettingsService slingSettingsService;
-    
+
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policyOption = ReferencePolicyOption.GREEDY, target="(config.plugin.id=org.apache.felix.configadmin.plugin.interpolation)")
+    ConfigurationPlugin interpolationPlugin;
+
+    /** Regular expression which matches against values which should be interpolated, see https://github.com/apache/felix-dev/blob/master/configadmin-plugins/interpolation/README.md */
+    public static final Pattern CONFIG_ADMIN_INTERPOLATOR_FORMAT = Pattern.compile("^\\$\\[(env|secret|prop):.*\\]$");
+
     @Override
     public AcConfiguration getMergedConfigurations(
             final Map<String, String> configFileContentByFilename,
@@ -92,8 +101,15 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
                                                                                  // configurations
         final Set<String> obsoleteAuthorizables = new HashSet<String>();
 
-        final Yaml yamlParser = new Yaml();
-
+        final Yaml yamlParser;
+        if (interpolationPlugin != null) {
+            yamlParser = new Yaml(new YamlConfigurationAdminPluginScalarConstructor(installLog, interpolationPlugin));
+            // bind constructor to certain scalar formats (compare with https://bitbucket.org/asomov/snakeyaml/src/master/src/test/java/org/yaml/snakeyaml/env/EnvVariableTest.java)
+            yamlParser.addImplicitResolver(YamlConfigurationAdminPluginScalarConstructor.TAG, CONFIG_ADMIN_INTERPOLATOR_FORMAT, "$[" );
+            installLog.addMessage(LOG, "Using YAML parser with ConfigurationAdmin Plugin placeholder support");
+        } else {
+            yamlParser = new Yaml();
+        }
         final ConfigurationsValidator configurationsValidator = new YamlConfigurationsValidator();
 
         Map<String, Object> globalVariables = getGlobalVariablesForYamlMacroProcessing();
