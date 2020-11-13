@@ -289,9 +289,10 @@ When looping over content structures, entries can be applied conditionally using
 
 ## Interpolate values
 
-Sometimes configuration values should be obtained from somewhere else and should not appear as literals in the YAML (e.g. to hide sensitive information like passwords or to reuse the same yaml on multiple environments with slight environment adaptations). For that the [Felix Configadmin Interpolation Plugin][felix-interpolation-plugin] is hooked up with the AC Tool to allow to reference Environment Variables, Secrets and Properties (both Framework and Java System). The syntax is described in its [README][felix-interpolation-plugin].
+Sometimes configuration values should be obtained from somewhere else and should not appear as literals in the YAML (e.g. to hide sensitive information like passwords or to reuse the same yaml on multiple environments with slight environment adaptations). For that the [Felix Configadmin Interpolation Plugin][felix-interpolation-plugin] is hooked up with the AC Tool to allow to reference Environment Variables, Secrets and Properties (both Framework and Java System Properties). The syntax is described in its [README][felix-interpolation-plugin].
+Both secrets and environment variables can be easily set for AEMaaCS environments via [Cloud Manager API](https://www.adobe.io/apis/experiencecloud/cloud-manager/api-reference.html#/Variables/patchEnvironmentVariables) or with some client like [Adobe IO CLI together with the Cloud Manager Plugin](https://github.com/adobe/aio-cli-plugin-cloudmanager#aio-cloudmanagerenvironmentset-variables-environmentid).
 
-Although AC Tool comes with native support for environment variables already (via the global variable `env.`) the syntax supported by the Felix Configadmin Interpolation Plugin is more powerful.
+Although AC Tool comes with native support for environment variables already (via the global variable `env.`) the syntax supported by the Felix Configadmin Interpolation Plugin is more powerful and usage of Secrets and Properties is not possible without this feature at all.
 
 *This feature is only available in AEMaaCS and since ACTool 2.7.0*
 
