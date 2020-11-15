@@ -31,9 +31,11 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.yaml.snakeyaml.Yaml;
 
+import biz.netcentric.cq.tools.actool.aem.AemCryptoSupport;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.SimpleAEMCryptoSupport;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
 public class YamlConfigReaderTest {
@@ -136,7 +138,8 @@ public class YamlConfigReaderTest {
 
     @Test
     public void testKeys() throws IOException, AcConfigBeanValidationException {
-        final ConfigReader yamlConfigReader = new YamlConfigReader();
+        final YamlConfigReader yamlConfigReader = new YamlConfigReader();
+        yamlConfigReader.cryptoSupport = new SimpleAEMCryptoSupport();
         final List<Map> yamlList = getYamlList("test-user-with-keys.yaml");
         yamlConfigReader.getUserConfigurationBeans(yamlList, null);
     }

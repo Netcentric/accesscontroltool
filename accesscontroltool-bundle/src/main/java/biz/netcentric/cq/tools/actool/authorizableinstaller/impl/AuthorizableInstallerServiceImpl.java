@@ -218,9 +218,9 @@ public class AuthorizableInstallerServiceImpl implements
         for (Entry<String, Key> entry : keys.entrySet()) {
             Certificate certificate = entry.getValue().getCertificate();
             if (certificate != null) {
-                keyStoreService.addKeyStoreKeyEntry(resourceResolver, userId, entry.getKey(), entry.getValue().getPrivateKey(cryptoSupport), new Certificate[] {certificate});
+                keyStoreService.addKeyStoreKeyEntry(resourceResolver, userId, entry.getKey(), entry.getValue().getPrivateKey(), new Certificate[] {certificate});
             } else {
-                keyStoreService.addKeyStoreKeyPair(resourceResolver, userId, entry.getValue().getKeyPair(cryptoSupport), entry.getKey());
+                keyStoreService.addKeyStoreKeyPair(resourceResolver, userId, entry.getValue().getKeyPair(), entry.getKey());
             }
             installLog.addMessage(LOG, "Added key with alias '"+ entry.getKey() + "' to keystore of user '" + userId + "'");
         }

@@ -13,4 +13,6 @@ public interface AemCryptoSupport {
 
     public String unprotect(String password);
 
+    boolean isProtected(String password);
+
 }

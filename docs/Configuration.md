@@ -171,8 +171,8 @@ Each key entry in the `keys` section stands for a key alias in the key store. Th
 
 property | comment | required
 --- | --- | ---
-private | The encrypted PKCS#8 key in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-11). Non-encrypted keys are not supported for security reasons! The symmetrical encryption requires the privatePassword to be decrypted. | yes
-privatePassword | The password for decrypting the private key. The password itself must be encrypted with the AEM Crypto Support (i.e. encrypted with the AEM master key of the according instance). Therefore the value must start with `{`. Once the key is added to the keystore this password is no longer relevant as there the private key is encrypted with the password of the AEM keystore itself. | yes
+private | The encrypted (or since v2.7.0 non-encrypted) PKCS#8 key in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-11). Non-encrypted keys should be used with care (usually only combined with security value interpolation)! In case of encrypted private keys the password must be given in `privatePassword` | yes
+privatePassword | The password for decrypting the encrypted private key. The password itself should be encrypted with the AEM Crypto Support (i.e. encrypted with the AEM master key of the according instance). Therefore the value should start with `{`. Alternatively one can rely on value interpolation for this value. Once the key is added to the keystore this password is no longer relevant as there the private key is encrypted with the password of the AEM keystore itself. | no
 public | The public DER key in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-13). . If both `certificate` and `public` are set `certificate` takes precedence. | no (either public or certificate needs to be set)
 certificate | The certificate in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-5.1). If both `certificate` and `public` are set `certificate` takes precedence. | no (either public or certificate needs to be set)
 

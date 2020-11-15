@@ -47,17 +47,13 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.aem.AemCryptoSupport;
 
-/**
- * Class encapsulating a private key together with either a full certificate or just the public key.
- */
+/** Class encapsulating a private key together with either a full certificate or just the public key. */
 public class Key {
-
-    private final PKCS8EncryptedPrivateKeyInfo encryptedPrivateKeyInfo;
-    private final String encryptedPrivateKeyPassword;
 
     public static final Logger LOG = LoggerFactory.getLogger(Key.class);
 
     private final PublicKey publicKey;
+    private final PrivateKey privateKey; // unencrypted
     private final X509Certificate certificate;
 
     // as defined in https://tools.ietf.org/html/rfc7468#section-13
@@ -67,34 +63,23 @@ public class Key {
                     "-+END PUBLIC KEY[^-]*-+", // Footer
             Pattern.CASE_INSENSITIVE);
 
-    public static Key createFromKeyPair(String pemPkcs8PrivateKey, String encryptedPrivateKeyPassword, String pemDerPublicKey)
-            throws InvalidKeyException, InvalidKeySpecException, NoSuchAlgorithmException, CertificateException, IOException {
-        return new Key(pemPkcs8PrivateKey, encryptedPrivateKeyPassword, pemDerPublicKey, null);
+    public static Key createFromKeyPair(AemCryptoSupport cryptoSupport, String pemPkcs8PrivateKey, String encryptedPrivateKeyPassword,
+            String pemDerPublicKey)
+            throws IOException, GeneralSecurityException {
+        return new Key(cryptoSupport, pemPkcs8PrivateKey, encryptedPrivateKeyPassword, pemDerPublicKey, null);
     }
 
-    public static Key createFromPrivateKeyAndCertificate(String pemPkcs8PrivateKey, String encryptedPrivateKeyPassword,
+    public static Key createFromPrivateKeyAndCertificate(AemCryptoSupport cryptoSupport, String pemPkcs8PrivateKey,
+            String encryptedPrivateKeyPassword,
             String pemCertificate)
-            throws InvalidKeyException, InvalidKeySpecException, NoSuchAlgorithmException, CertificateException, IOException {
-        return new Key(pemPkcs8PrivateKey, encryptedPrivateKeyPassword, null, pemCertificate);
+            throws IOException, GeneralSecurityException {
+        return new Key(cryptoSupport, pemPkcs8PrivateKey, encryptedPrivateKeyPassword, null, pemCertificate);
     }
 
-    private Key(String pemPkcs8PrivateKey, String encryptedPrivateKeyPassword, String pemDerPublicKey, String pemCertificate)
-            throws InvalidKeyException, InvalidKeySpecException, NoSuchAlgorithmException, CertificateException, IOException {
+    private Key(AemCryptoSupport cryptoSupport, String pemPkcs8PrivateKey, String encryptedPrivateKeyPassword, String pemDerPublicKey,
+            String pemCertificate)
+            throws IOException, GeneralSecurityException {
         super();
-        if (StringUtils.isBlank(pemPkcs8PrivateKey)) {
-            throw new InvalidKeyException("The private key must not be blank!");
-        }
-        try {
-            this.encryptedPrivateKeyInfo = decodePKCS8PEM(pemPkcs8PrivateKey);
-        } catch (IOException e) {
-            throw new InvalidKeyException("The private key format is wrong", e);
-        }
-        // the same as CryptoSupport.isProtected(...) but must work without the dependency
-        if (!encryptedPrivateKeyPassword.startsWith("{")) {
-            throw new InvalidKeyException("The private key password must be given as encrypted value (encrypted with the AEM Crypto Support, i.e. start with '{')");
-        }
-        this.encryptedPrivateKeyPassword = encryptedPrivateKeyPassword;
-
         if (!StringUtils.isBlank(pemCertificate)) {
             try (ByteArrayInputStream input = new ByteArrayInputStream(pemCertificate.getBytes(StandardCharsets.US_ASCII))) {
                 certificate = getCertificate(input);
@@ -109,29 +94,54 @@ public class Key {
                 throw new InvalidKeyException("Either the public key or the certicate must not be blank!");
             }
         }
+        if (StringUtils.isBlank(pemPkcs8PrivateKey)) {
+            throw new InvalidKeyException("The private key must not be blank!");
+        }
+
+        try (PEMParser parser = new PEMParser(new StringReader(pemPkcs8PrivateKey))) {
+            Object object = parser.readObject();
+            if (object instanceof PKCS8EncryptedPrivateKeyInfo) {
+                privateKey = getDecryptedPrivateKey(cryptoSupport, encryptedPrivateKeyPassword, (PKCS8EncryptedPrivateKeyInfo) object,
+                        getPublicKey());
+            } else if (object instanceof PrivateKeyInfo) {
+                privateKey = getPrivateKey((PrivateKeyInfo) object);
+            } else {
+                throw new InvalidKeyException("The private key neither is an encrypted or unencrypted PKCS#8 key but " + object.getClass());
+            }
+        }
     }
 
-    public PrivateKey getPrivateKey(AemCryptoSupport cryptoSupport) throws IOException, GeneralSecurityException {
+    static PrivateKey getDecryptedPrivateKey(AemCryptoSupport cryptoSupport, String encryptedPrivateKeyPassword,
+            PKCS8EncryptedPrivateKeyInfo encryptedPrivateKeyInfo, PublicKey publicKey) throws IOException, GeneralSecurityException {
+        
         if (cryptoSupport == null) {
             throw new IllegalArgumentException("CryptoSupport has not been provided but it is required to deal with PKCS#8 keys.");
         }
-        String keyPassword = cryptoSupport.unprotect(encryptedPrivateKeyPassword);
+        final String keyPassword;
+        if (cryptoSupport.isProtected(encryptedPrivateKeyPassword)) {
+            keyPassword = cryptoSupport.unprotect(encryptedPrivateKeyPassword);
+        } else {
+            keyPassword = encryptedPrivateKeyPassword;
+        }
         PrivateKey privateKey;
         try {
-            privateKey = getPrivateKey(keyPassword);
+            privateKey = getDecryptedPrivateKey(keyPassword, encryptedPrivateKeyInfo);
         } catch (OperatorCreationException | PKCSException e) {
             throw new GeneralSecurityException("Could not decrypt private key", e);
         }
         // verify that the keys belong to each other
-        if (!isMatchingKeyPair(getPublicKey(), privateKey)) {
+        if (!isMatchingKeyPair(publicKey, privateKey)) {
             throw new InvalidKeyException("The public and private keys are not matching");
         }
         return privateKey;
     }
 
-    public KeyPair getKeyPair(AemCryptoSupport cryptoSupport) throws IOException, GeneralSecurityException {
-        PrivateKey privateKey = getPrivateKey(cryptoSupport);
+    public KeyPair getKeyPair() {
         return new KeyPair(publicKey, privateKey);
+    }
+
+    public PrivateKey getPrivateKey() {
+        return privateKey;
     }
 
     public Certificate getCertificate() {
@@ -157,32 +167,24 @@ public class Key {
         }
     }
 
+    static PrivateKey getPrivateKey(PrivateKeyInfo privateKeyInfo) throws IOException {
+        JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+        return converter.getPrivateKey(privateKeyInfo);
+    }
+
     static X509Certificate getCertificate(InputStream input) throws CertificateException {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         return (X509Certificate) cf.generateCertificate(input);
     }
 
-    private PrivateKey getPrivateKey(String keyPassword) throws IOException, PKCSException, OperatorCreationException {
+    private static PrivateKey getDecryptedPrivateKey(String keyPassword, PKCS8EncryptedPrivateKeyInfo encryptedPrivateKeyInfo)
+            throws IOException, PKCSException, OperatorCreationException {
         // use BouncyCastle due to https://bugs.openjdk.java.net/browse/JDK-8231581
         JceOpenSSLPKCS8DecryptorProviderBuilder jce = new JceOpenSSLPKCS8DecryptorProviderBuilder();
         jce.setProvider(new BouncyCastleProvider());
         InputDecryptorProvider decProv = jce.build(keyPassword.toCharArray());
         PrivateKeyInfo info = encryptedPrivateKeyInfo.decryptPrivateKeyInfo(decProv);
         return new JcaPEMKeyConverter().getPrivateKey(info);
-    }
-
-
-    /** <a href="https://tools.ietf.org/html/rfc7468#section-11">RFC 7468</a>
-     * 
-     * @throws IOException */
-    static PKCS8EncryptedPrivateKeyInfo decodePKCS8PEM(String pemPrivateKey) throws IOException {
-        try (PEMParser parser = new PEMParser(new StringReader(pemPrivateKey))) {
-            Object object = parser.readObject();
-            if (!(object instanceof PKCS8EncryptedPrivateKeyInfo)) {
-                throw new IOException("Invalid pem object, must be an encrypted private key but is a " + object);
-            }
-            return (PKCS8EncryptedPrivateKeyInfo)object;
-        }
     }
 
     /** <a href="https://tools.ietf.org/html/rfc7468#section-5.1">RFC 7468</a>
@@ -203,7 +205,7 @@ public class Key {
 
     @Override
     public String toString() {
-        return "Key [encryptedPrivateKeyInfo=" + encryptedPrivateKeyInfo.toString() + ", encryptedPrivateKeyPassword=" + encryptedPrivateKeyPassword
+        return "Key [privateKey=" + privateKey
                 + ", publicKey=" + publicKey + ", certificate=" + certificate + "]";
     }
 
@@ -235,7 +237,7 @@ public class Key {
     private static boolean isMatchingDsaKeyPair(DSAPublicKey publicKey, PrivateKey privateKey) throws NoSuchAlgorithmException {
         byte[] data = "test".getBytes(StandardCharsets.US_ASCII);
         try {
-            Signature dsa = Signature.getInstance("SHA/DSA"); 
+            Signature dsa = Signature.getInstance("SHA/DSA");
             // first create signature
             dsa.initSign(privateKey);
             dsa.update(data);

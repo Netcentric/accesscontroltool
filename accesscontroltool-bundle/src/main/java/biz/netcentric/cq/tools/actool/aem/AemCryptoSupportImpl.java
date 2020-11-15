@@ -25,6 +25,7 @@ public class AemCryptoSupportImpl implements AemCryptoSupport {
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private CryptoSupport cryptoSupport;
 
+    @Override
     public String unprotect(String password) {
         String abbreviatedPasswordHint = password.substring(0, 4)+"..";
         try {
@@ -34,6 +35,11 @@ public class AemCryptoSupportImpl implements AemCryptoSupport {
         } catch (CryptoException e) {
             throw new IllegalArgumentException("Invalid password string starting with '"+abbreviatedPasswordHint+"' (cannot be decrypted)", e);
         }
+    }
+    
+    @Override
+    public boolean isProtected(String password) {
+        return cryptoSupport.isProtected(password);
     }
 
 }

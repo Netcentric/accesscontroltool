@@ -9,10 +9,7 @@
 package biz.netcentric.cq.tools.actool.configreader;
 
 import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.spec.InvalidKeySpecException;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,10 +30,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.aem.AemCryptoSupport;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
@@ -101,9 +101,11 @@ public class YamlConfigReader implements ConfigReader {
 
     private static final String USER_CONFIG_IMPERSONATION_ALLOWED_FOR = "impersonationAllowedFor";
     
-    
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
+
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
+    volatile AemCryptoSupport cryptoSupport;
 
     @Override
     @SuppressWarnings("rawtypes")
@@ -434,7 +436,7 @@ public class YamlConfigReader implements ConfigReader {
             }
             try {
                 setupAuthorizableKeys(authorizableConfigBean, (Map<String, Object>) configObjUserConfigKeys);
-            } catch (InvalidKeyException | InvalidKeySpecException | NoSuchAlgorithmException | CertificateException | IOException e) {
+            } catch (GeneralSecurityException|IOException e) {
                 throw new InvalidAuthorizableException("Invalid key format given", e);
             }
         }
@@ -452,7 +454,7 @@ public class YamlConfigReader implements ConfigReader {
         
     }
 
-    private void setupAuthorizableKeys(final AuthorizableConfigBean authorizableConfigBean, Map<String, Object> keys) throws InvalidKeyException, InvalidAuthorizableException, InvalidKeySpecException, NoSuchAlgorithmException, CertificateException, IOException {
+    private void setupAuthorizableKeys(final AuthorizableConfigBean authorizableConfigBean, Map<String, Object> keys) throws InvalidAuthorizableException, IOException, GeneralSecurityException {
         Map<String, Key> parsedKeys = new HashMap<>();
         for (Entry<String, Object> entry : keys.entrySet()) {
             // ensure correct format
@@ -464,9 +466,9 @@ public class YamlConfigReader implements ConfigReader {
             // TODO: make sure that all fields are strings
             final Key key;
             if (StringUtils.isNotBlank(keyFields.get(USER_CONFIG_KEY_CERTIFICATE))) {
-                key = Key.createFromPrivateKeyAndCertificate(keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_CERTIFICATE));
+                key = Key.createFromPrivateKeyAndCertificate(cryptoSupport, keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_CERTIFICATE));
             } else {
-                key = Key.createFromKeyPair(keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_PUBLIC));
+                key = Key.createFromKeyPair(cryptoSupport, keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_PUBLIC));
             }
             parsedKeys.put(entry.getKey(), key);
         }
