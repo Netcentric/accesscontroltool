@@ -171,8 +171,8 @@ Each key entry in the `keys` section stands for a key alias in the key store. Th
 
 property | comment | required
 --- | --- | ---
-private | The encrypted (or since v2.7.0 non-encrypted) PKCS#8 key in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-11). Non-encrypted keys should be used with care (usually only combined with security value interpolation)! In case of encrypted private keys the password must be given in `privatePassword` | yes
-privatePassword | The password for decrypting the encrypted private key. The password itself should be encrypted with the AEM Crypto Support (i.e. encrypted with the AEM master key of the according instance). Therefore the value should start with `{`. Alternatively one can rely on value interpolation for this value. Once the key is added to the keystore this password is no longer relevant as there the private key is encrypted with the password of the AEM keystore itself. | no
+private | The PKCS#8 private key in one of the following formats: [PKCS#8 PEM](https://tools.ietf.org/html/rfc7468#section-10)(optionally encrypted with AEM's Crypto Support or [PKCS#8 Encrypted PEM](https://tools.ietf.org/html/rfc7468#section-11). One of the following approaches can be used for protecting the sensitive private key: <br/>1. Use value interpolation with secrets with an [unencrypted PKCS#8 private key](https://tools.ietf.org/html/rfc7468#section-10) (only supported on AEMaaCS and since v2.7.0) </br>2. Use AEM Crypto Support to encrypt the [unencrypted PKCS#8 private key](https://tools.ietf.org/html/rfc7468#section-10) (only supported since v2.7.0)</br>3. Use [encrypted PKCS#8 private keys](https://tools.ietf.org/html/rfc7468#section-11) (better algorithms only supported with Bouncycastle and even those provide weaker encryption than 1. or 2. In this case the encryption password must be given in `privatePassword`</br>Non-encrypted keys should be used with care! In case of encrypted private keys  | yes
+privatePassword | The password for decrypting the encrypted private key. The password itself can be encrypted with the AEM Crypto Support (i.e. encrypted with the AEM master key of the according instance). Alternatively one can rely on value interpolation for this value. Once the key is added to the keystore this password is no longer relevant as there the private key is encrypted with the password of the AEM keystore itself. | no
 public | The public DER key in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-13). . If both `certificate` and `public` are set `certificate` takes precedence. | no (either public or certificate needs to be set)
 certificate | The certificate in PEM format as defined in [RFC 7468](https://tools.ietf.org/html/rfc7468#section-5.1). If both `certificate` and `public` are set `certificate` takes precedence. | no (either public or certificate needs to be set)
 
@@ -185,8 +185,24 @@ The key pair can be created with `openssl` as outlined in https://experienceleag
 
 #### Encrypt private key
 
-To encrypt an unencrypted private key (in PEM format) you can use
-`openssl pkcs8 -topk8 -in <unencrypted-private-key-file> -out <encrypted-private-key-file>`. It will ask you for the passphrase interactively.
+##### With AEM Crypto Support
+
+AEMs Crypto Support provides a 128 bit AES encryption which is stronger than the PKCS#8 algorithms and doesn't require specifying an explicit password (as the master key is used for encryption). To encrypt an unencrypted PEM PKCS#8 private key just [use the Felix Web Console Plugin at `/system/console/crypto`](https://experienceleague.adobe.com/docs/experience-manager-65/administering/security/encryption-support-for-configuration-properties.html?lang=en#enabling-encryption-support).
+
+##### With PKCS#8 Algorithms
+
+To encrypt an unencrypted PKCS#8 private key (in PEM format) you can use the command
+`openssl pkcs8 -topk8 -in <unencrypted-private-key-file> -out <encrypted-private-key-file>`. It will ask you for the password interactively.
+By default this will use the unsafe `PbeWithMD5AndDES-CBC` (based on 56 bit key) algorithm. You should consider using more secure algorithms with parameter `v2`, those are only supported with [Bouncycastle][bouncycastle], though. For more details refer also to [RFC 8018](https://tools.ietf.org/html/rfc8018#appendix-B.2)
+
+### Install Bouncycastle
+
+In case you don't want to rely on Crypto Support for encrypting your private keys the stronger PBES2 algorithms only supported by [Bouncycastle][bouncycastle] are strongly recommended to use instead. All versions suffer from <https://bugs.openjdk.java.net/browse/JDK-8231581>. Java up to version 11 also from <https://bugs.openjdk.java.net/browse/JDK-8076999>.
+
+In this case the following Bouncycastle bundles need to be available on the AEM instance evaluating the YAML configuration:
+
+1. [`org.bouncycastle:bcpkix-jdk15on`](https://search.maven.org/artifact/org.bouncycastle/bcpkix-jdk15on)
+1. [`org.bouncycastle:bcprov-jdk15on`](https://search.maven.org/artifact/org.bouncycastle/bcprov-jdk15on)
 
 ## Configuration of ACEs
 
@@ -295,3 +311,5 @@ First the validation of the different configuration lines is performed and gets 
 
 If issues occur during the application of the configurations in CRX the installation has to be aborted and the previous state has to stay untouched. Therefore the session used for the installation only gets saved if no issues occurred thus persisting the changes.
 
+
+[bouncycastle]: https://www.bouncycastle.org/

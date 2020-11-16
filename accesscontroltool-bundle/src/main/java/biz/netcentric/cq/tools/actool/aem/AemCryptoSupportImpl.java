@@ -17,8 +17,8 @@ import org.slf4j.LoggerFactory;
 import com.adobe.granite.crypto.CryptoException;
 import com.adobe.granite.crypto.CryptoSupport;
 
-@Component
-public class AemCryptoSupportImpl implements AemCryptoSupport {
+@Component(service=AemCryptoSupport.class)
+public class AemCryptoSupportImpl extends AemCryptoSupport {
 
     private static final Logger LOG = LoggerFactory.getLogger(AemCryptoSupportImpl.class);
 
@@ -35,11 +35,6 @@ public class AemCryptoSupportImpl implements AemCryptoSupport {
         } catch (CryptoException e) {
             throw new IllegalArgumentException("Invalid password string starting with '"+abbreviatedPasswordHint+"' (cannot be decrypted)", e);
         }
-    }
-    
-    @Override
-    public boolean isProtected(String password) {
-        return cryptoSupport.isProtected(password);
     }
 
 }

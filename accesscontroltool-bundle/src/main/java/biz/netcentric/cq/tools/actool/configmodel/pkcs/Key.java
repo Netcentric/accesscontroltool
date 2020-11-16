@@ -1,9 +1,8 @@
-package biz.netcentric.cq.tools.actool.configmodel;
+package biz.netcentric.cq.tools.actool.configmodel.pkcs;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
@@ -21,27 +20,16 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.DSAPublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
-import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
-import org.bouncycastle.operator.InputDecryptorProvider;
-import org.bouncycastle.operator.OperatorCreationException;
-import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
-import org.bouncycastle.pkcs.PKCSException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,28 +44,21 @@ public class Key {
     private final PrivateKey privateKey; // unencrypted
     private final X509Certificate certificate;
 
-    // as defined in https://tools.ietf.org/html/rfc7468#section-13
-    private static final Pattern PUBLIC_KEY_PATTERN = Pattern.compile(
-            "-+BEGIN PUBLIC KEY[^-]*-+(?:\\s|\\r|\\n)+" + // Header
-                    "([a-z0-9+/=\\r\\n]+)" + // Base64 text
-                    "-+END PUBLIC KEY[^-]*-+", // Footer
-            Pattern.CASE_INSENSITIVE);
-
     public static Key createFromKeyPair(AemCryptoSupport cryptoSupport, String pemPkcs8PrivateKey, String encryptedPrivateKeyPassword,
-            String pemDerPublicKey)
+            String pemDerPublicKey, PrivateKeyDecryptor privateKeyDecryptor)
             throws IOException, GeneralSecurityException {
-        return new Key(cryptoSupport, pemPkcs8PrivateKey, encryptedPrivateKeyPassword, pemDerPublicKey, null);
+        return new Key(cryptoSupport, pemPkcs8PrivateKey, encryptedPrivateKeyPassword, pemDerPublicKey, null, privateKeyDecryptor);
     }
 
     public static Key createFromPrivateKeyAndCertificate(AemCryptoSupport cryptoSupport, String pemPkcs8PrivateKey,
             String encryptedPrivateKeyPassword,
-            String pemCertificate)
+            String pemCertificate, PrivateKeyDecryptor privateKeyDecryptor)
             throws IOException, GeneralSecurityException {
-        return new Key(cryptoSupport, pemPkcs8PrivateKey, encryptedPrivateKeyPassword, null, pemCertificate);
+        return new Key(cryptoSupport, pemPkcs8PrivateKey, encryptedPrivateKeyPassword, null, pemCertificate, privateKeyDecryptor);
     }
 
     private Key(AemCryptoSupport cryptoSupport, String pemPkcs8PrivateKey, String encryptedPrivateKeyPassword, String pemDerPublicKey,
-            String pemCertificate)
+            String pemCertificate, PrivateKeyDecryptor privateKeyDecryptor)
             throws IOException, GeneralSecurityException {
         super();
         if (!StringUtils.isBlank(pemCertificate)) {
@@ -87,8 +68,12 @@ public class Key {
             }
         } else {
             if (!StringUtils.isBlank(pemDerPublicKey)) {
-                byte[] derPublicKey = decodePemDer(pemDerPublicKey);
-                publicKey = getPublicKey(derPublicKey);
+                DerData derData = DerData.parseFromPem(pemDerPublicKey);
+                if (derData.getType() != DerType.PUBLIC_KEY) {
+                    throw new InvalidKeyException("The given public key is of wrong type " + derData.getType());
+                }
+                X509EncodedKeySpec keySpec = new X509EncodedKeySpec(derData.getData());
+                publicKey = getPublicKey(keySpec);
                 certificate = null;
             } else {
                 throw new InvalidKeyException("Either the public key or the certicate must not be blank!");
@@ -98,42 +83,35 @@ public class Key {
             throw new InvalidKeyException("The private key must not be blank!");
         }
 
-        try (PEMParser parser = new PEMParser(new StringReader(pemPkcs8PrivateKey))) {
-            Object object = parser.readObject();
-            if (object instanceof PKCS8EncryptedPrivateKeyInfo) {
-                privateKey = getDecryptedPrivateKey(cryptoSupport, encryptedPrivateKeyPassword, (PKCS8EncryptedPrivateKeyInfo) object,
-                        getPublicKey());
-            } else if (object instanceof PrivateKeyInfo) {
-                privateKey = getPrivateKey((PrivateKeyInfo) object);
-            } else {
-                throw new InvalidKeyException("The private key neither is an encrypted or unencrypted PKCS#8 key but " + object.getClass());
-            }
+        if (AemCryptoSupport.isProtected(pemPkcs8PrivateKey)) {
+            pemPkcs8PrivateKey = cryptoSupport.unprotect(pemPkcs8PrivateKey);
         }
-    }
 
-    static PrivateKey getDecryptedPrivateKey(AemCryptoSupport cryptoSupport, String encryptedPrivateKeyPassword,
-            PKCS8EncryptedPrivateKeyInfo encryptedPrivateKeyInfo, PublicKey publicKey) throws IOException, GeneralSecurityException {
-        
-        if (cryptoSupport == null) {
-            throw new IllegalArgumentException("CryptoSupport has not been provided but it is required to deal with PKCS#8 keys.");
-        }
-        final String keyPassword;
-        if (cryptoSupport.isProtected(encryptedPrivateKeyPassword)) {
-            keyPassword = cryptoSupport.unprotect(encryptedPrivateKeyPassword);
-        } else {
-            keyPassword = encryptedPrivateKeyPassword;
-        }
-        PrivateKey privateKey;
-        try {
-            privateKey = getDecryptedPrivateKey(keyPassword, encryptedPrivateKeyInfo);
-        } catch (OperatorCreationException | PKCSException e) {
-            throw new GeneralSecurityException("Could not decrypt private key", e);
+        DerData derData = DerData.parseFromPem(pemPkcs8PrivateKey);
+        switch(derData.getType()) {
+            case ENCRYPTED_PRIVATE_KEY:
+                if (cryptoSupport == null) {
+                    throw new IllegalArgumentException("CryptoSupport has not been provided but it is required to deal with PKCS#8 keys.");
+                }
+                final String keyPassword;
+                if (AemCryptoSupport.isProtected(encryptedPrivateKeyPassword)) {
+                    keyPassword = cryptoSupport.unprotect(encryptedPrivateKeyPassword);
+                } else {
+                    keyPassword = encryptedPrivateKeyPassword;
+                }
+                privateKey = privateKeyDecryptor.decrypt(keyPassword.toCharArray(), derData.getData());
+                break;
+            case PRIVATE_KEY:
+                PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(derData.getData());
+                privateKey = getPrivateKey(keySpec);
+                break;
+            default:
+                throw new InvalidKeyException("The private key has wrong format " + derData.getType());
         }
         // verify that the keys belong to each other
-        if (!isMatchingKeyPair(publicKey, privateKey)) {
+        if (!isMatchingKeyPair(getPublicKey(), privateKey)) {
             throw new InvalidKeyException("The public and private keys are not matching");
         }
-        return privateKey;
     }
 
     public KeyPair getKeyPair() {
@@ -156,20 +134,24 @@ public class Key {
         }
     }
 
-    static PublicKey getPublicKey(byte[] derPublicKey) throws InvalidKeySpecException, NoSuchAlgorithmException {
-        X509EncodedKeySpec spec = new X509EncodedKeySpec(derPublicKey);
+    static PublicKey getPublicKey(X509EncodedKeySpec keySpec) throws NoSuchAlgorithmException, InvalidKeySpecException {
         try {
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            return keyFactory.generatePublic(spec);
+            return keyFactory.generatePublic(keySpec);
         } catch (InvalidKeySpecException ignore) {
             KeyFactory keyFactory = KeyFactory.getInstance("DSA");
-            return keyFactory.generatePublic(spec);
+            return keyFactory.generatePublic(keySpec);
         }
     }
 
-    static PrivateKey getPrivateKey(PrivateKeyInfo privateKeyInfo) throws IOException {
-        JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-        return converter.getPrivateKey(privateKeyInfo);
+    static PrivateKey getPrivateKey(PKCS8EncodedKeySpec keySpec) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        try {
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            return keyFactory.generatePrivate(keySpec);
+        } catch (InvalidKeySpecException ignore) {
+            KeyFactory keyFactory = KeyFactory.getInstance("DSA");
+            return keyFactory.generatePrivate(keySpec);
+        }
     }
 
     static X509Certificate getCertificate(InputStream input) throws CertificateException {
@@ -177,31 +159,6 @@ public class Key {
         return (X509Certificate) cf.generateCertificate(input);
     }
 
-    private static PrivateKey getDecryptedPrivateKey(String keyPassword, PKCS8EncryptedPrivateKeyInfo encryptedPrivateKeyInfo)
-            throws IOException, PKCSException, OperatorCreationException {
-        // use BouncyCastle due to https://bugs.openjdk.java.net/browse/JDK-8231581
-        JceOpenSSLPKCS8DecryptorProviderBuilder jce = new JceOpenSSLPKCS8DecryptorProviderBuilder();
-        jce.setProvider(new BouncyCastleProvider());
-        InputDecryptorProvider decProv = jce.build(keyPassword.toCharArray());
-        PrivateKeyInfo info = encryptedPrivateKeyInfo.decryptPrivateKeyInfo(decProv);
-        return new JcaPEMKeyConverter().getPrivateKey(info);
-    }
-
-    /** <a href="https://tools.ietf.org/html/rfc7468#section-5.1">RFC 7468</a>
-     * 
-     * @throws InvalidKeyException */
-    static byte[] decodePemDer(String pemDer) throws InvalidKeyException {
-        Matcher matcher = PUBLIC_KEY_PATTERN.matcher(pemDer);
-        if (!matcher.find()) {
-            throw new InvalidKeyException(
-                    "Public key has not been given in the expected PEM DER format as defined in https://tools.ietf.org/html/rfc7468#section-13");
-        }
-        return base64Decode(matcher.group(1));
-    }
-
-    static byte[] base64Decode(String base64) {
-        return Base64.decodeBase64(base64);
-    }
 
     @Override
     public String toString() {

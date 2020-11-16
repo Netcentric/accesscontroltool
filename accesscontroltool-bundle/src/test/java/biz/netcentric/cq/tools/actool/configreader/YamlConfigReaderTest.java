@@ -36,6 +36,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.SimpleAEMCryptoSupport;
+import biz.netcentric.cq.tools.actool.configmodel.pkcs.JcaPkcs8EncryptedPrivateKeyDecryptor;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
 public class YamlConfigReaderTest {
@@ -140,6 +141,7 @@ public class YamlConfigReaderTest {
     public void testKeys() throws IOException, AcConfigBeanValidationException {
         final YamlConfigReader yamlConfigReader = new YamlConfigReader();
         yamlConfigReader.cryptoSupport = new SimpleAEMCryptoSupport();
+        yamlConfigReader.privateKeyDecryptor = new JcaPkcs8EncryptedPrivateKeyDecryptor();
         final List<Map> yamlList = getYamlList("test-user-with-keys.yaml");
         yamlConfigReader.getUserConfigurationBeans(yamlList, null);
     }

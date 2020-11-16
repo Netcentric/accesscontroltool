@@ -60,8 +60,8 @@ import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableInstalle
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
-import biz.netcentric.cq.tools.actool.configmodel.Key;
-import biz.netcentric.cq.tools.actool.configmodel.RandomPassword;
+import biz.netcentric.cq.tools.actool.configmodel.pkcs.Key;
+import biz.netcentric.cq.tools.actool.configmodel.pkcs.RandomPassword;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.Constants;
@@ -233,12 +233,11 @@ public class AuthorizableInstallerServiceImpl implements
         authorizableToInstall.changePassword(password);
     }
 
-
     private String getPassword(final AuthorizableConfigBean authorizableConfigBean)
             throws AuthorizableCreatorException {
         try {
             String password = authorizableConfigBean.getPassword();
-            if (StringUtils.isNotBlank(password) && password.matches("\\{.+}")) {
+            if (AemCryptoSupport.isProtected(password)) {
                 if (cryptoSupport == null) {
                     throw new IllegalArgumentException(
                             "Password with {...} syntax is used but AEM CryptoSupport is missing to unprotect password.");
@@ -251,7 +250,6 @@ public class AuthorizableInstallerServiceImpl implements
                     "Could not decrypt password for user " + authorizableConfigBean.getAuthorizableId() + ": " + e);
         }
     }
-
 
     /** This is only relevant for members that point to groups/users not contained in configuration.
      * {@link biz.netcentric.cq.tools.actool.configreader.YamlConfigurationMerger#ensureIsMemberOfIsUsedWherePossible()} ensures that

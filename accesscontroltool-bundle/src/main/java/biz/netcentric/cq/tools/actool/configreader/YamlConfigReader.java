@@ -42,7 +42,8 @@ import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
-import biz.netcentric.cq.tools.actool.configmodel.Key;
+import biz.netcentric.cq.tools.actool.configmodel.pkcs.Key;
+import biz.netcentric.cq.tools.actool.configmodel.pkcs.PrivateKeyDecryptor;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
@@ -106,6 +107,9 @@ public class YamlConfigReader implements ConfigReader {
 
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
     volatile AemCryptoSupport cryptoSupport;
+
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    PrivateKeyDecryptor privateKeyDecryptor;
 
     @Override
     @SuppressWarnings("rawtypes")
@@ -466,9 +470,9 @@ public class YamlConfigReader implements ConfigReader {
             // TODO: make sure that all fields are strings
             final Key key;
             if (StringUtils.isNotBlank(keyFields.get(USER_CONFIG_KEY_CERTIFICATE))) {
-                key = Key.createFromPrivateKeyAndCertificate(cryptoSupport, keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_CERTIFICATE));
+                key = Key.createFromPrivateKeyAndCertificate(cryptoSupport, keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_CERTIFICATE), privateKeyDecryptor);
             } else {
-                key = Key.createFromKeyPair(cryptoSupport, keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_PUBLIC));
+                key = Key.createFromKeyPair(cryptoSupport, keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_PUBLIC), privateKeyDecryptor);
             }
             parsedKeys.put(entry.getKey(), key);
         }

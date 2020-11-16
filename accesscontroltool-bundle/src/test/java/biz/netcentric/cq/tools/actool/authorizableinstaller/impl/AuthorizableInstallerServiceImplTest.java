@@ -322,7 +322,7 @@ public class AuthorizableInstallerServiceImplTest {
         @Parameterized.Parameters
         public static Collection<Object[]> data() {
             return Arrays.asList(new Object[][] {
-                    { "{some_protected_pass}", UNPROTECTED_PASSWORD },
+                    { "{some_protected_pass1}", UNPROTECTED_PASSWORD }, // all protected password need even length!
                     { "bracketsAtTheEnd{pass}", "bracketsAtTheEnd{pass}" },
                     { "{pass}bracketsAtTheStart", "{pass}bracketsAtTheStart" },
                     { "bracketsIn{pass}TheMiddle", "bracketsIn{pass}TheMiddle" },

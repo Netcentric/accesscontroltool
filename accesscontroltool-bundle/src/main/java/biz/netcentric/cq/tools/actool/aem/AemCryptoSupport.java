@@ -9,10 +9,15 @@
 package biz.netcentric.cq.tools.actool.aem;
 
 /** OSGi service to encapulate AEM crypto support (to make it optional) */
-public interface AemCryptoSupport {
+public abstract class AemCryptoSupport {
 
-    public String unprotect(String password);
+    public abstract String unprotect(String password);
 
-    boolean isProtected(String password);
+    /**
+     * Copied from CryptoImpl, need it separately to be able to check if decryption is necessary before CryptoSupport is loaded
+     */
+    public static boolean isProtected(String text) {
+        return text != null && text.length() > 2 && text.charAt(0) == '{' && text.charAt(text.length() - 1) == '}' && text.length() % 2 == 0 && text.lastIndexOf('{') == 0;
+    }
 
 }
