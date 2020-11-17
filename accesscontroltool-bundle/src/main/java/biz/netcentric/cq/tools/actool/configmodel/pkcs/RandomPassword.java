@@ -1,4 +1,4 @@
-package biz.netcentric.cq.tools.actool.configmodel;
+package biz.netcentric.cq.tools.actool.configmodel.pkcs;
 
 import java.security.SecureRandom;
 import java.util.Random;

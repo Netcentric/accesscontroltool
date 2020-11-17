@@ -17,19 +17,27 @@ import org.slf4j.LoggerFactory;
 import com.adobe.granite.crypto.CryptoException;
 import com.adobe.granite.crypto.CryptoSupport;
 
-@Component
-public class AemCryptoSupportImpl implements AemCryptoSupport {
+import biz.netcentric.cq.tools.actool.crypto.DecryptionService;
 
-    private static final Logger LOG = LoggerFactory.getLogger(AemCryptoSupportImpl.class);
+@Component
+public class AemCryptoDecryptionService implements DecryptionService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AemCryptoDecryptionService.class);
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private CryptoSupport cryptoSupport;
 
-    public String unprotect(String password) {
-        String abbreviatedPasswordHint = password.substring(0, 4)+"..";
+    
+    @Override
+    public String decrypt(String text) {
+        if (!cryptoSupport.isProtected(text)) {
+            LOG.debug("Given text is not encrypted and therefore doesn't need decryption: {}", text);
+            return text;
+        }
+        String abbreviatedPasswordHint = text.substring(0, 4)+"..";
         try {
-            String unprotected = cryptoSupport.unprotect(password);
-            LOG.debug("Unprotected {} to password with {} chars", abbreviatedPasswordHint, password.length());
+            String unprotected = cryptoSupport.unprotect(text);
+            LOG.debug("Decrypted {} to text with {} chars", abbreviatedPasswordHint, unprotected.length());
             return unprotected;
         } catch (CryptoException e) {
             throw new IllegalArgumentException("Invalid password string starting with '"+abbreviatedPasswordHint+"' (cannot be decrypted)", e);

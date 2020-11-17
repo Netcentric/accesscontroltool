@@ -54,14 +54,14 @@ import org.slf4j.LoggerFactory;
 import com.adobe.granite.keystore.KeyStoreNotInitialisedException;
 import com.adobe.granite.keystore.KeyStoreService;
 
-import biz.netcentric.cq.tools.actool.aem.AemCryptoSupport;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableInstallerService;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
-import biz.netcentric.cq.tools.actool.configmodel.Key;
-import biz.netcentric.cq.tools.actool.configmodel.RandomPassword;
+import biz.netcentric.cq.tools.actool.configmodel.pkcs.Key;
+import biz.netcentric.cq.tools.actool.configmodel.pkcs.RandomPassword;
+import biz.netcentric.cq.tools.actool.crypto.DecryptionService;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.Constants;
@@ -90,8 +90,8 @@ public class AuthorizableInstallerServiceImpl implements
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policyOption=ReferencePolicyOption.GREEDY)
     ImpersonationInstallerServiceImpl impersonationInstallerService;
     
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
-    volatile AemCryptoSupport cryptoSupport;
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    DecryptionService decryptionService;
     
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
     volatile KeyStoreService keyStoreService;
@@ -218,9 +218,9 @@ public class AuthorizableInstallerServiceImpl implements
         for (Entry<String, Key> entry : keys.entrySet()) {
             Certificate certificate = entry.getValue().getCertificate();
             if (certificate != null) {
-                keyStoreService.addKeyStoreKeyEntry(resourceResolver, userId, entry.getKey(), entry.getValue().getPrivateKey(cryptoSupport), new Certificate[] {certificate});
+                keyStoreService.addKeyStoreKeyEntry(resourceResolver, userId, entry.getKey(), entry.getValue().getPrivateKey(), new Certificate[] {certificate});
             } else {
-                keyStoreService.addKeyStoreKeyPair(resourceResolver, userId, entry.getValue().getKeyPair(cryptoSupport), entry.getKey());
+                keyStoreService.addKeyStoreKeyPair(resourceResolver, userId, entry.getValue().getKeyPair(), entry.getKey());
             }
             installLog.addMessage(LOG, "Added key with alias '"+ entry.getKey() + "' to keystore of user '" + userId + "'");
         }
@@ -233,25 +233,16 @@ public class AuthorizableInstallerServiceImpl implements
         authorizableToInstall.changePassword(password);
     }
 
-
     private String getPassword(final AuthorizableConfigBean authorizableConfigBean)
             throws AuthorizableCreatorException {
         try {
             String password = authorizableConfigBean.getPassword();
-            if (StringUtils.isNotBlank(password) && password.matches("\\{.+}")) {
-                if (cryptoSupport == null) {
-                    throw new IllegalArgumentException(
-                            "Password with {...} syntax is used but AEM CryptoSupport is missing to unprotect password.");
-                }
-                password = cryptoSupport.unprotect(password);
-            }
-            return password;
-        } catch (IllegalArgumentException e) {
+            return decryptionService.decrypt(password);
+        } catch (UnsupportedOperationException e) {
             throw new AuthorizableCreatorException(
                     "Could not decrypt password for user " + authorizableConfigBean.getAuthorizableId() + ": " + e);
         }
     }
-
 
     /** This is only relevant for members that point to groups/users not contained in configuration.
      * {@link biz.netcentric.cq.tools.actool.configreader.YamlConfigurationMerger#ensureIsMemberOfIsUsedWherePossible()} ensures that
@@ -906,8 +897,5 @@ public class AuthorizableInstallerServiceImpl implements
         }
         return authorizableSet;
     }
-
-
-
 
 }

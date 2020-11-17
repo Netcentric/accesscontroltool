@@ -9,10 +9,7 @@
 package biz.netcentric.cq.tools.actool.configreader;
 
 import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.spec.InvalidKeySpecException;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,7 +39,9 @@ import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
-import biz.netcentric.cq.tools.actool.configmodel.Key;
+import biz.netcentric.cq.tools.actool.configmodel.pkcs.Key;
+import biz.netcentric.cq.tools.actool.configmodel.pkcs.PrivateKeyDecryptor;
+import biz.netcentric.cq.tools.actool.crypto.DecryptionService;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
@@ -101,9 +100,14 @@ public class YamlConfigReader implements ConfigReader {
 
     private static final String USER_CONFIG_IMPERSONATION_ALLOWED_FOR = "impersonationAllowedFor";
     
-    
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
+
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    DecryptionService decryptionService;
+
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    PrivateKeyDecryptor privateKeyDecryptor;
 
     @Override
     @SuppressWarnings("rawtypes")
@@ -434,7 +438,7 @@ public class YamlConfigReader implements ConfigReader {
             }
             try {
                 setupAuthorizableKeys(authorizableConfigBean, (Map<String, Object>) configObjUserConfigKeys);
-            } catch (InvalidKeyException | InvalidKeySpecException | NoSuchAlgorithmException | CertificateException | IOException e) {
+            } catch (GeneralSecurityException|IOException e) {
                 throw new InvalidAuthorizableException("Invalid key format given", e);
             }
         }
@@ -452,7 +456,7 @@ public class YamlConfigReader implements ConfigReader {
         
     }
 
-    private void setupAuthorizableKeys(final AuthorizableConfigBean authorizableConfigBean, Map<String, Object> keys) throws InvalidKeyException, InvalidAuthorizableException, InvalidKeySpecException, NoSuchAlgorithmException, CertificateException, IOException {
+    private void setupAuthorizableKeys(final AuthorizableConfigBean authorizableConfigBean, Map<String, Object> keys) throws InvalidAuthorizableException, IOException, GeneralSecurityException {
         Map<String, Key> parsedKeys = new HashMap<>();
         for (Entry<String, Object> entry : keys.entrySet()) {
             // ensure correct format
@@ -464,9 +468,9 @@ public class YamlConfigReader implements ConfigReader {
             // TODO: make sure that all fields are strings
             final Key key;
             if (StringUtils.isNotBlank(keyFields.get(USER_CONFIG_KEY_CERTIFICATE))) {
-                key = Key.createFromPrivateKeyAndCertificate(keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_CERTIFICATE));
+                key = Key.createFromPrivateKeyAndCertificate(decryptionService, keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_CERTIFICATE), privateKeyDecryptor);
             } else {
-                key = Key.createFromKeyPair(keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_PUBLIC));
+                key = Key.createFromKeyPair(decryptionService, keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_PUBLIC), privateKeyDecryptor);
             }
             parsedKeys.put(entry.getKey(), key);
         }

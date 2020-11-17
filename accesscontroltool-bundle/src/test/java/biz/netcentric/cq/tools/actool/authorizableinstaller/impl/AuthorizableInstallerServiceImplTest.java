@@ -54,11 +54,11 @@ import org.mockito.stubbing.Answer;
 
 import com.adobe.granite.crypto.CryptoException;
 
-import biz.netcentric.cq.tools.actool.aem.AemCryptoSupport;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
+import biz.netcentric.cq.tools.actool.crypto.DecryptionService;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 
 @RunWith(Enclosed.class)
@@ -298,7 +298,6 @@ public class AuthorizableInstallerServiceImplTest {
         }
     }
 
-    @RunWith(Parameterized.class)
     public static final class SetUserPassword {
 
         private static final String UNPROTECTED_PASSWORD = "unprotected_pass";
@@ -307,47 +306,28 @@ public class AuthorizableInstallerServiceImplTest {
         private User user;
 
         @Mock
-        private AemCryptoSupport cryptoSupportMock;
+        private DecryptionService decryptionService;
 
         private AuthorizableInstallerServiceImpl service;
-
-        private String password;
-        private String expectedPassword;
-
-        public SetUserPassword(String password, String expectedPassword) {
-            this.password = password;
-            this.expectedPassword = expectedPassword;
-        }
-
-        @Parameterized.Parameters
-        public static Collection<Object[]> data() {
-            return Arrays.asList(new Object[][] {
-                    { "{some_protected_pass}", UNPROTECTED_PASSWORD },
-                    { "bracketsAtTheEnd{pass}", "bracketsAtTheEnd{pass}" },
-                    { "{pass}bracketsAtTheStart", "{pass}bracketsAtTheStart" },
-                    { "bracketsIn{pass}TheMiddle", "bracketsIn{pass}TheMiddle" },
-                    { "noBrackets", "noBrackets" },
-            });
-        }
 
         @Before
         public void setUp() throws CryptoException {
             MockitoAnnotations.initMocks(this);
 
             service = new AuthorizableInstallerServiceImpl();
-            service.cryptoSupport = cryptoSupportMock;
+            service.decryptionService = decryptionService;
 
-            doReturn(UNPROTECTED_PASSWORD).when(cryptoSupportMock).unprotect(anyString());
+            doReturn(UNPROTECTED_PASSWORD).when(decryptionService).decrypt(anyString());
         }
 
         @Test
         public void test() throws RepositoryException, AuthorizableCreatorException {
             final AuthorizableConfigBean bean = new AuthorizableConfigBean();
-            bean.setPassword(password);
+            bean.setPassword("{some_protected_pass1}");
 
             service.setUserPassword(bean, user);
 
-            verify(user).changePassword(eq(expectedPassword));
+            verify(user).changePassword(eq(UNPROTECTED_PASSWORD));
         }
     }
 }

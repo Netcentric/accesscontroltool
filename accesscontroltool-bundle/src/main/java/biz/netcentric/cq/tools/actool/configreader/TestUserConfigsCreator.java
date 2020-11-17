@@ -15,22 +15,20 @@ import java.util.Map;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.aem.AemCryptoSupport;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.AutoCreateTestUsersConfig;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
+import biz.netcentric.cq.tools.actool.crypto.DecryptionService;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
+import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService;
 
 @Component(service=TestUserConfigsCreator.class)
 public class TestUserConfigsCreator {
@@ -40,8 +38,8 @@ public class TestUserConfigsCreator {
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     ExtendedSlingSettingsService slingSettingsService;
 
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
-    volatile AemCryptoSupport cryptoSupport;
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    DecryptionService decryptionService;
 
     YamlMacroElEvaluator elEvaluator = null;
     
@@ -95,13 +93,11 @@ public class TestUserConfigsCreator {
                     password = testUserAuthId;
                 }
 
-                if (password.matches("\\{.+}") && cryptoSupport != null) {
-                    try {
-                        password = cryptoSupport.unprotect(password);
-                    } catch (IllegalArgumentException e) {
+                try {
+                    password = decryptionService.decrypt(password);
+                } catch (UnsupportedOperationException e) {
                         throw new IllegalArgumentException("Could not unprotect password " + password + " as given in "
                                 + GlobalConfiguration.KEY_AUTOCREATE_TEST_USERS);
-                    }
                 }
                 testUserConfigBean.setPassword(password);
 

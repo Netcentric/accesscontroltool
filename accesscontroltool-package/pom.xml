@@ -50,16 +50,6 @@
             <version>${project.version}</version>
             <type>content-package</type>
         </dependency>
-        <!-- due to https://bugs.openjdk.java.net/browse/JDK-8231581 OOTB JRE is not sufficient -->
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcpkix-jdk15on</artifactId>
-        </dependency>
-        <!-- must be direct dependency to be embedded -->
-        <dependency>
-            <artifactId>bcprov-jdk15on</artifactId>
-            <groupId>org.bouncycastle</groupId>
-        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -105,12 +95,6 @@
                         <embedded>
                             <artifactId>accesscontroltool-startuphook-bundle</artifactId>
                             <target>/apps/netcentric/actool/install/27</target>
-                        </embedded>
-                        <embedded>
-                            <artifactId>bcprov-jdk15on</artifactId>
-                        </embedded>
-                        <embedded>
-                            <artifactId>bcpkix-jdk15on</artifactId>
                         </embedded>
                     </embeddeds>
                     <subPackages>
