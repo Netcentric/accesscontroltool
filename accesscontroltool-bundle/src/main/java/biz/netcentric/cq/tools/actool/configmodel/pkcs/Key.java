@@ -33,7 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.aem.AemCryptoSupport;
+import biz.netcentric.cq.tools.actool.crypto.DecryptionService;
 
 /** Class encapsulating a private key together with either a full certificate or just the public key. */
 public class Key {
@@ -44,20 +44,20 @@ public class Key {
     private final PrivateKey privateKey; // unencrypted
     private final X509Certificate certificate;
 
-    public static Key createFromKeyPair(AemCryptoSupport cryptoSupport, String pemPkcs8PrivateKey, String encryptedPrivateKeyPassword,
+    public static Key createFromKeyPair(DecryptionService decryptionService, String pemPkcs8PrivateKey, String encryptedPrivateKeyPassword,
             String pemDerPublicKey, PrivateKeyDecryptor privateKeyDecryptor)
             throws IOException, GeneralSecurityException {
-        return new Key(cryptoSupport, pemPkcs8PrivateKey, encryptedPrivateKeyPassword, pemDerPublicKey, null, privateKeyDecryptor);
+        return new Key(decryptionService, pemPkcs8PrivateKey, encryptedPrivateKeyPassword, pemDerPublicKey, null, privateKeyDecryptor);
     }
 
-    public static Key createFromPrivateKeyAndCertificate(AemCryptoSupport cryptoSupport, String pemPkcs8PrivateKey,
+    public static Key createFromPrivateKeyAndCertificate(DecryptionService decryptionService, String pemPkcs8PrivateKey,
             String encryptedPrivateKeyPassword,
             String pemCertificate, PrivateKeyDecryptor privateKeyDecryptor)
             throws IOException, GeneralSecurityException {
-        return new Key(cryptoSupport, pemPkcs8PrivateKey, encryptedPrivateKeyPassword, null, pemCertificate, privateKeyDecryptor);
+        return new Key(decryptionService, pemPkcs8PrivateKey, encryptedPrivateKeyPassword, null, pemCertificate, privateKeyDecryptor);
     }
 
-    private Key(AemCryptoSupport cryptoSupport, String pemPkcs8PrivateKey, String encryptedPrivateKeyPassword, String pemDerPublicKey,
+    private Key(DecryptionService decryptionService, String pemPkcs8PrivateKey, String encryptedPrivateKeyPassword, String pemDerPublicKey,
             String pemCertificate, PrivateKeyDecryptor privateKeyDecryptor)
             throws IOException, GeneralSecurityException {
         super();
@@ -83,22 +83,12 @@ public class Key {
             throw new InvalidKeyException("The private key must not be blank!");
         }
 
-        if (AemCryptoSupport.isProtected(pemPkcs8PrivateKey)) {
-            pemPkcs8PrivateKey = cryptoSupport.unprotect(pemPkcs8PrivateKey);
-        }
+        pemPkcs8PrivateKey = decryptionService.decrypt(pemPkcs8PrivateKey);
 
         DerData derData = DerData.parseFromPem(pemPkcs8PrivateKey);
         switch(derData.getType()) {
             case ENCRYPTED_PRIVATE_KEY:
-                if (cryptoSupport == null) {
-                    throw new IllegalArgumentException("CryptoSupport has not been provided but it is required to deal with PKCS#8 keys.");
-                }
-                final String keyPassword;
-                if (AemCryptoSupport.isProtected(encryptedPrivateKeyPassword)) {
-                    keyPassword = cryptoSupport.unprotect(encryptedPrivateKeyPassword);
-                } else {
-                    keyPassword = encryptedPrivateKeyPassword;
-                }
+                String keyPassword = decryptionService.decrypt(encryptedPrivateKeyPassword);
                 privateKey = privateKeyDecryptor.decrypt(keyPassword.toCharArray(), derData.getData());
                 break;
             case PRIVATE_KEY:

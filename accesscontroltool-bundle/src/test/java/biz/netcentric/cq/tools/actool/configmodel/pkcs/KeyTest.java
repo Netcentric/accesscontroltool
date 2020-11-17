@@ -13,21 +13,17 @@ import org.bouncycastle.pkcs.PKCSException;
 import org.junit.Before;
 import org.junit.Test;
 
-import biz.netcentric.cq.tools.actool.aem.AemCryptoSupport;
-import biz.netcentric.cq.tools.actool.configmodel.SimpleAEMCryptoSupport;
-import biz.netcentric.cq.tools.actool.configmodel.pkcs.BouncycastlePkcs8EncryptedPrivateKeyDecryptor;
-import biz.netcentric.cq.tools.actool.configmodel.pkcs.JcaPkcs8EncryptedPrivateKeyDecryptor;
-import biz.netcentric.cq.tools.actool.configmodel.pkcs.Key;
-import biz.netcentric.cq.tools.actool.configmodel.pkcs.PrivateKeyDecryptor;
+import biz.netcentric.cq.tools.actool.configmodel.TestDecryptionService;
+import biz.netcentric.cq.tools.actool.crypto.DecryptionService;
 
 public class KeyTest {
 
-    private AemCryptoSupport cryptoSupport;
+    private DecryptionService descryptionService;
     private PrivateKeyDecryptor privateKeyDecryptor;
 
     @Before
     public void setUp() {
-        cryptoSupport = new SimpleAEMCryptoSupport();
+        descryptionService = new TestDecryptionService();
         privateKeyDecryptor = new JcaPkcs8EncryptedPrivateKeyDecryptor();
     }
 
@@ -37,7 +33,7 @@ public class KeyTest {
                 InputStream inputPemDer = this.getClass().getResourceAsStream("example1_rsa_pub")) {
             String privateKey = IOUtils.toString(inputPkcs8, StandardCharsets.US_ASCII);
             String publicKey = IOUtils.toString(inputPemDer, StandardCharsets.US_ASCII);
-            Key key = Key.createFromKeyPair(cryptoSupport, privateKey, "{password}", publicKey, privateKeyDecryptor);
+            Key key = Key.createFromKeyPair(descryptionService, privateKey, "{password}", publicKey, privateKeyDecryptor);
             key.getKeyPair();
             key.getPrivateKey();
         }
@@ -49,7 +45,7 @@ public class KeyTest {
                 InputStream inputPemDer = this.getClass().getResourceAsStream("example1_dsa_pub")) {
             String privateKey = IOUtils.toString(inputPkcs8, StandardCharsets.US_ASCII);
             String publicKey = IOUtils.toString(inputPemDer, StandardCharsets.US_ASCII);
-            Key key = Key.createFromKeyPair(cryptoSupport, privateKey, "{password}", publicKey, privateKeyDecryptor);
+            Key key = Key.createFromKeyPair(descryptionService, privateKey, "{password}", publicKey, privateKeyDecryptor);
             key.getKeyPair();
             key.getPrivateKey();
         }
@@ -61,7 +57,7 @@ public class KeyTest {
                 InputStream inputPemDer = this.getClass().getResourceAsStream("example5_rsa.crt")) {
             String privateKey = IOUtils.toString(inputPkcs8, StandardCharsets.US_ASCII);
             String publicKey = IOUtils.toString(inputPemDer, StandardCharsets.US_ASCII);
-            Key.createFromPrivateKeyAndCertificate(cryptoSupport, privateKey, "{password}", publicKey, privateKeyDecryptor);
+            Key.createFromPrivateKeyAndCertificate(descryptionService, privateKey, "{password}", publicKey, privateKeyDecryptor);
         }
     }
 
@@ -72,7 +68,7 @@ public class KeyTest {
                 InputStream inputPemCert = this.getClass().getResourceAsStream("example5_rsa.crt")) {
             String privateKey = IOUtils.toString(inputPkcs8, StandardCharsets.US_ASCII);
             String certificate = IOUtils.toString(inputPemCert, StandardCharsets.US_ASCII);
-            Key key = Key.createFromPrivateKeyAndCertificate(cryptoSupport, privateKey, "{password}", certificate, privateKeyDecryptor);
+            Key key = Key.createFromPrivateKeyAndCertificate(descryptionService, privateKey, "{password}", certificate, privateKeyDecryptor);
             key.getKeyPair();
         }
     }
@@ -84,7 +80,7 @@ public class KeyTest {
                 InputStream inputPemCert = this.getClass().getResourceAsStream("example5_rsa.crt")) {
             String privateKey = IOUtils.toString(inputPkcs8, StandardCharsets.US_ASCII);
             String certificate = IOUtils.toString(inputPemCert, StandardCharsets.US_ASCII);
-            Key key = Key.createFromPrivateKeyAndCertificate(cryptoSupport, privateKey, "{password}", certificate, privateKeyDecryptor);
+            Key key = Key.createFromPrivateKeyAndCertificate(descryptionService, privateKey, "{password}", certificate, privateKeyDecryptor);
             key.getKeyPair();
         }
     }
@@ -95,7 +91,7 @@ public class KeyTest {
                 InputStream inputPemDer = this.getClass().getResourceAsStream("example1_rsa_pub")) {
             String privateKey = IOUtils.toString(inputPkcs8, StandardCharsets.US_ASCII);
             String publicKey = IOUtils.toString(inputPemDer, StandardCharsets.US_ASCII);
-            Key.createFromKeyPair(cryptoSupport, privateKey, "{password}", publicKey, privateKeyDecryptor);
+            Key.createFromKeyPair(descryptionService, privateKey, "{password}", publicKey, privateKeyDecryptor);
         }
     }
 
@@ -105,7 +101,7 @@ public class KeyTest {
                 InputStream inputPemDer = this.getClass().getResourceAsStream("example1_rsa_pub")) {
             String privateKey = IOUtils.toString(inputPkcs8, StandardCharsets.US_ASCII);
             String publicKey = IOUtils.toString(inputPemDer, StandardCharsets.US_ASCII);
-            Key.createFromKeyPair(cryptoSupport, privateKey, "{password}", publicKey, privateKeyDecryptor);
+            Key.createFromKeyPair(descryptionService, privateKey, "{password}", publicKey, privateKeyDecryptor);
         }
     }
 
@@ -115,7 +111,7 @@ public class KeyTest {
                 InputStream inputPemDer = this.getClass().getResourceAsStream("example1_rsa_pub")) {
             String privateKey = IOUtils.toString(inputPkcs8, StandardCharsets.US_ASCII);
             String publicKey = IOUtils.toString(inputPemDer, StandardCharsets.US_ASCII);
-            Key.createFromKeyPair(cryptoSupport, privateKey, "   ", publicKey, privateKeyDecryptor);
+            Key.createFromKeyPair(descryptionService, privateKey, "   ", publicKey, privateKeyDecryptor);
         }
     }
 
@@ -125,7 +121,7 @@ public class KeyTest {
                 InputStream inputPemDer = this.getClass().getResourceAsStream("example4_rsa_pub")) {
             String privateKey = IOUtils.toString(inputPkcs8, StandardCharsets.US_ASCII);
             String publicKey = IOUtils.toString(inputPemDer, StandardCharsets.US_ASCII);
-            Key.createFromKeyPair(cryptoSupport, privateKey, "{password}", publicKey, privateKeyDecryptor);
+            Key.createFromKeyPair(descryptionService, privateKey, "{password}", publicKey, privateKeyDecryptor);
         }
     }
 
@@ -135,7 +131,7 @@ public class KeyTest {
                 InputStream inputPemDer = this.getClass().getResourceAsStream("example6_rsa.crt")) {
             String privateKey = IOUtils.toString(inputPkcs8, StandardCharsets.US_ASCII);
             String certificate = IOUtils.toString(inputPemDer, StandardCharsets.US_ASCII);
-            Key key = Key.createFromPrivateKeyAndCertificate(cryptoSupport, privateKey, "", certificate, privateKeyDecryptor);
+            Key key = Key.createFromPrivateKeyAndCertificate(descryptionService, privateKey, "", certificate, privateKeyDecryptor);
             key.getKeyPair();
             key.getPrivateKey();
         }

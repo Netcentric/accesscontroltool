@@ -54,7 +54,6 @@ import org.slf4j.LoggerFactory;
 import com.adobe.granite.keystore.KeyStoreNotInitialisedException;
 import com.adobe.granite.keystore.KeyStoreService;
 
-import biz.netcentric.cq.tools.actool.aem.AemCryptoSupport;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableInstallerService;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
@@ -62,6 +61,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.pkcs.Key;
 import biz.netcentric.cq.tools.actool.configmodel.pkcs.RandomPassword;
+import biz.netcentric.cq.tools.actool.crypto.DecryptionService;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.Constants;
@@ -90,8 +90,8 @@ public class AuthorizableInstallerServiceImpl implements
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policyOption=ReferencePolicyOption.GREEDY)
     ImpersonationInstallerServiceImpl impersonationInstallerService;
     
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
-    volatile AemCryptoSupport cryptoSupport;
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    DecryptionService decryptionService;
     
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
     volatile KeyStoreService keyStoreService;
@@ -237,15 +237,8 @@ public class AuthorizableInstallerServiceImpl implements
             throws AuthorizableCreatorException {
         try {
             String password = authorizableConfigBean.getPassword();
-            if (AemCryptoSupport.isProtected(password)) {
-                if (cryptoSupport == null) {
-                    throw new IllegalArgumentException(
-                            "Password with {...} syntax is used but AEM CryptoSupport is missing to unprotect password.");
-                }
-                password = cryptoSupport.unprotect(password);
-            }
-            return password;
-        } catch (IllegalArgumentException e) {
+            return decryptionService.decrypt(password);
+        } catch (UnsupportedOperationException e) {
             throw new AuthorizableCreatorException(
                     "Could not decrypt password for user " + authorizableConfigBean.getAuthorizableId() + ": " + e);
         }
@@ -904,8 +897,5 @@ public class AuthorizableInstallerServiceImpl implements
         }
         return authorizableSet;
     }
-
-
-
 
 }

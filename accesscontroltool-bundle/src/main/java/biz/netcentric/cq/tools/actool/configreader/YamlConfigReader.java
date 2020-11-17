@@ -30,13 +30,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.aem.AemCryptoSupport;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.AcesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
@@ -44,6 +41,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.pkcs.Key;
 import biz.netcentric.cq.tools.actool.configmodel.pkcs.PrivateKeyDecryptor;
+import biz.netcentric.cq.tools.actool.crypto.DecryptionService;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
@@ -105,8 +103,8 @@ public class YamlConfigReader implements ConfigReader {
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
 
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
-    volatile AemCryptoSupport cryptoSupport;
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    DecryptionService decryptionService;
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     PrivateKeyDecryptor privateKeyDecryptor;
@@ -470,9 +468,9 @@ public class YamlConfigReader implements ConfigReader {
             // TODO: make sure that all fields are strings
             final Key key;
             if (StringUtils.isNotBlank(keyFields.get(USER_CONFIG_KEY_CERTIFICATE))) {
-                key = Key.createFromPrivateKeyAndCertificate(cryptoSupport, keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_CERTIFICATE), privateKeyDecryptor);
+                key = Key.createFromPrivateKeyAndCertificate(decryptionService, keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_CERTIFICATE), privateKeyDecryptor);
             } else {
-                key = Key.createFromKeyPair(cryptoSupport, keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_PUBLIC), privateKeyDecryptor);
+                key = Key.createFromKeyPair(decryptionService, keyFields.get(USER_CONFIG_KEY_PRIVATE), keyFields.get(USER_CONFIG_KEY_PRIVATE_PASSWORD), keyFields.get(USER_CONFIG_KEY_PUBLIC), privateKeyDecryptor);
             }
             parsedKeys.put(entry.getKey(), key);
         }
