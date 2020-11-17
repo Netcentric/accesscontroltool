@@ -1,4 +1,4 @@
-package biz.netcentric.cq.tools.actool.configmodel;
+package biz.netcentric.cq.tools.actool.configmodel.pkcs;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,6 +14,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import biz.netcentric.cq.tools.actool.aem.AemCryptoSupport;
+import biz.netcentric.cq.tools.actool.configmodel.SimpleAEMCryptoSupport;
 import biz.netcentric.cq.tools.actool.configmodel.pkcs.BouncycastlePkcs8EncryptedPrivateKeyDecryptor;
 import biz.netcentric.cq.tools.actool.configmodel.pkcs.JcaPkcs8EncryptedPrivateKeyDecryptor;
 import biz.netcentric.cq.tools.actool.configmodel.pkcs.Key;

@@ -16,7 +16,7 @@ import org.bouncycastle.pkcs.PKCSException;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Component;
 
-@Component(property = Constants.SERVICE_RANKING +":Integer=1000")
+// this service is conditionally enabled in the Activator
 public class BouncycastlePkcs8EncryptedPrivateKeyDecryptor implements PrivateKeyDecryptor {
 
     @Override

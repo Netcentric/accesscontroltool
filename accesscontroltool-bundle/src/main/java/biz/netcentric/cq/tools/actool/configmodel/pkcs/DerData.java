@@ -6,25 +6,25 @@ import java.util.regex.Pattern;
 public class DerData {
     final byte[] data;
     final DerType type;
-    
- // as defined in https://tools.ietf.org/html/rfc7468#section-13
+
+    // as defined in https://tools.ietf.org/html/rfc7468#section-13 (lax version)
     static final Pattern PUBLIC_KEY_PATTERN = Pattern.compile(
-            "-+BEGIN PUBLIC KEY[^-]*-+(?:\\s|\\r|\\n)+" + // Header
-                    "([a-z0-9+/=\\r\\n]+)" + // Base64 text
+            "-+BEGIN PUBLIC KEY[^-]*-+(?:\\s)+" + // Header
+                    "([a-z0-9+/=\\s]+)" + // Base64 text
                     "-+END PUBLIC KEY[^-]*-+", // FootDer
             Pattern.CASE_INSENSITIVE);
 
-    // https://tools.ietf.org/html/rfc7468#section-10
+    // https://tools.ietf.org/html/rfc7468#section-10 (lax version)
     static final Pattern PRIVATE_KEY_PATTERN = Pattern.compile(
-            "-+BEGIN PRIVATE KEY[^-]*-+(?:\\s|\\r|\\n)+" + // Header
-                    "([a-z0-9+/=\\r\\n]+)" + // Base64 text
+            "-+BEGIN PRIVATE KEY[^-]*-+(?:\\s)+" + // Header
+                    "([a-z0-9+/=\\s]+)" + // Base64 text
                     "-+END PRIVATE KEY[^-]*-+", // Footer
             Pattern.CASE_INSENSITIVE);
 
-    // https://tools.ietf.org/html/rfc7468#section-11
+    // https://tools.ietf.org/html/rfc7468#section-11 (lax version)
     static final Pattern ENCRYPTED_PRIVATE_KEY_PATTERN = Pattern.compile(
-            "-+BEGIN ENCRYPTED PRIVATE KEY[^-]*-+(?:\\s|\\r|\\n)+" + // Header
-                    "([a-z0-9+/=\\r\\n]+)" + // Base64 text
+            "-+BEGIN ENCRYPTED PRIVATE KEY[^-]*-+(?:\\s)+" + // Header
+                    "([a-z0-9+/=\\s]+)" + // Base64 text
                     "-+END ENCRYPTED PRIVATE KEY[^-]*-+", // Footer
             Pattern.CASE_INSENSITIVE);
 
