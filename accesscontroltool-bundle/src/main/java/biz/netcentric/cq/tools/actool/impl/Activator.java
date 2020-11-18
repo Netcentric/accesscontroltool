@@ -10,10 +10,8 @@ import org.osgi.framework.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.aem.AemCryptoDecryptionService;
 import biz.netcentric.cq.tools.actool.configmodel.pkcs.BouncycastlePkcs8EncryptedPrivateKeyDecryptor;
 import biz.netcentric.cq.tools.actool.configmodel.pkcs.PrivateKeyDecryptor;
-import biz.netcentric.cq.tools.actool.crypto.DecryptionService;
 
 @Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}")
 public class Activator implements BundleActivator {
@@ -32,23 +30,11 @@ public class Activator implements BundleActivator {
             LOG.info("Can not load Bouncycastle, probably not installed!");
             LOG.debug("Exception while loading Bouncy Castle", t);
         }
-        
-        // try to load Crypto Support
-        try {
-            AemCryptoDecryptionService decryptionService = new AemCryptoDecryptionService();
-            Dictionary<String, Object> properties = new Hashtable<>();
-            properties.put(Constants.SERVICE_RANKING, Integer.valueOf(1000));
-            context.registerService(DecryptionService.class, decryptionService, properties);
-        } catch (Throwable t) {
-            LOG.info("Can not load AemCryptoDecryptionService, probably AEMs CryptoSupport is not running!");
-            LOG.debug("Exception while loading AemCryptoDecryptionService", t);
-        }
     }
 
     @Override
     public void stop(BundleContext context) throws Exception {
-        // TODO Auto-generated method stub
-
+        // Nothing to do as services are automatically unregistered when bundle stops
     }
 
 }

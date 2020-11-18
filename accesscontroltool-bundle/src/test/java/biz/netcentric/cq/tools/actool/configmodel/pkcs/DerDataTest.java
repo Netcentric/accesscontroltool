@@ -1,7 +1,10 @@
 package biz.netcentric.cq.tools.actool.configmodel.pkcs;
 
+import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -35,7 +38,7 @@ public class DerDataTest {
    
     @Test
     public void testFromLaxPem() throws InvalidKeyException {
-        String pem = buildPem(false, "VGVzdA==");
+        String pem = buildPem(false, "VGVz   dA==");
         assertDerData(pem, "Test".getBytes(StandardCharsets.US_ASCII));
     }
     
@@ -57,5 +60,14 @@ public class DerDataTest {
         DerData data = DerData.parseFromPem(pem);
         Assert.assertEquals(expectedType, data.getType());
         Assert.assertArrayEquals(expectedData, data.getData());
+    }
+    
+    
+    @Test
+    public void testCert() throws InvalidKeyException, CertificateException {
+        String pem = "-----BEGIN CERTIFICATE----- MIIDTjCCAjagAwIBAgIIYFkxjDzo/ZwwDQYJKoZIhvcNAQELBQAwZzELMAkGA1UEBhMCVVMxCzAJ BgNVBAgTAkNBMRYwFAYDVQQHEw1TYW4gRnJhbmNpc2NvMQ4wDAYDVQQKEwVBZG9iZTERMA8GA1UE CxMIU2VjdXJpdHkxEDAOBgNVBAMTB0NvbnNvbGUwHhcNMjAxMTEyMTMwNjIzWhcNMjExMTEyMTMw NjIzWjBnMQswCQYDVQQGEwJVUzELMAkGA1UECBMCQ0ExFjAUBgNVBAcTDVNhbiBGcmFuY2lzY28x DjAMBgNVBAoTBUFkb2JlMREwDwYDVQQLEwhTZWN1cml0eTEQMA4GA1UEAxMHQ29uc29sZTCCASIw DQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAIEmzZRXJs8r5SHJmlnii2dvGwuVz5mnK9qqY0rm pVbyvVt4epzCi692CD5k8c0GXFS+1CHnUsGNiqB19psYdZDi3G6TfT82H0aoVcDC0fUQUCyTyPWh ug77EaF9tMK7wVvsTn/Cf8rez+4mj9isTwLEmM20EeJ9BuLDObeFb0HQ/O3Mp9GD2s9dxFsUAlm7 asYzOIUoBJ3jmLl0GqWL8X5rejOQRCOX/WdmfNkZjTPCUXtKqAA0eSWP4eaeZEvfNsVd3CAP/pKv Of+tHBmU4O8Paus9jsZqpF+Ah53qB7g1X4g95fG24GIeSdRTIZZidg/Vi2ghV0eqgQwZcLpFop0C AwEAATANBgkqhkiG9w0BAQsFAAOCAQEATDn36jD2Auw3n9tSVTntXkhRBOMgMftIMtjyXgvU3auX a03W4kbLWoTOyeySUW46XyS4YhsEGAjJfjmmRTOcSaRBn9Xid26XqMVAX8xc2KByxbqf7Xl2B66M 3cTLqUordnwZc7eG2q9TJ6zisCQjxRSZaV5+i/NtLcxENp24qr7mCVfLzEf3dRsRgF5nBftVHNwN pAn339a7+X71YciE7omS02ZHjOlhEYcge8SckEKk1Kyi9lZyefgN5efbLU00HJBLY02cFr5YagNq /S/+6Bkx+4srLkSXXlDxlGJ62OI/sUjcIUs94905jScm83kBkC5ough5C+Qljl7ae3dz6g== -----END CERTIFICATE-----";
+        DerData data = DerData.parseFromPem(pem);
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        cf.generateCertificate(new ByteArrayInputStream(data.getData()));
     }
 }

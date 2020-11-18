@@ -8,6 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.aem;
 
+import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
@@ -19,7 +20,7 @@ import com.adobe.granite.crypto.CryptoSupport;
 
 import biz.netcentric.cq.tools.actool.crypto.DecryptionService;
 
-@Component
+@Component(property = Constants.SERVICE_RANKING + ":Integer=1000")
 public class AemCryptoDecryptionService implements DecryptionService {
 
     private static final Logger LOG = LoggerFactory.getLogger(AemCryptoDecryptionService.class);
@@ -27,7 +28,6 @@ public class AemCryptoDecryptionService implements DecryptionService {
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private CryptoSupport cryptoSupport;
 
-    
     @Override
     public String decrypt(String text) {
         if (!cryptoSupport.isProtected(text)) {

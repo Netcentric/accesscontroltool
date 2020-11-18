@@ -28,6 +28,13 @@ public class DerData {
                     "-+END ENCRYPTED PRIVATE KEY[^-]*-+", // Footer
             Pattern.CASE_INSENSITIVE);
 
+    // https://tools.ietf.org/html/rfc7468#section-5.1 (lax version)
+    static final Pattern CERTIFICATE_PATTERN = Pattern.compile(
+            "-+BEGIN CERTIFICATE[^-]*-+(?:\\s)+" + // Header
+                    "([a-z0-9+/=\\s]+)" + // Base64 text
+                    "-+END CERTIFICATE[^-]*-+", // Footer
+            Pattern.CASE_INSENSITIVE);
+
     public DerData(byte[] data, DerType type) {
         super();
         this.data = data;

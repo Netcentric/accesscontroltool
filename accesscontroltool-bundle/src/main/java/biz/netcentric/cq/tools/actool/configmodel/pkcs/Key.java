@@ -62,7 +62,11 @@ public class Key {
             throws IOException, GeneralSecurityException {
         super();
         if (!StringUtils.isBlank(pemCertificate)) {
-            try (ByteArrayInputStream input = new ByteArrayInputStream(pemCertificate.getBytes(StandardCharsets.US_ASCII))) {
+            DerData derData = DerData.parseFromPem(pemCertificate);
+            if (derData.getType() != DerType.CERTIFICATE) {
+                throw new InvalidKeyException("The given certificate is of wrong type " + derData.getType());
+            }
+            try (ByteArrayInputStream input = new ByteArrayInputStream(derData.getData())) {
                 certificate = getCertificate(input);
                 publicKey = null;
             }

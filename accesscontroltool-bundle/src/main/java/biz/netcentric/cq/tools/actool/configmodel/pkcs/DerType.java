@@ -9,7 +9,8 @@ public enum DerType {
 
     PUBLIC_KEY("Public Key", DerData.PUBLIC_KEY_PATTERN),
     PRIVATE_KEY("PKCS#8 Private Key", DerData.PRIVATE_KEY_PATTERN),
-    ENCRYPTED_PRIVATE_KEY("PKCS#8 Encrypted Private Key", DerData.ENCRYPTED_PRIVATE_KEY_PATTERN),;
+    ENCRYPTED_PRIVATE_KEY("PKCS#8 Encrypted Private Key", DerData.ENCRYPTED_PRIVATE_KEY_PATTERN),
+    CERTIFICATE("Certificate", DerData.CERTIFICATE_PATTERN);
     
     private final String label;
     private final Pattern pattern;

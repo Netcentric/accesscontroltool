@@ -52,6 +52,11 @@
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.framework</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.util.tracker</artifactId>
+            <version>1.5.1</version>
+        </dependency>
         <!-- Config Admin -->
         <dependency>
             <groupId>org.osgi</groupId>
