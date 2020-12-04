@@ -95,7 +95,7 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
             PersistableInstallationLogger history;
             try {
                 history = acService.installYamlFilesFromPackage(context
-                        .getPackage().getArchive(), context.getSession(), context.getOptions().getListener());
+                        .getPackage(), context.getSession(), context.getOptions().getListener());
 
             } catch (Exception e) {
                 // needed as root cause of PackageException is not reliably logged in AEM 6.2

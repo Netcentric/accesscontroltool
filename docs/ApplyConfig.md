@@ -69,7 +69,20 @@ If you would rather use the filevault-package-maven-plugin for building the pack
 </plugin>
 ```
 
-The `*.yaml` files are installed directly from the package content and respect the [run mode semantics](Configuration.md). Otherwise there is no limitation, so the YAML files will be picked up from anywhere in the package (as long as the parent node does not contain a `.` followed by one or multiple not matching run modes).
+The `*.yaml` files are installed directly from the package content and respect the [run mode semantics](Configuration.md). Otherwise there is no limitation, so the YAML files will be picked up from anywhere in the package (as long as the parent node does not contain a `.` followed by one or multiple not matching run modes). If you wish to limit where the YAML files are looked upon you can add a property `actool.hook.config.paths` in your package with a regular expression to match the desired paths:
+
+```
+<plugin>
+    <groupId>org.apache.jackrabbit</groupId>
+    <artifactId>filevault-package-maven-plugin</artifactId>
+    <configuration>
+        <properties>
+            <installhook.actool.class>biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook</installhook.actool.class>
+            <actool.hook.config.paths>/apps/myapp/acl.*</actool.hook.config.paths>
+        </properties>
+    </configuration>
+</plugin>
+```
 
 Although it is not necessary that the YAML files are covered by the filter rules of the `filter.xml`, this is recommended practice. That way you can see afterwards in the repository which YAML files have been processed. However if you would not let the `filter.xml` cover your YAML files, those files would still be processed by the installation hook.
 

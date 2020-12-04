@@ -9,7 +9,9 @@
 package biz.netcentric.cq.tools.actool.configreader;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.hamcrest.Matchers;
@@ -38,39 +40,93 @@ public class ConfigFilesRetrieverImplTest {
     }
 
     @Test
-    public void testIsRelevantConfiguration() {
+    public void testIsRelevantConfiguration() throws Exception {
         Set<String> currentRunmodes = new HashSet<String>(
                 Arrays.asList("samplecontent", "author", "netcentric", "crx3tar", "crx2", "local"));
 
         slingSettings = new ExtendedSlingSettingsServiceImpl(currentRunmodes);
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("", "fragments", slingSettings)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test", "fragments", slingSettings)));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments", slingSettings)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.publish", slingSettings)));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.author", slingSettings)));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.samplecontent", slingSettings)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yam", "fragments.samplecontent", slingSettings)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.samplecontent.publish",
-                slingSettings)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.foo.publish", slingSettings)));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.samplecontent.local", slingSettings)));
+        String configFilePaths=null;
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry(""), "fragments", slingSettings, null)));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry( "test"), "fragments", slingSettings, null)));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments", slingSettings, null)));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.publish", slingSettings, null)));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.author", slingSettings, null)));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.samplecontent", slingSettings, null)));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yam"), "fragments.samplecontent", slingSettings, null)));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.samplecontent.publish",
+                slingSettings, null)));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.foo.publish", slingSettings, null)));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.samplecontent.local", slingSettings, null)));
 
     }
 
     @Test
-    public void testIsRelevantConfigurationWithOrCombinations() {
+    public void testIsRelevantConfigurationWithOrCombinations() throws Exception {
         Set<String> currentRunmodes = new HashSet<String>(
                 Arrays.asList("samplecontent", "author", "netcentric", "crx3tar", "crx2", "local"));
         slingSettings = new ExtendedSlingSettingsServiceImpl(currentRunmodes);
         // testing 'or' combinations with
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.dev,local", slingSettings)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.int,prod", slingSettings)));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.dev,local", slingSettings, null)));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.int,prod", slingSettings, null)));
 
         // combined 'and' and 'or'
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.author.dev,author.local",
-                slingSettings)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration("test.yaml", "fragments.publish.dev,publish.local",
-                slingSettings)));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.author.dev,author.local",
+                slingSettings, null)));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.publish.dev,publish.local",
+                slingSettings, null)));
+    }
+
+    @Test
+    public void testIsRelevantConfigurationsFiltered() throws Exception {
+        Set<String> currentRunmodes = new HashSet<String>(
+                Arrays.asList("author"));
+        slingSettings = new ExtendedSlingSettingsServiceImpl(currentRunmodes);
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf","file.yaml"), "config.author", slingSettings, "/conf/.*")));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf","file.yaml"), "config.author", slingSettings, "/conf/test.*.yaml")));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf","file.yaml"), "config.author", slingSettings, "/conf/.*\\.yaml")));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf","file.yaml"), "config.author", slingSettings, "/nonconf.*")));
+
+    }
+
+    static class StubEntry implements ConfigFilesRetrieverImpl.PackageEntryOrNode {
+
+        private final String parentPath;
+        private final String name;
+
+        StubEntry(String name){
+           this.name=name;
+           this.parentPath="/";
+        }
+
+        StubEntry(String parentPath, String name){
+            this.parentPath=parentPath;
+            this.name=name;
+        }
+
+        @Override
+        public String getName() throws Exception {
+            return  name;
+        }
+
+        @Override
+        public String getPath() throws Exception {
+            return parentPath+"/"+name;
+        }
+
+        @Override
+        public List<ConfigFilesRetrieverImpl.PackageEntryOrNode> getChildren() throws Exception {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public boolean isDirectory() throws Exception {
+            return false;
+        }
+
+        @Override
+        public String getContentAsString() throws Exception {
+            throw new UnsupportedOperationException("not implemented for testing");
+        }
     }
 
 }
