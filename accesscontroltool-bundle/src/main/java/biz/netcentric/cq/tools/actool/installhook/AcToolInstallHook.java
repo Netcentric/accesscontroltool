@@ -38,7 +38,7 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
         switch (context.getPhase()) {
         case PREPARE:
             if (!shouldInstallInPhaseInstalled(context.getPackage())) {
-                
+
                 install(context);
             }
             break;
@@ -56,10 +56,11 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
     private boolean shouldInstallInPhaseInstalled(PackageProperties properties) {
         return Boolean.parseBoolean(properties.getProperty(PROPERTY_ACTOOL_INSTALL_AT_INSTALLED_PHASE));
     }
+
     private boolean forceInstallHookInCloud(PackageProperties properties) {
         return Boolean.parseBoolean(properties.getProperty(PROPERTY_ACTOOL_FORCE_INSTALLHOOK_IN_CLOUD));
     }
-    
+
     private void install(InstallContext context) throws PackageException {
         final ProgressTrackerListener listener = context.getOptions().getListener();
         /*
@@ -72,9 +73,10 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
             return;
         }
         alreadyRan = true;
-        
-        if(RuntimeHelper.isCloudReadyInstance() && !forceInstallHookInCloud(context.getPackage())) {
-            log("InstallHook is skipped by default in cloud (use package property 'actool.forceInstallHookInCloud = true' to force run)", listener);
+
+        if (RuntimeHelper.isCloudReadyInstance() && !forceInstallHookInCloud(context.getPackage())) {
+            log("InstallHook is skipped by default in cloud (use package property 'actool.forceInstallHookInCloud = true' to force run)",
+                    listener);
             return;
         }
 
@@ -106,7 +108,7 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
 
             if (!history.isSuccess()) {
                 throw new PackageException("AC Tool installation failed with "
-                        +history.getErrors().size()+ " errors. Check log for detailed error message(s)!");
+                        + history.getErrors().size() + " errors. Check log for detailed error message(s)!");
             } else {
                 log("Installed ACLs successfully through AcToolInstallHook!", listener);
             }

@@ -69,7 +69,7 @@ If you would rather use the filevault-package-maven-plugin for building the pack
 </plugin>
 ```
 
-The `*.yaml` files are installed directly from the package content and respect the [run mode semantics](Configuration.md). Otherwise there is no limitation, so the YAML files will be picked up from anywhere in the package (as long as the parent node does not contain a `.` followed by one or multiple not matching run modes). If you wish to limit where the YAML files are looked upon you can add a property `actool.hook.config.paths` in your package with a regular expression to match the desired paths:
+The `*.yaml` files are installed directly from the package content and respect the [run mode semantics](Configuration.md). Otherwise there is no limitation, so the YAML files will be picked up from anywhere in the package (as long as the parent node does not contain a `.` followed by one or multiple not matching run modes). If you wish to limit where the YAML files are looked upon you can add one or more package properties with a regular expression to match the desired paths. The properties names should start with `actool.hook.paths.patterns`:
 
 ```
 <plugin>
@@ -78,7 +78,8 @@ The `*.yaml` files are installed directly from the package content and respect t
     <configuration>
         <properties>
             <installhook.actool.class>biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook</installhook.actool.class>
-            <actool.hook.config.paths>/apps/myapp/acl.*</actool.hook.config.paths>
+            <actool.hook.paths.patterns.groups>/apps/myapp/acl/groups.*</actool.hook.paths.patterns.groups>
+            <actool.hook.paths.patterns.users>/apps/myapp/acl/users.*</actool.hook.paths.patterns.users>
         </properties>
     </configuration>
 </plugin>

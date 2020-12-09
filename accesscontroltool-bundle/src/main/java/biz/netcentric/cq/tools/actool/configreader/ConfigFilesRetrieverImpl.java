@@ -3,6 +3,7 @@ package biz.netcentric.cq.tools.actool.configreader;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -14,7 +15,6 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.commons.JcrUtils;
 import org.apache.jackrabbit.vault.fs.io.Archive;
 import org.apache.jackrabbit.vault.fs.io.Archive.Entry;
@@ -38,53 +38,22 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
 
-    @Override
-    public Map<String, String> getConfigFileContentFromNode(String rootPath, Session session) throws Exception {
-        Node rootNode = session.getNode(rootPath);
-        if (rootNode == null) {
-            throw new IllegalArgumentException("No configuration path configured! please check the configuration of AcService!");
-        }
-        Map<String, String> configurations = getConfigurations(new NodeInJcr(rootNode), null);
-        return configurations;
-    }
-
-    @Override
-    public Map<String, String> getConfigFileContentFromPackage(Archive archive, String configFilePaths) throws Exception {
-        Entry rootEntry = archive.getJcrRoot();
-        if (rootEntry == null) {
-            throw new IllegalStateException("Invalid package: It does not contain a JCR root element");
-        }
-        Map<String, String> configurations = getConfigurations(new EntryInPackage(archive, "", rootEntry), configFilePaths);
-        return configurations;
-    }
-
-    private Map<String, String> getConfigurations(PackageEntryOrNode configFileOrDir, String configFilePaths) throws Exception {
-        Map<String, String> configs = new TreeMap<String, String>();
-
-        for (PackageEntryOrNode entry : configFileOrDir.getChildren()) {
-            if (entry.isDirectory()) {
-                Map<String, String> resultsFromDir = getConfigurations(entry, configFilePaths);
-                configs.putAll(resultsFromDir);
-                continue;
+    static boolean isRelevantConfiguration(final PackageEntryOrNode entry, final String parentName,
+            ExtendedSlingSettingsService slingSettings, List<String> configFilePatterns) throws Exception {
+        boolean matchPattern = configFilePatterns.isEmpty();
+        for (String pathPattern : configFilePatterns) {
+            if (entry.getPath().matches(pathPattern)) {
+                matchPattern = true;
             }
-
-            if (isRelevantConfiguration(entry, configFileOrDir.getName(),slingSettingsService, configFilePaths)) {
-                LOG.debug("Found relevant YAML file {}", entry.getName());
-                configs.put(entry.getPath(), entry.getContentAsString());
-            }
-
         }
-        return configs;
-    }
-
-    static boolean isRelevantConfiguration(final PackageEntryOrNode entry, final String parentName, ExtendedSlingSettingsService slingSettings, String configFilePaths) throws Exception {
-
-        if ((StringUtils.isNotBlank(configFilePaths))&& !entry.getPath().matches(configFilePaths)) {
-            LOG.info("Skipped file '{}' because it didnt match config regex '{}'", entry.getPath(), configFilePaths);
+        if (!matchPattern) {
+            LOG.info("Skipped file '{}' because it didnt match path pattern", entry.getPath());
             return false;
         }
-        String entryName=entry.getName();
-        if (!entryName.endsWith(".yaml") && !entryName.equals("config") /* name 'config' without .yaml allowed for backwards compatibility */) {
+        String entryName = entry.getName();
+        if (!entryName.endsWith(".yaml") && !entryName.equals("config") /*
+                                                                         * name 'config' without .yaml allowed for backwards compatibility
+                                                                         */) {
             return false;
         }
 
@@ -116,11 +85,47 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
         return name.substring(positionDot + 1);
     }
 
+    @Override
+    public Map<String, String> getConfigFileContentFromNode(String rootPath, Session session) throws Exception {
+        Node rootNode = session.getNode(rootPath);
+        if (rootNode == null) {
+            throw new IllegalArgumentException("No configuration path configured! please check the configuration of AcService!");
+        }
+        Map<String, String> configurations = getConfigurations(new NodeInJcr(rootNode), Collections.<String> emptyList());
+        return configurations;
+    }
 
-    /**
-     * Internal representation of either a package entry or a node to be able to use one algorithm for both InstallHook/JMX scenarios.
-     */
-     static interface PackageEntryOrNode {
+    @Override
+    public Map<String, String> getConfigFileContentFromPackage(Archive archive, List<String> configFilePatterns) throws Exception {
+        Entry rootEntry = archive.getJcrRoot();
+        if (rootEntry == null) {
+            throw new IllegalStateException("Invalid package: It does not contain a JCR root element");
+        }
+        Map<String, String> configurations = getConfigurations(new EntryInPackage(archive, "", rootEntry), configFilePatterns);
+        return configurations;
+    }
+
+    private Map<String, String> getConfigurations(PackageEntryOrNode configFileOrDir, List<String> configFilePatterns) throws Exception {
+        Map<String, String> configs = new TreeMap<String, String>();
+
+        for (PackageEntryOrNode entry : configFileOrDir.getChildren()) {
+            if (entry.isDirectory()) {
+                Map<String, String> resultsFromDir = getConfigurations(entry, configFilePatterns);
+                configs.putAll(resultsFromDir);
+                continue;
+            }
+
+            if (isRelevantConfiguration(entry, configFileOrDir.getName(), slingSettingsService, configFilePatterns)) {
+                LOG.debug("Found relevant YAML file {}", entry.getName());
+                configs.put(entry.getPath(), entry.getContentAsString());
+            }
+
+        }
+        return configs;
+    }
+
+    /** Internal representation of either a package entry or a node to be able to use one algorithm for both InstallHook/JMX scenarios. */
+    static interface PackageEntryOrNode {
         String getName() throws Exception;
 
         String getPath() throws Exception;

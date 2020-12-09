@@ -18,6 +18,8 @@ import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableList;
+
 import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsServiceImpl;
 
 public class ConfigFilesRetrieverImplTest {
@@ -45,18 +47,27 @@ public class ConfigFilesRetrieverImplTest {
                 Arrays.asList("samplecontent", "author", "netcentric", "crx3tar", "crx2", "local"));
 
         slingSettings = new ExtendedSlingSettingsServiceImpl(currentRunmodes);
-        String configFilePaths=null;
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry(""), "fragments", slingSettings, null)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry( "test"), "fragments", slingSettings, null)));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments", slingSettings, null)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.publish", slingSettings, null)));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.author", slingSettings, null)));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.samplecontent", slingSettings, null)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yam"), "fragments.samplecontent", slingSettings, null)));
+        List<String> configFilePatterns = Collections.emptyList();
+        Assert.assertFalse(
+                (ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry(""), "fragments", slingSettings, configFilePatterns)));
+        Assert.assertFalse(
+                (ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test"), "fragments", slingSettings, configFilePatterns)));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments", slingSettings,
+                configFilePatterns)));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.publish", slingSettings,
+                configFilePatterns)));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.author", slingSettings,
+                configFilePatterns)));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.samplecontent",
+                slingSettings, configFilePatterns)));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yam"), "fragments.samplecontent",
+                slingSettings, configFilePatterns)));
         Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.samplecontent.publish",
-                slingSettings, null)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.foo.publish", slingSettings, null)));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.samplecontent.local", slingSettings, null)));
+                slingSettings, configFilePatterns)));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.foo.publish",
+                slingSettings, configFilePatterns)));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.samplecontent.local",
+                slingSettings, configFilePatterns)));
 
     }
 
@@ -65,15 +76,19 @@ public class ConfigFilesRetrieverImplTest {
         Set<String> currentRunmodes = new HashSet<String>(
                 Arrays.asList("samplecontent", "author", "netcentric", "crx3tar", "crx2", "local"));
         slingSettings = new ExtendedSlingSettingsServiceImpl(currentRunmodes);
+        List<String> configFilePatterns = Collections.emptyList();
         // testing 'or' combinations with
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.dev,local", slingSettings, null)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.int,prod", slingSettings, null)));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.dev,local",
+                slingSettings, configFilePatterns)));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.int,prod",
+                slingSettings, configFilePatterns)));
 
         // combined 'and' and 'or'
         Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.author.dev,author.local",
-                slingSettings, null)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.publish.dev,publish.local",
-                slingSettings, null)));
+                slingSettings, configFilePatterns)));
+        Assert.assertFalse(
+                (ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.publish.dev,publish.local",
+                        slingSettings, configFilePatterns)));
     }
 
     @Test
@@ -81,10 +96,16 @@ public class ConfigFilesRetrieverImplTest {
         Set<String> currentRunmodes = new HashSet<String>(
                 Arrays.asList("author"));
         slingSettings = new ExtendedSlingSettingsServiceImpl(currentRunmodes);
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf","file.yaml"), "config.author", slingSettings, "/conf/.*")));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf","file.yaml"), "config.author", slingSettings, "/conf/test.*.yaml")));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf","file.yaml"), "config.author", slingSettings, "/conf/.*\\.yaml")));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf","file.yaml"), "config.author", slingSettings, "/nonconf.*")));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
+                slingSettings, ImmutableList.<String> of())));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
+                slingSettings, ImmutableList.<String> of("/noMatch", "/conf/.*"))));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
+                slingSettings, ImmutableList.<String> of("/conf/test.*.yaml"))));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
+                slingSettings, ImmutableList.<String> of("/conf/.*\\.yaml", "/noMatch"))));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
+                slingSettings, ImmutableList.<String> of("/nonconf.*"))));
 
     }
 
@@ -93,24 +114,24 @@ public class ConfigFilesRetrieverImplTest {
         private final String parentPath;
         private final String name;
 
-        StubEntry(String name){
-           this.name=name;
-           this.parentPath="/";
+        StubEntry(String name) {
+            this.name = name;
+            this.parentPath = "/";
         }
 
-        StubEntry(String parentPath, String name){
-            this.parentPath=parentPath;
-            this.name=name;
+        StubEntry(String parentPath, String name) {
+            this.parentPath = parentPath;
+            this.name = name;
         }
 
         @Override
         public String getName() throws Exception {
-            return  name;
+            return name;
         }
 
         @Override
         public String getPath() throws Exception {
-            return parentPath+"/"+name;
+            return parentPath + "/" + name;
         }
 
         @Override

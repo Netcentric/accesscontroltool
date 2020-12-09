@@ -8,12 +8,14 @@
  */
 package biz.netcentric.cq.tools.actool.installhook.impl;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.jcr.Session;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.fs.io.Archive;
 import org.apache.jackrabbit.vault.packaging.VaultPackage;
@@ -29,7 +31,7 @@ import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceInternal;
 @Component
 public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
 
-    public static final String ACL_HOOK_PATHS="actool.hook.config.paths";
+    public static final String ACL_HOOK_PATHS = "actool.hook.paths.patterns(.*)";
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private AcInstallationServiceInternal acInstallationService;
 
@@ -37,16 +39,24 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
     private ConfigFilesRetriever configFilesRetriever;
 
     @Override
-    public PersistableInstallationLogger installYamlFilesFromPackage(VaultPackage  vaultPackage, Session session, ProgressTrackerListener progressTrackerListener)
+    public PersistableInstallationLogger installYamlFilesFromPackage(VaultPackage vaultPackage, Session session,
+            ProgressTrackerListener progressTrackerListener)
             throws Exception {
-        Archive archive=vaultPackage.getArchive();
-        String configFilePaths=vaultPackage.getProperties().getProperty(ACL_HOOK_PATHS);
-        //archive paths have a jcr_root prefix which users shouldnt worry about
-        if(StringUtils.isNotBlank(configFilePaths)){
-            StringUtils.prependIfMissing(configFilePaths,"/jcr_root");
+        Archive archive = vaultPackage.getArchive();
+        Properties packageProperties = vaultPackage.getMetaInf().getProperties();
+        List<String> configPathPatterns = new ArrayList<>();
+        Set<Object> propertiesKeys = packageProperties.keySet();
+        for (Object property : propertiesKeys) {
+            if (property.toString().matches(ACL_HOOK_PATHS)) {
+                // archive paths have a /jcr_root prefix which users shouldnt worry about
+                configPathPatterns.add("/jcr_root" + packageProperties.getProperty(property.toString()));
+            }
         }
-        PersistableInstallationLogger history = progressTrackerListener != null ? new ProgressTrackerListenerInstallationLogger(progressTrackerListener) : new PersistableInstallationLogger();
-        Map<String, String> configs = configFilesRetriever.getConfigFileContentFromPackage(archive,configFilePaths);
+
+        PersistableInstallationLogger history = progressTrackerListener != null
+                ? new ProgressTrackerListenerInstallationLogger(progressTrackerListener)
+                : new PersistableInstallationLogger();
+        Map<String, String> configs = configFilesRetriever.getConfigFileContentFromPackage(archive, configPathPatterns);
         history.setCrxPackageName(getArchiveName(archive));
         String[] restrictedToPaths = null; // never use path restriction for hook usage for now
         acInstallationService.installConfigurationFiles(history, configs, restrictedToPaths, session);
