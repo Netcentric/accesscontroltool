@@ -9,6 +9,7 @@
 package biz.netcentric.cq.tools.actool.configreader;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -47,7 +48,7 @@ public class ConfigFilesRetrieverImplTest {
                 Arrays.asList("samplecontent", "author", "netcentric", "crx3tar", "crx2", "local"));
 
         slingSettings = new ExtendedSlingSettingsServiceImpl(currentRunmodes);
-        List<String> configFilePatterns = Collections.emptyList();
+        Collection<String> configFilePatterns = Collections.emptyList();
         Assert.assertFalse(
                 (ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry(""), "fragments", slingSettings, configFilePatterns)));
         Assert.assertFalse(
@@ -76,7 +77,7 @@ public class ConfigFilesRetrieverImplTest {
         Set<String> currentRunmodes = new HashSet<String>(
                 Arrays.asList("samplecontent", "author", "netcentric", "crx3tar", "crx2", "local"));
         slingSettings = new ExtendedSlingSettingsServiceImpl(currentRunmodes);
-        List<String> configFilePatterns = Collections.emptyList();
+        Collection<String> configFilePatterns = Collections.emptyList();
         // testing 'or' combinations with
         Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.dev,local",
                 slingSettings, configFilePatterns)));

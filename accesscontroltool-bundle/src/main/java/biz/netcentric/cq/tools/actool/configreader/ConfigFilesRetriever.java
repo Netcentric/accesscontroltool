@@ -1,6 +1,6 @@
 package biz.netcentric.cq.tools.actool.configreader;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
 import javax.jcr.Session;
@@ -28,6 +28,6 @@ public interface ConfigFilesRetriever {
      * @param configFilePaths regular expression to limit the paths where configuration files are looked
      * @return map of yaml configurations by their path location
      * @throws Exception if things go wrong */
-    Map<String, String> getConfigFileContentFromPackage(Archive archive, List<String> configFilePaths) throws Exception;
+    Map<String, String> getConfigFileContentFromPackage(Archive archive, Collection<String> configFilePaths) throws Exception;
 
 }

@@ -49,7 +49,7 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
     }
 
     @Override
-    public Map<String, String> getConfigFileContentFromPackage(Archive archive, List<String> configFilePatterns) throws Exception {
+    public Map<String, String> getConfigFileContentFromPackage(Archive archive, Collection<String> configFilePatterns) throws Exception {
         Entry rootEntry = archive.getJcrRoot();
         if (rootEntry == null) {
             throw new IllegalStateException("Invalid package: It does not contain a JCR root element");
@@ -58,7 +58,7 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
         return configurations;
     }
 
-    private Map<String, String> getConfigurations(PackageEntryOrNode configFileOrDir, List<String> configFilePatterns) throws Exception {
+    private Map<String, String> getConfigurations(PackageEntryOrNode configFileOrDir, Collection<String> configFilePatterns) throws Exception {
         Map<String, String> configs = new TreeMap<String, String>();
 
         for (PackageEntryOrNode entry : configFileOrDir.getChildren()) {
@@ -78,7 +78,7 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
     }
 
     static boolean isRelevantConfiguration(final PackageEntryOrNode entry, final String parentName,
-                                           ExtendedSlingSettingsService slingSettings, List<String> configFilePatterns) throws Exception {
+                                           ExtendedSlingSettingsService slingSettings, Collection<String> configFilePatterns) throws Exception {
         boolean matchPattern = configFilePatterns.isEmpty();
         for (String pathPattern : configFilePatterns) {
             if (entry.getPath().matches(pathPattern)) {
@@ -86,7 +86,7 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
             }
         }
         if (!matchPattern) {
-            LOG.info("Skipped file '{}' because it didnt match path pattern", entry.getPath());
+            LOG.info("Skipped file '{}' because it didn't match any path pattern", entry.getPath());
             return false;
         }
         String entryName = entry.getName();
