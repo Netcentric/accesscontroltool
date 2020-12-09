@@ -38,53 +38,6 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
 
-    static boolean isRelevantConfiguration(final PackageEntryOrNode entry, final String parentName,
-            ExtendedSlingSettingsService slingSettings, List<String> configFilePatterns) throws Exception {
-        boolean matchPattern = configFilePatterns.isEmpty();
-        for (String pathPattern : configFilePatterns) {
-            if (entry.getPath().matches(pathPattern)) {
-                matchPattern = true;
-            }
-        }
-        if (!matchPattern) {
-            LOG.info("Skipped file '{}' because it didnt match path pattern", entry.getPath());
-            return false;
-        }
-        String entryName = entry.getName();
-        if (!entryName.endsWith(".yaml") && !entryName.equals("config") /*
-                                                                         * name 'config' without .yaml allowed for backwards compatibility
-                                                                         */) {
-            return false;
-        }
-
-        // extract runmode from parent name (if parent has "." in it)
-        String runModeSpec = extractRunModeSpecFromName(parentName);
-        if (runModeSpec.isEmpty()) {
-            LOG.debug("Install file '{}', because parent name '{}' does not have a run mode specified.",
-                    entryName, parentName);
-            return true;
-        }
-
-        // check run mode spec
-        final boolean restrictionFulfilled = slingSettings.isMatchingRunModeSpec(runModeSpec);
-        if (restrictionFulfilled) {
-            LOG.debug("The relevant run modes are all set, therefore proceed installing file '{}'", entryName);
-        } else {
-            LOG.debug("The run mode restrictions could not be fullfilled, therefore not installing file '{}'", entryName);
-        }
-        return restrictionFulfilled;
-    }
-
-    static String extractRunModeSpecFromName(final String name) {
-        // strip prefix as the name starts usually with config.
-        int positionDot = name.indexOf(".");
-        if (positionDot == -1) {
-            return "";
-        }
-
-        return name.substring(positionDot + 1);
-    }
-
     @Override
     public Map<String, String> getConfigFileContentFromNode(String rootPath, Session session) throws Exception {
         Node rootNode = session.getNode(rootPath);
@@ -122,6 +75,53 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
 
         }
         return configs;
+    }
+
+    static boolean isRelevantConfiguration(final PackageEntryOrNode entry, final String parentName,
+                                           ExtendedSlingSettingsService slingSettings, List<String> configFilePatterns) throws Exception {
+        boolean matchPattern = configFilePatterns.isEmpty();
+        for (String pathPattern : configFilePatterns) {
+            if (entry.getPath().matches(pathPattern)) {
+                matchPattern = true;
+            }
+        }
+        if (!matchPattern) {
+            LOG.info("Skipped file '{}' because it didnt match path pattern", entry.getPath());
+            return false;
+        }
+        String entryName = entry.getName();
+        if (!entryName.endsWith(".yaml") && !entryName.equals("config") /*
+         * name 'config' without .yaml allowed for backwards compatibility
+         */) {
+            return false;
+        }
+
+        // extract runmode from parent name (if parent has "." in it)
+        String runModeSpec = extractRunModeSpecFromName(parentName);
+        if (runModeSpec.isEmpty()) {
+            LOG.debug("Install file '{}', because parent name '{}' does not have a run mode specified.",
+                    entryName, parentName);
+            return true;
+        }
+
+        // check run mode spec
+        final boolean restrictionFulfilled = slingSettings.isMatchingRunModeSpec(runModeSpec);
+        if (restrictionFulfilled) {
+            LOG.debug("The relevant run modes are all set, therefore proceed installing file '{}'", entryName);
+        } else {
+            LOG.debug("The run mode restrictions could not be fullfilled, therefore not installing file '{}'", entryName);
+        }
+        return restrictionFulfilled;
+    }
+
+    static String extractRunModeSpecFromName(final String name) {
+        // strip prefix as the name starts usually with config.
+        int positionDot = name.indexOf(".");
+        if (positionDot == -1) {
+            return "";
+        }
+
+        return name.substring(positionDot + 1);
     }
 
     /** Internal representation of either a package entry or a node to be able to use one algorithm for both InstallHook/JMX scenarios. */
