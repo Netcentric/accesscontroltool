@@ -25,9 +25,9 @@ public interface ConfigFilesRetriever {
     /** Returns yaml configurations from a package.  This will only return configuration entries which apply to the current run mode
      *
      * @param archive the Vault Package
-     * @param configFilePaths regular expression to limit the paths where configuration files are looked
+     * @param configFilePatterns collection of regular expression to limit which configuration files are used.
      * @return map of yaml configurations by their path location
      * @throws Exception if things go wrong */
-    Map<String, String> getConfigFileContentFromPackage(Archive archive, Collection<String> configFilePaths) throws Exception;
+    Map<String, String> getConfigFileContentFromPackage(Archive archive, Collection<String> configFilePatterns) throws Exception;
 
 }
