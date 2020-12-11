@@ -58,7 +58,8 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
         return configurations;
     }
 
-    private Map<String, String> getConfigurations(PackageEntryOrNode configFileOrDir, Collection<String> configFilePatterns) throws Exception {
+    private Map<String, String> getConfigurations(PackageEntryOrNode configFileOrDir, Collection<String> configFilePatterns)
+            throws Exception {
         Map<String, String> configs = new TreeMap<String, String>();
 
         for (PackageEntryOrNode entry : configFileOrDir.getChildren()) {
@@ -67,18 +68,16 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
                 configs.putAll(resultsFromDir);
                 continue;
             }
-
             if (isRelevantConfiguration(entry, configFileOrDir.getName(), slingSettingsService, configFilePatterns)) {
                 LOG.debug("Found relevant YAML file {}", entry.getName());
                 configs.put(entry.getPath(), entry.getContentAsString());
             }
-
         }
         return configs;
     }
 
     static boolean isRelevantConfiguration(final PackageEntryOrNode entry, final String parentName,
-                                           ExtendedSlingSettingsService slingSettings, Collection<String> configFilePatterns) throws Exception {
+            ExtendedSlingSettingsService slingSettings, Collection<String> configFilePatterns) throws Exception {
         boolean matchPattern = configFilePatterns.isEmpty();
         for (String pathPattern : configFilePatterns) {
             if (entry.getPath().matches(pathPattern)) {
@@ -90,9 +89,8 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
             return false;
         }
         String entryName = entry.getName();
-        if (!entryName.endsWith(".yaml") && !entryName.equals("config") /*
-         * name 'config' without .yaml allowed for backwards compatibility
-         */) {
+        // name 'config' without .yaml allowed for backwards compatibility
+        if (!entryName.endsWith(".yaml") && !entryName.equals("config")) {
             return false;
         }
 

@@ -48,8 +48,7 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
         Set<Object> propertiesKeys = packageProperties.keySet();
         for (Object property : propertiesKeys) {
             if (property.toString().matches(ACL_HOOK_PATHS)) {
-                // archive paths have a /jcr_root prefix which users shouldnt worry about
-                configPathPatterns.add("/jcr_root" + packageProperties.getProperty(property.toString()));
+                configPathPatterns.add(packageProperties.getProperty(property.toString()));
             }
         }
 

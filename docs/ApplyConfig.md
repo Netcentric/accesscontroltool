@@ -69,7 +69,9 @@ If you would rather use the filevault-package-maven-plugin for building the pack
 </plugin>
 ```
 
-The `*.yaml` files are installed directly from the package content and respect the [run mode semantics](Configuration.md). Otherwise there is no limitation, so the YAML files will be picked up from anywhere in the package (as long as the parent node does not contain a `.` followed by one or multiple not matching run modes). If you wish to limit where the YAML files are looked upon you can add one or more package properties with a regular expression to match the desired paths. The properties names should start with `actool.hook.paths.patterns`:
+The `*.yaml` files are installed directly from the package content and respect the [run mode semantics](Configuration.md). Otherwise there is no limitation, so the YAML files will be picked up from anywhere in the package (as long as the parent node does not contain a `.` followed by one or multiple not matching run modes).
+
+If you wish to limit which YAML files are picked up by the installation hook, you can add one or more regular expressions as package properties that start with the prefix `actool.hook.paths.patterns`. If the path of a file within the package matches any of the provided patterns, it will be picked up by the installation hook:
 
 ```
 <plugin>
@@ -78,8 +80,8 @@ The `*.yaml` files are installed directly from the package content and respect t
     <configuration>
         <properties>
             <installhook.actool.class>biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook</installhook.actool.class>
-            <actool.hook.paths.patterns.groups>/apps/myapp/acl/groups.*</actool.hook.paths.patterns.groups>
-            <actool.hook.paths.patterns.users>/apps/myapp/acl/users.*</actool.hook.paths.patterns.users>
+            <actool.hook.paths.patterns.groups>/jcr_content/apps/myapp/acl/groups.*</actool.hook.paths.patterns.groups>
+            <actool.hook.paths.patterns.users>/jcr_content/apps/myapp/acl/users.*</actool.hook.paths.patterns.users>
         </properties>
     </configuration>
 </plugin>
