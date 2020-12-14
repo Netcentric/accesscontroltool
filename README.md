@@ -78,6 +78,14 @@ The [JMX interface](docs/Jmx.md) provides utility functions such as installing a
 
 A history object collects messages, warnings, and also an exception in case something goes wrong. This history gets saved in CRX under /var/statistics/achistory. The number of histories to be saved can be configured in the history service.
 
+# Questions
+
+If you have any questions which are still answered after reading the [documentation](docs/) feel free to raise them in the [discussion forum](https://github.com/Netcentric/accesscontroltool/discussions).
+
+# Contributions
+
+Contributions are highly welcome in the form of [issue reports](https://github.com/Netcentric/accesscontroltool/issues), [pull request](https://docs.github.com/en/free-pro-team@latest/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request-from-a-fork) or providing help in our [discussion forum](https://github.com/Netcentric/accesscontroltool/discussions).
+
 # Building the packages from source
 
 If needed you can [build the AC Tool yourself](docs/BuildPackage.md).
