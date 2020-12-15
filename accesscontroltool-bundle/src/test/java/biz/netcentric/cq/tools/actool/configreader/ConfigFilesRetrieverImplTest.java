@@ -97,16 +97,16 @@ public class ConfigFilesRetrieverImplTest {
         Set<String> currentRunmodes = new HashSet<String>(
                 Arrays.asList("author"));
         slingSettings = new ExtendedSlingSettingsServiceImpl(currentRunmodes);
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/jcr_root/conf", "file.yaml"), "config.author",
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
                 slingSettings, ImmutableList.<String> of())));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/jcr_root/conf", "file.yaml"), "config.author",
-                slingSettings, ImmutableList.<String> of("/noMatch", "/jcr_root/conf/.*"))));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/jcr_root/conf", "file.yaml"), "config.author",
-                slingSettings, ImmutableList.<String> of("/jcr_root/conf/test.*.yaml"))));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/jcr_root/conf", "file.yaml"), "config.author",
-                slingSettings, ImmutableList.<String> of("/jcr_root/conf/.*\\.yaml", "/noMatch"))));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/jcr_root/conf", "file.yaml"), "config.author",
-                slingSettings, ImmutableList.<String> of("/jcr_root/nonconf.*"))));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
+                slingSettings, ImmutableList.<String> of("/noMatch", "/conf/.*"))));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
+                slingSettings, ImmutableList.<String> of("/conf/test.*.yaml"))));
+        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
+                slingSettings, ImmutableList.<String> of("/conf/.*\\.yaml", "/noMatch"))));
+        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
+                slingSettings, ImmutableList.<String> of("/nonconf.*"))));
 
     }
 

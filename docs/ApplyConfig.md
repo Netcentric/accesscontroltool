@@ -71,7 +71,7 @@ If you would rather use the filevault-package-maven-plugin for building the pack
 
 The `*.yaml` files are installed directly from the package content and respect the [run mode semantics](Configuration.md). Otherwise there is no limitation, so the YAML files will be picked up from anywhere in the package (as long as the parent node does not contain a `.` followed by one or multiple not matching run modes).
 
-If you wish to limit which YAML files are picked up by the installation hook, you can add one or more regular expressions as package properties that start with the prefix `actool.hook.paths.patterns`. If the path of a file within the package matches any of the provided patterns, it will be picked up by the installation hook:
+If you wish to limit which YAML files are picked up by the installation hook, you can add one or more regular expressions as package properties that start with the prefix `actool.installhook.configFilesPattern`. If the path of a file matches any of the provided patterns, it will be picked up by the installation hook:
 
 ```
 <plugin>
@@ -80,8 +80,8 @@ If you wish to limit which YAML files are picked up by the installation hook, yo
     <configuration>
         <properties>
             <installhook.actool.class>biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook</installhook.actool.class>
-            <actool.hook.paths.patterns.groups>/jcr_content/apps/myapp/acl/groups.*</actool.hook.paths.patterns.groups>
-            <actool.hook.paths.patterns.users>/jcr_content/apps/myapp/acl/users.*</actool.hook.paths.patterns.users>
+            <actool.installhook.configFilesPattern.groups>/apps/myapp/acl/groups.*</actool.installhook.configFilesPattern.groups>
+            <actool.installhook.configFilesPattern.users>/apps/myapp/acl/users.*</actool.installhook.configFilesPattern.users>
         </properties>
     </configuration>
 </plugin>

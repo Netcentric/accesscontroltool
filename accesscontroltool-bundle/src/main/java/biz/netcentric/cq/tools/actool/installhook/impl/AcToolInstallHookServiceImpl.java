@@ -31,7 +31,8 @@ import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceInternal;
 @Component
 public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
 
-    public static final String ACL_HOOK_PATHS = "actool.hook.paths.patterns(.*)";
+    public static final String ACL_HOOK_PATHS = "actool.installhook.configFilesPattern(.*)";
+    private static final String JCR_ROOT_PREFIX="/jcr_root";
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private AcInstallationServiceInternal acInstallationService;
 
@@ -48,7 +49,8 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
         Set<Object> propertiesKeys = packageProperties.keySet();
         for (Object property : propertiesKeys) {
             if (property.toString().matches(ACL_HOOK_PATHS)) {
-                configPathPatterns.add(packageProperties.getProperty(property.toString()));
+                configPathPatterns.add(JCR_ROOT_PREFIX + packageProperties.getProperty(property.toString()));
+                
             }
         }
 
