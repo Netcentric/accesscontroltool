@@ -71,7 +71,8 @@ If you would rather use the filevault-package-maven-plugin for building the pack
 
 The `*.yaml` files are installed directly from the package content and respect the [run mode semantics](Configuration.md). Otherwise there is no limitation, so the YAML files will be picked up from anywhere in the package (as long as the parent node does not contain a `.` followed by one or multiple not matching run modes).
 
-If you wish to limit which YAML files are picked up by the installation hook, you can add one or more regular expressions as package properties that start with the prefix `actool.installhook.configFilesPattern`. If the path of a file matches any of the provided patterns, it will be picked up by the installation hook:
+If you wish to limit which YAML files are picked up by the installation hook, you can add one or more regular expressions as package properties that start with the prefix `actool.installhook.configFilesPattern`. 
+If the path of a file within its content package (excluding the `/jcr_root` prefix) matches any of the provided patterns, it will be picked up by the installation hook:
 
 ```
 <plugin>
