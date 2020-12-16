@@ -197,7 +197,9 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     public InstallationLog apply(String configurationRootPath, String[] restrictedToPaths, boolean skipIfConfigUnchanged) {
 
         if(StringUtils.isBlank(configurationRootPath)) {
-            if(configurationRootPaths.size() == 1) {
+            if(CollectionUtils.isEmpty(configurationRootPaths)) {
+                throw new IllegalArgumentException("Configuration root path neither configured nor provided.");
+            } else if(configurationRootPaths.size() == 1) {
                 configurationRootPath = configurationRootPaths.get(0);
             } else {
                 return applyMultipleConfigurations(restrictedToPaths, skipIfConfigUnchanged);

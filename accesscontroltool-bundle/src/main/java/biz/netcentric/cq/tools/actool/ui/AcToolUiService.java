@@ -4,7 +4,6 @@ import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
@@ -316,7 +315,7 @@ public class AcToolUiService {
                     Boolean.valueOf(req.getParameter(AcToolUiService.PARAM_APPLY_ONLY_IF_CHANGED)));
             return result;
         }
-
+        
         final String configurationRootPath;
         final List<String> basePaths;
         final int showLogNo;
@@ -346,7 +345,7 @@ public class AcToolUiService {
             if (result == null) {
                 result = defaultValue;
             }
-            return result.trim();
+            return StringUtils.trim(result);
         }
 
     }
