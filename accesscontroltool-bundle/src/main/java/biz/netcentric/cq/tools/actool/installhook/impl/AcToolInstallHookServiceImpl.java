@@ -8,13 +8,17 @@
  */
 package biz.netcentric.cq.tools.actool.installhook.impl;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.jcr.Session;
 
 import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.fs.io.Archive;
+import org.apache.jackrabbit.vault.packaging.VaultPackage;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
@@ -27,6 +31,8 @@ import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceInternal;
 @Component
 public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
 
+    public static final String ACL_HOOK_PATHS = "actool.installhook.configFilesPattern(.*)";
+    private static final String JCR_ROOT_PREFIX="/jcr_root";
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private AcInstallationServiceInternal acInstallationService;
 
@@ -34,10 +40,24 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
     private ConfigFilesRetriever configFilesRetriever;
 
     @Override
-    public PersistableInstallationLogger installYamlFilesFromPackage(Archive archive, Session session, ProgressTrackerListener progressTrackerListener)
+    public PersistableInstallationLogger installYamlFilesFromPackage(VaultPackage vaultPackage, Session session,
+            ProgressTrackerListener progressTrackerListener)
             throws Exception {
-        PersistableInstallationLogger history = progressTrackerListener != null ? new ProgressTrackerListenerInstallationLogger(progressTrackerListener) : new PersistableInstallationLogger();
-        Map<String, String> configs = configFilesRetriever.getConfigFileContentFromPackage(archive);
+        Archive archive = vaultPackage.getArchive();
+        Properties packageProperties = vaultPackage.getMetaInf().getProperties();
+        List<String> configPathPatterns = new ArrayList<>();
+        Set<Object> propertiesKeys = packageProperties.keySet();
+        for (Object property : propertiesKeys) {
+            if (property.toString().matches(ACL_HOOK_PATHS)) {
+                configPathPatterns.add(JCR_ROOT_PREFIX + packageProperties.getProperty(property.toString()));
+                
+            }
+        }
+
+        PersistableInstallationLogger history = progressTrackerListener != null
+                ? new ProgressTrackerListenerInstallationLogger(progressTrackerListener)
+                : new PersistableInstallationLogger();
+        Map<String, String> configs = configFilesRetriever.getConfigFileContentFromPackage(archive, configPathPatterns);
         history.setCrxPackageName(getArchiveName(archive));
         String[] restrictedToPaths = null; // never use path restriction for hook usage for now
         acInstallationService.installConfigurationFiles(history, configs, restrictedToPaths, session);

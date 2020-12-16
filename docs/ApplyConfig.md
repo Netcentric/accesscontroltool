@@ -71,6 +71,23 @@ If you would rather use the filevault-package-maven-plugin for building the pack
 
 The `*.yaml` files are installed directly from the package content and respect the [run mode semantics](Configuration.md). Otherwise there is no limitation, so the YAML files will be picked up from anywhere in the package (as long as the parent node does not contain a `.` followed by one or multiple not matching run modes).
 
+If you wish to limit which YAML files are picked up by the installation hook, you can add one or more regular expressions as package properties that start with the prefix `actool.installhook.configFilesPattern`. 
+If the path of a file within its content package (excluding the `/jcr_root` prefix) matches any of the provided patterns, it will be picked up by the installation hook:
+
+```
+<plugin>
+    <groupId>org.apache.jackrabbit</groupId>
+    <artifactId>filevault-package-maven-plugin</artifactId>
+    <configuration>
+        <properties>
+            <installhook.actool.class>biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook</installhook.actool.class>
+            <actool.installhook.configFilesPattern.groups>/apps/myapp/acl/groups.*</actool.installhook.configFilesPattern.groups>
+            <actool.installhook.configFilesPattern.users>/apps/myapp/acl/users.*</actool.installhook.configFilesPattern.users>
+        </properties>
+    </configuration>
+</plugin>
+```
+
 Although it is not necessary that the YAML files are covered by the filter rules of the `filter.xml`, this is recommended practice. That way you can see afterwards in the repository which YAML files have been processed. However if you would not let the `filter.xml` cover your YAML files, those files would still be processed by the installation hook.
 
 The installation takes place in phase "PREPARE" by default, i.e. before any other content from the package has been installed. Optionally you can make the hook kick in in phase "INSTALLED" (i.e. after the content has been installed) by additionally setting the package property `actool.atInstalledPhase` to `true`. This is helpful if the initial content on which you want to set ACEs is created via classical package content (instead of inline yaml `initialContent`). That is only properly supported since AEM 6.4.2 (for details look at [issue 287](https://github.com/Netcentric/accesscontroltool/issues/287)) and since ACTool 2.4.0.

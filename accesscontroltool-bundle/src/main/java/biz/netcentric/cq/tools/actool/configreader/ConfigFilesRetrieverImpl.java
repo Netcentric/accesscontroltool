@@ -3,6 +3,7 @@ package biz.netcentric.cq.tools.actool.configreader;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -43,41 +44,53 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
         if (rootNode == null) {
             throw new IllegalArgumentException("No configuration path configured! please check the configuration of AcService!");
         }
-        Map<String, String> configurations = getConfigurations(new NodeInJcr(rootNode));
+        Map<String, String> configurations = getConfigurations(new NodeInJcr(rootNode), Collections.<String> emptyList());
         return configurations;
     }
 
     @Override
-    public Map<String, String> getConfigFileContentFromPackage(Archive archive) throws Exception {
+    public Map<String, String> getConfigFileContentFromPackage(Archive archive, Collection<String> configFilePatterns) throws Exception {
         Entry rootEntry = archive.getJcrRoot();
         if (rootEntry == null) {
             throw new IllegalStateException("Invalid package: It does not contain a JCR root element");
         }
-        Map<String, String> configurations = getConfigurations(new EntryInPackage(archive, "", rootEntry));
+        Map<String, String> configurations = getConfigurations(new EntryInPackage(archive, "", rootEntry), configFilePatterns);
         return configurations;
     }
 
-    private Map<String, String> getConfigurations(PackageEntryOrNode configFileOrDir) throws Exception {
+    private Map<String, String> getConfigurations(PackageEntryOrNode configFileOrDir, Collection<String> configFilePatterns)
+            throws Exception {
         Map<String, String> configs = new TreeMap<String, String>();
 
         for (PackageEntryOrNode entry : configFileOrDir.getChildren()) {
             if (entry.isDirectory()) {
-                Map<String, String> resultsFromDir = getConfigurations(entry);
+                Map<String, String> resultsFromDir = getConfigurations(entry, configFilePatterns);
                 configs.putAll(resultsFromDir);
                 continue;
             }
-
-            if (isRelevantConfiguration(entry.getName(), configFileOrDir.getName(), slingSettingsService)) {
+            if (isRelevantConfiguration(entry, configFileOrDir.getName(), slingSettingsService, configFilePatterns)) {
                 LOG.debug("Found relevant YAML file {}", entry.getName());
                 configs.put(entry.getPath(), entry.getContentAsString());
             }
-
         }
         return configs;
     }
 
-    static boolean isRelevantConfiguration(final String entryName, final String parentName, ExtendedSlingSettingsService slingSettings) {
-        if (!entryName.endsWith(".yaml") && !entryName.equals("config") /* name 'config' without .yaml allowed for backwards compatibility */) {
+    static boolean isRelevantConfiguration(final PackageEntryOrNode entry, final String parentName,
+            ExtendedSlingSettingsService slingSettings, Collection<String> configFilePatterns) throws Exception {
+        boolean matchPattern = configFilePatterns.isEmpty();
+        for (String pathPattern : configFilePatterns) {
+            if (entry.getPath().matches(pathPattern)) {
+                matchPattern = true;
+            }
+        }
+        if (!matchPattern) {
+            LOG.info("Skipped file '{}' because it didn't match any path pattern", entry.getPath());
+            return false;
+        }
+        String entryName = entry.getName();
+        // name 'config' without .yaml allowed for backwards compatibility
+        if (!entryName.endsWith(".yaml") && !entryName.equals("config")) {
             return false;
         }
 
@@ -105,12 +118,12 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
         if (positionDot == -1) {
             return "";
         }
-        
+
         return name.substring(positionDot + 1);
     }
 
     /** Internal representation of either a package entry or a node to be able to use one algorithm for both InstallHook/JMX scenarios. */
-    private static interface PackageEntryOrNode {
+    static interface PackageEntryOrNode {
         String getName() throws Exception;
 
         String getPath() throws Exception;
