@@ -9,6 +9,7 @@
   * [JMX](#jmx)
   * [Startup Hook](#startup-hook)
   * [Upload Listener Service](#upload-listener-service)
+  * [Ad hoc installation of small fragments](#ad-hoc-installation-of-small-fragments)
 
 <!--- This table of contents has been generated with https://github.com/ekalinin/github-markdown-toc#gh-md-toc -->
 
@@ -144,7 +145,7 @@ The upload listener service requires the `AC Tool Installation Service` (PID `bi
 ### Ad hoc installation of small fragments
 
 Generally it is best practice to keep the yaml files in source control and only use one of the above methods to trigger the installation of those files. 
-However for some support scenarios it can be useful to be able to apply small yaml fragments directly. This can be achieved by using the following 
+However, for some support scenarios it can be useful to be able to apply small yaml fragments directly. This can be achieved by using the following 
 groovy script (using the [AEM Groovy Console](https://github.com/icfnext/aem-groovy-console)):
 
 ```
