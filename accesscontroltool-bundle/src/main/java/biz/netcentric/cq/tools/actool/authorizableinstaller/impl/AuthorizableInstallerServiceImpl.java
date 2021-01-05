@@ -106,10 +106,12 @@ public class AuthorizableInstallerServiceImpl implements
             final Session session, InstallationLogger installLog)
             throws RepositoryException, AuthorizableCreatorException, LoginException, IOException, GeneralSecurityException {
 
+        UserManager userManager = new PrefetchedAuthorizablesUserManager(AccessControlUtils.getUserManagerAutoSaveDisabled(session), installLog);
+
         Set<String> authorizablesFromConfigurations = authorizablesConfigBeans.getAuthorizableIds();
         for (AuthorizableConfigBean authorizableConfigBean : authorizablesConfigBeans) {
 
-            installAuthorizableConfigurationBean(session, acConfiguration,
+            installAuthorizableConfigurationBean(session, userManager, acConfiguration,
                     authorizableConfigBean, installLog, authorizablesFromConfigurations);
         }
 
@@ -118,6 +120,7 @@ public class AuthorizableInstallerServiceImpl implements
     }
 
     private void installAuthorizableConfigurationBean(final Session session,
+            UserManager userManager,
             AcConfiguration acConfiguration,
             AuthorizableConfigBean authorizableConfigBean,
             InstallationLogger installLog, Set<String> authorizablesFromConfigurations)
@@ -125,8 +128,6 @@ public class AuthorizableInstallerServiceImpl implements
 
         String authorizableId = authorizableConfigBean.getAuthorizableId();
         LOG.debug("- start installation of authorizable: {}", authorizableId);
-
-        UserManager userManager = AccessControlUtils.getUserManagerAutoSaveDisabled(session);
 
         // if current authorizable from config doesn't exist yet
         Authorizable authorizableToInstall = userManager.getAuthorizable(authorizableId);
