@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.SimpleCredentials;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFactory;
 
@@ -43,6 +44,7 @@ import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.apache.sling.jcr.api.SlingRepository;
 import org.apache.sling.jcr.resource.JcrResourceConstants;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
@@ -99,6 +101,9 @@ public class AuthorizableInstallerServiceImpl implements
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     ResourceResolverFactory resourceResolverFactory;
 
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    SlingRepository repository;
+    
     @Override
     public void installAuthorizables(
             AcConfiguration acConfiguration,
@@ -155,7 +160,7 @@ public class AuthorizableInstallerServiceImpl implements
             // update password for users
             if (!authorizableToInstall.isGroup() && !authorizableConfigBean.isSystemUser()
                     && StringUtils.isNotBlank(authorizableConfigBean.getPassword())) {
-                setUserPassword(authorizableConfigBean, (User) authorizableToInstall);
+                setUserPassword(authorizableConfigBean, (User) authorizableToInstall, installLog);
             }
 
             // move authorizable if path changed (retaining existing members)
@@ -226,11 +231,25 @@ public class AuthorizableInstallerServiceImpl implements
         }
     }
 
-
     void setUserPassword(final AuthorizableConfigBean authorizableConfigBean,
-                             final User authorizableToInstall) throws RepositoryException, AuthorizableCreatorException {
+            final User authorizableToInstall, InstallationLogger installLog) throws RepositoryException, AuthorizableCreatorException {
+
+        String userId = authorizableToInstall.getID();
         String password = getPassword(authorizableConfigBean);
-        authorizableToInstall.changePassword(password);
+        Session sessionForUser = null;
+        try {
+            sessionForUser = repository.login(new SimpleCredentials(userId, password.toCharArray()));
+            LOG.trace("Could obtain session {} for user {}, will not update password", sessionForUser, userId);
+            installLog.addVerboseMessage(LOG, "Password of user " + userId + " has not changed");
+        } catch (javax.jcr.LoginException e) {
+            LOG.trace("User {} could not log in with existing password", userId, e);
+            authorizableToInstall.changePassword(password);
+            installLog.addMessage(LOG, "Changed password of user " + userId);
+        } finally {
+            if (sessionForUser != null) {
+                sessionForUser.logout();
+            }
+        }
     }
 
     private String getPassword(final AuthorizableConfigBean authorizableConfigBean)
