@@ -26,6 +26,12 @@ class PrefetchedAuthorizablesUserManager implements UserManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(PrefetchedAuthorizablesUserManager.class);
 
+    static final Query ALL_AUTHORIZABLES_QUERY = new Query() {
+        public <T> void build(QueryBuilder<T> builder) {
+            // fetch all authorizables
+        }
+    };
+
     private final UserManager delegate;
     private final Map<String, Authorizable> authorizableCache;
 
@@ -34,12 +40,7 @@ class PrefetchedAuthorizablesUserManager implements UserManager {
         this.authorizableCache = new HashMap<>();
 
         long startPrefetch = System.currentTimeMillis();
-        Iterator<Authorizable> allAuthorizables = delegate.findAuthorizables(new Query() {
-            public <T> void build(QueryBuilder<T> builder) {
-                // fetch all authorizables
-            }
-        });
-
+        Iterator<Authorizable> allAuthorizables = delegate.findAuthorizables(ALL_AUTHORIZABLES_QUERY);
         while (allAuthorizables.hasNext()) {
             Authorizable auth = allAuthorizables.next();
             authorizableCache.put(auth.getID(), auth);
