@@ -106,7 +106,7 @@ public class AuthorizableInstallerServiceImpl implements
             final Session session, InstallationLogger installLog)
             throws RepositoryException, AuthorizableCreatorException, LoginException, IOException, GeneralSecurityException {
 
-        UserManager userManager = new PrefetchedAuthorizablesUserManager(AccessControlUtils.getUserManagerAutoSaveDisabled(session), installLog);
+        PrefetchingUserManager userManager = new PrefetchingUserManager(AccessControlUtils.getUserManagerAutoSaveDisabled(session), session.getValueFactory(), installLog);
 
         Set<String> authorizablesFromConfigurations = authorizablesConfigBeans.getAuthorizableIds();
         for (AuthorizableConfigBean authorizableConfigBean : authorizablesConfigBeans) {
@@ -120,7 +120,7 @@ public class AuthorizableInstallerServiceImpl implements
     }
 
     private void installAuthorizableConfigurationBean(final Session session,
-            UserManager userManager,
+            PrefetchingUserManager userManager,
             AcConfiguration acConfiguration,
             AuthorizableConfigBean authorizableConfigBean,
             InstallationLogger installLog, Set<String> authorizablesFromConfigurations)
@@ -250,16 +250,14 @@ public class AuthorizableInstallerServiceImpl implements
      * regular relationships between groups contained in config are kept in isMemberOf */
     @SuppressWarnings("unchecked")
     void applyGroupMembershipConfigMembers(AcConfiguration acConfiguration, AuthorizableConfigBean authorizableConfigBean, InstallationLogger installLog,
-            String authorizableId, UserManager userManager, Set<String> authorizablesFromConfigurations) throws RepositoryException {
+            String authorizableId, PrefetchingUserManager userManager, Set<String> authorizablesFromConfigurations) throws RepositoryException {
         if (authorizableConfigBean.isGroup()) {
-
-            Group installedGroup = (Group) userManager.getAuthorizable(authorizableId);
 
             String[] membersInConfigArr = authorizableConfigBean.getMembers();
             Set<String> membersInConfig = membersInConfigArr != null ? new HashSet<String>(Arrays.asList(membersInConfigArr)) : new HashSet<String>();
 
             // initial set without regular users (those are never removed because that relationship is typically managed in AEM UI or LDAP/SAML/SSO/etc. )
-            Set<String> relevantMembersInRepo = getDeclaredMembersWithoutRegularUsers(installedGroup);
+            Set<String> relevantMembersInRepo = userManager.getDeclaredMembersWithoutRegularUsers(authorizableId);
 
             // ensure authorizables from config itself that are added via isMemberOf are not deleted
             relevantMembersInRepo = new HashSet<String>(CollectionUtils.subtract(relevantMembersInRepo, authorizablesFromConfigurations));
@@ -271,6 +269,7 @@ public class AuthorizableInstallerServiceImpl implements
             Set<String> membersToAdd = new HashSet<String>(CollectionUtils.subtract(membersInConfig, relevantMembersInRepo));
             Set<String> membersToRemove = new HashSet<String>(CollectionUtils.subtract(relevantMembersInRepo, membersInConfig));
 
+            Group installedGroup = (Group) userManager.getAuthorizable(authorizableId);
             if (!membersToAdd.isEmpty()) {
                 installLog.addVerboseMessage(LOG,
                         "Adding " + membersToAdd.size() + " external members to group " + authorizableConfigBean.getAuthorizableId());
@@ -299,24 +298,6 @@ public class AuthorizableInstallerServiceImpl implements
                 }
             }
         }
-    }
-
-    private Set<String> getDeclaredMembersWithoutRegularUsers(Group installedGroup) throws RepositoryException {
-        Set<String> membersInRepo = new HashSet<String>();
-        Iterator<Authorizable> currentMemberInRepo = installedGroup.getDeclaredMembers();
-        while (currentMemberInRepo.hasNext()) {
-            Authorizable member = currentMemberInRepo.next();
-            if (!isRegularUser(member)) {
-                membersInRepo.add(member.getID());
-            }
-        }
-        return membersInRepo;
-    }
-
-    private boolean isRegularUser(Authorizable member) throws RepositoryException { 
-        return member != null && !member.isGroup() // if user
-            && !member.getPath().startsWith(Constants.USERS_ROOT + "/system/") // but not system user
-            && !member.getID().equals(Constants.USER_ANONYMOUS);  // and not anonymous
     }
 
     private Set<String> removeExternalMembersUnmanagedByConfiguration(AcConfiguration acConfiguration, AuthorizableConfigBean authorizableConfigBean,
@@ -504,13 +485,12 @@ public class AuthorizableInstallerServiceImpl implements
 
     private void applyGroupMembershipConfigIsMemberOf(InstallationLogger installLog,
             AcConfiguration acConfiguration,
-            AuthorizableConfigBean authorizableConfigBean, UserManager userManager, Session session,
+            AuthorizableConfigBean authorizableConfigBean, PrefetchingUserManager userManager, Session session,
             Set<String> authorizablesFromConfigurations) throws RepositoryException, AuthorizableCreatorException {
-        String[] memberOf = authorizableConfigBean.getIsMemberOf();
 
-        Authorizable currentGroupFromRepository = userManager.getAuthorizable(authorizableConfigBean.getAuthorizableId());
-        Set<String> membershipGroupsFromConfig = getMembershipGroupsFromConfig(memberOf);
-        Set<String> membershipGroupsFromRepository = getMembershipGroupsFromRepository(currentGroupFromRepository);
+        String authId = authorizableConfigBean.getAuthorizableId();
+        Set<String> membershipGroupsFromConfig = getMembershipGroupsFromConfig(authorizableConfigBean.getIsMemberOf());
+        Set<String> membershipGroupsFromRepository = userManager.getDeclaredIsMemberOf(authId);
 
         applyGroupMembershipConfigIsMemberOf(authorizableConfigBean, acConfiguration, installLog, userManager, session,
                 membershipGroupsFromConfig,
@@ -545,19 +525,6 @@ public class AuthorizableInstallerServiceImpl implements
         }
 
         return newAuthorizable;
-    }
-
-    private Set<String> getMembershipGroupsFromRepository(Authorizable currentGroupFromRepository) throws RepositoryException {
-        Set<String> membershipGroupsFromRepository = new HashSet<String>();
-        Iterator<Group> memberOfGroupsIterator = currentGroupFromRepository.declaredMemberOf();
-
-        // build Set which contains the all Groups of which the existingGroup is
-        // a member of
-        while (memberOfGroupsIterator.hasNext()) {
-            Authorizable memberOfGroup = memberOfGroupsIterator.next();
-            membershipGroupsFromRepository.add(memberOfGroup.getID());
-        }
-        return membershipGroupsFromRepository;
     }
 
     private Set<String> getMembershipGroupsFromConfig(String[] memberOf) {

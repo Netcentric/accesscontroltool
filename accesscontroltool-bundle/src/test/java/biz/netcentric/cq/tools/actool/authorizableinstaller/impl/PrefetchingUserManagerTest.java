@@ -6,11 +6,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.security.Principal;
 import java.util.Arrays;
-import java.util.Iterator;
+import java.util.Collections;
+import java.util.List;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.ValueFactory;
 
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
@@ -23,17 +24,19 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 @RunWith(MockitoJUnitRunner.class)
-public class PrefetchedAuthorizablesUserManagerTest {
+public class PrefetchingUserManagerTest {
 
     @Mock
     UserManager userManager;
 
+    @Mock
+    ValueFactory valueFactory;
+    
     @Mock
     InstallationLogger installationLogger;
     
@@ -55,56 +58,58 @@ public class PrefetchedAuthorizablesUserManagerTest {
     @Mock
     User userNonCached;
     
-    PrefetchedAuthorizablesUserManager prefetchedAuthorizablesUserManager;
+    PrefetchingUserManager prefetchingUserManager;
     
     @Before
     public void before() throws RepositoryException {
         
-        when(group1.getID()).thenReturn("group1");
-        when(group2.getID()).thenReturn("group2");
-        when(group3.getID()).thenReturn("group3");
-        when(user1.getID()).thenReturn("user1");
-        when(user1.getID()).thenReturn("user2");
-        when(userNonCached.getID()).thenReturn("userNonCached");
-        
-        
+        setupAuthorizable(group1, "group1", Collections.<Group>emptyList());
+        setupAuthorizable(group2, "group2", Arrays.asList(group1));
+        setupAuthorizable(group3, "group3", Arrays.asList(group2));
+        setupAuthorizable(user1, "user1", Arrays.asList(group3));
+        setupAuthorizable(user2, "user2", Arrays.asList(group3));
+        setupAuthorizable(userNonCached, "userNonCached", Arrays.asList(group3));
 
-        when(userManager.findAuthorizables(PrefetchedAuthorizablesUserManager.ALL_AUTHORIZABLES_QUERY)).thenReturn(Arrays.asList(group1, group2, group3, user1, user2).iterator());
-
+        when(userManager.findAuthorizables(any(Query.class))).thenReturn(Arrays.asList(group1, group2, group3, user1, user2).iterator());
     }
     
+    private void setupAuthorizable(Authorizable auth, String id, List<Group> memberOf) throws RepositoryException {
+        when(auth.getID()).thenReturn(id);
+        when(auth.declaredMemberOf()).thenReturn(memberOf.iterator());
+    }
+
     @Test
     public void testPrefetchedAuthorizablesUserManager() throws RepositoryException {
-        prefetchedAuthorizablesUserManager = new PrefetchedAuthorizablesUserManager(userManager, installationLogger);
+        prefetchingUserManager = new PrefetchingUserManager(userManager, valueFactory, installationLogger);
         
-        assertEquals(5, prefetchedAuthorizablesUserManager.getCacheSize());
-        assertEquals(group1, prefetchedAuthorizablesUserManager.getAuthorizable("group1"));
-        assertEquals(null, prefetchedAuthorizablesUserManager.getAuthorizable("userNonCached"));
+        assertEquals(5, prefetchingUserManager.getCacheSize());
+        assertEquals(group1, prefetchingUserManager.getAuthorizable("group1"));
+        assertEquals(null, prefetchingUserManager.getAuthorizable("userNonCached"));
 
         when(userManager.getAuthorizable("userNonCached")).thenReturn(userNonCached);
-        assertEquals(userNonCached, prefetchedAuthorizablesUserManager.getAuthorizable("userNonCached"));
+        assertEquals(userNonCached, prefetchingUserManager.getAuthorizable("userNonCached"));
     }
 
     @Test
     public void testDelegation() throws RepositoryException {
-        prefetchedAuthorizablesUserManager = new PrefetchedAuthorizablesUserManager(userManager, installationLogger);
+        prefetchingUserManager = new PrefetchingUserManager(userManager, valueFactory, installationLogger);
 
         String testuser = "test";
         PrincipalImpl testPrincipal = new PrincipalImpl(testuser);
-        prefetchedAuthorizablesUserManager.getAuthorizable(testPrincipal);
+        prefetchingUserManager.getAuthorizable(testPrincipal);
         verify(userManager, times(1)).getAuthorizable(testPrincipal);
 
 
 
         String userPath = "/home/users/path";
-        prefetchedAuthorizablesUserManager.getAuthorizableByPath(userPath);
+        prefetchingUserManager.getAuthorizableByPath(userPath);
         verify(userManager, times(1)).getAuthorizableByPath(userPath);
         
         String relPath = "profile/test";
         String testVal = "testval";
-        prefetchedAuthorizablesUserManager.findAuthorizables(relPath, testVal);
+        prefetchingUserManager.findAuthorizables(relPath, testVal);
         verify(userManager, times(1)).findAuthorizables(relPath, testVal);
-        prefetchedAuthorizablesUserManager.findAuthorizables(relPath, testVal, UserManager.SEARCH_TYPE_AUTHORIZABLE);
+        prefetchingUserManager.findAuthorizables(relPath, testVal, UserManager.SEARCH_TYPE_AUTHORIZABLE);
         verify(userManager, times(1)).findAuthorizables(relPath, testVal, UserManager.SEARCH_TYPE_AUTHORIZABLE);
         
         Query testQuery = new Query() {
@@ -112,35 +117,35 @@ public class PrefetchedAuthorizablesUserManagerTest {
                 // fetch all authorizables
             }
         };
-        prefetchedAuthorizablesUserManager.findAuthorizables(testQuery);
+        prefetchingUserManager.findAuthorizables(testQuery);
         verify(userManager, times(1)).findAuthorizables(testQuery);
         
         String testpw = "pw";
-        prefetchedAuthorizablesUserManager.createUser(testuser, testpw);
+        prefetchingUserManager.createUser(testuser, testpw);
         verify(userManager, times(1)).createUser(testuser, testpw);
 
-        prefetchedAuthorizablesUserManager.createUser(testuser, testpw, testPrincipal, userPath);
+        prefetchingUserManager.createUser(testuser, testpw, testPrincipal, userPath);
         verify(userManager, times(1)).createUser(testuser, testpw, testPrincipal, userPath);
         
-        prefetchedAuthorizablesUserManager.createSystemUser(testuser, userPath);
+        prefetchingUserManager.createSystemUser(testuser, userPath);
         verify(userManager, times(1)).createSystemUser(testuser, userPath);
         
-        prefetchedAuthorizablesUserManager.createGroup(testuser);
+        prefetchingUserManager.createGroup(testuser);
         verify(userManager, times(1)).createGroup(testuser);
 
-        prefetchedAuthorizablesUserManager.createGroup(testPrincipal);
+        prefetchingUserManager.createGroup(testPrincipal);
         verify(userManager, times(1)).createGroup(testPrincipal);
         
-        prefetchedAuthorizablesUserManager.createGroup(testPrincipal, userPath);
+        prefetchingUserManager.createGroup(testPrincipal, userPath);
         verify(userManager, times(1)).createGroup(testPrincipal, userPath);
 
-        prefetchedAuthorizablesUserManager.createGroup(testuser, testPrincipal, userPath);
+        prefetchingUserManager.createGroup(testuser, testPrincipal, userPath);
         verify(userManager, times(1)).createGroup(testuser, testPrincipal, userPath);
         
-        prefetchedAuthorizablesUserManager.autoSave(true);
+        prefetchingUserManager.autoSave(true);
         verify(userManager, times(1)).autoSave(true);
         
-        prefetchedAuthorizablesUserManager.isAutoSave();
+        prefetchingUserManager.isAutoSave();
         verify(userManager, times(1)).isAutoSave();
     }
 
