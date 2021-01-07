@@ -24,12 +24,27 @@ import org.apache.jackrabbit.oak.spi.security.user.UserConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
-/** Prefetches a) all groups and system users (but not regular users) and b) all memberships between these authorizables in constructor.  */
+/**
+ * <p>
+ * Special user manager that prefetches
+ * <ul>
+ * <li>all groups, system users and anonymous (but not regular users)</li>
+ * <li>all memberships between the preloaded authorizables</li>
+ * <ul>
+ * upon creation. 
+ * </p>
+ * <p>
+ * The membership relationships are cached in lookup maps to quickly be able to query the repository state for both
+ * authorizable.declaredMemberOf() (this we call in this class also) and group.getDeclaredMembers(). Having called declaredMemberOf() for
+ * all groups of the repository has also retrieved all memberships (expect regular user memberships), hence the method getDeclaredMembers()
+ * does not have to be called anymore. This is particularly useful because that way the AC tool does not have to iterate over a potentially
+ * huge number of users in production to then only filter out a few relevant groups in the end (the AC Tool does not touch user memberships
+ * to groups).
+ * </p>
+ */
 class PrefetchingUserManager implements UserManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(PrefetchingUserManager.class);
@@ -45,7 +60,7 @@ class PrefetchingUserManager implements UserManager {
         this.delegate = delegate;
 
         long startPrefetch = System.currentTimeMillis();
-        Iterator<Authorizable> allAuthorizables = delegate.findAuthorizables(new Query() {
+        Iterator<Authorizable> allGroupsAndSystemUsersAndAnonymous = delegate.findAuthorizables(new Query() {
             public <T> void build(QueryBuilder<T> builder) {
                 builder.setCondition(
                         builder.or( //
@@ -54,8 +69,8 @@ class PrefetchingUserManager implements UserManager {
                 );
             }
         });
-        while (allAuthorizables.hasNext()) {
-            Authorizable auth = allAuthorizables.next();
+        while (allGroupsAndSystemUsersAndAnonymous.hasNext()) {
+            Authorizable auth = allGroupsAndSystemUsersAndAnonymous.next();
             String authId = auth.getID();
             authorizableCache.put(authId, auth);
 
@@ -96,11 +111,11 @@ class PrefetchingUserManager implements UserManager {
     }
 
     public Set<String> getDeclaredIsMemberOf(String id) throws RepositoryException {
-        
-        if(isMemberOfByAuthorizableId.containsKey(id)) {
+
+        if (isMemberOfByAuthorizableId.containsKey(id)) {
             return isMemberOfByAuthorizableId.get(id);
         } else {
-            // for users fall back to retrieve on demand 
+            // for users fall back to retrieve on demand
             Set<String> memberOfSet = new HashSet<String>();
             Iterator<Group> memberOfIt = getAuthorizable(id).declaredMemberOf();
             while (memberOfIt.hasNext()) {
@@ -112,7 +127,8 @@ class PrefetchingUserManager implements UserManager {
     }
 
     public Set<String> getDeclaredMembersWithoutRegularUsers(String id) {
-        return nonRegularUserMembersByAuthorizableId.containsKey(id) ? nonRegularUserMembersByAuthorizableId.get(id): Collections.<String>emptySet();
+        return nonRegularUserMembersByAuthorizableId.containsKey(id) ? nonRegularUserMembersByAuthorizableId.get(id)
+                : Collections.<String> emptySet();
     }
 
     public int getCacheSize() {

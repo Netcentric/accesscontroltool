@@ -36,10 +36,10 @@ public class PrefetchingUserManagerTest {
 
     @Mock
     ValueFactory valueFactory;
-    
+
     @Mock
     InstallationLogger installationLogger;
-    
+
     @Mock
     Group group1;
 
@@ -48,22 +48,22 @@ public class PrefetchingUserManagerTest {
 
     @Mock
     Group group3;
-    
+
     @Mock
     User user1;
-    
+
     @Mock
     User user2;
 
     @Mock
     User userNonCached;
-    
+
     PrefetchingUserManager prefetchingUserManager;
-    
+
     @Before
     public void before() throws RepositoryException {
-        
-        setupAuthorizable(group1, "group1", Collections.<Group>emptyList());
+
+        setupAuthorizable(group1, "group1", Collections.<Group> emptyList());
         setupAuthorizable(group2, "group2", Arrays.asList(group1));
         setupAuthorizable(group3, "group3", Arrays.asList(group2));
         setupAuthorizable(user1, "user1", Arrays.asList(group3));
@@ -72,7 +72,7 @@ public class PrefetchingUserManagerTest {
 
         when(userManager.findAuthorizables(any(Query.class))).thenReturn(Arrays.asList(group1, group2, group3, user1, user2).iterator());
     }
-    
+
     private void setupAuthorizable(Authorizable auth, String id, List<Group> memberOf) throws RepositoryException {
         when(auth.getID()).thenReturn(id);
         when(auth.declaredMemberOf()).thenReturn(memberOf.iterator());
@@ -81,7 +81,7 @@ public class PrefetchingUserManagerTest {
     @Test
     public void testPrefetchedAuthorizablesUserManager() throws RepositoryException {
         prefetchingUserManager = new PrefetchingUserManager(userManager, valueFactory, installationLogger);
-        
+
         assertEquals(5, prefetchingUserManager.getCacheSize());
         assertEquals(group1, prefetchingUserManager.getAuthorizable("group1"));
         assertEquals(null, prefetchingUserManager.getAuthorizable("userNonCached"));
@@ -99,19 +99,17 @@ public class PrefetchingUserManagerTest {
         prefetchingUserManager.getAuthorizable(testPrincipal);
         verify(userManager, times(1)).getAuthorizable(testPrincipal);
 
-
-
         String userPath = "/home/users/path";
         prefetchingUserManager.getAuthorizableByPath(userPath);
         verify(userManager, times(1)).getAuthorizableByPath(userPath);
-        
+
         String relPath = "profile/test";
         String testVal = "testval";
         prefetchingUserManager.findAuthorizables(relPath, testVal);
         verify(userManager, times(1)).findAuthorizables(relPath, testVal);
         prefetchingUserManager.findAuthorizables(relPath, testVal, UserManager.SEARCH_TYPE_AUTHORIZABLE);
         verify(userManager, times(1)).findAuthorizables(relPath, testVal, UserManager.SEARCH_TYPE_AUTHORIZABLE);
-        
+
         Query testQuery = new Query() {
             public <T> void build(QueryBuilder<T> builder) {
                 // fetch all authorizables
@@ -119,40 +117,34 @@ public class PrefetchingUserManagerTest {
         };
         prefetchingUserManager.findAuthorizables(testQuery);
         verify(userManager, times(1)).findAuthorizables(testQuery);
-        
+
         String testpw = "pw";
         prefetchingUserManager.createUser(testuser, testpw);
         verify(userManager, times(1)).createUser(testuser, testpw);
 
         prefetchingUserManager.createUser(testuser, testpw, testPrincipal, userPath);
         verify(userManager, times(1)).createUser(testuser, testpw, testPrincipal, userPath);
-        
+
         prefetchingUserManager.createSystemUser(testuser, userPath);
         verify(userManager, times(1)).createSystemUser(testuser, userPath);
-        
+
         prefetchingUserManager.createGroup(testuser);
         verify(userManager, times(1)).createGroup(testuser);
 
         prefetchingUserManager.createGroup(testPrincipal);
         verify(userManager, times(1)).createGroup(testPrincipal);
-        
+
         prefetchingUserManager.createGroup(testPrincipal, userPath);
         verify(userManager, times(1)).createGroup(testPrincipal, userPath);
 
         prefetchingUserManager.createGroup(testuser, testPrincipal, userPath);
         verify(userManager, times(1)).createGroup(testuser, testPrincipal, userPath);
-        
+
         prefetchingUserManager.autoSave(true);
         verify(userManager, times(1)).autoSave(true);
-        
+
         prefetchingUserManager.isAutoSave();
         verify(userManager, times(1)).isAutoSave();
     }
 
-
-    
-    
-    
-    
-    
 }
