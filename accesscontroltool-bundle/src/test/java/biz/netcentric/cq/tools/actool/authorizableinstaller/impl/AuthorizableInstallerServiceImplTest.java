@@ -14,6 +14,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
@@ -22,6 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,6 +32,7 @@ import java.util.Set;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.SimpleCredentials;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 
@@ -39,17 +42,17 @@ import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.Query;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
+import org.apache.sling.jcr.api.SlingRepository;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Enclosed;
+import org.mockito.InjectMocks;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -321,6 +324,7 @@ public class AuthorizableInstallerServiceImplTest {
 
     public static final class SetUserPassword {
 
+        private static final String USER_ID = "userid";
         private static final String UNPROTECTED_PASSWORD = "unprotected_pass";
 
         @Mock
@@ -329,26 +333,48 @@ public class AuthorizableInstallerServiceImplTest {
         @Mock
         private DecryptionService decryptionService;
 
+        @Mock
+        private InstallationLogger installationLogger;
+
+        @Mock
+        private SlingRepository repository;
+
+        @Mock
+        private Session session;
+
+        @Spy
+        @InjectMocks
         private AuthorizableInstallerServiceImpl service;
 
-        @Before
-        public void setUp() throws CryptoException {
-            MockitoAnnotations.initMocks(this);
+        private AuthorizableConfigBean configBean;
 
-            service = new AuthorizableInstallerServiceImpl();
-            service.decryptionService = decryptionService;
+        @Before
+        public void setUp() throws CryptoException, RepositoryException {
+            initMocks(this);
+
+            doReturn(USER_ID).when(user).getID();
 
             doReturn(UNPROTECTED_PASSWORD).when(decryptionService).decrypt(anyString());
+
+            configBean = new AuthorizableConfigBean();
+            configBean.setPassword("{some_protected_pass1}");
         }
 
         @Test
-        public void test() throws RepositoryException, AuthorizableCreatorException {
+        public void testPasswordExists() throws RepositoryException, AuthorizableCreatorException {
+
+            doReturn(session).when(repository).login(any(SimpleCredentials.class));
+            service.setUserPassword(configBean, user, installationLogger);
+            verify(user, times(0)).changePassword(anyString());
+        }
+
+        @Test
+        public void testPasswordDifferent() throws RepositoryException, AuthorizableCreatorException {
             final AuthorizableConfigBean bean = new AuthorizableConfigBean();
             bean.setPassword("{some_protected_pass1}");
-
-            service.setUserPassword(bean, user);
-
-            verify(user).changePassword(eq(UNPROTECTED_PASSWORD));
+            doThrow(javax.jcr.LoginException.class).when(repository).login(any(SimpleCredentials.class));
+            service.setUserPassword(configBean, user, installationLogger);
+            verify(user, times(1)).changePassword(UNPROTECTED_PASSWORD);
         }
     }
 }
