@@ -16,10 +16,9 @@ public interface AcHistoryService {
 
     public void persistAcePurgeHistory(PersistableInstallationLogger history);
 
-    /**
-     * Returns history items of previous runs
-     * @return Set of AcToolExecutions
-     */
+    /** Returns history items of previous runs
+     * 
+     * @return Set of AcToolExecutions */
     public List<AcToolExecution> getAcToolExecutions();
 
     public String getLastInstallationHistory();
@@ -28,10 +27,8 @@ public interface AcHistoryService {
 
     public boolean wasLastPersistHistoryCallSuccessful();
 
-    /**
-     * @deprecated Use {@link #getAcToolExecutions()} instead
-     * @return
-     */
+    /** @deprecated Use {@link #getAcToolExecutions()} instead
+     * @return */
     public String[] getInstallationLogPaths();
-    
+
 }

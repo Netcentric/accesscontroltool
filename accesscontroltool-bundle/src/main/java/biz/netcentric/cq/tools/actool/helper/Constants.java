@@ -33,7 +33,8 @@ public class Constants {
             OBSOLETE_AUTHORIZABLES_KEY));
 
     public static final String USER_ANONYMOUS = "anonymous";
-
+    public static final String PRINCIPAL_EVERYONE = "everyone";
+    
     public static final String GROUPS_ROOT = "/home/groups";
     public static final String USERS_ROOT = "/home/users";
 

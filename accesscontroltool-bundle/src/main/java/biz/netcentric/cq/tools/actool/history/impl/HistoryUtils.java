@@ -133,13 +133,8 @@ public class HistoryUtils {
         Node newHistoryNode = safeGetNode(acHistoryRootNode, name, NODETYPE_NT_UNSTRUCTURED);
         String path = newHistoryNode.getPath();
         setHistoryNodeProperties(newHistoryNode, installLog, trigger);
-        
-        // not ideal to save both variants, but the easiest for now
-        JcrUtils.putFile(newHistoryNode, LOG_FILE_NAME_VERBOSE, "text/plain",
-                new ByteArrayInputStream(installLog.getVerboseMessageHistory().getBytes()));
-        JcrUtils.putFile(newHistoryNode, LOG_FILE_NAME, "text/plain",
-                new ByteArrayInputStream(installLog.getMessageHistory().getBytes()));
-        
+        saveLogs(newHistoryNode, installLog);
+
         deleteObsoleteHistoryNodes(acHistoryRootNode, nrOfHistoriesToSave);
 
         Node previousHistoryNode = (Node) acHistoryRootNode.getNodes().next();
@@ -151,6 +146,14 @@ public class HistoryUtils {
         // Explicitly not adding this to install log (as it has been saved already, regular log is sufficient)
         LOG.info("Saved history in node: {}", path);
         return newHistoryNode;
+    }
+
+    static void saveLogs(Node historyNode, PersistableInstallationLogger installLog) throws RepositoryException {
+        // not ideal to save both variants, but the easiest for now
+        JcrUtils.putFile(historyNode, LOG_FILE_NAME_VERBOSE, "text/plain",
+                new ByteArrayInputStream(installLog.getVerboseMessageHistory().getBytes()));
+        JcrUtils.putFile(historyNode, LOG_FILE_NAME, "text/plain",
+                new ByteArrayInputStream(installLog.getMessageHistory().getBytes()));
     }
 
     private static boolean isInStrackTracke(StackTraceElement[] stackTrace, Class<?> classToSearch) {

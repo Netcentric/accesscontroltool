@@ -8,6 +8,8 @@
  */
 package biz.netcentric.cq.tools.actool.authorizableinstaller.impl;
 
+import static biz.netcentric.cq.tools.actool.helper.Constants.PRINCIPAL_EVERYONE;
+
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.cert.Certificate;
@@ -77,8 +79,6 @@ public class AuthorizableInstallerServiceImpl implements
     private static final Logger LOG = LoggerFactory.getLogger(AuthorizableInstallerServiceImpl.class);
 
     private static final String PATH_SEGMENT_SYSTEMUSERS = "system";
-
-    private static final String PRINCIPAL_EVERYONE = "everyone";
 
     // not using org.apache.jackrabbit.oak.spi.security.authentication.external.basic.DefaultSyncContext.REP_EXTERNAL_ID since it is an
     // optional dependency and not available in AEM 6.1

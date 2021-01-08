@@ -14,8 +14,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -37,8 +35,6 @@ import org.slf4j.LoggerFactory;
 
 import com.day.cq.commons.jcr.JcrConstants;
 
-import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
-import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
 import biz.netcentric.cq.tools.actool.history.AcToolExecution;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
@@ -172,7 +168,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
                 history = "no history found!";
             }
         } catch (RepositoryException e) {
-            LOG.error("RepositoryException: ", e);
+            LOG.error("RepositoryException: {}", e, e);
         } finally {
             if (session != null) {
                 session.logout();
@@ -235,62 +231,44 @@ public class AcHistoryServiceImpl implements AcHistoryService {
 
     @Override
     public void persistAcePurgeHistory(PersistableInstallationLogger installLog) {
-        Session session = null;
 
+        Session session = null;
         try {
             session = repository.loginService(null, null);
+
             Node acHistoryRootNode = HistoryUtils.getAcHistoryRootNode(session);
-            NodeIterator nodeIterator = acHistoryRootNode.getNodes();
-            Set<Node> historyNodes = new TreeSet<Node>(
-                    new TimestampPropertyComparator());
-            Node newestHistoryNode = null;
-            while (nodeIterator.hasNext()) {
-                historyNodes.add(nodeIterator.nextNode());
-            }
-            if (!historyNodes.isEmpty()) {
-                newestHistoryNode = historyNodes.iterator().next();
-                persistPurgeAceHistory(session, installLog, newestHistoryNode);
-                session.save();
+
+            Node purgeHistoryNode = acHistoryRootNode.addNode("purge_" + System.currentTimeMillis(), HistoryUtils.NODETYPE_NT_UNSTRUCTURED);
+
+            // if there is already a purge history node, order the new one before so
+            // the newest one is always on top
+            NodeIterator nodeIt = acHistoryRootNode.getNodes();
+            Node previousPurgeNode = null;
+            while (nodeIt.hasNext()) {
+                Node currNode = nodeIt.nextNode();
+                // get previous purgeHistory node
+                if (currNode.getName().contains("purge_")) {
+                    previousPurgeNode = currNode;
+                    break;
+                }
             }
 
+            if (previousPurgeNode != null) {
+                acHistoryRootNode.orderBefore(purgeHistoryNode.getName(), previousPurgeNode.getName());
+            }
+
+            installLog.addMessage(LOG, "Saved history in node: " + purgeHistoryNode.getPath());
+            HistoryUtils.setHistoryNodeProperties(purgeHistoryNode, installLog, "purge");
+            HistoryUtils.saveLogs(purgeHistoryNode, installLog);
+
+            session.save();
         } catch (RepositoryException e) {
-            LOG.error("Exception: ", e);
+            LOG.error("RepositoryException: ", e);
         } finally {
             if (session != null) {
                 session.logout();
             }
         }
-    }
-
-    private static Node persistPurgeAceHistory(final Session session,
-            PersistableInstallationLogger installLog, final Node historyNode)
-                    throws RepositoryException {
-
-        Node purgeHistoryNode = historyNode.addNode(
-                "purge_" + System.currentTimeMillis(),
-                HistoryUtils.NODETYPE_NT_UNSTRUCTURED);
-
-        // if there is already a purge history node, order the new one before so
-        // the newest one is always on top
-        NodeIterator nodeIt = historyNode.getNodes();
-        Node previousPurgeNode = null;
-        while (nodeIt.hasNext()) {
-            Node currNode = nodeIt.nextNode();
-            // get previous purgeHistory node
-            if (currNode.getName().contains("purge_")) {
-                previousPurgeNode = currNode;
-                break;
-            }
-        }
-
-        if (previousPurgeNode != null) {
-            historyNode.orderBefore(purgeHistoryNode.getName(),
-                    previousPurgeNode.getName());
-        }
-
-        installLog.addMessage(LOG, "Saved history in node: " + purgeHistoryNode.getPath());
-        HistoryUtils.setHistoryNodeProperties(purgeHistoryNode, installLog, "purge");
-        return historyNode;
     }
 
     @Override

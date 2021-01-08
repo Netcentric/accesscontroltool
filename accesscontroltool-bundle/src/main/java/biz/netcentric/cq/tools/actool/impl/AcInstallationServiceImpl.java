@@ -8,6 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.impl;
 
+import static biz.netcentric.cq.tools.actool.helper.Constants.PRINCIPAL_EVERYONE;
 import static biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger.msHumanReadable;
 
 import java.util.ArrayList;
@@ -24,21 +25,27 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.AccessDeniedException;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
+import javax.jcr.lock.LockException;
+import javax.jcr.security.AccessControlEntry;
+import javax.jcr.security.AccessControlException;
+import javax.jcr.security.AccessControlManager;
+import javax.jcr.version.VersionException;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
+import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
-import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.cm.ConfigurationAdmin;
@@ -70,7 +77,6 @@ import biz.netcentric.cq.tools.actool.dumpservice.ConfigDumpService;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.AclBean;
-import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.PurgeHelper;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
@@ -79,6 +85,7 @@ import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl.Configuration;
 import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService;
 
 @Component
 @Designate(ocd=Configuration.class)
@@ -472,16 +479,21 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         Map<String, Set<AceBean>> filteredPathBasedAceMapFromConfig = filterForRestrictedPaths(pathBasedAceMapFromConfig,
                 restrictedToPaths, installLog);
 
-        AceBeanInstaller aceBeanInstaller = acConfiguration.getGlobalConfiguration().getInstallAclsIncrementally()
-                ? aceBeanInstallerIncremental : aceBeanInstallerClassic;
+        if (!filteredPathBasedAceMapFromConfig.isEmpty()) {
+            AceBeanInstaller aceBeanInstaller = acConfiguration.getGlobalConfiguration().getInstallAclsIncrementally()
+                    ? aceBeanInstallerIncremental
+                    : aceBeanInstallerClassic;
 
+            installLog.addMessage(LOG,
+                    "*** Starting installation of " + collectAceCount(filteredPathBasedAceMapFromConfig) + " ACE configurations for "
+                            + filteredPathBasedAceMapFromConfig.size() + " paths in content nodes using strategy "
+                            + aceBeanInstaller.getClass().getSimpleName() + "...");
 
-        installLog.addMessage(LOG, "*** Starting installation of " + collectAceCount(filteredPathBasedAceMapFromConfig) + " ACE configurations for "
-                + filteredPathBasedAceMapFromConfig.size()
-                + " paths in content nodes using strategy " + aceBeanInstaller.getClass().getSimpleName() + "...");
-
-        aceBeanInstaller.installPathBasedACEs(filteredPathBasedAceMapFromConfig, acConfiguration, session, installLog, principalsToRemoveAcesFor,
-                intermediateSaves);
+            aceBeanInstaller.installPathBasedACEs(filteredPathBasedAceMapFromConfig, acConfiguration, session, installLog,
+                    principalsToRemoveAcesFor, intermediateSaves);
+        } else {
+            installLog.addMessage(LOG, "No relevant ACEs to install");
+        }
 
         // if everything went fine (no exceptions), save the session
         // thus persisting the changed ACLs
@@ -595,8 +607,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 installLog.addMessage(LOG, "(" + obsoleteAuthorizablesAlreadyPurged.size() + " have been purged already)");
             }
 
-            String purgeAuthorizablesResultMsg = purgeAuthorizables(obsoleteAuthorizables, session);
-            installLog.addVerboseMessage(LOG, purgeAuthorizablesResultMsg); // this message is too long for regular log
+            purgeAuthorizables(obsoleteAuthorizables, session, installLog, true);
             installLog.addMessage(LOG, "Successfully purged " + obsoleteAuthorizables);
         } catch (Exception e) {
             installLog.addError(LOG, "Could not purge obsolete authorizables " + obsoleteAuthorizables, e);
@@ -629,8 +640,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             installLog.addMessage(LOG, "Purging " + virtualGroupIds.size()
                     + " virtual groups from repository (most likely they were non-virtual groups before)...");
 
-            String purgeAuthorizablesResultMsg = purgeAuthorizables(virtualGroupIds, session);
-            installLog.addVerboseMessage(LOG, purgeAuthorizablesResultMsg); // this message is too long for regular log
+            purgeAuthorizables(virtualGroupIds, session, installLog, true);
             installLog.addMessage(LOG, "Successfully purged virtual groups from repository: " + virtualGroupIds);
 
         } catch (Exception e) {
@@ -744,111 +754,175 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     @Override
     public String purgeAuthorizablesFromConfig() {
         List<String> resultMessages = new ArrayList<String>();
-        for(String configRootPath: configurationRootPaths) {
+        for (String configRootPath : configurationRootPaths) {
             LOG.info("Purging authorizables for root path {}", configRootPath);
             resultMessages.add(purgeAuthorizablesFromConfig(configRootPath));
         }
         return StringUtils.join(resultMessages, "\n");
     }
-    
+
     @Override
     public String purgeAuthorizablesFromConfig(String configRootPath) {
         Session session = null;
-        String message = "";
         try {
             session = repository.loginService(null, null);
 
-            Set<String> authorizabesFromConfigurations = getAllAuthorizablesFromConfig(session, configRootPath);
-            message = purgeAuthorizables(authorizabesFromConfigurations, session);
             PersistableInstallationLogger installLog = new PersistableInstallationLogger();
-            installLog.addMessage(LOG, "purge method: purgAuthorizablesFromConfig()");
-            installLog.addMessage(LOG, message);
+            installLog.addMessage(LOG, "*** Purging AC Tool configuraiton " + configRootPath + "...");
+
+            Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configRootPath, session);
+            AcConfiguration acConfiguration = configurationMerger.getMergedConfigurations(newestConfigurations, installLog, configReader,
+                    session);
+
+            installLog.addMessage(LOG, "Purging ACLs...");
+            long startAclPurge = System.currentTimeMillis();
+            // removing the ace config section will clear all
+            acConfiguration.getAceConfig().clear();
+
+            Map<String, Set<AceBean>> aceDump = dumpservice
+                    .createAclDumpMap(AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE, Collections.<String> emptyList(), true, session)
+                    .getAceDump();
+            installAces(installLog, acConfiguration, aceDump, null, session);
+            installLog.addMessage(LOG, "Purged ACLs for " + acConfiguration.getAuthorizablesConfig().size() + " authorizables in "
+                    + msHumanReadable(System.currentTimeMillis() - startAclPurge));
+
+            installLog.addMessage(LOG, "Purging authorizables...");
+            Set<String> authorizablesToPurge = new HashSet<>();
+            for (AuthorizableConfigBean authorizableConfigBean : acConfiguration.getAuthorizablesConfig()) {
+                String authorizableId = authorizableConfigBean.getAuthorizableId();
+                if (StringUtils.isNotBlank(authorizableConfigBean.getUnmanagedAcePathsRegex())) {
+                    installLog.addMessage(LOG, "Not purging " + authorizableId + " since property unmanagedAcePathsRegex is configured");
+                    continue;
+                }
+                if (PRINCIPAL_EVERYONE.equals(authorizableId)) {
+                    continue;
+                }
+                authorizablesToPurge.add(authorizableId);
+            }
+
+            purgeAuthorizables(authorizablesToPurge, session, installLog, false);
+
             acHistoryService.persistAcePurgeHistory(installLog);
+
+            return installLog.getMessageHistory();
         } catch (Exception e) {
-            message = "Exception while purging all authorizable from config: " + e;
-            LOG.error(message, e);
+            LOG.error("Exception while purging all authorizable from config: {}", e, e);
+            return "Could not purge authorizables from config " + configRootPath + ": " + e;
         } finally {
             if (session != null) {
                 session.logout();
             }
         }
-        return message;
     }
 
     @Override
     public String purgeAuthorizables(String[] authorizableIds) {
+        PersistableInstallationLogger installLog = new PersistableInstallationLogger();
+
         Session session = null;
-        String message = "";
         try {
             session = repository.loginService(null, null);
-            Set<String> authorizablesSet = new HashSet<String>(Arrays.asList(authorizableIds));
-            message = purgeAuthorizables(authorizablesSet, session);
-            PersistableInstallationLogger installLog = new PersistableInstallationLogger();
-            installLog.addMessage(LOG, "purge method: purgeAuthorizables()");
-            installLog.addMessage(LOG, message);
+            Set<String> authorizablesSet = new HashSet<>(Arrays.asList(authorizableIds));
+            purgeAuthorizables(authorizablesSet, session, installLog, true);
+
             acHistoryService.persistAcePurgeHistory(installLog);
         } catch (RepositoryException e) {
-            LOG.error("Exception: ", e);
-            message = e.toString();
+            installLog.addError(LOG, "Could not purge authorizables " + Arrays.asList(authorizableIds) + ": " + e, e);
         } finally {
             if (session != null) {
                 session.logout();
             }
         }
-        return message;
+        return installLog.getMessageHistory();
     }
 
-    private String purgeAuthorizables(Set<String> authorizableIds, final Session session) {
+    private void purgeAuthorizables(Set<String> authorizableIds, final Session session, InstallationLogger installLog, boolean deleteAces) {
 
         StopWatch sw = new StopWatch();
         sw.start();
 
-        StringBuilder message = new StringBuilder();
-
         try {
-            // first the ACE entries have to be deleted
-            Set<String> principalIds = new HashSet<String>();
-            Set<AclBean> aclBeans = QueryHelper.getAuthorizablesAcls(session, authorizableIds, principalIds);
-            String deleteAcesResultMsg = PurgeHelper.deleteAcesForPrincipalIds(session, principalIds, aclBeans);
-            message.append(deleteAcesResultMsg);
+            if (deleteAces) {
+                // first the ACE entries have to be deleted
+                Set<String> principalIds = new HashSet<>();
+                Set<AclBean> aclBeans = QueryHelper.getAuthorizablesAcls(session, authorizableIds, principalIds);
+                deleteAcesForPrincipalIds(session, installLog, principalIds, aclBeans);
+            }
 
             // then the authorizables can be deleted
             UserManager userManager = AccessControlUtils.getUserManagerAutoSaveDisabled(session);
-            List<Authorizable> authorizablesToDelete = new ArrayList<Authorizable>();
+            List<Authorizable> authorizablesToDelete = new ArrayList<>();
             for (String authorizableId : authorizableIds) {
                 Authorizable authorizable = userManager.getAuthorizable(authorizableId);
                 if (authorizable != null) {
                     authorizablesToDelete.add(authorizable);
                 } else {
-                    message.append("Could not delete authorizable '" + authorizableId + "' because it does not exist\n");
+                    installLog.addMessage(LOG, "Could not delete authorizable '" + authorizableId + "' because it does not exist");
                 }
             }
 
             sortAuthorizablesForDeletion(authorizablesToDelete);
 
             for (Authorizable authorizableToDelete : authorizablesToDelete) {
-                String deleteResultMsg = deleteAuthorizable(authorizableToDelete);
-                message.append(deleteResultMsg);
+                deleteAuthorizable(installLog, authorizableToDelete);
             }
 
             session.save();
 
             sw.stop();
             String executionTime = PersistableInstallationLogger.msHumanReadable(sw.getTime());
-            message.append("Purged " + authorizablesToDelete.size() + " authorizables in " + executionTime + "\n");
+            installLog.addMessage(LOG, "Purged " + authorizablesToDelete.size() + " authorizables in " + executionTime);
 
         } catch (Exception e) {
-            message.append("Deletion of ACEs failed! reason: RepositoryException: " + e + "\n");
-            LOG.error("Exception while purgin authorizables: " + e, e);
+            installLog.addError(LOG, "Purging of authorizables failed: " + e, e);
         }
 
-        return message.toString();
+    }
+
+    public void deleteAcesForPrincipalIds(final Session session, InstallationLogger installLog, final Set<String> principalIds,
+            final Set<AclBean> aclBeans) throws RepositoryException {
+
+        StopWatch sw = new StopWatch();
+        sw.start();
+        AccessControlManager aMgr = session.getAccessControlManager();
+        long aceCounter = 0;
+
+        for (AclBean aclBean : aclBeans) {
+            if (aclBean == null) {
+                continue;
+            }
+
+            JackrabbitAccessControlList acl = aclBean.getAcl();
+            for (AccessControlEntry ace : acl.getAccessControlEntries()) {
+                String principalId = ace.getPrincipal().getName();
+                if (principalIds.contains(principalId)) {
+                    String parentNodePath = aclBean.getParentPath();
+                    acl.removeAccessControlEntry(ace);
+                    boolean aclEmpty = acl.isEmpty();
+                    if (!aclEmpty) {
+                        aMgr.setPolicy(aclBean.getParentPath(), acl);
+                    } else {
+                        aMgr.removePolicy(aclBean.getParentPath(), acl);
+                    }
+
+                    installLog.addVerboseMessage(LOG, "Path " + parentNodePath + ": Removed entry for '" + principalId + "' from ACL "
+                            + (aclEmpty ? " (and the now emtpy ACL itself)" : ""));
+
+                    aceCounter++;
+                }
+            }
+        }
+        sw.stop();
+        String executionTime = msHumanReadable(sw.getTime());
+        String resultMsg = (aceCounter > 0)
+                ? "Deleted " + aceCounter + " ACEs for " + principalIds.size() + " principals in " + executionTime
+                : "Did not delete any ACEs";
+        installLog.addMessage(LOG, resultMsg);
     }
 
     void sortAuthorizablesForDeletion(List<Authorizable> authorizablesToDelete) throws RepositoryException {
 
-        outer:
-        for (int i = 0; i < authorizablesToDelete.size();) {
+        outer: for (int i = 0; i < authorizablesToDelete.size();) {
             Authorizable currentAuthorizable = authorizablesToDelete.get(i);
             Iterator<Group> declaredMemberOfIt = currentAuthorizable.declaredMemberOf();
             LOG.trace("At index {}: {}", i, currentAuthorizable.getID());
@@ -869,10 +943,9 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         }
     }
 
-    private String deleteAuthorizable(Authorizable authorizable) throws RepositoryException {
-        String message;
+    private void deleteAuthorizable(InstallationLogger installLog, Authorizable authorizable) throws RepositoryException {
         try {
-            List<String> removedFromGroups = new ArrayList<String>();
+            List<String> removedFromGroups = new ArrayList<>();
             Iterator<Group> declaredMemberOf = authorizable.declaredMemberOf();
             while (declaredMemberOf.hasNext()) {
                 Group groupTheAuthorizableIsMemberOf = declaredMemberOf.next();
@@ -882,17 +955,13 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             }
 
             authorizable.remove();
-            message = "Deleted authorizable '" + authorizable.getID() + "'"
+            installLog.addVerboseMessage(LOG, "Deleted authorizable '" + authorizable.getID() + "'"
                     + (!removedFromGroups.isEmpty() ? " and removed it from groups: " + StringUtils.join(removedFromGroups, ", ")
-                            : "")
-                    + "\n";
+                            : ""));
 
         } catch (RepositoryException e) {
-            message = "Error while deleting authorizable '" + authorizable.getID() + "': e=" + e;
-            LOG.warn("Error while deleting authorizable '" + authorizable.getID() + "': e=" + e, e);
+            installLog.addError(LOG, "Error while deleting authorizable '" + authorizable.getID() + "': e=" + e, e);
         }
-
-        return message;
     }
 
     @Override
@@ -918,7 +987,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             }
             
         } catch (Exception e) {
-            LOG.warn("Could not retrieve config file content for root paths " + configurationRootPaths + ": e=" + e, e);
+            LOG.warn("Could not retrieve config file content for root paths {}: e={}", configurationRootPaths, e, e);
         } finally {
             if (session != null) {
                 session.logout();
@@ -927,14 +996,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         return paths;
     }
 
-    public Set<String> getAllAuthorizablesFromConfig(Session session, String configRootPath)
-            throws Exception {
-        PersistableInstallationLogger history = new PersistableInstallationLogger();
-        Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configRootPath, session);
-        AcConfiguration acConfiguration = configurationMerger.getMergedConfigurations(newestConfigurations, history, configReader, session);
-        Set<String> allAuthorizablesFromConfig = acConfiguration.getAuthorizablesConfig().getAuthorizableIds();
-        return allAuthorizablesFromConfig;
-    }
+
 
     public String getVersion() {
         String bundleVersion = FrameworkUtil.getBundle(AcInstallationServiceImpl.class).getVersion().toString();
@@ -961,6 +1023,5 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     public AcInstallationHistoryPojo execute(String configurationRootPath, String[] restrictedToPaths) {
         return apply(configurationRootPath, restrictedToPaths);
     }
-
 
 }
