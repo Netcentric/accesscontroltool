@@ -1,0 +1,8 @@
+
+- group_config:
+
+    - fragment-xyz-editor:
+        - path: /home/groups/test
+        # only one item allowed underneath group name 
+        - isMemberOf:
+            - fragment-xyz
