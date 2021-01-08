@@ -217,9 +217,10 @@ public class YamlConfigReader implements ConfigReader {
             final List<Map<String, Object>> currentAuthorizableData = (List<Map<String, Object>>) currentMap.get(currentAuthorizableIdFromYaml);
 
             if ((currentAuthorizableData != null) && !currentAuthorizableData.isEmpty()) {
-                
-                if(currentAuthorizableData.size() > 1) {
-                    throw new AcConfigBeanValidationException("Invalid authorizable " + currentAuthorizableIdFromYaml +" - configuration needs to contain exactly one yaml list entry");
+
+                if (currentAuthorizableData.size() > 1) {
+                    throw new AcConfigBeanValidationException("Invalid authorizable " + currentAuthorizableIdFromYaml
+                            + " - configuration needs to contain exactly one yaml list entry");
                 }
                 try {
                     Map<String, Object> currentPrincipalDataMap = currentAuthorizableData.get(0);
