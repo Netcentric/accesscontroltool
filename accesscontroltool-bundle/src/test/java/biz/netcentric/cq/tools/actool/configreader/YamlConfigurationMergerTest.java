@@ -88,6 +88,11 @@ public class YamlConfigurationMergerTest {
         getAcConfigurationForFile(getConfigurationMerger(), session, "test-invalid2.yaml");
     }
 
+    @Test(expected = AcConfigBeanValidationException.class)
+    public void testReadInvalidYaml3() throws IOException, RepositoryException, AcConfigBeanValidationException {
+        getAcConfigurationForFile(getConfigurationMerger(), session, "test-invalid3.yaml");
+    }
+    
     @Test()
     public void testReadEmptyYaml() throws IOException, RepositoryException, AcConfigBeanValidationException {
         getAcConfigurationForFile(getConfigurationMerger(), session, "test-empty.yaml");

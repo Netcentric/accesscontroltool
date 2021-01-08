@@ -218,17 +218,20 @@ public class YamlConfigReader implements ConfigReader {
 
             if ((currentAuthorizableData != null) && !currentAuthorizableData.isEmpty()) {
 
-                for (final Map<String, Object> currentPrincipalDataMap : currentAuthorizableData) {
-                    try {
-                        final AuthorizableConfigBean tmpPrincipalConfigBean = getNewAuthorizableConfigBean();
-                        setupAuthorizableBean(tmpPrincipalConfigBean, currentPrincipalDataMap, currentAuthorizableIdFromYaml, isGroupSection);
-                        if (authorizableValidator != null) {
-                            authorizableValidator.validate(tmpPrincipalConfigBean);
-                        }
-                        authorizableBeans.add(tmpPrincipalConfigBean);
-                    } catch (AcConfigBeanValidationException e) {
-                        throw new AcConfigBeanValidationException("Invalid authorizable " + currentAuthorizableIdFromYaml, e);
+                if (currentAuthorizableData.size() > 1) {
+                    throw new AcConfigBeanValidationException("Invalid authorizable " + currentAuthorizableIdFromYaml
+                            + " - configuration needs to contain exactly one yaml list entry");
+                }
+                try {
+                    Map<String, Object> currentPrincipalDataMap = currentAuthorizableData.get(0);
+                    final AuthorizableConfigBean tmpPrincipalConfigBean = getNewAuthorizableConfigBean();
+                    setupAuthorizableBean(tmpPrincipalConfigBean, currentPrincipalDataMap, currentAuthorizableIdFromYaml, isGroupSection);
+                    if (authorizableValidator != null) {
+                        authorizableValidator.validate(tmpPrincipalConfigBean);
                     }
+                    authorizableBeans.add(tmpPrincipalConfigBean);
+                } catch (AcConfigBeanValidationException e) {
+                    throw new AcConfigBeanValidationException("Invalid authorizable " + currentAuthorizableIdFromYaml, e);
                 }
             }
 
