@@ -29,7 +29,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 @RunWith(MockitoJUnitRunner.class)
-public class PrefetchingUserManagerTest {
+public class AuthInstallerUserManagerPrefetchingImplTest {
 
     @Mock
     UserManager userManager;
@@ -58,7 +58,7 @@ public class PrefetchingUserManagerTest {
     @Mock
     User userNonCached;
 
-    PrefetchingUserManager prefetchingUserManager;
+    AuthInstallerUserManagerPrefetchingImpl prefetchingUserManager;
 
     @Before
     public void before() throws RepositoryException {
@@ -80,7 +80,7 @@ public class PrefetchingUserManagerTest {
 
     @Test
     public void testPrefetchedAuthorizablesUserManager() throws RepositoryException {
-        prefetchingUserManager = new PrefetchingUserManager(userManager, valueFactory, installationLogger);
+        prefetchingUserManager = new AuthInstallerUserManagerPrefetchingImpl(userManager, valueFactory, installationLogger);
 
         assertEquals(5, prefetchingUserManager.getCacheSize());
         assertEquals(group1, prefetchingUserManager.getAuthorizable("group1"));
@@ -92,44 +92,19 @@ public class PrefetchingUserManagerTest {
 
     @Test
     public void testDelegation() throws RepositoryException {
-        prefetchingUserManager = new PrefetchingUserManager(userManager, valueFactory, installationLogger);
+        prefetchingUserManager = new AuthInstallerUserManagerPrefetchingImpl(userManager, valueFactory, installationLogger);
 
         String testuser = "test";
         PrincipalImpl testPrincipal = new PrincipalImpl(testuser);
-        prefetchingUserManager.getAuthorizable(testPrincipal);
-        verify(userManager, times(1)).getAuthorizable(testPrincipal);
 
         String userPath = "/home/users/path";
-        prefetchingUserManager.getAuthorizableByPath(userPath);
-        verify(userManager, times(1)).getAuthorizableByPath(userPath);
-
-        String relPath = "profile/test";
-        String testVal = "testval";
-        prefetchingUserManager.findAuthorizables(relPath, testVal);
-        verify(userManager, times(1)).findAuthorizables(relPath, testVal);
-        prefetchingUserManager.findAuthorizables(relPath, testVal, UserManager.SEARCH_TYPE_AUTHORIZABLE);
-        verify(userManager, times(1)).findAuthorizables(relPath, testVal, UserManager.SEARCH_TYPE_AUTHORIZABLE);
-
-        Query testQuery = new Query() {
-            public <T> void build(QueryBuilder<T> builder) {
-                // fetch all authorizables
-            }
-        };
-        prefetchingUserManager.findAuthorizables(testQuery);
-        verify(userManager, times(1)).findAuthorizables(testQuery);
-
         String testpw = "pw";
-        prefetchingUserManager.createUser(testuser, testpw);
-        verify(userManager, times(1)).createUser(testuser, testpw);
-
         prefetchingUserManager.createUser(testuser, testpw, testPrincipal, userPath);
         verify(userManager, times(1)).createUser(testuser, testpw, testPrincipal, userPath);
 
         prefetchingUserManager.createSystemUser(testuser, userPath);
         verify(userManager, times(1)).createSystemUser(testuser, userPath);
 
-        prefetchingUserManager.createGroup(testuser);
-        verify(userManager, times(1)).createGroup(testuser);
 
         prefetchingUserManager.createGroup(testPrincipal);
         verify(userManager, times(1)).createGroup(testPrincipal);
@@ -137,14 +112,7 @@ public class PrefetchingUserManagerTest {
         prefetchingUserManager.createGroup(testPrincipal, userPath);
         verify(userManager, times(1)).createGroup(testPrincipal, userPath);
 
-        prefetchingUserManager.createGroup(testuser, testPrincipal, userPath);
-        verify(userManager, times(1)).createGroup(testuser, testPrincipal, userPath);
 
-        prefetchingUserManager.autoSave(true);
-        verify(userManager, times(1)).autoSave(true);
-
-        prefetchingUserManager.isAutoSave();
-        verify(userManager, times(1)).isAutoSave();
     }
 
 }

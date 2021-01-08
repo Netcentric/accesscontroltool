@@ -45,9 +45,9 @@ import biz.netcentric.cq.tools.actool.history.InstallationLogger;
  * to groups).
  * </p>
  */
-class PrefetchingUserManager implements UserManager {
+class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManager {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PrefetchingUserManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AuthInstallerUserManagerPrefetchingImpl.class);
 
     private final UserManager delegate;
     private final Map<String, Authorizable> authorizableCache = new HashMap<>();
@@ -55,12 +55,12 @@ class PrefetchingUserManager implements UserManager {
     private final Map<String, Set<String>> nonRegularUserMembersByAuthorizableId = new HashMap<>();
     private final Map<String, Set<String>> isMemberOfByAuthorizableId = new HashMap<>();
 
-    public PrefetchingUserManager(UserManager delegate, final ValueFactory valueFactory, InstallationLogger installLog)
+    public AuthInstallerUserManagerPrefetchingImpl(UserManager delegate, final ValueFactory valueFactory, InstallationLogger installLog)
             throws RepositoryException {
         this.delegate = delegate;
 
         long startPrefetch = System.currentTimeMillis();
-        Iterator<Authorizable> allGroupsAndSystemUsersAndAnonymous = delegate.findAuthorizables(new Query() {
+        Iterator<Authorizable> authorizablesToPrefetchIt = delegate.findAuthorizables(new Query() {
             public <T> void build(QueryBuilder<T> builder) {
                 builder.setCondition(
                         builder.or( //
@@ -69,8 +69,8 @@ class PrefetchingUserManager implements UserManager {
                 );
             }
         });
-        while (allGroupsAndSystemUsersAndAnonymous.hasNext()) {
-            Authorizable auth = allGroupsAndSystemUsersAndAnonymous.next();
+        while (authorizablesToPrefetchIt.hasNext()) {
+            Authorizable auth = authorizablesToPrefetchIt.next();
             String authId = auth.getID();
             authorizableCache.put(authId, auth);
 
@@ -100,7 +100,6 @@ class PrefetchingUserManager implements UserManager {
                 + msHumanReadable(System.currentTimeMillis() - startPrefetchMemberships));
     }
 
-    @Override
     public Authorizable getAuthorizable(String id) throws RepositoryException {
         Authorizable authorizable = authorizableCache.get(id);
         if (authorizable == null) {
@@ -137,28 +136,8 @@ class PrefetchingUserManager implements UserManager {
 
     // --- delegated methods
 
-    public Authorizable getAuthorizable(Principal principal) throws RepositoryException {
-        return delegate.getAuthorizable(principal);
-    }
-
-    public Authorizable getAuthorizableByPath(String path) throws RepositoryException {
-        return delegate.getAuthorizableByPath(path);
-    }
-
-    public Iterator<Authorizable> findAuthorizables(String relPath, String value) throws RepositoryException {
-        return delegate.findAuthorizables(relPath, value);
-    }
-
-    public Iterator<Authorizable> findAuthorizables(String relPath, String value, int searchType) throws RepositoryException {
-        return delegate.findAuthorizables(relPath, value, searchType);
-    }
-
-    public Iterator<Authorizable> findAuthorizables(Query query) throws RepositoryException {
-        return delegate.findAuthorizables(query);
-    }
-
-    public User createUser(String userID, String password) throws RepositoryException {
-        return delegate.createUser(userID, password);
+    public UserManager getOakUserManager() {
+        return delegate;
     }
 
     public User createUser(String userID, String password, Principal principal, String intermediatePath) throws RepositoryException {
@@ -169,28 +148,12 @@ class PrefetchingUserManager implements UserManager {
         return delegate.createSystemUser(userID, intermediatePath);
     }
 
-    public Group createGroup(String groupID) throws RepositoryException {
-        return delegate.createGroup(groupID);
-    }
-
     public Group createGroup(Principal principal) throws RepositoryException {
         return delegate.createGroup(principal);
     }
-
+    
     public Group createGroup(Principal principal, String intermediatePath) throws RepositoryException {
         return delegate.createGroup(principal, intermediatePath);
-    }
-
-    public Group createGroup(String groupID, Principal principal, String intermediatePath) throws RepositoryException {
-        return delegate.createGroup(groupID, principal, intermediatePath);
-    }
-
-    public boolean isAutoSave() {
-        return delegate.isAutoSave();
-    }
-
-    public void autoSave(boolean enable) throws RepositoryException {
-        delegate.autoSave(enable);
     }
 
 }

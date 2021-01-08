@@ -111,7 +111,7 @@ public class AuthorizableInstallerServiceImpl implements
             final Session session, InstallationLogger installLog)
             throws RepositoryException, AuthorizableCreatorException, LoginException, IOException, GeneralSecurityException {
 
-        PrefetchingUserManager userManager = new PrefetchingUserManager(AccessControlUtils.getUserManagerAutoSaveDisabled(session), session.getValueFactory(), installLog);
+        AuthInstallerUserManager userManager = new AuthInstallerUserManagerPrefetchingImpl(AccessControlUtils.getUserManagerAutoSaveDisabled(session), session.getValueFactory(), installLog);
 
         Set<String> authorizablesFromConfigurations = authorizablesConfigBeans.getAuthorizableIds();
         for (AuthorizableConfigBean authorizableConfigBean : authorizablesConfigBeans) {
@@ -125,7 +125,7 @@ public class AuthorizableInstallerServiceImpl implements
     }
 
     private void installAuthorizableConfigurationBean(final Session session,
-            PrefetchingUserManager userManager,
+            AuthInstallerUserManager userManager,
             AcConfiguration acConfiguration,
             AuthorizableConfigBean authorizableConfigBean,
             InstallationLogger installLog, Set<String> authorizablesFromConfigurations)
@@ -269,7 +269,7 @@ public class AuthorizableInstallerServiceImpl implements
      * regular relationships between groups contained in config are kept in isMemberOf */
     @SuppressWarnings("unchecked")
     void applyGroupMembershipConfigMembers(AcConfiguration acConfiguration, AuthorizableConfigBean authorizableConfigBean, InstallationLogger installLog,
-            String authorizableId, PrefetchingUserManager userManager, Set<String> authorizablesFromConfigurations) throws RepositoryException {
+            String authorizableId, AuthInstallerUserManager userManager, Set<String> authorizablesFromConfigurations) throws RepositoryException {
         if (authorizableConfigBean.isGroup()) {
 
             String[] membersInConfigArr = authorizableConfigBean.getMembers();
@@ -351,7 +351,7 @@ public class AuthorizableInstallerServiceImpl implements
     }
 
     
-    private void migrateFromOldGroup(AuthorizableConfigBean authorizableConfigBean, UserManager userManager,
+    private void migrateFromOldGroup(AuthorizableConfigBean authorizableConfigBean, AuthInstallerUserManager userManager,
             InstallationLogger installLog) throws RepositoryException {
         Authorizable groupForMigration = userManager.getAuthorizable(authorizableConfigBean.getMigrateFrom());
 
@@ -399,7 +399,7 @@ public class AuthorizableInstallerServiceImpl implements
             AcConfiguration acConfiguration, 
             AuthorizableConfigBean principalConfigBean,
             InstallationLogger installLog,
-            UserManager userManager) throws RepositoryException, AuthorizableCreatorException {
+            AuthInstallerUserManager userManager) throws RepositoryException, AuthorizableCreatorException {
 
         String authorizableId = principalConfigBean.getAuthorizableId();
 
@@ -504,7 +504,7 @@ public class AuthorizableInstallerServiceImpl implements
 
     private void applyGroupMembershipConfigIsMemberOf(InstallationLogger installLog,
             AcConfiguration acConfiguration,
-            AuthorizableConfigBean authorizableConfigBean, PrefetchingUserManager userManager, Session session,
+            AuthorizableConfigBean authorizableConfigBean, AuthInstallerUserManager userManager, Session session,
             Set<String> authorizablesFromConfigurations) throws RepositoryException, AuthorizableCreatorException {
 
         String authId = authorizableConfigBean.getAuthorizableId();
@@ -520,7 +520,7 @@ public class AuthorizableInstallerServiceImpl implements
             AcConfiguration acConfiguration, 
             AuthorizableConfigBean principalConfigBean,
             InstallationLogger installLog,
-            UserManager userManager, Session session)
+            AuthInstallerUserManager userManager, Session session)
             throws AuthorizableExistsException, RepositoryException,
             AuthorizableCreatorException {
 
@@ -561,7 +561,7 @@ public class AuthorizableInstallerServiceImpl implements
     @SuppressWarnings("unchecked")
     void applyGroupMembershipConfigIsMemberOf(AuthorizableConfigBean authorizableConfigBean,
             AcConfiguration acConfiguration,
-            InstallationLogger installLog, UserManager userManager, Session session,
+            InstallationLogger installLog, AuthInstallerUserManager userManager, Session session,
             Set<String> membershipGroupsFromConfig,
             Set<String> membershipGroupsFromRepository, Set<String> authorizablesFromConfigurations)
             throws RepositoryException, AuthorizableExistsException,
@@ -637,7 +637,7 @@ public class AuthorizableInstallerServiceImpl implements
     }
 
     private Authorizable createNewGroup(
-            final UserManager userManager,
+            final AuthInstallerUserManager userManager,
             AuthorizablesConfig authorizablesConfig, 
             AuthorizableConfigBean principalConfigBean,
             InstallationLogger installLog, Session session)
@@ -657,7 +657,7 @@ public class AuthorizableInstallerServiceImpl implements
                     throw new IllegalStateException("External IDs are not available for your AEM version ("
                             + principalConfigBean.getAuthorizableId() + " is using '" + principalConfigBean.getExternalId() + "')");
                 }
-                newGroup = (Group) externalGroupCreatorService.createGroupWithExternalId(userManager, principalConfigBean, installLog, session);
+                newGroup = (Group) externalGroupCreatorService.createGroupWithExternalId(userManager.getOakUserManager(), principalConfigBean, installLog, session);
                 LOG.info("Successfully created new external group: {}", groupID);
             } else {
 
@@ -776,7 +776,7 @@ public class AuthorizableInstallerServiceImpl implements
     }
 
     private Authorizable createNewUser(
-            final UserManager userManager,
+            final AuthInstallerUserManager userManager,
             AuthorizablesConfig authorizablesConfig, 
             AuthorizableConfigBean principalConfigBean,
             InstallationLogger installLog,
@@ -807,7 +807,7 @@ public class AuthorizableInstallerServiceImpl implements
     }
 
     private void addMembersToReferencingAuthorizables(Authorizable authorizable, AuthorizablesConfig authorizablesConfig, AuthorizableConfigBean principalConfigBean,
-            final UserManager userManager, Session session, InstallationLogger installLog)
+            final AuthInstallerUserManager userManager, Session session, InstallationLogger installLog)
             throws RepositoryException, AuthorizableCreatorException {
         String authorizableId = principalConfigBean.getAuthorizableId();
         String[] memberOf = principalConfigBean.getIsMemberOf();
@@ -839,7 +839,7 @@ public class AuthorizableInstallerServiceImpl implements
      * @throws RepositoryException
      * @throws AuthorizableCreatorException if one of the authorizables contained in membersOf array is a user */
     Set<String> validateAssignedGroups(
-            final UserManager userManager, AuthorizablesConfig authorizablesConfig, Session session, final String authorizablelId,
+            final AuthInstallerUserManager userManager, AuthorizablesConfig authorizablesConfig, Session session, final String authorizablelId,
             final Set<String> isMemberOf, InstallationLogger installLog) throws RepositoryException,
             AuthorizableCreatorException {
 
