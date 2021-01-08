@@ -175,7 +175,7 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
                 StringWriter writer = new StringWriter();
                 IOUtils.copy(configInputStream, writer, "UTF-8");
                 String configData = writer.toString();
-                LOG.debug("Found configuration data of node: {} with {} bytes", node.getPath(), configData.getBytes());
+                LOG.debug("Found configuration data of node: {} with {} chars", node.getPath(), configData.length());
                 return configData;
             }
         }
