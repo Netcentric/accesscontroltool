@@ -91,8 +91,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             final ConfigReader configReader, Session session) throws RepositoryException,
             AcConfigBeanValidationException {
 
-        StopWatch sw = new StopWatch();
-        sw.start();
+        long wholeConfigStart = System.currentTimeMillis();
 
         final GlobalConfiguration globalConfiguration = new GlobalConfiguration();
         final AuthorizablesConfig mergedAuthorizablesBeansfromConfig = new AuthorizablesConfig();
@@ -115,6 +114,8 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         Map<String, Object> globalVariables = getGlobalVariablesForYamlMacroProcessing();
         
         for (final Map.Entry<String, String> entry : configFileContentByFilename.entrySet()) {
+
+            long configFileStart = System.currentTimeMillis();
 
             String sourceFile = entry.getKey();
             installLog.addMessage(LOG, "Using configuration file " + sourceFile);
@@ -200,6 +201,9 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             // --- obsolete authorizables config section
             obsoleteAuthorizables.addAll(configReader.getObsoluteAuthorizables(yamlRootList));
             obsoleteAuthorizablesValidator.validate(obsoleteAuthorizables, authorizableIdsFromAllConfigs, sourceFile);
+
+            installLog.addVerboseMessage(LOG,
+                    "Loaded configuration file " + sourceFile + " in " + msHumanReadable(System.currentTimeMillis() - configFileStart));
         }
 
         ensureIsMemberOfIsUsedWherePossible(mergedAuthorizablesBeansfromConfig, installLog);
@@ -217,13 +221,13 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         testUserConfigsCreator.createTestUserConfigs(acConfiguration, installLog);
 
         if(!Boolean.TRUE.equals(globalConfiguration.getAllowCreateOfUnmanagedRelationships())) {
-        	UnmangedExternalMemberRelationshipChecker.validate(acConfiguration);
+            UnmangedExternalMemberRelationshipChecker.validate(acConfiguration);
         }
         
         installLog.setMergedAndProcessedConfig(
                 "# Merged configuration of " + configFileContentByFilename.size() + " files \n" + yamlParser.dump(acConfiguration));
 
-        installLog.addMessage(LOG, "Loaded configuration in " + msHumanReadable(sw.getTime()));
+        installLog.addMessage(LOG, "Loaded configuration in " + msHumanReadable(System.currentTimeMillis() - wholeConfigStart));
 
         return acConfiguration;
     }
