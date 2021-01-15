@@ -131,7 +131,7 @@ public class AuthInstallerUserManagerPrefetchingImplTest {
 
         final PrincipalImpl group = new PrincipalImpl(GROUP_1);
         setupAuthorizable(groupCreated, GROUP_1, Collections.<Group> emptyList());
-        when(userManager.createGroup(eq(group))).thenReturn(groupCreated);
+        when(userManager.createGroup(group)).thenReturn(groupCreated);
 
         final Authorizable groupBeforeRecreation = prefetchingUserManager.getAuthorizable(GROUP_1);
         final Authorizable groupRecreated = prefetchingUserManager.createGroup(group);
@@ -148,7 +148,7 @@ public class AuthInstallerUserManagerPrefetchingImplTest {
 
         final PrincipalImpl group = new PrincipalImpl(GROUP_1);
         setupAuthorizable(groupCreated, GROUP_1, Collections.<Group> emptyList());
-        when(userManager.createGroup(eq(group), eq(GROUP1_PATH))).thenReturn(groupCreated);
+        when(userManager.createGroup(group, GROUP1_PATH)).thenReturn(groupCreated);
 
         final Authorizable groupBeforeRecreation = prefetchingUserManager.getAuthorizable(GROUP_1);
         final Authorizable groupRecreated = prefetchingUserManager.createGroup(group, GROUP1_PATH);
