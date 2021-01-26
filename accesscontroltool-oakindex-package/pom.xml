@@ -38,6 +38,28 @@
                     <filterSource>src/main/META-INF/vault/filter.xml</filterSource>
                     <allowIndexDefinitions>true</allowIndexDefinitions>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>generate-metadata-for-cloud</id>
+                        <goals>
+                            <goal>generate-metadata</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>cloud</classifier>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>package-for-cloud</id>
+                        <goals>
+                            <goal>package</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>cloud</classifier>
+                            <!-- due to https://issues.apache.org/jira/browse/JCRVLT-498 -->
+                            <workDirectory>${project.build.directory}/vault-work-cloud</workDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
            </plugin>
 
             <plugin>

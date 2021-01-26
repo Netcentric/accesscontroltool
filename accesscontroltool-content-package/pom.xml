@@ -37,6 +37,12 @@
                     <properties>
                         <acHandling>merge_preserve</acHandling>
                     </properties>
+                    <validatorsSettings>
+                        <jackrabbit-nodetypes>
+                            <!-- disable due to https://issues.apache.org/jira/browse/JCRVLT-497 -->
+                            <isDisabled>true</isDisabled>
+                        </jackrabbit-nodetypes>
+                    </validatorsSettings>
                 </configuration>
             </plugin>
             <plugin>

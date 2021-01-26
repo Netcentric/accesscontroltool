@@ -107,6 +107,8 @@
                     </subPackages>
                     <!-- is still mixed due to the contained content package -->
                     <packageType>mixed</packageType>
+                    <!-- all sub packages have been validated already -->
+                    <skipSubPackageValidation>true</skipSubPackageValidation>
                 </configuration>
                 <executions>
                     <execution>
