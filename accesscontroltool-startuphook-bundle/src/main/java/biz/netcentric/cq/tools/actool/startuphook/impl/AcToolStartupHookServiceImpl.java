@@ -21,6 +21,7 @@ import javax.jcr.Session;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.oak.spi.security.authorization.accesscontrol.AccessControlConstants;
 import org.apache.sling.jcr.api.SlingRepository;
+import org.apache.sling.jcr.api.SlingRepositoryInitializer;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -33,13 +34,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.api.AcInstallationService;
-import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
 import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
 
-@Component
+@Component(
+        property = {"service.ranking:Integer=400"}) // must be executed after https://github.com/apache/sling-org-apache-sling-jcr-packageinit/blob/master/src/main/java/org/apache/sling/jcr/packageinit/impl/ExecutionPlanRepoInitializer.java#L53
 @Designate(ocd=AcToolStartupHookServiceImpl.Config.class)
-public class AcToolStartupHookServiceImpl {
+public class AcToolStartupHookServiceImpl implements SlingRepositoryInitializer {
     private static final Logger LOG = LoggerFactory.getLogger(AcToolStartupHookServiceImpl.class);
 
     @ObjectClassDefinition(name = "AC Tool Startup Hook", description = "Applies AC Tool config automatically upon startup (depending on configuration/runtime)")
@@ -55,53 +56,21 @@ public class AcToolStartupHookServiceImpl {
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private AcInstallationService acInstallationService;
 
-    @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    private SlingRepository repository;
-
     private boolean isCompositeNodeStore;
+    private Config.StartupHookActivation activationMode;
 
     @Activate
     public void activate(BundleContext bundleContext, Config config) {
-
-        boolean isCloudReady = RuntimeHelper.isCloudReadyInstance();
-        Config.StartupHookActivation activationMode = config.activationMode();
-        LOG.info("AcTool Startup Hook (start level: {}  isCloudReady: {}  activationMode: {})", 
-                RuntimeHelper.getCurrentStartLevel(bundleContext),
-                isCloudReady,
-                activationMode);
-
-        boolean applyOnStartup = (activationMode == Config.StartupHookActivation.ALWAYS) 
-                || (isCloudReady && activationMode == Config.StartupHookActivation.CLOUD_ONLY);
-
-        if(applyOnStartup) {
-            
-            try {
-
-                List<String> relevantPathsForInstallation = getRelevantPathsForInstallation();
-                LOG.info("Running AcTool with "
-                        + (relevantPathsForInstallation.isEmpty() ? "all paths" : "paths " + relevantPathsForInstallation) + "...");
-                acInstallationService.apply(null, relevantPathsForInstallation.toArray(new String[relevantPathsForInstallation.size()]),
-                        true);
-                LOG.info("AC Tool Startup Hook done. (start level " + RuntimeHelper.getCurrentStartLevel(bundleContext) + ")");
-
-                copyAcHistoryToOrFromApps(isCloudReady);
-
-            } catch (RepositoryException e) {
-                LOG.error("Exception while triggering AC Tool on startup: " + e, e);
-            }
-        } else {
-            LOG.debug("Skipping AcTool Startup Hook: activationMode: {} isCloudReady: {}", activationMode, isCloudReady);
-        }
-
+        activationMode = config.activationMode();
     }
 
-    private List<String> getRelevantPathsForInstallation() throws RepositoryException {
+    private List<String> getRelevantPathsForInstallation(SlingRepository repository) throws RepositoryException {
         Session session = null;
         try {
             session = repository.loginService(null, null);
 
-            isCompositeNodeStore = RuntimeHelper.isCompositeNodeStore(session);
-            LOG.info("Repo is running with Composite NodeStore: " + isCompositeNodeStore);
+            boolean isCompositeNodeStore = RuntimeHelper.isCompositeNodeStore(session);
+            LOG.info("Repo is running with Composite NodeStore: {}", isCompositeNodeStore);
             
             if(!isCompositeNodeStore) {
                 return Collections.emptyList();
@@ -118,7 +87,7 @@ public class AcToolStartupHookServiceImpl {
                         AccessControlConstants.REP_REPO_POLICY).contains(node.getName())) {
                     continue;
                 }
-                if (isCompositeNodeStore && Arrays.asList("apps", "libs").contains(node.getName())) {
+                if (Arrays.asList("apps", "libs").contains(node.getName())) {
                     continue;
                 }
                 relevantPathsForInstallation.add(node.getPath());
@@ -139,7 +108,7 @@ public class AcToolStartupHookServiceImpl {
         }
     }
 
-    private void copyAcHistoryToOrFromApps(boolean isCloudReady) {
+    private void copyAcHistoryToOrFromApps(SlingRepository repository, boolean isCloudReady) {
 
         if(isCloudReady) {
             Session session = null;
@@ -176,6 +145,30 @@ public class AcToolStartupHookServiceImpl {
             }
         }
 
+    }
+
+    @Override
+    public void processRepository(SlingRepository repo) throws Exception {
+        boolean isCloudReady = RuntimeHelper.isCloudReadyInstance();
+        LOG.info("AcTool Startup Hook (isCloudReady: {}  activationMode: {})", 
+                isCloudReady,
+                activationMode);
+
+        boolean applyOnStartup = (activationMode == Config.StartupHookActivation.ALWAYS) 
+                || (isCloudReady && activationMode == Config.StartupHookActivation.CLOUD_ONLY);
+
+        if(applyOnStartup) {
+            List<String> relevantPathsForInstallation = getRelevantPathsForInstallation(repo);
+            LOG.info("Running AcTool with "
+                    + (relevantPathsForInstallation.isEmpty() ? "all paths" : "paths " + relevantPathsForInstallation) + "...");
+            acInstallationService.apply(null, relevantPathsForInstallation.toArray(new String[relevantPathsForInstallation.size()]),
+                    true);
+            LOG.info("AC Tool Startup Hook done.");
+
+            copyAcHistoryToOrFromApps(repo, isCloudReady);
+        } else {
+            LOG.debug("Skipping AcTool Startup Hook: activationMode: {} isCloudReady: {}", activationMode, isCloudReady);
+        }
     }
 
 }
