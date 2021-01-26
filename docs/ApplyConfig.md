@@ -29,11 +29,11 @@ During the installation a history containing the most important events gets crea
 
 Due to usage of a [composite node store](http://jackrabbit.apache.org/oak/docs/nodestore/compositens.html) the installation is slightly more complex in AEMaaCS
 
-1. During Maven build in Cloud Manager the ACLs are applied like outlined above via [Installation Hook](#installation-hook)
+1. During the Docker build ("Build Images") in Cloud Manager the ACLs are applied via [Startup Hook](#startup-hook)
 2. Afterwards all mutable content is discarded (authorizables in `/home` and ACEs in mutable content)
-3. During deployment in Cloud Manager the authorizables and ACEs in mutable locations of the repository are installed on the target mutable node store via the [Startup Hook](#startup-hook)
+3. During deployment the authorizables and ACEs in mutable locations of the repository are installed on the target mutable node store via the [Startup Hook](#startup-hook)
 
-Theoretically step 1 is only necessary if ACEs for immutable content are required, but it is recommended to always use the combination of Installation Hook and Startup Hook for AEMaaCS to be able to use the same package also for installation with a local AEM SDK instance.
+Theoretically step 1 is only necessary if ACEs for immutable content are required. In addition you should configure the [Installation Hook](#installation-hook] in the package containing the YAML configuration to be able to also install on a local AEM SDK instance. The install hook is automatically skipped in AEMaaCS instances.
 
 ## Installation Methods
 
@@ -93,7 +93,7 @@ Although it is not necessary that the YAML files are covered by the filter rules
 
 The installation takes place in phase "PREPARE" by default, i.e. before any other content from the package has been installed. Optionally you can make the hook kick in in phase "INSTALLED" (i.e. after the content has been installed) by additionally setting the package property `actool.atInstalledPhase` to `true`. This is helpful if the initial content on which you want to set ACEs is created via classical package content (instead of inline yaml `initialContent`). That is only properly supported since AEM 6.4.2 (for details look at [issue 287](https://github.com/Netcentric/accesscontroltool/issues/287)) and since ACTool 2.4.0.
 
-An install hook is ignored in the cloud because the startup hook is to be used for that use case (the package property `actool.forceInstallHookInCloud` can be used force excution).
+An install hook is ignored in the Cloud because the startup hook is to be used for that use case (the package property `actool.forceInstallHookInCloud` can be used force excution).
 
 **Notice:** Packages with install hooks can only be installed by admin users (compare with [JCRVLT-427](https://issues.apache.org/jira/browse/JCRVLT-427))! This is either user with id `admin`, `system` or every member of group `administrators`.
 
@@ -124,10 +124,14 @@ When using the [Sling Feature Model](https://sling.apache.org/documentation/deve
 The startup hook requires the `AC Tool Installation Service` (PID `biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl`) to be configured correctly, i.e. its configuration path must point to the nodes containing the `YAML` files.
 <img src="images/installation-service.png">
 
+The startup hook *runs twice* in AEM as a Cloud Service. Once during building the docker images (for the immutable content) and then during the start of the actual Kubernetes pods. At run time you can see the log of the first execution in `/apps/netcentric/achistory` while all subsequent executions are logged in `/var/netcentric/achistory`.
+<img src="images/cloud-installation-logs.png">
+
+
 The AC Tool handles a [composite node store](https://jackrabbit.apache.org/oak/docs/nodestore/compositens.html) repository correctly (it will automatically only run with paths that are not ready-only). To avoid overhead for the case a configuration has already been applied, an MD5 checksum is created over all configuration files and the configuration is only applied for the case the checksum has changed.
 
 The startup hook is the **only way** to automatically apply ACLs during startup and is therefore necessary for installing authorizables and applying ACEs on mutable content in [AEM as a Cloud Service](https://www.adobe.com/marketing/experience-manager/cloud-service.html).
-This mechanism should be combined with the [Installation Hook](#installation-hook) to also have ACEs on immutable content applied (and to be able to use the same package with a local AEM SDK).
+This mechanism should be combined with the [Installation Hook](#installation-hook)to be able to use the same package with a local AEM SDK.
 
 Use [Touch UI](ApplyConfig.md#touch-ui) to validate your results.
 
