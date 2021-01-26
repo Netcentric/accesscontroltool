@@ -56,7 +56,6 @@ public class AcToolStartupHookServiceImpl implements SlingRepositoryInitializer 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private AcInstallationService acInstallationService;
 
-    private boolean isCompositeNodeStore;
     private Config.StartupHookActivation activationMode;
 
     @Activate
@@ -115,7 +114,7 @@ public class AcToolStartupHookServiceImpl implements SlingRepositoryInitializer 
             try {
                 session = repository.loginService(null, null);
 
-                if(isCompositeNodeStore) {
+                if(RuntimeHelper.isCompositeNodeStore(session)) {
                     LOG.info("Restoring history from /apps to /var");
 
                     if(session.nodeExists(HistoryUtils.AC_HISTORY_PATH_IN_APPS)) {
