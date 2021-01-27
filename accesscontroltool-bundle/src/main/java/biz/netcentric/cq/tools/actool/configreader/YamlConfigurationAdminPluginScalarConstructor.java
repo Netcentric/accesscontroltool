@@ -54,6 +54,7 @@ public class YamlConfigurationAdminPluginScalarConstructor extends Constructor {
         dictionary.put(KEY, scalar);
         try {
             installLog.addMessage(LOG, "Using ConfigAdminPlugin to resolve '" + scalar + "'");
+            // resolve arbitrarily many placeholders in the scalar
             interpolationPlugin.modifyConfiguration(null, dictionary);
             return (String)dictionary.get(KEY);
         } catch (Exception e) {
