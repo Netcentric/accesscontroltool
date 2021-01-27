@@ -33,7 +33,7 @@ Due to usage of a [composite node store](http://jackrabbit.apache.org/oak/docs/n
 2. Afterwards all mutable content is discarded (authorizables in `/home` and ACEs in mutable content)
 3. During deployment the authorizables and ACEs in mutable locations of the repository are installed on the target mutable node store via the [Startup Hook](#startup-hook)
 
-Theoretically step 1 is only necessary if ACEs for immutable content are required. In addition you should configure the [Installation Hook](#installation-hook] in the package containing the YAML configuration to be able to also install on a local AEM SDK instance. The install hook is automatically skipped in AEMaaCS instances.
+Theoretically step 1 is only necessary if ACEs for immutable content are required. In addition you should configure the [Installation Hook](#installation-hook) in the package containing the YAML configuration to be able to also install on a local AEM SDK instance. The install hook is automatically skipped in AEMaaCS instances.
 
 ## Installation Methods
 
