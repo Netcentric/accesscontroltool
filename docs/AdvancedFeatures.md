@@ -30,9 +30,10 @@
 
 ## Expressions
 
-Expressions are evaluated using [javax.el expression language](https://docs.oracle.com/javaee/6/tutorial/doc/gjddd.html). 
+Expressions are evaluated using [javax.el expression language](https://docs.oracle.com/javaee/6/tutorial/doc/gjddd.html). They can be used anywhere in the YAML and are processed after YAML parsing and interpolation. Note though that only the [*Immediate Evaluation* syntax `${...}`](https://docs.oracle.com/javaee/6/tutorial/doc/bnahr.html#bnahs) is supported but not the *Deferred Evaluation* syntax (`#{...}`).
 
-The following utility functions are made available to any EL expression used in YAML
+The following utility functions are made available to any EL expression used in YAML.
+They can either be used standalone or combined with the [default EL operators](https://docs.oracle.com/javaee/6/tutorial/doc/bnaik.html).
 
 Function Signature | Description
 ---|---
@@ -157,7 +158,7 @@ variable name | description
 
 ## Loops
 
-Configuration sections for groups and ACEs allow to use loops to specify multiple, similar entries. In order to do this, a FOR statement has to be used in place of a group name. The FOR statement names a loop variable and lists the values to iterate over. All the children of the FOR element are repeated once per iteration and all group names and property values of child elements that contain the name of the loop variable within '${' and '}' have that expression substituted with the current value of the loop variable.
+Configuration sections for groups and ACEs allow to use loops to specify multiple, similar entries. In order to do this, a `FOR` statement has to be used in place of a group name. The `FOR` statement names a loop variable and lists the values to iterate over. All the children of the `FOR` element are repeated once per iteration and all group names and property values of child elements that contain the name of the loop variable within '${' and '}' have that expression substituted with the current value of the loop variable.
 
 For example, the following configuration element:
 
@@ -195,7 +196,7 @@ Gets replaced with
 
 ### Nested Loops
 
-FOR loops can be nested to any level:
+`FOR` loops can be nested to any level:
 
 ```
 - for brand IN [ BRAND1, BRAND2 ]:
@@ -244,7 +245,7 @@ This will create 12 groups:
 
 ### Loops derived from content structure
 
-For some use cases it is useful to dynamically derive the list of possible values from the content structure. FOR ... IN CHILDREN OF will loop over the children of the provided path (skipping 'jcr:content' nodes) and provide an object with the properties name, path, primaryType, jcr:content (a map of all properties of the respective node) and title (./jcr:content/jcr:title added to root map for convenience).
+For some use cases it is useful to dynamically derive the list of possible values from the content structure. `FOR ... IN CHILDREN OF` will loop over the children of the provided path (skipping 'jcr:content' nodes) and provide an object with the properties name, path, primaryType, jcr:content (a map of all properties of the respective node) and title (./jcr:content/jcr:title added to root map for convenience).
 
 ```
 - FOR site IN CHILDREN OF /content/myPrj:
@@ -257,7 +258,7 @@ For some use cases it is useful to dynamically derive the list of possible value
 
 ### Loops that traverse the full jcr:content structure
 
-By default only the direct properties of the jcr:content node will be mapped and made available for substitution. In some cases it may be desirable to extract properties from further down within the jcr:content node structure. As this can be memory intensive a special syntax has been introduced to enable this on a per-loop basis. FOR ... WITH CONTENT IN ... will perform the for loop and map the full jcr:content node structure.
+By default only the direct properties of the jcr:content node will be mapped and made available for substitution. In some cases it may be desirable to extract properties from further down within the jcr:content node structure. As this can be memory intensive a special syntax has been introduced to enable this on a per-loop basis. `FOR ... WITH CONTENT IN ...` will perform the for loop and map the full jcr:content node structure.
 
 ```
 - FOR site WITH CONTENT IN CHILDREN OF /content/myPrj:
@@ -270,7 +271,7 @@ By default only the direct properties of the jcr:content node will be mapped and
 
 ## Conditional entries
 
-When looping over content structures, entries can be applied conditionally using the "IF" keyword:
+Entries can be applied conditionally using the `IF` keyword (e.g. within a Loop)
 
 ```
 - FOR site IN CHILDREN OF /content/myPrj:
@@ -289,8 +290,15 @@ When looping over content structures, entries can be applied conditionally using
 
 ## Interpolate values
 
-Sometimes configuration values should be obtained from somewhere else and should not appear as literals in the YAML (e.g. to hide sensitive information like passwords or to reuse the same yaml on multiple environments with slight environment adaptations). For that the [Felix Configadmin Interpolation Plugin][felix-interpolation-plugin] is hooked up with the AC Tool to allow to reference Environment Variables, Secrets and Properties (both Framework and Java System Properties). The syntax is described in its [README][felix-interpolation-plugin].
-Both secrets and environment variables can be easily set for AEMaaCS environments via [Cloud Manager API](https://www.adobe.io/apis/experiencecloud/cloud-manager/api-reference.html#/Variables/patchEnvironmentVariables) or with some client like [Adobe IO CLI together with the Cloud Manager Plugin](https://github.com/adobe/aio-cli-plugin-cloudmanager#aio-cloudmanagerenvironmentset-variables-environmentid).
+Sometimes configuration values should be obtained from somewhere else and should not appear as literals in the YAML (e.g. to hide sensitive information like passwords or to reuse the same yaml on multiple environments with slight environment adaptations). For that the [Felix Configadmin Interpolation Plugin][felix-interpolation-plugin] is hooked up with the AC Tool to allow to reference Environment Variables, Secrets and Properties (both Framework and Java System Properties). The syntax is as follows
+
+1. `$[env:my_env_variable]` to reference the environment variable named `my_env_variable`
+1. `$[secret:my_secret_variable]` to reference the secret variable named `my_secret_variable`
+1. `$[prop:my.property]` to reference the framework property named `my.property`
+
+Further details and the full syntax (incl. default values and type support) is described in the plugin's [README][felix-interpolation-plugin].
+
+Both secret and environment variables can be easily set for AEMaaCS environments via [Cloud Manager API](https://www.adobe.io/apis/experiencecloud/cloud-manager/api-reference.html#/Variables/patchEnvironmentVariables) or with some client like [Adobe IO CLI together with the Cloud Manager Plugin](https://github.com/adobe/aio-cli-plugin-cloudmanager#aio-cloudmanagerenvironmentset-variables-environmentid).
 
 Although AC Tool comes with native support for environment variables already (via the global variable `env.`) the syntax supported by the Felix Configadmin Interpolation Plugin is more powerful and usage of Secrets and Properties is not possible without this feature at all.
 
