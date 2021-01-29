@@ -82,7 +82,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
     ConfigurationPlugin interpolationPlugin;
 
     /** Regular expression which matches against values which should be interpolated, see https://github.com/apache/felix-dev/blob/master/configadmin-plugins/interpolation/README.md */
-    public static final Pattern CONFIG_ADMIN_INTERPOLATOR_FORMAT = Pattern.compile("^\\$\\[(env|secret|prop):.*\\]$");
+    public static final Pattern CONFIG_ADMIN_INTERPOLATOR_FORMAT = Pattern.compile(".*\\$\\[(env|secret|prop):[^\\]]*\\].*");
 
     @Override
     public AcConfiguration getMergedConfigurations(
@@ -104,7 +104,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         if (interpolationPlugin != null) {
             yamlParser = new Yaml(new YamlConfigurationAdminPluginScalarConstructor(installLog, interpolationPlugin));
             // bind constructor to certain scalar formats (compare with https://bitbucket.org/asomov/snakeyaml/src/master/src/test/java/org/yaml/snakeyaml/env/EnvVariableTest.java)
-            yamlParser.addImplicitResolver(YamlConfigurationAdminPluginScalarConstructor.TAG, CONFIG_ADMIN_INTERPOLATOR_FORMAT, "$[" );
+            yamlParser.addImplicitResolver(YamlConfigurationAdminPluginScalarConstructor.TAG, CONFIG_ADMIN_INTERPOLATOR_FORMAT, null);
             installLog.addMessage(LOG, "Using YAML parser with ConfigurationAdmin Plugin placeholder support");
         } else {
             yamlParser = new Yaml();

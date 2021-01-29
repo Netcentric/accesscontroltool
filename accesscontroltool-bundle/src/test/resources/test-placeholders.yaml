@@ -9,3 +9,5 @@
 - user_config:
   - editor:
     - password: $[secret:password]
+  - editor2:
+    - password: ${upperCase('$[secret:password]')}

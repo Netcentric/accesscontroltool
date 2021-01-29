@@ -120,11 +120,15 @@ public class YamlConfigurationMergerTest {
             // replace all placeholders with value "resolved"
             @Override
             public void modifyConfiguration(ServiceReference<?> reference, Dictionary<String, Object> properties) {
-                properties.put(YamlConfigurationAdminPluginScalarConstructor.KEY, "resolved");
+                // replace all placeholders
+                String value = (String)properties.get(YamlConfigurationAdminPluginScalarConstructor.KEY);
+                String newValue = value.replaceAll("\\$\\[(env|secret|prop):([^\\]]*)\\]", "resolved-$2");
+                properties.put(YamlConfigurationAdminPluginScalarConstructor.KEY, newValue);
             }
         };
         AcConfiguration acConfiguration = getAcConfigurationForFile(yamlConfigMerger, session, "test-placeholders.yaml");
-        assertEquals("resolved", acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("editor").getPassword());
+        assertEquals("resolved-password", acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("editor").getPassword());
+        assertEquals("RESOLVED-PASSWORD", acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("editor2").getPassword());
     }
 
     public static AcConfiguration getAcConfigurationForFile(YamlConfigurationMerger merger, Session session, String testConfigFile)
