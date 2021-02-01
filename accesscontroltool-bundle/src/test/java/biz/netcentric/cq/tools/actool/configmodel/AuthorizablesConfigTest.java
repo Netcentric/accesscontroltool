@@ -41,16 +41,16 @@ public class AuthorizablesConfigTest {
                 beanEveryone.getPrincipalName());
 
         Set<String> onlyManagedPrincipalNames = authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("/etc/linkchecker", principalSet,
-                null);
+                null, null);
         assertEquals(principalSet("testgroupAllManaged", "testgroupPartlyManaged", "everyone"), onlyManagedPrincipalNames);
 
-        onlyManagedPrincipalNames = authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("/etc", principalSet, null);
+        onlyManagedPrincipalNames = authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("/etc", principalSet, null, null);
         assertEquals(principalSet("testgroupAllManaged", "testgroupPartlyManaged"), onlyManagedPrincipalNames);
 
-        onlyManagedPrincipalNames = authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("/content/geometrixx", principalSet, null);
+        onlyManagedPrincipalNames = authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("/content/geometrixx", principalSet, null, null);
         assertEquals(principalSet("testgroupAllManaged", "testgroupPartlyManaged"), onlyManagedPrincipalNames);
 
-        onlyManagedPrincipalNames = authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("/content/dam/geometrixx", principalSet, null);
+        onlyManagedPrincipalNames = authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("/content/dam/geometrixx", principalSet, null, null);
         assertEquals(principalSet("testgroupAllManaged"), onlyManagedPrincipalNames);
     }
 
@@ -60,7 +60,7 @@ public class AuthorizablesConfigTest {
         Set<String> principalSet = principalSet(beanTestGroupAllManaged.getPrincipalName(), testgroupPartlyManaged.getPrincipalName(),
                 beanEveryone.getPrincipalName(), "nonExistentPrincipal");
 
-        Set<String> removedPrincipals = authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("/content/dam/geometrixx", principalSet, null);
+        Set<String> removedPrincipals = authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("/content/dam/geometrixx", principalSet, null, null);
         assertEquals(principalSet("testgroupAllManaged", "nonExistentPrincipal"), removedPrincipals);
     }
 
@@ -70,7 +70,7 @@ public class AuthorizablesConfigTest {
         Set<String> principalSet = principalSet(beanTestGroupAllManaged.getPrincipalName(), testgroupPartlyManaged.getPrincipalName(),
                 beanEveryone.getPrincipalName());
 
-        Set<String> onlyManagedPrincipalNames = authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("/etc/linkchecker", principalSet,
+        Set<String> onlyManagedPrincipalNames = authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("/etc/linkchecker", principalSet, null,
                 "/etc/.*");
 
         // "testgroupPartlyManaged", "everyone" are still in since they define their own unmanagedAcePathsRegex
@@ -80,12 +80,12 @@ public class AuthorizablesConfigTest {
         // anything removed from this path
         testgroupPartlyManaged.setUnmanagedAcePathsRegex(null);
         beanEveryone.setUnmanagedAcePathsRegex(null);
-        onlyManagedPrincipalNames = authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("/etc/linkchecker", principalSet,
+        onlyManagedPrincipalNames = authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("/etc/linkchecker", principalSet, null,
                 "/etc/.*");
         assertEquals(Collections.emptySet(), onlyManagedPrincipalNames);
 
         // without default restriction all principals have to be returned
-        onlyManagedPrincipalNames = authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("/etc/linkchecker", principalSet,
+        onlyManagedPrincipalNames = authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("/etc/linkchecker", principalSet, null,
                 null);
         assertEquals(principalSet("testgroupAllManaged", "testgroupPartlyManaged", "everyone"), onlyManagedPrincipalNames);
 

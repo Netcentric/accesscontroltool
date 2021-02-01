@@ -134,6 +134,8 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     private ExtendedSlingSettingsService slingSettingsService;
     
     private List<String> configurationRootPaths;
+    
+    private Set<String> allowedPrincipalsForUnmanagedPaths;
 
     private boolean intermediateSaves;
     
@@ -144,6 +146,9 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         
         @AttributeDefinition(name="Configuration path(s)", description="JCR path(s) where the config files reside (usually it's just one, can be multiple for multitenant setups)")
         String[] configurationRootPaths() default {};
+        
+        @AttributeDefinition(name="Allowed principals for unmanaged path(s)", description="List of principals for which the unmanaged paths should be checked")
+        String[] allowedPrincipalsForUnmanagedPaths() default {};
 
         @AttributeDefinition(name="Use intermediate saves", description="Saves ACLs for each path individually - this can be used to avoid problems with large changesets and MongoDB (OAK-5557), however the rollback is disabled then.")
         boolean intermediateSaves() default false;
@@ -175,6 +180,10 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 intermediateSaves = PropertiesUtil.toBoolean(legacyProps.get(LEGACY_PROPERTY_INTERMEDIATE_SAVES), false);
             }
         }
+        
+        if(configuration.allowedPrincipalsForUnmanagedPaths() != null){
+          allowedPrincipalsForUnmanagedPaths = new HashSet<String>(Arrays.asList(configuration.allowedPrincipalsForUnmanagedPaths()));
+      }
 
         LOG.info("Activated AC Tool at start level "+RuntimeHelper.getCurrentStartLevel(bundleContext) + " default config path: "+configurationRootPaths);
 
@@ -356,7 +365,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
         for (String relevantPath : relevantPathsForCleanup) {
             Set<String> principalsToRemoveAcesForAtThisPath = acConfiguration.getAuthorizablesConfig()
-                    .removeUnmanagedPrincipalNamesAtPath(relevantPath, principalsInConfig,
+                    .removeUnmanagedPrincipalNamesAtPath(relevantPath, principalsInConfig, allowedPrincipalsForUnmanagedPaths,
                             acConfiguration.getGlobalConfiguration().getDefaultUnmanagedAcePathsRegex());
 
             // delete ACE if principal *is* in config, but the path *is not* in config
@@ -490,7 +499,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                             + aceBeanInstaller.getClass().getSimpleName() + "...");
 
             aceBeanInstaller.installPathBasedACEs(filteredPathBasedAceMapFromConfig, acConfiguration, session, installLog,
-                    principalsToRemoveAcesFor, intermediateSaves);
+                    principalsToRemoveAcesFor, allowedPrincipalsForUnmanagedPaths, intermediateSaves);
         } else {
             installLog.addMessage(LOG, "No relevant ACEs to install");
         }
