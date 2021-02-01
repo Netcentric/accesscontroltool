@@ -37,6 +37,14 @@
                     <group>Netcentric</group>
                     <filterSource>src/main/META-INF/vault/filter.xml</filterSource>
                     <allowIndexDefinitions>true</allowIndexDefinitions>
+                    <!-- overwrite (compare with https://issues.apache.org/jira/browse/JCRVLT-496) -->
+                    <packageType>application</packageType>
+                    <validatorsSettings>
+                        <jackrabbit-packagetype>
+                            <!-- https://issues.apache.org/jira/browse/JCRVLT-496 -->
+                            <isDisabled>true</isDisabled>
+                        </jackrabbit-packagetype>
+                    </validatorsSettings>
                 </configuration>
                 <executions>
                     <execution>
