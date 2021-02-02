@@ -61,12 +61,13 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
 
         long startPrefetch = System.currentTimeMillis();
         Iterator<Authorizable> authorizablesToPrefetchIt = delegate.findAuthorizables(new Query() {
-            // all groups and user "anonymous"
             public <T> void build(QueryBuilder<T> builder) {
                 builder.setCondition(
-                        builder.or( //
+                        builder.or( 
+                                // this is true for groups and system users
                                 builder.neq("@" + JcrConstants.JCR_PRIMARYTYPE, valueFactory.createValue(UserConstants.NT_REP_USER)),
-                                builder.eq("@" + UserConstants.REP_AUTHORIZABLE_ID, valueFactory.createValue(Constants.USER_ANONYMOUS))) //
+                                // this is true for user anonymous
+                                builder.eq("@" + UserConstants.REP_AUTHORIZABLE_ID, valueFactory.createValue(Constants.USER_ANONYMOUS)))
                 );
             }
         });
