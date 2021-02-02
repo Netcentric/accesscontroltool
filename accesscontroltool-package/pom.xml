@@ -105,8 +105,7 @@
                             <artifactId>accesscontroltool-content-package</artifactId>
                         </subPackage>
                     </subPackages>
-                    <!-- is still mixed due to the contained content package -->
-                    <packageType>mixed</packageType>
+                    <packageType>container</packageType>
                     <!-- all sub packages have been validated already -->
                     <skipSubPackageValidation>true</skipSubPackageValidation>
                 </configuration>
