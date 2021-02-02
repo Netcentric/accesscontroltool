@@ -103,6 +103,17 @@ public class AuthInstallerUserManagerPrefetchingImplTest {
     }
 
     @Test
+    public void testPrefetchedAuthorizablesUserManagerWithIncompleteIndex() throws RepositoryException {
+        when(userManager.findAuthorizables(any(Query.class))).thenReturn(Arrays.<Authorizable>asList(user1, user2).iterator());
+        prefetchingUserManager = new AuthInstallerUserManagerPrefetchingImpl(userManager, valueFactory, installationLogger);
+
+        assertEquals(2, prefetchingUserManager.getCacheSize());
+
+        when(userManager.getAuthorizable("userNonCached")).thenReturn(userNonCached);
+        assertEquals(userNonCached, prefetchingUserManager.getAuthorizable("userNonCached"));
+    }
+
+    @Test
     public void testDelegation() throws RepositoryException {
         prefetchingUserManager = new AuthInstallerUserManagerPrefetchingImpl(userManager, valueFactory, installationLogger);
 

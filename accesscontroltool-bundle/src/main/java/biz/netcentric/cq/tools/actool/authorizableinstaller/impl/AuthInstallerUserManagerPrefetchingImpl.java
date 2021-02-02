@@ -61,6 +61,7 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
 
         long startPrefetch = System.currentTimeMillis();
         Iterator<Authorizable> authorizablesToPrefetchIt = delegate.findAuthorizables(new Query() {
+            // all groups and user "anonymous"
             public <T> void build(QueryBuilder<T> builder) {
                 builder.setCondition(
                         builder.or( //
@@ -91,7 +92,15 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
                 Group memberOfGroup = declaredMemberOf.next();
                 String memberOfGroupId = memberOfGroup.getID();
                 isMemberOfByAuthorizableId.get(authId).add(memberOfGroupId);
-                nonRegularUserMembersByAuthorizableId.get(memberOfGroupId).add(authId);
+                final Set<String> nonRegularUserMembers;
+                if (!nonRegularUserMembersByAuthorizableId.containsKey(memberOfGroupId)) {
+                    // in case the group was not found by the previous query
+                    nonRegularUserMembers = new HashSet<String>();
+                    nonRegularUserMembersByAuthorizableId.put(memberOfGroupId, nonRegularUserMembers);
+                } else {
+                    nonRegularUserMembers = nonRegularUserMembersByAuthorizableId.get(memberOfGroupId);
+                }
+                nonRegularUserMembers.add(authId);
                 membershipCount++;
             }
         }
