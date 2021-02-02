@@ -53,6 +53,14 @@ You can get the content package containing the [index definition](http://jackrab
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
     <artifactId>accesscontroltool-oakindex-package</artifactId>
 ```
+(for AEM Classic/On Premise) or
+
+```
+    <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
+    <artifactId>accesscontroltool-oakindex-package</artifactId>
+    <classifier>cloud</classifier>
+```
+(for AEM as a Cloud Service)
 
 Install it afterwards e.g. via AEM's package manager.
 
