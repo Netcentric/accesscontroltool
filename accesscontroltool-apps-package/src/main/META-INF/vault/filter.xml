@@ -8,6 +8,6 @@
         <include pattern="/apps/cq/core/content/nav"/>
         <include pattern="/apps/cq/core/content/nav/tools"/>
         <include pattern="/apps/cq/core/content/nav/tools/security"/>
-        <include pattern="/apps/cq/core/content/nav/tools/security/actool"/>
+        <include pattern="/apps/cq/core/content/nav/tools/security/actool(.*)?"/>
     </filter>
 </workspaceFilter>

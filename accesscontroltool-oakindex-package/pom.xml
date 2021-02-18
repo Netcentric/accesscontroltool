@@ -15,7 +15,7 @@
     <parent>
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
         <artifactId>accesscontroltool</artifactId>
-        <version>2.7.2-SNAPSHOT</version>
+        <version>2.7.3-SNAPSHOT</version>
     </parent>
 
     <!-- ====================================================================== -->
@@ -37,7 +37,37 @@
                     <group>Netcentric</group>
                     <filterSource>src/main/META-INF/vault/filter.xml</filterSource>
                     <allowIndexDefinitions>true</allowIndexDefinitions>
+                    <!-- overwrite (compare with https://issues.apache.org/jira/browse/JCRVLT-496) -->
+                    <packageType>application</packageType>
+                    <validatorsSettings>
+                        <jackrabbit-packagetype>
+                            <!-- https://issues.apache.org/jira/browse/JCRVLT-496 -->
+                            <isDisabled>true</isDisabled>
+                        </jackrabbit-packagetype>
+                    </validatorsSettings>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>generate-metadata-for-cloud</id>
+                        <goals>
+                            <goal>generate-metadata</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>cloud</classifier>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>package-for-cloud</id>
+                        <goals>
+                            <goal>package</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>cloud</classifier>
+                            <!-- due to https://issues.apache.org/jira/browse/JCRVLT-498 -->
+                            <workDirectory>${project.build.directory}/vault-work-cloud</workDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
            </plugin>
 
             <plugin>

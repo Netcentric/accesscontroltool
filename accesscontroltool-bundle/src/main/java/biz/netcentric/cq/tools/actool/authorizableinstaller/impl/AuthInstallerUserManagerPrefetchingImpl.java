@@ -34,7 +34,7 @@ import biz.netcentric.cq.tools.actool.history.InstallationLogger;
  * <li>all groups, system users and anonymous (but not regular users)</li>
  * <li>all memberships between the preloaded authorizables</li>
  * <ul>
- * upon creation. 
+ * upon creation.
  * </p>
  * <p>
  * The membership relationships are cached in lookup maps to quickly be able to query the repository state for both
@@ -134,6 +134,12 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
         return authorizableCache.size();
     }
 
+    private void refreshAuthorizableCacheIfNeeded(final String id, final Authorizable authorizable) {
+        if (authorizableCache.containsKey(id)) {
+            authorizableCache.put(id, authorizable);
+        }
+    }
+
     // --- delegated methods
 
     public UserManager getOakUserManager() {
@@ -141,19 +147,26 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
     }
 
     public User createUser(String userID, String password, Principal principal, String intermediatePath) throws RepositoryException {
-        return delegate.createUser(userID, password, principal, intermediatePath);
+        final User user = delegate.createUser(userID, password, principal, intermediatePath);
+        refreshAuthorizableCacheIfNeeded(userID, user);
+        return user;
     }
 
     public User createSystemUser(String userID, String intermediatePath) throws RepositoryException {
-        return delegate.createSystemUser(userID, intermediatePath);
+        final User user = delegate.createSystemUser(userID, intermediatePath);
+        refreshAuthorizableCacheIfNeeded(userID, user);
+        return user;
     }
 
     public Group createGroup(Principal principal) throws RepositoryException {
-        return delegate.createGroup(principal);
-    }
-    
-    public Group createGroup(Principal principal, String intermediatePath) throws RepositoryException {
-        return delegate.createGroup(principal, intermediatePath);
+        final Group group = delegate.createGroup(principal);
+        refreshAuthorizableCacheIfNeeded(principal.getName(), group);
+        return group;
     }
 
+    public Group createGroup(Principal principal, String intermediatePath) throws RepositoryException {
+        final Group group = delegate.createGroup(principal, intermediatePath);
+        refreshAuthorizableCacheIfNeeded(principal.getName(), group);
+        return group;
+    }
 }
