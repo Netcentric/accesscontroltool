@@ -15,7 +15,7 @@
     <parent>
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
         <artifactId>accesscontroltool</artifactId>
-        <version>2.7.2-SNAPSHOT</version>
+        <version>2.7.3-SNAPSHOT</version>
     </parent>
 
     <!-- ====================================================================== -->
@@ -34,12 +34,22 @@
                 <artifactId>filevault-package-maven-plugin</artifactId>
                 <configuration>
                     <packageType>application</packageType>
-                    <!-- filter roots are not given in any dependency  -->
-                    <failOnDependencyErrors>false</failOnDependencyErrors>
                     <properties>
                         <!-- ACLs are included to show AC Tool by default only to admin -->
                         <acHandling>merge_preserve</acHandling>
                     </properties>
+                    <validatorsSettings>
+                        <jackrabbit-filter>
+                            <options>
+                                <validRoots>/apps/netcentric/actool,/apps/cq/core/content</validRoots>
+                            </options>
+                        </jackrabbit-filter>
+                        <jackrabbit-packagetype>
+                            <options>
+                                <allowComplexFilterRulesInApplicationPackages>true</allowComplexFilterRulesInApplicationPackages>
+                            </options>
+                        </jackrabbit-packagetype>
+                    </validatorsSettings>
                 </configuration>
             </plugin>
             <plugin>

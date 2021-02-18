@@ -11,7 +11,7 @@
 
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
     <artifactId>accesscontroltool</artifactId>
-    <version>2.7.2-SNAPSHOT</version>
+    <version>2.7.3-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Access Control Tool</name>
@@ -466,12 +466,66 @@
                 <plugin>
                     <groupId>org.apache.jackrabbit</groupId>
                     <artifactId>filevault-package-maven-plugin</artifactId>
-                    <version>1.0.4</version>
+                    <version>1.1.6</version>
                     <extensions>true</extensions>
                     <configuration>
                         <group>Netcentric</group>
                         <filterSource>src/main/META-INF/vault/filter.xml</filterSource>
+                        <validatorsSettings>
+                            <jackrabbit-filter>
+                                <options>
+                                    <validRoots>/,/libs,/libs/core/wcm,/apps,/apps/netcentric,/apps/netcentric/actool,/etc,/etc/packages,/tmp,/content,/oak:index</validRoots>
+                                </options>
+                            </jackrabbit-filter>
+                            <jackrabbit-nodetypes>
+                                <options>
+                                    <!-- use the nodetypes and namespaces from the aem-nodetypes.jar provided in the plugin dependencies -->
+                                    <cnds>tccl:aem.cnd</cnds>
+                                </options>
+                            </jackrabbit-nodetypes>
+                            <netcentric-aem-classification>
+                                <defaultSeverity>WARN</defaultSeverity>
+                                <options>
+                                    <severitiesPerClassification>INTERNAL_DEPRECATED=WARN</severitiesPerClassification>
+                                    <maps>tccl:biz/netcentric/filevault/validator/maps/aem-classification-map-deprecations/coral2deprecations.map,tccl:biz/netcentric/filevault/validator/maps/aem-classification-map-deprecations/graniteuideprecations.map,tccl:biz/netcentric/filevault/validator/maps/aem-classification-map-repo-annotations.map</maps>
+                                </options>
+                            </netcentric-aem-classification>
+                            <netcentric-aem-cloud>
+                                <options>
+                                    <allowVarNodeOutsideContainer>false</allowVarNodeOutsideContainer><!-- default value is true, as it is allowed to have /var nodes inside author-only container -->
+                                </options>
+                            </netcentric-aem-cloud>
+                        </validatorsSettings>
                     </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>biz.netcentric.filevault.validator</groupId>
+                            <artifactId>aem-classification-validator</artifactId>
+                            <version>1.0.0</version>
+                        </dependency>
+                        <!-- the dependency containing the actual classification map -->
+                        <dependency>
+                            <groupId>biz.netcentric.filevault.validator.maps</groupId>
+                            <artifactId>aem-classification-map-repo-annotations</artifactId>
+                            <version>6.5.3.0</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>biz.netcentric.filevault.validator.maps</groupId>
+                            <artifactId>aem-classification-map-deprecations</artifactId>
+                            <version>6.5.0.0</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>biz.netcentric.aem</groupId>
+                            <artifactId>aem-nodetypes</artifactId>
+                            <version>6.5.7.0</version>
+                        </dependency>
+                        <!-- https://github.com/Netcentric/aem-cloud-validator -->
+                        <dependency>
+                            <groupId>biz.netcentric.filevault.validator</groupId>
+                            <artifactId>aem-cloud-validator</artifactId>
+                            <version>1.1.0</version>
+                         </dependency>
+                    </dependencies>
                 </plugin>
                 <!-- for deploying to AEM -->
                 <plugin>
