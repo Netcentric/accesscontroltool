@@ -127,7 +127,7 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
 
     public Set<String> getDeclaredMembersWithoutRegularUsers(String id) {
         return nonRegularUserMembersByAuthorizableId.containsKey(id) ? nonRegularUserMembersByAuthorizableId.get(id)
-                : Collections.<String> emptySet();
+                : Collections.<String>emptySet();
     }
 
     public int getCacheSize() {
@@ -137,6 +137,35 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
     private void refreshAuthorizableCacheIfNeeded(final String id, final Authorizable authorizable) {
         if (authorizableCache.containsKey(id)) {
             authorizableCache.put(id, authorizable);
+        }
+    }
+
+    @Override
+    public void removeAuthorizable(final Authorizable authorizable) throws RepositoryException {
+        if (authorizable == null) {
+            return;
+        }
+
+        // remove auth from cache
+        authorizableCache.remove(authorizable.getID());
+        // if auth is a group, remove auth from the cache which lists groups of a given user
+        removeAuthorizableFromGroupsCache(authorizable);
+
+        authorizable.remove();
+    }
+
+    private void removeAuthorizableFromGroupsCache(final Authorizable authorizable) throws RepositoryException {
+        if (authorizable instanceof Group) {
+            final Group group = (Group) authorizable;
+            final String groupID = group.getID();
+            final Iterator<Authorizable> membersIt = group.getDeclaredMembers();
+            while (membersIt.hasNext()) {
+                final Authorizable member = membersIt.next();
+                final String memberID = member.getID();
+                if (isMemberOfByAuthorizableId.containsKey(memberID)) {
+                    isMemberOfByAuthorizableId.get(memberID).remove(groupID);
+                }
+            }
         }
     }
 
@@ -169,4 +198,5 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
         refreshAuthorizableCacheIfNeeded(principal.getName(), group);
         return group;
     }
+
 }
