@@ -22,6 +22,8 @@ interface AuthInstallerUserManager {
 
     UserManager getOakUserManager();
 
+    void removeAuthorizable(Authorizable authorizable) throws RepositoryException;
+
     // -- methods from oak UserManager that the AC tool uses (delegated, only the relevant methods are listed here)
 
     Authorizable getAuthorizable(String id) throws RepositoryException;
