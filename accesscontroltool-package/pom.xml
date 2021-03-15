@@ -77,39 +77,101 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- for "cloud" package use repoinit instead of actool-content-package -->
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-cloud-package-resources</id>
+                        <!-- here the phase you need -->
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/vault-work-cloud/jcr_root</outputDirectory>
+                            <resources>
+                              <resource>
+                                <directory>src/main/jcr_root-cloud</directory>
+                                <filtering>false</filtering>
+                              </resource>
+                            </resources>
+                        </configuration> 
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- generate two packages: one for cloud (classifier "cloud") and one for classic (no classifier) -->
             <plugin>
                 <groupId>org.apache.jackrabbit</groupId>
                 <artifactId>filevault-package-maven-plugin</artifactId>
                 <configuration>
-                    <properties>
-                        <!-- install the two bundles and service user config synchronously in order to be callable from within 
-                              same complete package (if yaml file containing package declares the dependency to it) -->
-                        <installPathRegex>/apps/netcentric/actool/(config|install)/.*</installPathRegex>
-                        <waitForOsgiEventsQuietInSec>5</waitForOsgiEventsQuietInSec>
-                    </properties>
                     <embeddedTarget>/apps/netcentric/actool/install</embeddedTarget>
-                    <embeddeds>
-                        <embedded>
-                            <artifactId>accesscontroltool-bundle</artifactId>
-                        </embedded>
-                        <embedded>
-                            <artifactId>accesscontroltool-startuphook-bundle</artifactId>
-                            <target>/apps/netcentric/actool/install/27</target>
-                        </embedded>
-                    </embeddeds>
-                    <subPackages>
-                        <subPackage>
-                            <artifactId>accesscontroltool-apps-package</artifactId>
-                        </subPackage>
-                        <subPackage>
-                            <artifactId>accesscontroltool-content-package</artifactId>
-                        </subPackage>
-                    </subPackages>
                     <packageType>container</packageType>
                     <!-- all sub packages have been validated already -->
                     <skipSubPackageValidation>true</skipSubPackageValidation>
                 </configuration>
                 <executions>
+                    <execution>
+                        <id>default-generate-metadata</id>
+                        <configuration>
+                            <properties>
+                                <!-- install the two bundles and service user config synchronously in order to be callable from within 
+                                      same complete package (if yaml file containing package declares the dependency to it) -->
+                                <installPathRegex>/apps/netcentric/actool/(config|install)/.*</installPathRegex>
+                                <waitForOsgiEventsQuietInSec>5</waitForOsgiEventsQuietInSec>
+                            </properties>
+                            <embeddeds>
+                                <embedded>
+                                    <artifactId>accesscontroltool-bundle</artifactId>
+                                </embedded>
+                                <embedded>
+                                    <artifactId>accesscontroltool-startuphook-bundle</artifactId>
+                                    <target>/apps/netcentric/actool/install/27</target>
+                                </embedded>
+                            </embeddeds>
+                            <subPackages>
+                                <subPackage>
+                                    <artifactId>accesscontroltool-apps-package</artifactId>
+                                </subPackage>
+                                <subPackage>
+                                    <artifactId>accesscontroltool-content-package</artifactId>
+                                </subPackage>
+                            </subPackages>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>cloud-generate-metadata</id>
+                        <goals>
+                            <goal>generate-metadata</goal>
+                        </goals>
+                        <configuration>
+                            <!-- everything via embed, no subpackages, no accesscontroltool-content-package -->
+                            <embeddeds>
+                                <embedded>
+                                    <artifactId>accesscontroltool-bundle</artifactId>
+                                </embedded>
+                                <embedded>
+                                    <artifactId>accesscontroltool-apps-package</artifactId>
+                                </embedded>
+                                <embedded>
+                                    <artifactId>accesscontroltool-startuphook-bundle</artifactId>
+                                    <target>/apps/netcentric/actool/install/27</target>
+                                </embedded>
+                            </embeddeds>
+                            <classifier>cloud</classifier>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>cloud-package</id>
+                        <goals>
+                            <goal>package</goal>
+                        </goals>
+                        <configuration>
+                            <!-- must set explicitly due to https://issues.apache.org/jira/browse/JCRVLT-498 -->
+                            <workDirectory>${project.build.directory}/vault-work-cloud</workDirectory>
+                            <classifier>cloud</classifier>
+                        </configuration>
+                    </execution>
                     <execution>
                         <id>default-analyze-classes</id>
                         <phase>invalid</phase>
