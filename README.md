@@ -36,6 +36,14 @@ The [content package](https://jackrabbit.apache.org/filevault) is available from
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
     <artifactId>accesscontroltool-package</artifactId>
 ```
+(for AEM Classic/On Premise) or
+
+```
+    <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
+    <artifactId>accesscontroltool-package</artifactId>
+    <classifier>cloud</classifier>
+```
+(for AEM as a Cloud Service)
 
 Install it afterwards e.g. via AEM's package manager.
 
