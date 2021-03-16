@@ -170,6 +170,7 @@
                             <!-- must set explicitly due to https://issues.apache.org/jira/browse/JCRVLT-498 -->
                             <workDirectory>${project.build.directory}/vault-work-cloud</workDirectory>
                             <classifier>cloud</classifier>
+                            <failOnDuplicateEntries>false</failOnDuplicateEntries>
                         </configuration>
                     </execution>
                     <execution>
