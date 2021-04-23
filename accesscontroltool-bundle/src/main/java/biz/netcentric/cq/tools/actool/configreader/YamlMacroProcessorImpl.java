@@ -8,7 +8,15 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
+import org.slf4j.helpers.MessageFormatter;
 
 @Component
 public class YamlMacroProcessorImpl implements YamlMacroProcessor {
@@ -232,7 +241,7 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
         Boolean expressionIsTrue = elEvaluator.evaluateEl(condition, Boolean.class, variables);
 
         if (expressionIsTrue == null) {
-            LOG.warn("Expression {} evaluates to null, returning false", condition);
+            installLog.addWarning(LOG, MessageFormatter.format("Expression {} evaluates to null, returning false", condition).getMessage());
             expressionIsTrue = false;
         }
 
