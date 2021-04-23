@@ -8,17 +8,8 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -238,7 +229,12 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
             InstallationLogger installLog, Session session) {
         String condition = ifMatcher.group(1).trim();
 
-        boolean expressionIsTrue = elEvaluator.evaluateEl(condition, Boolean.class, variables);
+        Boolean expressionIsTrue = elEvaluator.evaluateEl(condition, Boolean.class, variables);
+
+        if (expressionIsTrue == null) {
+            LOG.warn("Expression {} evaluates to null, returning false", condition);
+            expressionIsTrue = false;
+        }
 
         List toBeUnfoldedList = unfoldIf(variables, objVal, expressionIsTrue, installLog, session);
 
