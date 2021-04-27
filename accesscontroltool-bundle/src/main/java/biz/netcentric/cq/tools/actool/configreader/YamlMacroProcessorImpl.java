@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
+import org.slf4j.helpers.MessageFormatter;
 
 @Component
 public class YamlMacroProcessorImpl implements YamlMacroProcessor {
@@ -238,7 +239,12 @@ public class YamlMacroProcessorImpl implements YamlMacroProcessor {
             InstallationLogger installLog, Session session) {
         String condition = ifMatcher.group(1).trim();
 
-        boolean expressionIsTrue = elEvaluator.evaluateEl(condition, Boolean.class, variables);
+        Boolean expressionIsTrue = elEvaluator.evaluateEl(condition, Boolean.class, variables);
+
+        if (expressionIsTrue == null) {
+            installLog.addWarning(LOG, MessageFormatter.format("Expression {} evaluates to null, returning false", condition).getMessage());
+            expressionIsTrue = false;
+        }
 
         List toBeUnfoldedList = unfoldIf(variables, objVal, expressionIsTrue, installLog, session);
 
