@@ -221,4 +221,13 @@ public class AuthInstallerUserManagerPrefetchingImplTest {
         assertNull(retrievedGroup3);
         assertFalse(groups.contains(group3.getID()));
     }
+
+    @Test
+    public void testCaseSensitiveAuthorizableCacheRetrieval() throws RepositoryException {
+        prefetchingUserManager = new AuthInstallerUserManagerPrefetchingImpl(userManager, valueFactory, installationLogger);
+        final Authorizable retrievedGroup3 = prefetchingUserManager.getAuthorizable(group1.getID());
+        final Authorizable retrievedGroup3Alternative = prefetchingUserManager.getAuthorizable(group1.getID().toUpperCase());
+
+        assertEquals(retrievedGroup3, retrievedGroup3Alternative);
+    }
 }
