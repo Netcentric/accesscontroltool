@@ -14,6 +14,7 @@ import java.util.Set;
 import javax.jcr.RepositoryException;
 import javax.jcr.ValueFactory;
 
+import org.apache.commons.collections.map.CaseInsensitiveMap;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
@@ -51,7 +52,7 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
     private static final Logger LOG = LoggerFactory.getLogger(AuthInstallerUserManagerPrefetchingImpl.class);
 
     private final UserManager delegate;
-    private final Map<String, Authorizable> authorizableCache = new HashMap<>();
+    private final Map<String, Authorizable> authorizableCache = new CaseInsensitiveMap();
 
     private final Map<String, Set<String>> nonRegularUserMembersByAuthorizableId = new HashMap<>();
     private final Map<String, Set<String>> isMemberOfByAuthorizableId = new HashMap<>();
@@ -73,7 +74,7 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
         while (authorizablesToPrefetchIt.hasNext()) {
             Authorizable auth = authorizablesToPrefetchIt.next();
             String authId = auth.getID();
-            authorizableCache.put(authId.toLowerCase(), auth);
+            authorizableCache.put(authId, auth);
 
             // init lists
             nonRegularUserMembersByAuthorizableId.put(authId, new HashSet<String>());
@@ -102,10 +103,10 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
     }
 
     public Authorizable getAuthorizable(String id) throws RepositoryException {
-        Authorizable authorizable = authorizableCache.get(id.toLowerCase());
+        Authorizable authorizable = authorizableCache.get(id);
         if (authorizable == null) {
             authorizable = delegate.getAuthorizable(id);
-            authorizableCache.put(id.toLowerCase(), authorizable);
+            authorizableCache.put(id, authorizable);
         }
         return authorizable;
     }
@@ -136,8 +137,8 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
     }
 
     private void refreshAuthorizableCacheIfNeeded(final String id, final Authorizable authorizable) {
-        if (authorizableCache.containsKey(id.toLowerCase())) {
-            authorizableCache.put(id.toLowerCase(), authorizable);
+        if (authorizableCache.containsKey(id)) {
+            authorizableCache.put(id, authorizable);
         }
     }
 
@@ -146,7 +147,7 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
         Objects.requireNonNull(authorizable);
 
         // remove auth from cache
-        authorizableCache.remove(authorizable.getID().toLowerCase());
+        authorizableCache.remove(authorizable.getID());
 
         // if auth is a group, remove auth from the cache which lists groups of a given user
         if (authorizable instanceof Group) {
