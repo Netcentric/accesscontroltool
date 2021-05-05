@@ -14,6 +14,7 @@ import java.util.Set;
 import javax.jcr.RepositoryException;
 import javax.jcr.ValueFactory;
 
+import org.apache.commons.collections.map.CaseInsensitiveMap;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
@@ -38,6 +39,10 @@ import biz.netcentric.cq.tools.actool.history.InstallationLogger;
  * upon creation.
  * </p>
  * <p>
+ * Authorizables as well as membership relationships are cached by their case-insensitive IDs in alignment
+ * with {@link org.apache.jackrabbit.oak.security.user.AuthorizableBaseProvider#getContentID(String authorizableId)}.
+ * </p>
+ * <p>
  * The membership relationships are cached in lookup maps to quickly be able to query the repository state for both
  * authorizable.declaredMemberOf() (this we call in this class also) and group.getDeclaredMembers(). Having called declaredMemberOf() for
  * all groups of the repository has also retrieved all memberships (expect regular user memberships), hence the method getDeclaredMembers()
@@ -51,10 +56,10 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
     private static final Logger LOG = LoggerFactory.getLogger(AuthInstallerUserManagerPrefetchingImpl.class);
 
     private final UserManager delegate;
-    private final Map<String, Authorizable> authorizableCache = new HashMap<>();
+    private final Map<String, Authorizable> authorizableCache = new CaseInsensitiveMap();
 
-    private final Map<String, Set<String>> nonRegularUserMembersByAuthorizableId = new HashMap<>();
-    private final Map<String, Set<String>> isMemberOfByAuthorizableId = new HashMap<>();
+    private final Map<String, Set<String>> nonRegularUserMembersByAuthorizableId = new CaseInsensitiveMap();
+    private final Map<String, Set<String>> isMemberOfByAuthorizableId = new CaseInsensitiveMap();
 
     public AuthInstallerUserManagerPrefetchingImpl(UserManager delegate, final ValueFactory valueFactory, InstallationLogger installLog)
             throws RepositoryException {
