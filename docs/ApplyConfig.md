@@ -1,18 +1,3 @@
-# Applying ACLs
-
-* [General Installation](#general-installation)
-* [Installation in AEM as a Cloud Service](#installation-in-aem-as-a-cloud-service)
-* [Installation Methods](#installation-methods)
-  * [Installation Hook](#installation-hook)
-  * [Web Console](#web-console)
-  * [Touch UI](#touch-ui)
-  * [JMX](#jmx)
-  * [Startup Hook](#startup-hook)
-  * [Upload Listener Service](#upload-listener-service)
-  * [Ad hoc installation of small fragments](#ad-hoc-installation-of-small-fragments)
-
-<!--- This table of contents has been generated with https://github.com/ekalinin/github-markdown-toc#gh-md-toc -->
-
 ## General Installation
 
 The following steps are performed during the installation of authorizables and ACEs:
@@ -93,7 +78,7 @@ Although it is not necessary that the YAML files are covered by the filter rules
 
 The installation takes place in phase "PREPARE" by default, i.e. before any other content from the package has been installed. Optionally you can make the hook kick in in phase "INSTALLED" (i.e. after the content has been installed) by additionally setting the package property `actool.atInstalledPhase` to `true`. This is helpful if the initial content on which you want to set ACEs is created via classical package content (instead of inline yaml `initialContent`). That is only properly supported since AEM 6.4.2 (for details look at [issue 287](https://github.com/Netcentric/accesscontroltool/issues/287)) and since ACTool 2.4.0.
 
-An install hook is ignored in the Cloud because the startup hook is to be used for that use case (the package property `actool.forceInstallHookInCloud` can be used force excution).
+An install hook is ignored in the Cloud because the startup hook is to be used for that use case.
 
 **Notice:** Packages with install hooks can only be installed by admin users (compare with [JCRVLT-427](https://issues.apache.org/jira/browse/JCRVLT-427))! This is either user with id `admin`, `system` or every member of group `administrators`.
 
