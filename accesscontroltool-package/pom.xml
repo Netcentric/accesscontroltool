@@ -50,6 +50,12 @@
             <version>${project.version}</version>
             <type>content-package</type>
         </dependency>
+        <dependency>
+            <groupId>com.adobe.aem</groupId>
+            <artifactId>aem-sdk-api</artifactId>
+            <version>2021.5.5343.20210524T070738Z-210527</version>
+        </dependency>
+        
     </dependencies>
     <build>
         <plugins>
@@ -186,7 +192,13 @@
                     <targetURL>http://${crx.host}:${crx.port}/crx/packmgr/service.jsp</targetURL>
                 </configuration>
             </plugin>
-            
+            <plugin>
+                <groupId>com.adobe.aem</groupId>
+                <artifactId>aemanalyser-maven-plugin</artifactId>
+                <configuration>
+                    <classifier>cloud</classifier>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
     <profiles>

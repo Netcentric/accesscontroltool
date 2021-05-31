@@ -543,6 +543,19 @@
                         <password>${crx.password}</password>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>com.adobe.aem</groupId>
+                    <artifactId>aemanalyser-maven-plugin</artifactId>
+                    <version>1.0.4</version>
+                    <executions>
+                        <execution>
+                            <id>aem-analyser</id>
+                            <goals>
+                                <goal>project-analyse</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
                 <!--This plugin's configuration is used to store Eclipse m2e settings
                     only. It has no influence on the Maven build itself. -->
                 <plugin>
