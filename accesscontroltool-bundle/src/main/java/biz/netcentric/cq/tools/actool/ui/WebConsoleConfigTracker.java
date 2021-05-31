@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.Dictionary;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.jackrabbit.oak.commons.PropertiesUtil;
+import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.cm.ConfigurationEvent;
 import org.osgi.service.cm.ConfigurationListener;

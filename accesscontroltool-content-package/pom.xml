@@ -39,9 +39,12 @@
                     </properties>
                     <validatorsSettings>
                         <jackrabbit-nodetypes>
-                            <!-- disable due to https://issues.apache.org/jira/browse/JCRVLT-497 -->
+                            <!-- disable due to https://issues.apache.org/jira/browse/JCRVLT-527 -->
                             <isDisabled>true</isDisabled>
                         </jackrabbit-nodetypes>
+                        <netcentric-aem-cloud>
+                            <isDisabled>true</isDisabled>
+                        </netcentric-aem-cloud>
                     </validatorsSettings>
                 </configuration>
             </plugin>
