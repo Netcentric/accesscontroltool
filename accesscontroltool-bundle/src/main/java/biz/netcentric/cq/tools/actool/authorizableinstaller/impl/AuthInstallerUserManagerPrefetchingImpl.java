@@ -14,7 +14,7 @@ import java.util.Set;
 import javax.jcr.RepositoryException;
 import javax.jcr.ValueFactory;
 
-import org.apache.commons.collections.map.CaseInsensitiveMap;
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
