@@ -37,7 +37,7 @@ public abstract class OsgiAwareInstallHook implements InstallHook {
         // since this class was loaded through a bundle class loader as well, just take the bundle context
         Bundle currentBundle = FrameworkUtil.getBundle(this.getClass());
         if (currentBundle == null) {
-            throw new IllegalStateException("The class " + this.getClass() + " was not loaded through a a bundle classloader");
+            throw new IllegalStateException("The class " + this.getClass() + " was not loaded through a bundle classloader");
         }
 
         bundleContext = currentBundle.getBundleContext();

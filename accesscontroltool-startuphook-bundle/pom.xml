@@ -81,28 +81,15 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>osgicheck-maven-plugin</artifactId>
-                <version>0.1.0</version>
-                <executions>
-                    <execution>
-                        <id>check-bundle</id>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>biz.aQute.bnd</groupId>
                 <artifactId>bnd-maven-plugin</artifactId>
                 <configuration>
                     <bnd><![CDATA[
-Bundle-Description: ${project.description}
 Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
-Bundle-License: Eclipse Public License, Version 1.0; link="https://www.eclipse.org/legal/epl-v10.html"
 Bundle-SymbolicName: biz.netcentric.cq.tools.accesscontroltool.startuphook.bundle
-Bundle-Vendor: Netcentric
 Bundle-Activator: biz.netcentric.cq.tools.actool.startuphook.impl.StartupBundleActivator
-Bundle-Name: ${project.name}
 Conditional-Package: biz.netcentric.cq.tools.actool.helper.runtime
                     ]]></bnd>
                 </configuration>

@@ -162,26 +162,6 @@
         </dependencies>
     </dependencyManagement>
 
-    <!-- Inclusion of repositories in POMs is controversial, to say the least.
-        It would be best if you proxied the Adobe repository using a Maven Repository
-        Manager. Once you do that, remove these sections. -->
-    <repositories>
-        <repository>
-            <id>adobe</id>
-            <name>Adobe Public Repository</name>
-            <url>https://repo.adobe.com/nexus/content/groups/public/</url>
-            <layout>default</layout>
-        </repository>
-    </repositories>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>adobe</id>
-            <name>Adobe Public Repository</name>
-            <url>https://repo.adobe.com/nexus/content/groups/public/</url>
-            <layout>default</layout>
-        </pluginRepository>
-    </pluginRepositories>
-
     <build>
         <pluginManagement>
             <plugins>
@@ -241,7 +221,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>3.3.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -261,9 +241,9 @@
                 <plugin>
                     <groupId>org.apache.sling</groupId>
                     <artifactId>maven-sling-plugin</artifactId>
-                    <version>2.3.8</version>
+                    <version>2.4.2</version>
                     <configuration>
-                        <username>${crx.username}</username>
+                        <user>${crx.username}</user>
                         <password>${crx.password}</password>
                     </configuration>
                 </plugin>
@@ -348,6 +328,19 @@
                         
                     </dependencies>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>osgicheck-maven-plugin</artifactId>
+                    <version>0.1.0</version>
+                    <executions>
+                        <execution>
+                            <id>check-bundle</id>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
                 <!-- for deploying to AEM -->
                 <plugin>
                     <groupId>com.day.jcr.vault</groupId>
@@ -355,7 +348,7 @@
                     <version>1.0.4</version>
                     <configuration>
                         <failOnError>true</failOnError>
-                        <username>${crx.username}</username>
+                        <userId>${crx.username}</userId>
                         <password>${crx.password}</password>
                     </configuration>
                 </plugin>
@@ -543,7 +536,7 @@
                     <plugin>
                         <groupId>org.owasp</groupId>
                         <artifactId>dependency-check-maven</artifactId>
-                        <version>6.0.2</version>
+                        <version>6.2.0</version>
                         <executions>
                             <execution>
                                 <id>check-dependencies-for-vulnerabilities</id>
@@ -572,7 +565,7 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>0.8.6</version>
+                        <version>0.8.7</version>
                         <executions>
                             <execution>
                                 <id>prepare-jacoco-agent</id>
