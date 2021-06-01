@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import javax.jcr.Session;
 
@@ -46,16 +45,15 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
             ProgressTrackerListener progressTrackerListener)
             throws Exception {
         Archive archive = vaultPackage.getArchive();
-        Properties packageProperties = vaultPackage.getMetaInf().getProperties();
+        Properties packageProperties = archive.getMetaInf().getProperties();
         List<String> configPathPatterns = new ArrayList<>();
-        Set<Object> propertiesKeys = packageProperties.keySet();
-        for (Object property : propertiesKeys) {
-            if (property.toString().matches(ACL_HOOK_PATHS)) {
-                configPathPatterns.add(JCR_ROOT_PREFIX + packageProperties.getProperty(property.toString()));
-                
+        if (packageProperties != null) {
+            for (Object property : packageProperties.keySet()) {
+                if (property.toString().matches(ACL_HOOK_PATHS)) {
+                    configPathPatterns.add(JCR_ROOT_PREFIX + packageProperties.getProperty(property.toString()));
+                }
             }
         }
-
         PersistableInstallationLogger history = progressTrackerListener != null
                 ? new ProgressTrackerListenerInstallationLogger(progressTrackerListener)
                 : new PersistableInstallationLogger();

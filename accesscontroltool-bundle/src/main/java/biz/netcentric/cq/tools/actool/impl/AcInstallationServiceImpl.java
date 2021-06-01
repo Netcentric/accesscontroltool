@@ -147,7 +147,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     public void activate(Configuration configuration, BundleContext bundleContext) throws Exception {
         Dictionary<String, Object> configDict = configAdmin.getConfiguration(CONFIG_PID).getProperties();
         
-        configurationRootPaths = new ArrayList<String>();
+        configurationRootPaths = new ArrayList<>();
         if(!ArrayUtils.isEmpty(configuration.configurationRootPaths())) {
             configurationRootPaths.addAll(Arrays.asList(configuration.configurationRootPaths()));
         } else {

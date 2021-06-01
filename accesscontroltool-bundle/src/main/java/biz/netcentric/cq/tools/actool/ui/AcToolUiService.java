@@ -304,18 +304,18 @@ public class AcToolUiService {
     static class RequestParameters {
 
         static RequestParameters fromRequest(HttpServletRequest req, AcInstallationService acInstallationService) {
-            String configRootPath = null;
-                    /*
-                    getParam(req, AcToolUiService.PARAM_CONFIGURATION_ROOT_PATH,
-                    ((AcInstallationServiceImpl) acInstallationService).getConfigurationRootPaths());*/
+            List<String> allConfigRootPaths = ((AcInstallationServiceImpl) acInstallationService).getConfigurationRootPaths();
+            // take the first configured root path as default
+            String defaultConfigRootPath = allConfigRootPaths.size() > 0 ? allConfigRootPaths.get(allConfigRootPaths.size()-1) : "";
+            String configRootPath = 
+                    getParam(req, AcToolUiService.PARAM_CONFIGURATION_ROOT_PATH, defaultConfigRootPath);
             String basePathsParam = req.getParameter(AcToolUiService.PARAM_BASE_PATHS);
-            RequestParameters result = new RequestParameters(
+            return new RequestParameters(
                     configRootPath,
                     StringUtils.isNotBlank(basePathsParam) ? Arrays.asList(basePathsParam.split(" *, *")) : null,
                     Integer.parseInt(getParam(req, AcToolUiService.PARAM_SHOW_LOG_NO, "0")),
                     Boolean.valueOf(req.getParameter(AcToolUiService.PARAM_SHOW_LOG_VERBOSE)),
                     Boolean.valueOf(req.getParameter(AcToolUiService.PARAM_APPLY_ONLY_IF_CHANGED)));
-            return result;
         }
         
         final String configurationRootPath;
