@@ -37,7 +37,10 @@
             <organizationUrl>https://www.netcentric.biz/</organizationUrl>
         </developer>
     </developers>
-
+    <ciManagement>
+        <system>github</system>
+        <url>https://github.com/Netcentric/accesscontroltool/actions/workflows/maven.yml</url>
+    </ciManagement>
     <licenses>
         <license>
             <name>Eclipse Public License, Version 1.0</name>
