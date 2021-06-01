@@ -35,7 +35,7 @@ jobs:
           server-password: MAVEN_PASSWORD # env variable for token in deploy
 
       - name: Build with Maven
-        if: github.ref != 'refs/heads/develop' && (matrix.os != 'ubuntu-latest' || matrix.jdk != '11')
+        if: github.ref != 'refs/heads/develop' || matrix.os != 'ubuntu-latest' || matrix.jdk != '11'
         run: mvn -e -B -V clean verify
 
       - name: Build and Analyse with Maven
