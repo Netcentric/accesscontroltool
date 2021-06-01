@@ -552,7 +552,7 @@
                             <skipProvidedScope>true</skipProvidedScope>
                             <skipSystemScope>true</skipSystemScope>
                             <retireJsAnalyzerEnabled>false</retireJsAnalyzerEnabled>
-                            <suppressionFile>./suppression.xml</suppressionFile>
+                            <suppressionFile>../suppression.xml</suppressionFile>
                         </configuration>
                     </plugin>
                 </plugins>

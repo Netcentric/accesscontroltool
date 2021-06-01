@@ -7,13 +7,4 @@
     <packageUrl regex="true">^pkg:maven/org\.apache\.tomcat/tomcat\-jasper\-el@.*$</packageUrl>
     <cve>CVE-2020-8022</cve>
   </suppress>
-  <suppress>
-    <notes><![CDATA[
-   https://nvd.nist.gov/vuln/detail/CVE-2016-0956 and https://nvd.nist.gov/vuln/detail/CVE-2013-4390 have very broad cpes
-   and match e.g. the sling servlet annotations
-   ]]></notes>
-    <cve>CVE-2016-0956</cve>
-    <cve>CVE-2013-4390</cve>
-    <cve>CVE-2020-17527</cve>
-  </suppress>
 </suppressions>
