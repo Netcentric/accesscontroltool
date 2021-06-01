@@ -61,7 +61,7 @@ import biz.netcentric.cq.tools.actool.aem.AemCqActionsSupportImpl;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.configreader.YamlConfigReader;
-import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
+import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AceBeanInstallerIncrementalTest {
@@ -88,7 +88,7 @@ public class AceBeanInstallerIncrementalTest {
     AceBeanInstallerIncremental aceBeanInstallerIncremental;
 
     @Spy
-    PersistableInstallationLogger installLog;
+    InstallationLogger installLog;
 
     @Mock
     JackrabbitAccessControlList jackrabbitAccessControlList;

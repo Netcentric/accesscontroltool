@@ -64,7 +64,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.crypto.DecryptionService;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
-import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
+import biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger;
 
 @RunWith(Enclosed.class)
 public class AuthorizableInstallerServiceImplTest {
@@ -88,7 +88,7 @@ public class AuthorizableInstallerServiceImplTest {
 
         private AcConfiguration acConfiguration = new AcConfiguration();
         private GlobalConfiguration globalConfiguration = new GlobalConfiguration();
-        private PersistableInstallationLogger status = new PersistableInstallationLogger();
+        private InstallationLogger status = new PersistableInstallationLogger();
 
         @Mock
         private UserManager userManager;
@@ -198,7 +198,7 @@ public class AuthorizableInstallerServiceImplTest {
         @Test
         public void testApplyGroupMembershipConfigMembers() throws Exception {
 
-            PersistableInstallationLogger history = new PersistableInstallationLogger();
+            InstallationLogger history = new PersistableInstallationLogger();
             acConfiguration.setGlobalConfiguration(new GlobalConfiguration());
 
             AuthorizableConfigBean authorizableConfigBean = new AuthorizableConfigBean();

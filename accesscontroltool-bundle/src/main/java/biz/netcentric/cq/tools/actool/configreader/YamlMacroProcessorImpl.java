@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
+
 import org.slf4j.helpers.MessageFormatter;
 
 @Component

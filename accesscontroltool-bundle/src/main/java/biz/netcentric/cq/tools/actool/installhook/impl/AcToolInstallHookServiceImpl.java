@@ -24,9 +24,11 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetriever;
-import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
-import biz.netcentric.cq.tools.actool.history.ProgressTrackerListenerInstallationLogger;
+import biz.netcentric.cq.tools.actool.history.InstallationLogger;
+import biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger;
+import biz.netcentric.cq.tools.actool.history.impl.ProgressTrackerListenerInstallationLogger;
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceInternal;
+import biz.netcentric.cq.tools.actool.installhook.AcToolInstallHookService;
 
 @Component
 public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
@@ -40,7 +42,7 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
     private ConfigFilesRetriever configFilesRetriever;
 
     @Override
-    public PersistableInstallationLogger installYamlFilesFromPackage(VaultPackage vaultPackage, Session session,
+    public InstallationLogger installYamlFilesFromPackage(VaultPackage vaultPackage, Session session,
             ProgressTrackerListener progressTrackerListener)
             throws Exception {
         Archive archive = vaultPackage.getArchive();

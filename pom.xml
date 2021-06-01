@@ -11,7 +11,7 @@
 
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
     <artifactId>accesscontroltool</artifactId>
-    <version>2.8.2-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Access Control Tool</name>
@@ -169,6 +169,22 @@
                     <groupId>biz.aQute.bnd</groupId>
                     <artifactId>bnd-maven-plugin</artifactId>
                     <version>${bnd.version}</version>
+                    <configuration>
+                        <bnd>
+Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
+# generate error (instead of warning) when exported package uses private (non-exported) reference
+-fixupmessages:"Export *,  has \\d+,  private references"; \
+    restrict:=warning; \
+    is:=error
+                        </bnd>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>bnd-process</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>biz.aQute.bnd</groupId>
@@ -552,7 +568,7 @@
                             <skipProvidedScope>true</skipProvidedScope>
                             <skipSystemScope>true</skipSystemScope>
                             <retireJsAnalyzerEnabled>false</retireJsAnalyzerEnabled>
-                            <suppressionFile>../suppression.xml</suppressionFile>
+                            <skip>true</skip><!-- only enable in specific submodules -->
                         </configuration>
                     </plugin>
                 </plugins>

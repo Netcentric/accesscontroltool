@@ -9,7 +9,7 @@
 package biz.netcentric.cq.tools.actool.impl;
 
 import static biz.netcentric.cq.tools.actool.helper.Constants.PRINCIPAL_EVERYONE;
-import static biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger.msHumanReadable;
+import static biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger.msHumanReadable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,16 +25,12 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.AccessDeniedException;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
-import javax.jcr.lock.LockException;
 import javax.jcr.security.AccessControlEntry;
-import javax.jcr.security.AccessControlException;
 import javax.jcr.security.AccessControlManager;
-import javax.jcr.version.VersionException;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -60,7 +56,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.aceinstaller.AceBeanInstaller;
-import biz.netcentric.cq.tools.actool.aceservice.AceService;
 import biz.netcentric.cq.tools.actool.api.AcInstallationService;
 import biz.netcentric.cq.tools.actool.api.InstallationLog;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
@@ -82,14 +77,13 @@ import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
-import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
+import biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl.Configuration;
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService;
 
 @Component
 @Designate(ocd=Configuration.class)
-public class AcInstallationServiceImpl implements AcInstallationService, AcInstallationServiceInternal, AceService {
+public class AcInstallationServiceImpl implements AcInstallationService, AcInstallationServiceInternal {
     private static final Logger LOG = LoggerFactory.getLogger(AcInstallationServiceImpl.class);
 
     private static final String CONFIG_PID = "biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl";
@@ -252,7 +246,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     private InstallationLog applyMultipleConfigurations(String[] restrictedToPaths, boolean skipIfConfigUnchanged) {
-        PersistableInstallationLogger overviewInstallLog = new PersistableInstallationLogger();
+        InstallationLogger overviewInstallLog = new PersistableInstallationLogger();
         overviewInstallLog.addMessage(LOG, "Applying multiple configs (this log only shows what was applied, check the individual logs for details)");
         for(String rootPath: configurationRootPaths) {
             overviewInstallLog.addMessage(LOG, "Applying config at root path "+rootPath);
@@ -669,7 +663,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
     }
 
-    @Override
     public boolean isReadyToStart() {
         Session session = null;
         
@@ -964,12 +957,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         }
     }
 
-    @Override
-    @Deprecated
-    public String getConfiguredAcConfigurationRootPath() {
-        return !configurationRootPaths.isEmpty() ? configurationRootPaths.get(0): null;
-    }
-
     public List<String> getConfigurationRootPaths() {
         return configurationRootPaths;
     }
@@ -996,32 +983,9 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         return paths;
     }
 
-
-
     public String getVersion() {
         String bundleVersion = FrameworkUtil.getBundle(AcInstallationServiceImpl.class).getVersion().toString();
         return bundleVersion;
-    }
-
-    /* --- deprecated methods --- */
-    @Override
-    public AcInstallationHistoryPojo execute() {
-        return apply();
-    }
-
-    @Override
-    public AcInstallationHistoryPojo execute(String configurationRootPath) {
-        return apply(configurationRootPath);
-    }
-
-    @Override
-    public AcInstallationHistoryPojo execute(String[] restrictedToPaths) {
-        return apply(restrictedToPaths);
-    }
-
-    @Override
-    public AcInstallationHistoryPojo execute(String configurationRootPath, String[] restrictedToPaths) {
-        return apply(configurationRootPath, restrictedToPaths);
     }
 
 }

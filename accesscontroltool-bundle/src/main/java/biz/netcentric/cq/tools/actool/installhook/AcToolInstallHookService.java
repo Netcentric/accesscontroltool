@@ -6,18 +6,20 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package biz.netcentric.cq.tools.actool.installhook.impl;
+package biz.netcentric.cq.tools.actool.installhook;
 
 import javax.jcr.Session;
 
 import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.packaging.VaultPackage;
+import org.osgi.annotation.versioning.ProviderType;
 
-import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
+import biz.netcentric.cq.tools.actool.api.InstallationResult;
 
+@ProviderType
 public interface AcToolInstallHookService {
 
-    public PersistableInstallationLogger installYamlFilesFromPackage(VaultPackage archive, Session session,
+    public InstallationResult installYamlFilesFromPackage(VaultPackage archive, Session session,
             ProgressTrackerListener progressTrackerListener)
             throws Exception;
 

@@ -11,7 +11,7 @@
     <parent>
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
         <artifactId>accesscontroltool</artifactId>
-        <version>2.8.2-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
     </parent>
 
     <!-- ====================================================================== -->
@@ -85,21 +85,6 @@
             <plugin>
                 <groupId>biz.aQute.bnd</groupId>
                 <artifactId>bnd-maven-plugin</artifactId>
-                <configuration>
-                    <bnd><![CDATA[
-Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
-Bundle-SymbolicName: biz.netcentric.cq.tools.accesscontroltool.startuphook.bundle
-Bundle-Activator: biz.netcentric.cq.tools.actool.startuphook.impl.StartupBundleActivator
-Conditional-Package: biz.netcentric.cq.tools.actool.helper.runtime
-                    ]]></bnd>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>bnd-process</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

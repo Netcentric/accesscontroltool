@@ -8,7 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.aceinstaller;
 
-import static biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger.msHumanReadable;
+import static biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger.msHumanReadable;
 
 import java.security.Principal;
 import java.util.Arrays;

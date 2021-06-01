@@ -10,6 +10,7 @@ package biz.netcentric.cq.tools.actool.history.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -33,11 +34,11 @@ import org.apache.jackrabbit.commons.JcrUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.api.InstallationResult;
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
 import biz.netcentric.cq.tools.actool.configuploadlistener.impl.UploadListenerServiceImpl.AcToolConfigUpdateListener;
 import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
 import biz.netcentric.cq.tools.actool.history.AcToolExecution;
-import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.jmx.AceServiceMBeanImpl;
 import biz.netcentric.cq.tools.actool.ui.AcToolTouchUiServlet;
 import biz.netcentric.cq.tools.actool.ui.AcToolWebconsolePlugin;
@@ -148,7 +149,7 @@ public class HistoryUtils {
         return newHistoryNode;
     }
 
-    static void saveLogs(Node historyNode, PersistableInstallationLogger installLog) throws RepositoryException {
+    static void saveLogs(Node historyNode, InstallationResult installLog) throws RepositoryException {
         // not ideal to save both variants, but the easiest for now
         JcrUtils.putFile(historyNode, LOG_FILE_NAME_VERBOSE, "text/plain",
                 new ByteArrayInputStream(installLog.getVerboseMessageHistory().getBytes()));
@@ -325,7 +326,7 @@ public class HistoryUtils {
                         logFileNode = historyNode.getNode(LOG_FILE_NAME);
                     }
                     sb.append(lineFeedSymbol
-                            +  IOUtils.toString(JcrUtils.readFile(logFileNode)).replace("\n", lineFeedSymbol));
+                            +  IOUtils.toString(JcrUtils.readFile(logFileNode), StandardCharsets.UTF_8).replace("\n", lineFeedSymbol));
                 }
 
                 sb.append(lineFeedSymbol

@@ -3,11 +3,12 @@ package biz.netcentric.cq.tools.actool.history;
 import org.slf4j.Logger;
 
 import biz.netcentric.cq.tools.actool.api.InstallationLog;
+import biz.netcentric.cq.tools.actool.api.InstallationResult;
 /**
  * This is the SPI for writing to the logs.
  */
 // TODO: remove extends Installation log to completely separate writing from reading
-public interface InstallationLogger extends InstallationLog {
+public interface InstallationLogger extends InstallationLog, InstallationResult {
 
     void addVerboseMessage(Logger log, String message);
 

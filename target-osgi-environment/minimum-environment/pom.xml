@@ -21,7 +21,7 @@
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
         <artifactId>target-osgi-environment</artifactId>
         <relativePath>../pom.xml</relativePath>
-        <version>2.8.2-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>minimum-environment</artifactId>
