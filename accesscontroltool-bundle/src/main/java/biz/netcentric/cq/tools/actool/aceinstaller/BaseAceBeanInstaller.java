@@ -53,7 +53,7 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
             final AcConfiguration acConfiguration,
             final Session session,
             final InstallationLogger history, Set<String> principalsToRemoveAcesFor,
-            boolean intermediateSaves) throws Exception {
+            final Set<String> allowedPrincipals, boolean intermediateSaves) throws Exception {
 
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
@@ -92,7 +92,7 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
             orderedAceBeanSetFromConfig.addAll(aceBeanSetFromConfig);
 
             Set<String> principalsToRemoveAcesForAtThisPath = acConfiguration.getAuthorizablesConfig()
-                    .removeUnmanagedPrincipalNamesAtPath(path, principalsToRemoveAcesFor,
+                    .removeUnmanagedPrincipalNamesAtPath(path, principalsToRemoveAcesFor, allowedPrincipals,
                             acConfiguration.getGlobalConfiguration().getDefaultUnmanagedAcePathsRegex());
             installAcl(orderedAceBeanSetFromConfig, path, principalsToRemoveAcesForAtThisPath, session, history);
 

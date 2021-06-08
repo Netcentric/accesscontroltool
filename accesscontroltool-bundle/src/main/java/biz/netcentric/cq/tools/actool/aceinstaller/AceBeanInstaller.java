@@ -28,8 +28,9 @@ public interface AceBeanInstaller {
      * @param session the jcr session
      * @param installationLog the installation log
      * @param authorizablesToRemoveAcesFor
+     * @param allowedPrincipals Principals allowed for using the unmanagedAcePathsRegex feature
      * @param intermediateSaves whether the session should be saved after each path (for each ACL) */
     void installPathBasedACEs(final Map<String, Set<AceBean>> pathBasedAceMapFromConfig, final AcConfiguration acConfiguration, final Session session,
-            final InstallationLogger installationLog, Set<String> authorizablesToRemoveAcesFor, boolean intermediateSaves) throws Exception;
+            final InstallationLogger installationLog, Set<String> authorizablesToRemoveAcesFor, final Set<String> allowedPrincipals, boolean intermediateSaves) throws Exception;
 
 }
