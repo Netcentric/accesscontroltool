@@ -89,7 +89,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     private static final String CONFIG_PID = "biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl";
     private static final String LEGACY_CONFIG_PID = "biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl";
     private static final String LEGACY_PROPERTY_CONFIGURATION_PATH = "AceService.configurationPath";
-    private static final String LEGACY_PROPERTY_INTERMEDIATE_SAVES = "intermediateSaves";
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     AuthorizableInstallerService authorizableCreatorService;
@@ -129,8 +128,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     
     private List<String> configurationRootPaths;
 
-    private boolean intermediateSaves;
-    
     @ObjectClassDefinition(name = "AC Tool Installation Service", 
             description="Service that installs groups & ACEs according to textual configuration files",
             id = CONFIG_PID)
@@ -138,9 +135,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         
         @AttributeDefinition(name="Configuration path(s)", description="JCR path(s) where the config files reside (usually it's just one, can be multiple for multitenant setups)")
         String[] configurationRootPaths() default {};
-
-        @AttributeDefinition(name="Use intermediate saves", description="Saves ACLs for each path individually - this can be used to avoid problems with large changesets and MongoDB (OAK-5557), however the rollback is disabled then.")
-        boolean intermediateSaves() default false;
     }
 
     @Activate
@@ -157,8 +151,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 configurationRootPaths.add(PropertiesUtil.toString(configDict.get(LEGACY_PROPERTY_CONFIGURATION_PATH), ""));
             }
         }
-        
-        intermediateSaves = configuration.intermediateSaves();
 
         // Fallback to old PID: only fall back to legacy config if new config does not exist
         if (configDict == null) {
@@ -166,7 +158,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             if (legacyProps != null) {
                 LOG.warn("Using legacy configuration PID '{}'. Please remove this and switch to the new one with PID '{}',", LEGACY_CONFIG_PID, CONFIG_PID);
                 configurationRootPaths = Arrays.asList(PropertiesUtil.toString(legacyProps.get(LEGACY_PROPERTY_CONFIGURATION_PATH), ""));
-                intermediateSaves = PropertiesUtil.toBoolean(legacyProps.get(LEGACY_PROPERTY_INTERMEDIATE_SAVES), false);
             }
         }
 
@@ -484,7 +475,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                             + aceBeanInstaller.getClass().getSimpleName() + "...");
 
             aceBeanInstaller.installPathBasedACEs(filteredPathBasedAceMapFromConfig, acConfiguration, session, installLog,
-                    principalsToRemoveAcesFor, intermediateSaves);
+                    principalsToRemoveAcesFor);
         } else {
             installLog.addMessage(LOG, "No relevant ACEs to install");
         }
@@ -543,17 +534,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         try {
             // only save session if no exceptions occurred
             authorizableCreatorService.installAuthorizables(acConfiguration, authorizablesConfig, session, installLog);
-
-            if (intermediateSaves) {
-                if (session.hasPendingChanges()) {
-                    session.save();
-                    installLog.addVerboseMessage(LOG, "Saved session after installing authorizables.");
-                } else {
-                    installLog.addVerboseMessage(LOG,
-                            "After installing authorizables, intermediateSaves is turned on but there are no pending changes.");
-                }
-            }
-
         } catch (Exception e) {
             throw new AuthorizableCreatorException(e);
         }

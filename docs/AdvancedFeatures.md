@@ -491,11 +491,3 @@ The following examples shows a legitimate example of using `keepOrder: true`:
 ```
 This example gives the group `myproj-editor` edit rights for all content in folder `myproj`, except for the iframe component.
 
-## Intermediate save() calls during ACL installation
-
-For large installations (> 1000 groups) that use MongoDB, the system possibly may get into an invalid state as older versions of OAK (AEM 6.1/6.2 ootb) do not always correctly fire the post commit hook for very large change sets (OAK-5557). To circumvent this issue it is possible since v1.9.2 to configure the OSGi property `intermediateSaves=true` of PID `biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl`. 
-
-NOTE: This is never necessary when using TarMK and also it should only be used for MongoMK for large installations that do not contain a fix for OAK-5557 yet as the rollback functionality is lost when enabling intermediate saves.
-
-[i257]: https://github.com/Netcentric/accesscontroltool/issues/257
-[felix-interpolation-plugin]: https://github.com/apache/felix-dev/blob/master/configadmin-plugins/interpolation/README.md
