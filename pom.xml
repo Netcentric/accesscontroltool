@@ -100,7 +100,7 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Runtime dependencies should be AEM 6.1 compatible -->
+            <!-- Runtime dependencies should be AEM 6.4 compatible -->
             <dependency>
                 <groupId>io.wcm.maven</groupId>
                 <artifactId>io.wcm.maven.aem-dependencies</artifactId>
@@ -119,7 +119,7 @@
             <dependency>
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
-                <version>1.27</version>
+                <version>1.28</version>
             </dependency>
             <!-- due to https://bugs.openjdk.java.net/browse/JDK-8231581 OOTB JRE is not sufficient -->
             <dependency>
