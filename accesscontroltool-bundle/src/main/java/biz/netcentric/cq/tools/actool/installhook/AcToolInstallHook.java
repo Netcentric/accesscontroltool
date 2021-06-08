@@ -17,10 +17,8 @@ import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.api.InstallationResult;
 import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
-import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
-import biz.netcentric.cq.tools.actool.installhook.impl.AcToolInstallHookService;
-import biz.netcentric.cq.tools.actool.installhook.impl.OsgiAwareInstallHook;
 
 @ProviderType
 public class AcToolInstallHook extends OsgiAwareInstallHook {
@@ -89,9 +87,9 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
         }
 
         try {
-            PersistableInstallationLogger history;
+            InstallationResult result;
             try {
-                history = acService.installYamlFilesFromPackage(context
+                result = acService.installYamlFilesFromPackage(context
                         .getPackage(), context.getSession(), context.getOptions().getListener());
 
             } catch (Exception e) {
@@ -101,9 +99,9 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
                 throw new PackageException(e.getMessage(), e);
             }
 
-            if (!history.isSuccess()) {
+            if (!result.isSuccess()) {
                 throw new PackageException("AC Tool installation failed with "
-                        + history.getErrors().size() + " errors. Check log for detailed error message(s)!");
+                        + result.getErrors().size() + " errors. Check log for detailed error message(s)!");
             } else {
                 log("Installed ACLs successfully through AcToolInstallHook!", listener);
             }

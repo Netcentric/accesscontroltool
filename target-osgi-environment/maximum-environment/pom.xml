@@ -21,7 +21,7 @@
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
         <artifactId>target-osgi-environment</artifactId>
         <relativePath>../pom.xml</relativePath>
-        <version>2.8.2-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>maximum-environment</artifactId>
@@ -250,7 +250,7 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.jcr.oak.server</artifactId>
-            <version>1.2.4</version> <!-- uses Oak 1.3.7 -->
+            <version>1.2.4</version> <!-- uses Oak 1.10 -->
             <scope>provided</scope>
         </dependency>
         <!-- OSGi bundles shipped with the ACTool package -->

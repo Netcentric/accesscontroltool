@@ -16,7 +16,7 @@
 -standalone: ${fileuri;${.}/target/index.xml}
 
 -runfw: org.apache.felix.framework
--runee: JavaSE-1.7
+-runee: JavaSE-1.8
 
 # disable capability matching as not provided by AEM 6.1.1
 # -resolve.effective: active

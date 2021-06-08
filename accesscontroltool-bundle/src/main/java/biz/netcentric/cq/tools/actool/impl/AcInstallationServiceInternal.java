@@ -14,7 +14,7 @@ import java.util.Set;
 import javax.jcr.Session;
 
 import biz.netcentric.cq.tools.actool.api.AcInstallationService;
-import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
+import biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger;
 
 public interface AcInstallationServiceInternal extends AcInstallationService {
 

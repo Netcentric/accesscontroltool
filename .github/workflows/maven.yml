@@ -7,7 +7,12 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
-        jdk: [8, 11]
+        jdk: [8, 11, 16]
+        include:
+          # lengthy build steps should only be performed on linux with Java 11 (Sonar analysis, deployment)
+          - os: ubuntu-latest
+            jdk: 11
+            isMainBuildEnv: true
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
@@ -35,11 +40,11 @@ jobs:
           server-password: MAVEN_PASSWORD # env variable for token in deploy
 
       - name: Build with Maven
-        if: github.ref != 'refs/heads/develop' || matrix.os != 'ubuntu-latest' || matrix.jdk != '11'
+        if: '!matrix.isMainBuildEnv'
         run: mvn -e -B -V clean verify
 
       - name: Build and Analyse with Maven
-        if: github.ref != 'refs/heads/develop' && matrix.os == 'ubuntu-latest' && matrix.jdk == '11'
+        if: github.ref != 'refs/heads/develop' && matrix.isMainBuildEnv
         env: 
           # SonarCloud access token should be generated from https://sonarcloud.io/account/security/
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -48,7 +53,7 @@ jobs:
         run: mvn -e -B -V clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Netcentric_accesscontroltool -Dsonar.organization=netcentric -Dsonar.host.url=https://sonarcloud.io -Pdependency-check,coverage-report
 
       - name: Build, Analyse and Deploy with Maven
-        if: github.ref == 'refs/heads/develop' && matrix.os == 'ubuntu-latest' && matrix.jdk == '11'
+        if: github.ref == 'refs/heads/develop' && matrix.isMainBuildEnv
         env: 
           MAVEN_USERNAME: ${{ secrets.OSSRH_TOKEN_USER }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN_PASSWORD }}

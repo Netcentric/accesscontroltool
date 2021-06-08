@@ -255,10 +255,8 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
             installLog.incCountActionCacheMiss();
 
             Set<AceBean> aceBeansForActionEntry = null;
-            Session newSession = null;
+            Session newSession =  slingRepository.loginService(null, null);
             try {
-
-                newSession = slingRepository.loginService(null, null);
                 Session relevantSessionToUse;
                 if (newSession.nodeExists(origAceBean.getJcrPath())) {
                     // a new session is needed to ensure no pending changes are introduced (even if there would not be real pending changes

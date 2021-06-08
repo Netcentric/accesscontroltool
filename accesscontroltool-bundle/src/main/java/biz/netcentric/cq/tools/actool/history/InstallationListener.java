@@ -8,6 +8,9 @@
  */
 package biz.netcentric.cq.tools.actool.history;
 
+import org.osgi.annotation.versioning.ConsumerType;
+
+@ConsumerType
 public interface InstallationListener {
 	
 	void onWarning(String message);

@@ -12,15 +12,14 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -50,19 +49,21 @@ import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
 import biz.netcentric.cq.tools.actool.aem.AemCqActionsSupportImpl;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.configreader.YamlConfigReader;
-import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
+import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
+@RunWith(MockitoJUnitRunner.class)
 public class AceBeanInstallerIncrementalTest {
 
     private static final String FAKE_PRINCIPAL_ID = "author";
@@ -87,7 +88,7 @@ public class AceBeanInstallerIncrementalTest {
     AceBeanInstallerIncremental aceBeanInstallerIncremental;
 
     @Spy
-    PersistableInstallationLogger installLog;
+    InstallationLogger installLog;
 
     @Mock
     JackrabbitAccessControlList jackrabbitAccessControlList;
@@ -106,7 +107,6 @@ public class AceBeanInstallerIncrementalTest {
     
     @Before
     public void setup() throws RepositoryException {
-        initMocks(this);
 
         doReturn(accessControlManager).when(session).getAccessControlManager();
 
@@ -132,7 +132,7 @@ public class AceBeanInstallerIncrementalTest {
                 .privilegeFromName("jcr:read");
 
         // easier to mock than the static SessionUtil.clone()
-        doReturn(session).when(slingRepository).loginService(anyString(), anyString());
+        doReturn(session).when(slingRepository).loginService(null, null);
 
         doReturn(true).when(aceBeanInstallerIncremental).definesContent(testPath, session);
 

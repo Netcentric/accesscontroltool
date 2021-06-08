@@ -16,7 +16,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -60,7 +60,6 @@ public class AcInstallationServiceImplTest {
         when(group4.getID()).thenReturn("group4");
         when(group5.getID()).thenReturn("group5");
         when(group6.getID()).thenReturn("group6");
-        when(group7.getID()).thenReturn("group7");
         when(user1.getID()).thenReturn("user1");
         when(user2.getID()).thenReturn("user2");
 

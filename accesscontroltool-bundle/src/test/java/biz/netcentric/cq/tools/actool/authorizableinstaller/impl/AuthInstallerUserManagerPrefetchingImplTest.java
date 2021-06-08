@@ -194,7 +194,7 @@ public class AuthInstallerUserManagerPrefetchingImplTest {
 
     @Test
     public void testCacheShouldRefreshedAfterAuthorizableDeletion() throws RepositoryException {
-        when(group3.getDeclaredMembers()).thenReturn(Arrays.asList((Authorizable) user1).iterator());
+        //when(group3.getDeclaredMembers()).thenReturn(Arrays.asList((Authorizable) user1).iterator());
 
         prefetchingUserManager = new AuthInstallerUserManagerPrefetchingImpl(userManager, valueFactory, installationLogger);
 
