@@ -27,9 +27,8 @@ public interface AceBeanInstaller {
      * @param pathBasedAceMapFromConfig map containing the ACE data from the merged configurations path based
      * @param session the jcr session
      * @param installationLog the installation log
-     * @param authorizablesToRemoveAcesFor
-     * @param intermediateSaves whether the session should be saved after each path (for each ACL) */
+     * @param authorizablesToRemoveAcesFor */
     void installPathBasedACEs(final Map<String, Set<AceBean>> pathBasedAceMapFromConfig, final AcConfiguration acConfiguration, final Session session,
-            final InstallationLogger installationLog, Set<String> authorizablesToRemoveAcesFor, boolean intermediateSaves) throws Exception;
+            final InstallationLogger installationLog, Set<String> authorizablesToRemoveAcesFor) throws Exception;
 
 }
