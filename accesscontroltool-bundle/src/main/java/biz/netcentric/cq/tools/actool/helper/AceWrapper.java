@@ -8,11 +8,8 @@
  */
 package biz.netcentric.cq.tools.actool.helper;
 
-import java.security.Principal;
-
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
-import javax.jcr.ValueFormatException;
 import javax.jcr.security.Privilege;
 
 import org.apache.commons.lang3.StringUtils;
@@ -22,7 +19,7 @@ import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
  * from a system, in order to create an ACE Dump.
  *
  * @author jochenkoschorke */
-public class AceWrapper implements JackrabbitAccessControlEntry {
+public class AceWrapper {
     private final JackrabbitAccessControlEntry ace;
     private final String jcrPath;
 
@@ -34,6 +31,10 @@ public class AceWrapper implements JackrabbitAccessControlEntry {
 
     public String getJcrPath() {
         return this.jcrPath;
+    }
+
+    public JackrabbitAccessControlEntry getAce() {
+        return ace;
     }
 
     @Override
@@ -98,38 +99,6 @@ public class AceWrapper implements JackrabbitAccessControlEntry {
         }
         privilegesString = StringUtils.chop(privilegesString);
         return privilegesString;
-    }
-
-    @Override
-    public Principal getPrincipal() {
-        return this.ace.getPrincipal();
-    }
-
-    @Override
-    public Privilege[] getPrivileges() {
-        return this.ace.getPrivileges();
-    }
-
-    @Override
-    public boolean isAllow() {
-        return this.ace.isAllow();
-    }
-
-    @Override
-    public String[] getRestrictionNames() throws RepositoryException {
-        return this.ace.getRestrictionNames();
-    }
-
-    @Override
-    public Value getRestriction(String restrictionName)
-            throws ValueFormatException, RepositoryException {
-        return this.ace.getRestriction(restrictionName);
-    }
-
-    @Override
-    public Value[] getRestrictions(String restrictionName)
-            throws RepositoryException {
-        return this.ace.getRestrictions(restrictionName);
     }
 
 }
