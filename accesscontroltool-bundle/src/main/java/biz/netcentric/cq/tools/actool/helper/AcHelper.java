@@ -64,22 +64,22 @@ public class AcHelper {
         return aceBean;
     }
 
-    public static AceBean getAceBean(final AceWrapper ace)
-            throws ValueFormatException, IllegalStateException,
-            RepositoryException {
+    public static AceBean getAceBean(final AceWrapper aceWrapper)
+            throws IllegalStateException, RepositoryException {
         final AceBean aceBean = new AceBean();
+        final JackrabbitAccessControlEntry ace = aceWrapper.getAce();
 
         aceBean.setPermission(ace.isAllow() ? "allow" : "deny");
-        aceBean.setJcrPath(ace.getJcrPath());
+        aceBean.setJcrPath(aceWrapper.getJcrPath());
         aceBean.setPrincipalName(ace.getPrincipal().getName());
-        aceBean.setPrivilegesString(ace.getPrivilegesString());
+        aceBean.setPrivilegesString(aceWrapper.getPrivilegesString());
 
         List<Restriction> restrictions = buildRestrictionsMap(ace);
         aceBean.setRestrictions(restrictions);
         return aceBean;
     }
 
-    private static List<Restriction> buildRestrictionsMap(final AceWrapper ace) throws RepositoryException, ValueFormatException {
+    private static List<Restriction> buildRestrictionsMap(final JackrabbitAccessControlEntry ace) throws RepositoryException {
         final String[] restrictionNames = ace.getRestrictionNames();
         final List<Restriction> restrictionsList = new ArrayList<Restriction>();
         for (final String restrictionName : restrictionNames) {
