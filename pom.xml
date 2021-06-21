@@ -11,7 +11,7 @@
 
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
     <artifactId>accesscontroltool</artifactId>
-    <version>3.0.1-SNAPSHOT</version>
+    <version>3.0.1</version>
     <packaging>pom</packaging>
 
     <name>Access Control Tool</name>
@@ -53,7 +53,7 @@
         <connection>scm:git:ssh://git@github.com/Netcentric/accesscontroltool.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/Netcentric/accesscontroltool.git</developerConnection>
         <url>https://github.com/Netcentric/accesscontroltool.git</url>
-        <tag>HEAD</tag>
+        <tag>3.0.1</tag>
     </scm>
 
     <distributionManagement>
