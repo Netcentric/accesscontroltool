@@ -384,12 +384,12 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-release-plugin</artifactId>
-                    <version>2.5.3</version>
+                    <version>3.0.0-M4</version>
                     <configuration>
                         <autoVersionSubmodules>true</autoVersionSubmodules>
                         <tagNameFormat>@{project.version}</tagNameFormat>
                         <!-- skip rebuilding the release with GitHub actions (https://github.blog/changelog/2021-02-08-github-actions-skip-pull-request-and-push-workflows-with-skip-ci/) -->
-                      <scmReleaseCommitComment>@{prefix} prepare release @{releaseLabel} [skip ci]</scmReleaseCommitComment>
+                        <scmReleaseCommitComment>@{prefix} prepare release @{releaseLabel} [skip ci]</scmReleaseCommitComment>
                     </configuration>
                 </plugin>
             </plugins>
