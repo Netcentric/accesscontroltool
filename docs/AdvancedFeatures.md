@@ -491,3 +491,5 @@ The following examples shows a legitimate example of using `keepOrder: true`:
 ```
 This example gives the group `myproj-editor` edit rights for all content in folder `myproj`, except for the iframe component.
 
+
+[felix-interpolation-plugin]: https://github.com/apache/felix-dev/blob/master/configadmin-plugins/interpolation/README.md
