@@ -69,9 +69,11 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
         Iterator<Authorizable> authorizablesToPrefetchIt = delegate.findAuthorizables(new Query() {
             public <T> void build(QueryBuilder<T> builder) {
                 builder.setCondition(
-                        builder.or( //
+                        builder.or( 
+                                // this is true for groups and system users
                                 builder.neq("@" + JcrConstants.JCR_PRIMARYTYPE, valueFactory.createValue(UserConstants.NT_REP_USER)),
-                                builder.eq("@" + UserConstants.REP_AUTHORIZABLE_ID, valueFactory.createValue(Constants.USER_ANONYMOUS))) //
+                                // this is true for user anonymous
+                                builder.eq("@" + UserConstants.REP_AUTHORIZABLE_ID, valueFactory.createValue(Constants.USER_ANONYMOUS)))
                 );
             }
         });
@@ -97,7 +99,15 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
                 Group memberOfGroup = declaredMemberOf.next();
                 String memberOfGroupId = memberOfGroup.getID();
                 isMemberOfByAuthorizableId.get(authId).add(memberOfGroupId);
-                nonRegularUserMembersByAuthorizableId.get(memberOfGroupId).add(authId);
+                final Set<String> nonRegularUserMembers;
+                if (!nonRegularUserMembersByAuthorizableId.containsKey(memberOfGroupId)) {
+                    // in case the group was not found by the previous query
+                    nonRegularUserMembers = new HashSet<String>();
+                    nonRegularUserMembersByAuthorizableId.put(memberOfGroupId, nonRegularUserMembers);
+                } else {
+                    nonRegularUserMembers = nonRegularUserMembersByAuthorizableId.get(memberOfGroupId);
+                }
+                nonRegularUserMembers.add(authId);
                 membershipCount++;
             }
         }
