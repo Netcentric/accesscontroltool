@@ -8,8 +8,10 @@
  */
 package biz.netcentric.cq.tools.actool.configmodel;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -18,18 +20,18 @@ import org.apache.commons.lang3.StringUtils;
 public class AuthorizablesConfig extends LinkedHashSet<AuthorizableConfigBean> {
     private static final long serialVersionUID = -253685832563496002L;
 
+    private Map<String, AuthorizableConfigBean> configBeansByPrincipalId = new HashMap<>();
+    
+    @Override
+    public boolean add(AuthorizableConfigBean configBean) {
+        AuthorizableConfigBean previous = configBeansByPrincipalId.put(configBean.getPrincipalName(), configBean);
+        assert previous == null;
+        return super.add(configBean);
+    }
+
     public AuthorizableConfigBean getAuthorizableConfig(String authorizableId) {
         for (AuthorizableConfigBean authorizableConfigBean : this) {
             if (StringUtils.equals(authorizableConfigBean.getAuthorizableId(), authorizableId)) {
-                return authorizableConfigBean;
-            }
-        }
-        return null;
-    }
-
-    public AuthorizableConfigBean getAuthorizableConfigByPrincipalName(String principalName) {
-        for (AuthorizableConfigBean authorizableConfigBean : this) {
-            if (StringUtils.equals(authorizableConfigBean.getPrincipalName(), principalName)) {
                 return authorizableConfigBean;
             }
         }
@@ -67,7 +69,7 @@ public class AuthorizablesConfig extends LinkedHashSet<AuthorizableConfigBean> {
 
         Set<String> filteredPrincipals = new HashSet<String>();
         for (String principal : principals) {
-            AuthorizableConfigBean authorizableConfig = getAuthorizableConfigByPrincipalName(principal);
+            AuthorizableConfigBean authorizableConfig = configBeansByPrincipalId.get(principal);
             if (authorizableConfig == null /* happens if migrateFrom is used, #290 */
                     || authorizableConfig.managesPath(path, defaultUnmanagedAcePathsRegex)) {
                 filteredPrincipals.add(principal);
