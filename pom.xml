@@ -371,7 +371,7 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                 <plugin>
                     <groupId>com.adobe.aem</groupId>
                     <artifactId>aemanalyser-maven-plugin</artifactId>
-                    <version>1.0.8</version>
+                    <version>1.1.8</version>
                     <executions>
                         <execution>
                             <id>aem-analyser</id>
