@@ -341,7 +341,6 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                             <artifactId>aem-cloud-validator</artifactId>
                             <version>1.2.0</version>
                         </dependency>
-                        
                     </dependencies>
                 </plugin>
                 <plugin>
@@ -391,6 +390,19 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                         <tagNameFormat>@{project.version}</tagNameFormat>
                         <!-- skip rebuilding the release with GitHub actions (https://github.blog/changelog/2021-02-08-github-actions-skip-pull-request-and-push-workflows-with-skip-ci/) -->
                         <scmReleaseCommitComment>@{prefix} prepare release @{releaseLabel} [skip ci]</scmReleaseCommitComment>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.owasp</groupId>
+                    <artifactId>dependency-check-maven</artifactId>
+                    <version>6.3.1</version>
+                    <configuration>
+                        <cveValidForHours>24</cveValidForHours>
+                        <failBuildOnAnyVulnerability>true</failBuildOnAnyVulnerability>
+                        <skipProvidedScope>true</skipProvidedScope>
+                        <skipSystemScope>true</skipSystemScope>
+                        <retireJsAnalyzerEnabled>false</retireJsAnalyzerEnabled>
+                        <skip>true</skip><!-- only enable in specific submodules -->
                     </configuration>
                 </plugin>
             </plugins>
@@ -552,7 +564,6 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                     <plugin>
                         <groupId>org.owasp</groupId>
                         <artifactId>dependency-check-maven</artifactId>
-                        <version>6.2.0</version>
                         <executions>
                             <execution>
                                 <id>check-dependencies-for-vulnerabilities</id>
@@ -562,14 +573,6 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                                 </goals>
                             </execution>
                         </executions>
-                        <configuration>
-                            <cveValidForHours>24</cveValidForHours>
-                            <failBuildOnAnyVulnerability>true</failBuildOnAnyVulnerability>
-                            <skipProvidedScope>true</skipProvidedScope>
-                            <skipSystemScope>true</skipSystemScope>
-                            <retireJsAnalyzerEnabled>false</retireJsAnalyzerEnabled>
-                            <skip>true</skip><!-- only enable in specific submodules -->
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>
