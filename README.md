@@ -21,7 +21,7 @@ Features:
 * ensured order of ACLs
 * built-in expression language to reduce rule duplication
 
-See also our talk at [AdaptTo 2016](https://adapt.to/2016/en/schedule/ac-tool.html)
+See also our talk at [adaptTo() 2016](https://adapt.to/2016/en/schedule/ac-tool.html)
 
 # Requirements
 
