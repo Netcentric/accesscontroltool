@@ -7,7 +7,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
-        jdk: [8, 11, 16]
+        jdk: [8, 11, 17]
         include:
           # lengthy build steps should only be performed on linux with Java 11 (Sonar analysis, deployment)
           - os: ubuntu-latest
@@ -21,23 +21,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set up cache for ~/.m2/repository
-        uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: maven-${{ matrix.os }}-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            maven-${{ matrix.os }}-
-
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
-          distribution: 'adopt'
+          distribution: 'temurin'
           java-version: ${{ matrix.jdk }}
           # generate settings.xml with the correct values
           server-id: ossrh # Value of the distributionManagement/repository/id field of the pom.xml
           server-username: MAVEN_USERNAME # env variable for username in deploy
           server-password: MAVEN_PASSWORD # env variable for token in deploy
+          cache: 'maven'
 
       - name: Build with Maven
         if: '!matrix.isMainBuildEnv'
