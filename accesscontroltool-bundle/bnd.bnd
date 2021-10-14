@@ -3,7 +3,7 @@ Bundle-SymbolicName: biz.netcentric.cq.tools.accesscontroltool.bundle
 # export all versioned packages by default
 -exportcontents: ${packages;VERSIONED}
 # Embed (https://groups.google.com/g/bndtools-users/c/NAdU0_X8OKY)
--includeresource: tomcat-el-api-[0-9.]*.jar;lib:=true,tomcat-jasper-el-[0-9.]*.jar;lib:=true,snakeyaml-[0-9.]*.jar;lib:=true
+-includeresource: tomcat-el-api-[0-9.]*.jar;lib:=true,tomcat-jasper-el-[0-9.]*.jar;lib:=true,snakeyaml-[0-9.]*.jar;lib:=true,jsp-api-[0-9.]*.jar;lib:=true
 # 
 # allow to run in Sling without AEM bundles
 # allow to run without bouncycastle which is only necessary for some edge cases when managing keys
@@ -13,4 +13,5 @@ com.adobe.granite.keystore;resolution:=optional,\
 com.adobe.granite.jmx.annotation;resolution:=optional,\
 com.day.cq.security.util;resolution:=optional,\
 org.bouncycastle.*;resolution:=optional,\
+org.apache.sling.commons.scheduler.*;resolution:=optional,\
 *

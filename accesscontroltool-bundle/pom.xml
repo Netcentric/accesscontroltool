@@ -24,7 +24,7 @@
     <description>The OSGi bundle containing all classes of the Access Control Tool.</description>
 
     <dependencies>
-        
+
         <!-- OSGi annotations -->
         <dependency>
             <groupId>org.osgi</groupId>
@@ -106,7 +106,15 @@
             <artifactId>bcpkix-jdk15on</artifactId>
             <optional>true</optional>
         </dependency>
-        
+
+        <!-- JSP API to be embedded directly -->
+        <dependency>
+          <groupId>org.apache.tomcat</groupId>
+          <artifactId>jsp-api</artifactId>
+          <version>6.0.14</version>
+          <scope>compile</scope>
+        </dependency>
+
         <!-- use the uber-jar always as last dependency because a lot of classes are provided also by other artifacts
             It is only used here as replacement for com.adobe.granite:com.adobe.granite.crypto:3.0.0 whose pom.xml is not publicly available -->
         <dependency>
