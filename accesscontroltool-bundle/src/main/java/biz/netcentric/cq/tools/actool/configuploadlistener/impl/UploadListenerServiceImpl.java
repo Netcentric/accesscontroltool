@@ -27,6 +27,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
@@ -56,7 +57,7 @@ public class UploadListenerServiceImpl implements UploadListenerService {
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     AcInstallationService acInstallationService;
     
-    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    @Reference(policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.OPTIONAL)
     Scheduler scheduler;
 
     private List<AcToolConfigUpdateListener> updateListeners = new ArrayList<>();
@@ -166,10 +167,14 @@ public class UploadListenerServiceImpl implements UploadListenerService {
                 // check resource type
                 String resourceType = (String) event.getProperty(SlingConstants.PROPERTY_RESOURCE_TYPE);
                 if (resourceType != null && resourceType.equals("nt:file")) {
-                    LOG.debug("Received change event for yaml file {}", path);
-                    // we need to trigger the installation in a new thread, otherwise it may be blacklisted (http://felix.apache.org/documentation/subprojects/apache-felix-event-admin.html)
-                    // also delay processing until all YAML files have been placed there
-                    scheduleExecution();
+                    if(scheduler != null) {
+                        LOG.info("Received change event for yaml file {}", path);
+                        // we need to trigger the installation in a new thread, otherwise it may be blacklisted (http://felix.apache.org/documentation/subprojects/apache-felix-event-admin.html)
+                        // also delay processing until all YAML files have been placed there
+                        scheduleExecution();
+                    } else {
+                        LOG.warn("Received change event for yaml file {}, but service org.apache.sling.commons.scheduler.Scheduler is not available (Skipping execution)", path);
+                    }
                 } else {
                     LOG.debug("Observed resource event is not of resource type nt:file but of resource type '{}'", resourceType);
                 }
