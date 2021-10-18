@@ -92,6 +92,11 @@
         </dependency>
         <dependency>
             <groupId>org.apache.tomcat</groupId>
+            <artifactId>tomcat-jsp-api</artifactId>
+            <version>9.0.54</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat</groupId>
             <artifactId>tomcat-el-api</artifactId>
             <version>8.5.70</version>
         </dependency>
@@ -100,6 +105,7 @@
             <artifactId>tomcat-jasper-el</artifactId>
             <version>8.5.70</version>
         </dependency>
+
         <!-- due to https://bugs.openjdk.java.net/browse/JDK-8231581 OOTB JRE is not sufficient -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
@@ -107,13 +113,6 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- JSP API to be embedded directly -->
-        <dependency>
-          <groupId>org.apache.tomcat</groupId>
-          <artifactId>tomcat-jsp-api</artifactId>
-          <version>8.5.72</version>
-          <scope>compile</scope>
-        </dependency>
 
         <!-- use the uber-jar always as last dependency because a lot of classes are provided also by other artifacts
             It is only used here as replacement for com.adobe.granite:com.adobe.granite.crypto:3.0.0 whose pom.xml is not publicly available -->
