@@ -3,10 +3,7 @@ Bundle-SymbolicName: biz.netcentric.cq.tools.accesscontroltool.bundle
 # export all versioned packages by default
 -exportcontents: ${packages;VERSIONED}
 # Embed (https://groups.google.com/g/bndtools-users/c/NAdU0_X8OKY)
--includeresource: tomcat-el-api-[0-9.]*.jar;lib:=true,tomcat-jasper-el-[0-9.]*.jar;lib:=true,snakeyaml-[0-9.]*.jar;lib:=true,tomcat-jsp-api-[0-9.]*.jar;lib:=true
-
-# avoid the dependency to servlet API coming in via tomcat-jsp-api
--contract: !JavaServlet,*
+-includeresource: tomcat-el-api-[0-9.]*.jar;lib:=true,tomcat-jasper-el-[0-9.]*.jar;lib:=true,snakeyaml-[0-9.]*.jar;lib:=true
 
 # allow to run in Sling without AEM bundles
 # allow to run without bouncycastle which is only necessary for some edge cases when managing keys
