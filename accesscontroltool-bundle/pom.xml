@@ -22,6 +22,10 @@
     <packaging>jar</packaging>
     <name>Access Control Tool Bundle</name>
     <description>The OSGi bundle containing all classes of the Access Control Tool.</description>
+    
+    <properties>
+        <tomcat.libs.version>10.0.12</tomcat.libs.version>
+    </properties>
 
     <dependencies>
 
@@ -93,17 +97,17 @@
         <dependency>
             <groupId>org.apache.tomcat</groupId>
             <artifactId>tomcat-jsp-api</artifactId>
-            <version>9.0.54</version>
+            <version>${tomcat.libs.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.tomcat</groupId>
             <artifactId>tomcat-el-api</artifactId>
-            <version>9.0.54</version>
+            <version>${tomcat.libs.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.tomcat</groupId>
             <artifactId>tomcat-jasper-el</artifactId>
-            <version>9.0.54</version>
+            <version>${tomcat.libs.version}</version>
         </dependency>
 
         <!-- due to https://bugs.openjdk.java.net/browse/JDK-8231581 OOTB JRE is not sufficient -->
