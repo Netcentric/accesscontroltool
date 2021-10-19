@@ -15,7 +15,7 @@
     <parent>
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
         <artifactId>accesscontroltool</artifactId>
-        <version>3.0.3</version>
+        <version>3.0.4-SNAPSHOT</version>
     </parent>
 
     <!-- ====================================================================== -->
