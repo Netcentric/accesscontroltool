@@ -30,7 +30,7 @@
 
 ## Expressions
 
-Expressions are evaluated using [javax.el expression language](https://docs.oracle.com/javaee/6/tutorial/doc/gjddd.html). They can be used anywhere in the YAML and are processed after YAML parsing and interpolation. Note though that only the [*Immediate Evaluation* syntax `${...}`](https://docs.oracle.com/javaee/6/tutorial/doc/bnahr.html#bnahs) is supported but not the *Deferred Evaluation* syntax (`#{...}`).
+Expressions are evaluated using the [Jakarta Expression Language 4.0](https://jakarta.ee/specifications/expression-language/4.0/jakarta-expression-language-spec-4.0.html) (since v3.0.3 of the AC tool, before [javax.el EL 2.2](https://docs.oracle.com/javaee/6/tutorial/doc/gjddd.html) was used). They can be used anywhere in the YAML and are processed after YAML parsing and interpolation. Note though that only the [*Immediate Evaluation* syntax `${...}`](https://docs.oracle.com/javaee/6/tutorial/doc/bnahr.html#bnahs) is supported but not the *Deferred Evaluation* syntax (`#{...}`).
 
 The following utility functions are made available to any EL expression used in YAML.
 They can either be used standalone or combined with the [default EL operators](https://docs.oracle.com/javaee/6/tutorial/doc/bnaik.html).
