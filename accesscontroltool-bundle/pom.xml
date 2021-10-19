@@ -22,9 +22,13 @@
     <packaging>jar</packaging>
     <name>Access Control Tool Bundle</name>
     <description>The OSGi bundle containing all classes of the Access Control Tool.</description>
+    
+    <properties>
+        <tomcat.el.version>10.0.12</tomcat.el.version>
+    </properties>
 
     <dependencies>
-        
+
         <!-- OSGi annotations -->
         <dependency>
             <groupId>org.osgi</groupId>
@@ -93,20 +97,22 @@
         <dependency>
             <groupId>org.apache.tomcat</groupId>
             <artifactId>tomcat-el-api</artifactId>
-            <version>8.5.70</version>
+            <version>${tomcat.el.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.tomcat</groupId>
             <artifactId>tomcat-jasper-el</artifactId>
-            <version>8.5.70</version>
+            <version>${tomcat.el.version}</version>
         </dependency>
+
         <!-- due to https://bugs.openjdk.java.net/browse/JDK-8231581 OOTB JRE is not sufficient -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk15on</artifactId>
             <optional>true</optional>
         </dependency>
-        
+
+
         <!-- use the uber-jar always as last dependency because a lot of classes are provided also by other artifacts
             It is only used here as replacement for com.adobe.granite:com.adobe.granite.crypto:3.0.0 whose pom.xml is not publicly available -->
         <dependency>
