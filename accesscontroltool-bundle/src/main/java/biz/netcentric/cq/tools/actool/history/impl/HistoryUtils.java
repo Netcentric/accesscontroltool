@@ -52,7 +52,6 @@ public class HistoryUtils {
 
     public static final String HISTORY_NODE_NAME_PREFIX = "history_";
     public static final String NODETYPE_NT_UNSTRUCTURED = "nt:unstructured";
-    private static final String PROPERTY_SLING_RESOURCE_TYPE = "sling:resourceType";
     public static final String ACHISTORY_ROOT_NODE = "achistory";
     public static final String STATISTICS_ROOT_NODE = "var/statistics";
     public static final String ACHISTORY_PATH = "/"+ HistoryUtils.STATISTICS_ROOT_NODE + "/" + HistoryUtils.ACHISTORY_ROOT_NODE;
@@ -198,7 +197,6 @@ public class HistoryUtils {
         historyNode.setProperty(PROPERTY_CONFIG_ROOT_PATH, getEffectiveConfigRootPath(installLog));
         
         historyNode.setProperty(PROPERTY_TIMESTAMP, installLog.getInstallationDate().getTime());
-        historyNode.setProperty(PROPERTY_SLING_RESOURCE_TYPE, "/apps/netcentric/actool/components/historyRenderer");
 
         Map<String, String> configFileContentsByName = installLog.getConfigFileContentsByName();
         if (configFileContentsByName != null) {
