@@ -31,69 +31,33 @@ It is also possible to run the AC Tool on **Apache Sling 11** or above (ensure s
 
 # Installation
 
-The [content package](https://jackrabbit.apache.org/filevault) is available from [the Maven Central repository](https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-package/) with the coordinates 
+The [content package](https://jackrabbit.apache.org/filevault) is available from [the Maven Central repository](https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-package/) 
 
-```
-    <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
-    <artifactId>accesscontroltool-package</artifactId>
-```
-(for AEM Classic/On Premise) or
+For quick ad hoc testing and getting to know the AC Tool, the easiest is to
 
-```
-    <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
-    <artifactId>accesscontroltool-package</artifactId>
-    <classifier>cloud</classifier>
-```
-(for AEM as a Cloud Service)
+* Install the latest version via AEM's package manager
+* Create a sample YAML file in CRXDE (e.g. `/apps/actool-test/test.yaml`)
+* Apply this config using the UI (see [User Interface](#user-interface) below
 
-Install it afterwards e.g. via AEM's package manager.
+For properly integrating the AC Tool in the development process see [Installation](docs/Installation.md).
 
-
-## Oak Index for rep:ACL
-
-To retrieve all ACLs in the system, an Apache Oak index for node type `rep:ACL` is 
-
-* required for versions < 2.4.0 (otherwise the performance degrades significantly)
-* beneficial for large installations for versions >= 2.4.0 (see [#386](https://github.com/Netcentric/accesscontroltool/issues/386), most installations will be fine without index)
-
-You can get the content package containing the [index definition](http://jackrabbit.apache.org/oak/docs/query/indexing.html#index-defnitions) via [Maven Central](https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-oakindex-package/) with the coordinates  
-
-```
-    <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
-    <artifactId>accesscontroltool-oakindex-package</artifactId>
-```
-(for AEM Classic/On Premise) or
-
-```
-    <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
-    <artifactId>accesscontroltool-oakindex-package</artifactId>
-    <classifier>cloud</classifier>
-```
-(for AEM as a Cloud Service)
-
-Install it afterwards e.g. via AEM's package manager.
-
-# Migration to AC Tool
-
-You can easily migrate to AC Tool following [four simple steps](docs/Migration.md).
-
-# Configuration of ACL entries
+# Configuration of the AC Tool
 
 You need to setup [Yaml configuration files](docs/Configuration.md) to specify your users, groups and ACL entries. See also the [best practices](docs/BestPractices.md) for hints on structuring.
 
 There are also some [advanced configuration options](docs/AdvancedFeatures.md) supported such as loops, conditional statements and permissions for anonymous.
 
-# Applying the ACL entries
+# User Interface
 
-There are multiple options to [apply the ACL entries](docs/ApplyConfig.md) (e.g. install hook, JMX and upload listener) to your target system.
+There is a Felix Web Console plugin (at `/system/console/actool`) as well as a Touch UI console (at `/mnt/overlay/netcentric/actool/content/overview.html`) to apply configurations and to inspect previous executions of the tool. Additionally there is a [JMX interface](docs/Jmx.md) interface for some advanced use cases.
 
-# JMX interface
+# Applying a AC Tool Configurations
 
-The [JMX interface](docs/Jmx.md) provides utility functions such as installing and dumping ACLs or showing the history. 
+Best practice is to apply the AC Tool Configuration using the install hook (or startup hook for CS) during your project's software package installation. See [applying the ACL entries](docs/ApplyConfig.md) for a full list of options.
 
-# History service
+# Migration to AC Tool
 
-A history object collects messages, warnings, and also an exception in case something goes wrong. This history gets saved in CRX under /var/statistics/achistory. The number of histories to be saved can be configured in the history service.
+You can easily migrate to AC Tool following [four simple steps](docs/Migration.md).
 
 # Questions
 
