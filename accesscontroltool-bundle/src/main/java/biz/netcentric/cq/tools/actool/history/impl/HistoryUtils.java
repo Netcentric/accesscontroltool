@@ -40,7 +40,6 @@ import biz.netcentric.cq.tools.actool.configuploadlistener.impl.UploadListenerSe
 import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
 import biz.netcentric.cq.tools.actool.history.AcToolExecution;
 import biz.netcentric.cq.tools.actool.jmx.AceServiceMBeanImpl;
-import biz.netcentric.cq.tools.actool.ui.AcToolTouchUiServlet;
 import biz.netcentric.cq.tools.actool.ui.AcToolWebconsolePlugin;
 
 public class HistoryUtils {
@@ -73,6 +72,9 @@ public class HistoryUtils {
 
     private static final String AC_TOOL_STARTUPHOOK_CLASS = "biz.netcentric.cq.tools.actool.startuphook.impl.AcToolStartupHookServiceImpl";
     private static final String BUNDLE_START_TASK_CLASS = "org.apache.sling.installer.core.impl.tasks.BundleStartTask";
+
+    // not using direct class reference to avoid dependency to servlet API during image build
+    private static final String AC_TOOL_TOUCH_UI_SERVLET_CLASS = "biz.netcentric.cq.tools.actool.ui.AcToolTouchUiServlet";
 
     public static Node getAcHistoryRootNode(final Session session)
             throws RepositoryException {
@@ -107,7 +109,7 @@ public class HistoryUtils {
             trigger = "installhook";
         } else if(isInStrackTracke(stackTrace, AceServiceMBeanImpl.class)) {
             trigger = "jmx";
-        } else if(isInStrackTracke(stackTrace, AcToolTouchUiServlet.class)) {
+        } else if(isInStrackTracke(stackTrace, AC_TOOL_TOUCH_UI_SERVLET_CLASS)) {
             trigger = "aem_admin_ui";
         } else if(isInStrackTracke(stackTrace, AcToolConfigUpdateListener.class)) {
             trigger = "changelistener";
