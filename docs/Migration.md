@@ -4,20 +4,19 @@ Migration to AC Tool is quite easy as it allows to export the AC entries on your
 
 ## 1. Install AC Tool
 
-Install the AC Tool packages on your existing server that should be used as source for the AC Tool rules.
-Please note that for CQ 5.6 you will need version 1.8.5 of the tool.
+See [Installation](Installation.md) on how to introduce the tool to either on-prem or cloud service AEM instances.
 
-## 2. Export rules
+## 2. Export groups and ACLs
 
-Do an export using **groupBasedDump()** on [JMX interface](Jmx.md). The dump will provide you a Yaml export with all AC entries in your system. Save it to a file and remove all entries that should not be managed by AC Tool. E.g. you do not want to manage the system groups such as "everyone" and "administrators". 
+Do an export using **groupBasedDump()** on [JMX interface](Jmx.md). The dump will provide you a Yaml export with all AC entries in your system. Save it to a file and remove all entries that should not be managed by AC Tool. For instance you do not want to manage the system groups such as `everyone` and `administrators`. For most non-minimal setups it then also makes sense to split up the one dump file in multiple files for better maintainability.
 
-## 3. Add rules to your content package
+## 3. Create a permissions package in source control
 
-Add the config file to your [content package](Configuration.md) and use the [install hook](ApplyConfig.md) to install the rules during package installation.
+Create a permissions package in source control/maven and add the config file(s) to it along with the [install hook](ApplyConfig.md) to install the rules during package installation.
 
-## 4. Install the package
+## 4. Install the Permissions package
 
-Install your package on a clean instance and verify your rules. Take a look at the output of the package installation if there occurred any problems.
+Install your package on a clean instance and verify your rules. Take a look at the output of the package installation if there occurred any problems. 
 
 ## Next steps
 
