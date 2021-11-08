@@ -82,7 +82,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <slf4j.version>1.7.25</slf4j.version>
-        <bnd.version>5.3.0</bnd.version>
+        <bnd.version>6.0.0</bnd.version>
         <bouncycastle.version>1.64</bouncycastle.version>
         <java.target.version>8</java.target.version>
     </properties>
@@ -223,6 +223,11 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>3.2.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-install-plugin</artifactId>
                     <version>3.0.0-M1</version>
                 </plugin>
@@ -237,7 +242,7 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.3.0</version>
+                    <version>3.3.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -277,7 +282,7 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                 <plugin>
                     <groupId>org.apache.jackrabbit</groupId>
                     <artifactId>filevault-package-maven-plugin</artifactId>
-                    <version>1.1.8</version>
+                    <version>1.2.2</version>
                     <extensions>true</extensions>
                     <configuration>
                         <group>Netcentric</group>
@@ -309,16 +314,6 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                         </validatorsSettings>
                     </configuration>
                     <dependencies>
-                        <dependency>
-                            <groupId>org.apache.jackrabbit.vault</groupId>
-                            <artifactId>org.apache.jackrabbit.vault</artifactId>
-                            <version>3.5.0</version>
-                        </dependency>
-                        <dependency>
-                            <groupId>org.apache.jackrabbit.vault</groupId>
-                            <artifactId>vault-validation</artifactId>
-                            <version>3.5.0</version>
-                        </dependency>
                         <dependency>
                             <groupId>biz.netcentric.filevault.validator</groupId>
                             <artifactId>aem-classification-validator</artifactId>
@@ -375,7 +370,7 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                 <plugin>
                     <groupId>com.adobe.aem</groupId>
                     <artifactId>aemanalyser-maven-plugin</artifactId>
-                    <version>1.1.8</version>
+                    <version>1.2.2</version>
                     <executions>
                         <execution>
                             <id>aem-analyser</id>
@@ -400,7 +395,7 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                 <plugin>
                     <groupId>org.owasp</groupId>
                     <artifactId>dependency-check-maven</artifactId>
-                    <version>6.3.1</version>
+                    <version>6.5.0</version>
                     <configuration>
                         <cveValidForHours>24</cveValidForHours>
                         <failBuildOnAnyVulnerability>true</failBuildOnAnyVulnerability>
@@ -425,7 +420,7 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                         <configuration>
                             <rules>
                                 <requireMavenVersion>
-                                    <version>3.0.2</version>
+                                    <version>3.6.1</version>
                                 </requireMavenVersion>
                                 <requireJavaVersion>
                                     <version>1.8.0</version>
