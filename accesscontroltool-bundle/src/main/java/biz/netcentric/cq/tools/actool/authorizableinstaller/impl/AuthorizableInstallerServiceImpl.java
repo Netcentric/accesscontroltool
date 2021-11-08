@@ -31,14 +31,13 @@ import javax.jcr.SimpleCredentials;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFactory;
 
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.AuthorizableExistsException;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.User;
-import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.apache.sling.api.SlingIOException;
 import org.apache.sling.api.resource.LoginException;
@@ -47,7 +46,7 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.jcr.api.SlingRepository;
-import org.apache.sling.jcr.resource.JcrResourceConstants;
+import org.apache.sling.jcr.resource.api.JcrResourceConstants;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
@@ -278,6 +277,7 @@ public class AuthorizableInstallerServiceImpl implements
             // initial set without regular users (those are never removed because that relationship is typically managed in AEM UI or LDAP/SAML/SSO/etc. )
             Set<String> relevantMembersInRepo = userManager.getDeclaredMembersWithoutRegularUsers(authorizableId);
 
+
             // ensure authorizables from config itself that are added via isMemberOf are not deleted
             relevantMembersInRepo = new HashSet<String>(CollectionUtils.subtract(relevantMembersInRepo, authorizablesFromConfigurations));
             
@@ -390,7 +390,7 @@ public class AuthorizableInstallerServiceImpl implements
             }
         }
 
-        groupForMigration.remove();
+        userManager.removeAuthorizable(groupForMigration);
         installLog.addMessage(LOG, "- Deleted group " + authorizableConfigBean.getMigrateFrom());
 
     }
@@ -451,7 +451,7 @@ public class AuthorizableInstallerServiceImpl implements
             }
 
             // delete existingAuthorizable;
-            existingAuthorizable.remove();
+            userManager.removeAuthorizable(existingAuthorizable);
 
             // create group again using values form config
             Authorizable newAuthorizable = createNewAuthorizable(acConfiguration, principalConfigBean, installLog, userManager, session);
@@ -621,7 +621,6 @@ public class AuthorizableInstallerServiceImpl implements
             Authorizable targetAuthorizable = userManager.getAuthorizable(groupId);
             ((Group) targetAuthorizable).addMember(currentAuthorizable);
         }
-
         for (String groupId : toBeRemovedMembers) {
             LOG.debug("Membership Change: Removing {} from members of group {} in repository", authorizableId, groupId);
             Authorizable targetAuthorizable = userManager.getAuthorizable(groupId);

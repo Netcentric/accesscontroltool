@@ -8,6 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.jmx;
 
+import java.util.List;
 import java.util.Set;
 
 import javax.management.NotCompliantMBeanException;
@@ -25,6 +26,7 @@ import com.adobe.granite.jmx.annotation.AnnotatedStandardMBean;
 
 import biz.netcentric.cq.tools.actool.dumpservice.ConfigDumpService;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
+import biz.netcentric.cq.tools.actool.history.AcToolExecution;
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceInternal;
 
 @Component(property = {
@@ -104,11 +106,11 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
 
     @Override
     public String[] getSavedLogs() {
-        String[] logs = acHistoryService.getInstallationLogPaths();
-        if (logs.length == 0) {
-            return new String[] { "no logs found" };
+        List<AcToolExecution> executions = acHistoryService.getAcToolExecutions();
+        if (executions.isEmpty()) {
+            return new String[] { "no executions found" };
         }
-        return logs;
+        return executions.stream().map(AcToolExecution::getLogsPath).toArray(String[]::new);
     }
 
     @Override
@@ -134,7 +136,7 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
     @Override
     public String showInstallationLog(final String n, boolean verbose) {
         int i;
-        String[] logs = acHistoryService.getInstallationLogPaths();
+        String[] logs = getSavedLogs();
         if (logs.length == 0) {
             return "no logs found";
         }

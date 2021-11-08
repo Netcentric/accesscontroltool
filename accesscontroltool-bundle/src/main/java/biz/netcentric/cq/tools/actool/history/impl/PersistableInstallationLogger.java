@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package biz.netcentric.cq.tools.actool.history;
+package biz.netcentric.cq.tools.actool.history.impl;
 
 import java.sql.Timestamp;
 import java.text.DateFormat;
@@ -21,11 +21,13 @@ import java.util.TreeSet;
 
 import org.slf4j.Logger;
 
+import biz.netcentric.cq.tools.actool.api.HistoryEntry;
 import biz.netcentric.cq.tools.actool.api.InstallationLog;
+import biz.netcentric.cq.tools.actool.api.InstallationResult;
 import biz.netcentric.cq.tools.actool.comparators.HistoryEntryComparator;
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
-public class PersistableInstallationLogger implements InstallationLogger, InstallationLog, AcInstallationHistoryPojo {
+public class PersistableInstallationLogger implements InstallationLogger, InstallationLog, InstallationResult {
 
     protected static final String MSG_IDENTIFIER_ERROR = "ERROR: ";
     protected static final String MSG_IDENTIFIER_WARNING = "WARNING: ";
@@ -161,14 +163,17 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
         msgIndex++;
     }
 
+    @Override
     public Set<HistoryEntry> getMessages() {
         return messages;
     }
 
+    @Override
     public Set<HistoryEntry> getErrors() {
         return errors;
     }
 
+    @Override
     public boolean isSuccess() {
         return success;
     }
@@ -210,7 +215,7 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
     }
 
     private Set<HistoryEntry> getMessageSet(Set<HistoryEntry>... sets) {
-        Set<HistoryEntry> resultSet = new TreeSet<HistoryEntry>(
+        Set<HistoryEntry> resultSet = new TreeSet<>(
                 new HistoryEntryComparator());
 
         for (Set<HistoryEntry> set : sets) {
@@ -264,9 +269,6 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
         countAclsNoChange++;
     }
 
-    /* (non-Javadoc)
-     * @see biz.netcentric.cq.tools.actool.history.AcInstallationLo#getCountAclsUnchanged()
-     */
     @Override
     public int getCountAclsUnchanged() {
         return countAclsNoChange;
@@ -277,9 +279,6 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
         countAclsChanged++;
     }
 
-    /* (non-Javadoc)
-     * @see biz.netcentric.cq.tools.actool.history.AcInstallationLo#getCountAclsChanged()
-     */
     @Override
     public int getCountAclsChanged() {
         return countAclsChanged;
@@ -290,9 +289,6 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
         countAclsPathDoesNotExist++;
     }
 
-    /* (non-Javadoc)
-     * @see biz.netcentric.cq.tools.actool.history.AcInstallationLo#getCountAclsPathDoesNotExist()
-     */
     @Override
     public int getCountAclsPathDoesNotExist() {
         return countAclsPathDoesNotExist;
@@ -303,9 +299,6 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
         countActionCacheMiss++;
     }
 
-    /* (non-Javadoc)
-     * @see biz.netcentric.cq.tools.actool.history.AcInstallationLo#getCountActionCacheMiss()
-     */
     @Override
     public int getCountActionCacheMiss() {
         return countActionCacheMiss;
@@ -316,9 +309,6 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
         countActionCacheHit++;
     }
 
-    /* (non-Javadoc)
-     * @see biz.netcentric.cq.tools.actool.history.AcInstallationLo#getCountActionCacheHit()
-     */
     @Override
     public int getCountActionCacheHit() {
         return countActionCacheHit;

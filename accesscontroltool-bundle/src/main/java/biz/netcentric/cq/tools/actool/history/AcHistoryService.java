@@ -10,6 +10,11 @@ package biz.netcentric.cq.tools.actool.history;
 
 import java.util.List;
 
+import org.osgi.annotation.versioning.ProviderType;
+
+import biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger;
+
+@ProviderType
 public interface AcHistoryService {
 
     public void persistHistory(PersistableInstallationLogger history);
@@ -26,9 +31,5 @@ public interface AcHistoryService {
     public String getLogFromHistory(int n, boolean inHtmlFormat, boolean includeVerbose);
 
     public boolean wasLastPersistHistoryCallSuccessful();
-
-    /** @deprecated Use {@link #getAcToolExecutions()} instead
-     * @return */
-    public String[] getInstallationLogPaths();
 
 }

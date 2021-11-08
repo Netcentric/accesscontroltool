@@ -1,0 +1,57 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        jdk: [8, 11, 17]
+        include:
+          # lengthy build steps should only be performed on linux with Java 11 (Sonar analysis, deployment)
+          - os: ubuntu-latest
+            jdk: 11
+            isMainBuildEnv: true
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
+          # generate settings.xml with the correct values
+          server-id: ossrh # Value of the distributionManagement/repository/id field of the pom.xml
+          server-username: MAVEN_USERNAME # env variable for username in deploy
+          server-password: MAVEN_PASSWORD # env variable for token in deploy
+          cache: 'maven'
+
+      - name: Build with Maven
+        if: '!matrix.isMainBuildEnv'
+        run: mvn -e -B -V clean verify
+
+      - name: Build and Analyse with Maven
+        if: github.ref != 'refs/heads/develop' && matrix.isMainBuildEnv
+        env: 
+          # SonarCloud access token should be generated from https://sonarcloud.io/account/security/
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          # Needed to get some information about the pull request, if any
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: mvn -e -B -V clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Netcentric_accesscontroltool -Dsonar.organization=netcentric -Dsonar.host.url=https://sonarcloud.io -Pdependency-check,coverage-report
+
+      - name: Build, Analyse and Deploy with Maven
+        if: github.ref == 'refs/heads/develop' && matrix.isMainBuildEnv
+        env: 
+          MAVEN_USERNAME: ${{ secrets.OSSRH_TOKEN_USER }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN_PASSWORD }}
+          # SonarCloud access token should be generated from https://sonarcloud.io/account/security/
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          # Needed to get some information about the pull request, if any
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: mvn -e -B -V clean deploy org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Netcentric_accesscontroltool -Dsonar.organization=netcentric -Dsonar.host.url=https://sonarcloud.io -Pdependency-check,coverage-report

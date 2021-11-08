@@ -8,7 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.aceinstaller;
 
-import static biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger.msHumanReadable;
+import static biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger.msHumanReadable;
 
 import java.security.Principal;
 import java.util.Arrays;
@@ -52,8 +52,7 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
             final Map<String, Set<AceBean>> pathBasedAceMapFromConfig,
             final AcConfiguration acConfiguration,
             final Session session,
-            final InstallationLogger history, Set<String> principalsToRemoveAcesFor,
-            boolean intermediateSaves) throws Exception {
+            final InstallationLogger history, Set<String> principalsToRemoveAcesFor) throws Exception {
 
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
@@ -64,11 +63,6 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
         LOG.trace("Paths with ACEs: {}", paths);
         
         paths = filterReadOnlyPaths(paths, history, session);
-
-        if (intermediateSaves) {
-            history.addMessage(LOG, "Will save ACL for each path to session due to configuration option intermediateSaves=true - "
-                    + "rollback functionality is disabled.");
-        }
 
         // loop through all nodes from config
         for (final String path : paths) {
@@ -96,10 +90,6 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
                             acConfiguration.getGlobalConfiguration().getDefaultUnmanagedAcePathsRegex());
             installAcl(orderedAceBeanSetFromConfig, path, principalsToRemoveAcesForAtThisPath, session, history);
 
-            if (intermediateSaves && session.hasPendingChanges()) {
-                history.addVerboseMessage(LOG, "Saved session for path " + path);
-                session.save();
-            }
         }
 
         if (history.getMissingParentPathsForInitialContent() > 0) {

@@ -8,16 +8,16 @@
  */
 package biz.netcentric.cq.tools.actool.api;
 
-import org.osgi.annotation.versioning.ConsumerType;
+import java.util.Set;
 
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
+import org.osgi.annotation.versioning.ProviderType;
 
 /**
  * Access to log messages being emitted
  *
  */
-@ConsumerType
-public interface InstallationLog extends AcInstallationHistoryPojo {
+@ProviderType
+public interface InstallationLog {
 
     // This is only set for the installhook mechanism
     String getCrxPackageName();
@@ -25,18 +25,9 @@ public interface InstallationLog extends AcInstallationHistoryPojo {
     String getMessageHistory();
 
     String getVerboseMessageHistory();
-    
-    // TODO: move to separate interface InstallationResult which extends this interface
-    int getCountAclsUnchanged();
 
-    int getCountAclsChanged();
+    Set<HistoryEntry> getErrors();
 
-    int getCountAclsPathDoesNotExist();
-
-    int getCountActionCacheMiss();
-
-    int getCountActionCacheHit();
-
-    int getMissingParentPathsForInitialContent();
+    Set<HistoryEntry> getMessages();
 
 }

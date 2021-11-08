@@ -24,10 +24,10 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.api.AcInstallationService;
 import biz.netcentric.cq.tools.actool.api.InstallationLog;
+import biz.netcentric.cq.tools.actool.api.InstallationResult;
 import biz.netcentric.cq.tools.actool.dumpservice.ConfigDumpService;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
 import biz.netcentric.cq.tools.actool.history.AcToolExecution;
-import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl;
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceInternal;
 
@@ -84,7 +84,7 @@ public class AcToolUiService {
 
         PrintWriter pw = resp.getWriter();
         resp.setContentType("text/plain");
-        if (((PersistableInstallationLogger) log).isSuccess()) {
+        if (((InstallationResult) log).isSuccess()) {
             resp.setStatus(HttpServletResponse.SC_OK);
             pw.println("Applied AC Tool config from " + reqParams.configurationRootPath + ":\n" + msg);
         } else {
@@ -304,16 +304,18 @@ public class AcToolUiService {
     static class RequestParameters {
 
         static RequestParameters fromRequest(HttpServletRequest req, AcInstallationService acInstallationService) {
-            String configRootPath = getParam(req, AcToolUiService.PARAM_CONFIGURATION_ROOT_PATH,
-                    ((AcInstallationServiceImpl) acInstallationService).getConfiguredAcConfigurationRootPath());
+            List<String> allConfigRootPaths = ((AcInstallationServiceImpl) acInstallationService).getConfigurationRootPaths();
+            // take the first configured root path as default
+            String defaultConfigRootPath = allConfigRootPaths.size() > 0 ? allConfigRootPaths.get(allConfigRootPaths.size()-1) : "";
+            String configRootPath = 
+                    getParam(req, AcToolUiService.PARAM_CONFIGURATION_ROOT_PATH, defaultConfigRootPath);
             String basePathsParam = req.getParameter(AcToolUiService.PARAM_BASE_PATHS);
-            RequestParameters result = new RequestParameters(
+            return new RequestParameters(
                     configRootPath,
                     StringUtils.isNotBlank(basePathsParam) ? Arrays.asList(basePathsParam.split(" *, *")) : null,
                     Integer.parseInt(getParam(req, AcToolUiService.PARAM_SHOW_LOG_NO, "0")),
                     Boolean.valueOf(req.getParameter(AcToolUiService.PARAM_SHOW_LOG_VERBOSE)),
                     Boolean.valueOf(req.getParameter(AcToolUiService.PARAM_APPLY_ONLY_IF_CHANGED)));
-            return result;
         }
         
         final String configurationRootPath;

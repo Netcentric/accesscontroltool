@@ -17,17 +17,14 @@ import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.api.InstallationResult;
 import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
-import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
-import biz.netcentric.cq.tools.actool.installhook.impl.AcToolInstallHookService;
-import biz.netcentric.cq.tools.actool.installhook.impl.OsgiAwareInstallHook;
 
 @ProviderType
 public class AcToolInstallHook extends OsgiAwareInstallHook {
 
     private static final Logger LOG = LoggerFactory.getLogger(AcToolInstallHook.class);
     private static final String PROPERTY_ACTOOL_INSTALL_AT_INSTALLED_PHASE = "actool.atInstalledPhase";
-    private static final String PROPERTY_ACTOOL_FORCE_INSTALLHOOK_IN_CLOUD = "actool.forceInstallHookInCloud";
 
     private boolean alreadyRan = false;
 
@@ -57,10 +54,6 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
         return Boolean.parseBoolean(properties.getProperty(PROPERTY_ACTOOL_INSTALL_AT_INSTALLED_PHASE));
     }
 
-    private boolean forceInstallHookInCloud(PackageProperties properties) {
-        return Boolean.parseBoolean(properties.getProperty(PROPERTY_ACTOOL_FORCE_INSTALLHOOK_IN_CLOUD));
-    }
-
     private void install(InstallContext context) throws PackageException {
         final ProgressTrackerListener listener = context.getOptions().getListener();
         /*
@@ -74,7 +67,7 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
         }
         alreadyRan = true;
 
-        if (RuntimeHelper.isCloudReadyInstance() && !forceInstallHookInCloud(context.getPackage())) {
+        if (RuntimeHelper.isCloudReadyInstance()) {
             log("InstallHook is skipped by default in cloud (use package property 'actool.forceInstallHookInCloud = true' to force run)",
                     listener);
             return;
@@ -85,18 +78,18 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
         ServiceReference<AcToolInstallHookService> acToolInstallHookService = getServiceReference(AcToolInstallHookService.class);
         if (acToolInstallHookService == null) {
             throw new PackageException(
-                    "Could not get AceService from OSGI service registry. Make sure the ACTool is installed!");
+                    "Could not get AcToolInstallHookService from OSGI service registry. Make sure the ACTool is installed!");
         }
         AcToolInstallHookService acService = (AcToolInstallHookService) getBundleContext().getService(acToolInstallHookService);
         if (acService == null) {
             throw new PackageException(
-                    "Could not instanciate AceService. Make sure the ACTool is installed and check the log for errors");
+                    "Could not instantiate AcToolInstallHookService. Make sure the ACTool is installed and check the log for errors");
         }
 
         try {
-            PersistableInstallationLogger history;
+            InstallationResult result;
             try {
-                history = acService.installYamlFilesFromPackage(context
+                result = acService.installYamlFilesFromPackage(context
                         .getPackage(), context.getSession(), context.getOptions().getListener());
 
             } catch (Exception e) {
@@ -106,9 +99,9 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
                 throw new PackageException(e.getMessage(), e);
             }
 
-            if (!history.isSuccess()) {
+            if (!result.isSuccess()) {
                 throw new PackageException("AC Tool installation failed with "
-                        + history.getErrors().size() + " errors. Check log for detailed error message(s)!");
+                        + result.getErrors().size() + " errors. Check log for detailed error message(s)!");
             } else {
                 log("Installed ACLs successfully through AcToolInstallHook!", listener);
             }

@@ -11,7 +11,6 @@ package biz.netcentric.cq.tools.actool.history.impl;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +36,6 @@ import com.day.cq.commons.jcr.JcrConstants;
 
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
 import biz.netcentric.cq.tools.actool.history.AcToolExecution;
-import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.history.impl.AcHistoryServiceImpl.Configuration;
 
 @Component
@@ -103,22 +101,6 @@ public class AcHistoryServiceImpl implements AcHistoryService {
                 session.logout();
             }
         }
-    }
-
-    @Override
-    public String[] getInstallationLogPaths() {
-        
-        List<AcToolExecution> historyItems = getAcToolExecutions();
-        
-        String[] result = new String[historyItems.size()];
-        int count = 0;
-        Iterator<AcToolExecution> historyItemsIt = historyItems.iterator();
-        while(historyItemsIt.hasNext()) {
-            count++;
-            result[count-1] = count + ". "+historyItemsIt.next().toString();
-        }
-        return result;
-
     }
 
     @Override

@@ -6,11 +6,11 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package biz.netcentric.cq.tools.actool.installhook.impl;
+package biz.netcentric.cq.tools.actool.installhook;
 
 import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
-import org.apache.jackrabbit.vault.fs.io.ImportOptions;
 import org.apache.jackrabbit.vault.packaging.InstallHook;
+import org.osgi.annotation.versioning.ProviderType;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
  * Previous versions of that bundle (and more specifically the {@code com.day.jcr.vault.packaging.impl.JrVltInstallHookProcessor$Hook#loadMainClass(...)} 
  * only support the old interface at {@code com.day.jcr.vault.packaging.InstallHook}</p>
  */
+@ProviderType
 public abstract class OsgiAwareInstallHook implements InstallHook {
 
     private final BundleContext bundleContext;
@@ -37,7 +38,7 @@ public abstract class OsgiAwareInstallHook implements InstallHook {
         // since this class was loaded through a bundle class loader as well, just take the bundle context
         Bundle currentBundle = FrameworkUtil.getBundle(this.getClass());
         if (currentBundle == null) {
-            throw new IllegalStateException("The class " + this.getClass() + " was not loaded through a a bundle classloader");
+            throw new IllegalStateException("The class " + this.getClass() + " was not loaded through a bundle classloader");
         }
 
         bundleContext = currentBundle.getBundleContext();
@@ -48,28 +49,6 @@ public abstract class OsgiAwareInstallHook implements InstallHook {
 
     public BundleContext getBundleContext() {
         return bundleContext;
-    }
-
-    /** @param clazz
-     * @return
-     * @deprecated Use {@link #getServiceReference(Class)} instead */
-    @SuppressWarnings("rawtypes")
-    @Deprecated
-    public ServiceReference getServiceReference(String clazz) {
-        ServiceReference serviceReference = bundleContext
-                .getServiceReference(clazz);
-        return serviceReference;
-    }
-
-	/**
-	 * 
-	 * @param message
-	 * @param options
-	 * @deprecated Use {@link #log(String, ProgressTrackerListener)} instead.
-	 */
-	@Deprecated
-    public void log(String message, ImportOptions options) {
-        log(message, options.getListener());
     }
 
 	protected <T> ServiceReference<T> getServiceReference(Class<T> clazz) {

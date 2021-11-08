@@ -1,18 +1,3 @@
-# Applying ACLs
-
-* [General Installation](#general-installation)
-* [Installation in AEM as a Cloud Service](#installation-in-aem-as-a-cloud-service)
-* [Installation Methods](#installation-methods)
-  * [Installation Hook](#installation-hook)
-  * [Web Console](#web-console)
-  * [Touch UI](#touch-ui)
-  * [JMX](#jmx)
-  * [Startup Hook](#startup-hook)
-  * [Upload Listener Service](#upload-listener-service)
-  * [Ad hoc installation of small fragments](#ad-hoc-installation-of-small-fragments)
-
-<!--- This table of contents has been generated with https://github.com/ekalinin/github-markdown-toc#gh-md-toc -->
-
 ## General Installation
 
 The following steps are performed during the installation of authorizables and ACEs:
@@ -27,7 +12,7 @@ During the installation a history containing the most important events gets crea
 
 ## Installation in AEM as a Cloud Service
 
-Due to usage of a [composite node store](http://jackrabbit.apache.org/oak/docs/nodestore/compositens.html) the installation is slightly more complex in AEMaaCS
+Due to usage of a [composite node store](http://jackrabbit.apache.org/oak/docs/nodestore/compositens.html) the installation of authorizables and ACEs is slightly more complex in AEMaaCS
 
 1. During the Docker build ("Build Images") in Cloud Manager the ACLs are applied via [Startup Hook](#startup-hook)
 2. Afterwards all mutable content is discarded (authorizables in `/home` and ACEs in mutable content)
@@ -37,11 +22,11 @@ Theoretically step 1 is only necessary if ACEs for immutable content are require
 
 ## Installation Methods
 
-The following section explain how you can trigger the installation of ACLs.
+The following section explain how you can trigger the installation of authorizables and ACEs.
   
 ### Installation Hook
 
-You can automatically install ACEs and authorizables defined in YAML files within a package using the Content Package Install Hook mechanism.
+You can automatically install authorizables and ACEs defined in YAML files within a package using the [Content Package Install Hook](https://jackrabbit.apache.org/filevault/installhooks.html) mechanism.
 If you use the content-package-maven-plugin for building the package, enable the installation hook via: 
 
 ```
@@ -93,9 +78,9 @@ Although it is not necessary that the YAML files are covered by the filter rules
 
 The installation takes place in phase "PREPARE" by default, i.e. before any other content from the package has been installed. Optionally you can make the hook kick in in phase "INSTALLED" (i.e. after the content has been installed) by additionally setting the package property `actool.atInstalledPhase` to `true`. This is helpful if the initial content on which you want to set ACEs is created via classical package content (instead of inline yaml `initialContent`). That is only properly supported since AEM 6.4.2 (for details look at [issue 287](https://github.com/Netcentric/accesscontroltool/issues/287)) and since ACTool 2.4.0.
 
-An install hook is ignored in the Cloud because the startup hook is to be used for that use case (the package property `actool.forceInstallHookInCloud` can be used force excution).
+An install hook is ignored in the Cloud because the startup hook is to be used for that use case.
 
-**Notice:** Packages with install hooks can only be installed by admin users (compare with [JCRVLT-427](https://issues.apache.org/jira/browse/JCRVLT-427))! This is either user with id `admin`, `system` or every member of group `administrators`.
+**Notice:** Packages with install hooks can only be installed by admin users (compare with [JCRVLT-427](https://issues.apache.org/jira/browse/JCRVLT-427))! This is either a user with id `admin`, `system` or every member of group `administrators`.
 
 ### Web Console
 

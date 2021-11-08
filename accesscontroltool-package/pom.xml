@@ -15,7 +15,7 @@
     <parent>
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
         <artifactId>accesscontroltool</artifactId>
-        <version>2.7.2-SNAPSHOT</version>
+        <version>3.0.4-SNAPSHOT</version>
     </parent>
 
     <!-- ====================================================================== -->
@@ -50,67 +50,129 @@
             <version>${project.version}</version>
             <type>content-package</type>
         </dependency>
+        <dependency>
+            <groupId>com.adobe.aem</groupId>
+            <artifactId>aem-sdk-api</artifactId>
+            <version>2021.5.5343.20210524T070738Z-210527</version>
+        </dependency>
+        
     </dependencies>
     <build>
+        <pluginManagement>
+            <plugins>
+                <!-- see https://github.com/apache/felix/tree/trunk/tools/osgicheck-maven-plugin -->
+                <plugin>
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>osgicheck-maven-plugin</artifactId>
+                    <version>0.1.0</version>
+                    <executions>
+                        <execution>
+                            <id>check-bundle</id>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
+            <!-- for "cloud" package use repoinit instead of actool-content-package -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
+                <artifactId>maven-resources-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>copy-hook-into-package</id>
-                        <phase>generate-resources</phase>
+                        <id>copy-cloud-package-resources</id>
+                        <!-- here the phase you need -->
+                        <phase>process-resources</phase>
                         <goals>
-                            <goal>copy</goal>
+                            <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <artifactItems>
-                                <!-- See http://sling.apache.org/documentation/bundles/installer-provider-installhook.html -->
-                                <artifactItem>
-                                    <groupId>org.apache.sling</groupId>
-                                    <artifactId>org.apache.sling.installer.provider.installhook</artifactId>
-                                    <version>1.1.0</version>
-                                </artifactItem>
-                            </artifactItems>
-                            <outputDirectory>${project.build.directory}/vault-work/META-INF/vault/hooks</outputDirectory>
-                        </configuration>
+                            <outputDirectory>${project.build.directory}/vault-work-cloud/jcr_root</outputDirectory>
+                            <resources>
+                              <resource>
+                                <directory>src/main/jcr_root-cloud</directory>
+                                <filtering>false</filtering>
+                              </resource>
+                            </resources>
+                        </configuration> 
                     </execution>
                 </executions>
             </plugin>
+            <!-- generate two packages: one for cloud (classifier "cloud") and one for classic (no classifier) -->
             <plugin>
                 <groupId>org.apache.jackrabbit</groupId>
                 <artifactId>filevault-package-maven-plugin</artifactId>
                 <configuration>
-                    <properties>
-                        <!-- install the two bundles and service user config synchronously in order to be callable from within 
-                              same complete package (if yaml file containing package declares the dependency to it) -->
-                        <installPathRegex>/apps/netcentric/actool/(config|install)/.*</installPathRegex>
-                        <waitForOsgiEventsQuietInSec>5</waitForOsgiEventsQuietInSec>
-                    </properties>
                     <embeddedTarget>/apps/netcentric/actool/install</embeddedTarget>
-                    <embeddeds>
-                        <embedded>
-                            <artifactId>accesscontroltool-bundle</artifactId>
-                        </embedded>
-                        <embedded>
-                            <artifactId>accesscontroltool-startuphook-bundle</artifactId>
-                            <target>/apps/netcentric/actool/install/27</target>
-                        </embedded>
-                    </embeddeds>
-                    <subPackages>
-                        <subPackage>
-                            <artifactId>accesscontroltool-apps-package</artifactId>
-                        </subPackage>
-                        <subPackage>
-                            <artifactId>accesscontroltool-content-package</artifactId>
-                        </subPackage>
-                    </subPackages>
-                    <!-- is still mixed due to the contained content package -->
-                    <packageType>mixed</packageType>
+                    <packageType>container</packageType>
                     <!-- all sub packages have been validated already -->
                     <skipSubPackageValidation>true</skipSubPackageValidation>
                 </configuration>
                 <executions>
+                    <execution>
+                        <id>default-generate-metadata</id>
+                        <configuration>
+                            <properties>
+                                <!-- install the two bundles and service user config synchronously in order to be callable from within 
+                                      same complete package (if yaml file containing package declares the dependency to it) -->
+                                <installPathRegex>/apps/netcentric/actool/(config|install)/.*</installPathRegex>
+                                <waitForOsgiEventsQuietInSec>5</waitForOsgiEventsQuietInSec>
+                            </properties>
+                            <embeddeds>
+                                <embedded>
+                                    <artifactId>accesscontroltool-bundle</artifactId>
+                                </embedded>
+                                <embedded>
+                                    <artifactId>accesscontroltool-startuphook-bundle</artifactId>
+                                    <target>/apps/netcentric/actool/install/27</target>
+                                </embedded>
+                            </embeddeds>
+                            <subPackages>
+                                <subPackage>
+                                    <artifactId>accesscontroltool-apps-package</artifactId>
+                                </subPackage>
+                                <subPackage>
+                                    <artifactId>accesscontroltool-content-package</artifactId>
+                                </subPackage>
+                            </subPackages>
+                            <!-- See http://sling.apache.org/documentation/bundles/installer-provider-installhook.html -->
+                            <installHooks>org.apache.sling:org.apache.sling.installer.provider.installhook:1.1.0</installHooks>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>cloud-generate-metadata</id>
+                        <goals>
+                            <goal>generate-metadata</goal>
+                        </goals>
+                        <configuration>
+                            <!-- everything via embed, no subpackages, no accesscontroltool-content-package -->
+                            <embeddeds>
+                                <embedded>
+                                    <artifactId>accesscontroltool-bundle</artifactId>
+                                </embedded>
+                                <embedded>
+                                    <artifactId>accesscontroltool-apps-package</artifactId>
+                                </embedded>
+                                <embedded>
+                                    <artifactId>accesscontroltool-startuphook-bundle</artifactId>
+                                    <target>/apps/netcentric/actool/install/27</target>
+                                </embedded>
+                            </embeddeds>
+                            <classifier>cloud</classifier>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>cloud-package</id>
+                        <goals>
+                            <goal>package</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>cloud</classifier>
+                            <failOnDuplicateEntries>false</failOnDuplicateEntries>
+                        </configuration>
+                    </execution>
                     <execution>
                         <id>default-analyze-classes</id>
                         <phase>invalid</phase>
@@ -124,7 +186,13 @@
                     <targetURL>http://${crx.host}:${crx.port}/crx/packmgr/service.jsp</targetURL>
                 </configuration>
             </plugin>
-            
+            <plugin>
+                <groupId>com.adobe.aem</groupId>
+                <artifactId>aemanalyser-maven-plugin</artifactId>
+                <configuration>
+                    <classifier>cloud</classifier>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
     <profiles>

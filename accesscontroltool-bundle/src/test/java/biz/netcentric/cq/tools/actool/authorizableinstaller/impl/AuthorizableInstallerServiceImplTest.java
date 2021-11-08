@@ -9,9 +9,9 @@
 package biz.netcentric.cq.tools.actool.authorizableinstaller.impl;
 
 import static java.util.Arrays.asList;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -21,9 +21,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,19 +41,19 @@ import org.apache.jackrabbit.api.security.user.Query;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.jcr.api.SlingRepository;
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
-import org.junit.runners.Enclosed;
+import org.mockito.ArgumentMatcher;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
 import com.adobe.granite.crypto.CryptoException;
@@ -66,7 +64,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.crypto.DecryptionService;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
-import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
+import biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger;
 
 @RunWith(Enclosed.class)
 public class AuthorizableInstallerServiceImplTest {
@@ -90,7 +88,7 @@ public class AuthorizableInstallerServiceImplTest {
 
         private AcConfiguration acConfiguration = new AcConfiguration();
         private GlobalConfiguration globalConfiguration = new GlobalConfiguration();
-        private PersistableInstallationLogger status = new PersistableInstallationLogger();
+        private InstallationLogger status = new PersistableInstallationLogger();
 
         @Mock
         private UserManager userManager;
@@ -161,7 +159,6 @@ public class AuthorizableInstallerServiceImplTest {
             doReturn(authorizable).when(userManager).getAuthorizable(id);
             doReturn(id).when(authorizable).getID();
             doReturn(isGroup).when(authorizable).isGroup();
-            doReturn("/home/" + (isGroup ? "groups" : "users") + (isSystemUser ? "/system" : "") + "/test").when(authorizable).getPath();
         }
 
         @Test
@@ -186,8 +183,8 @@ public class AuthorizableInstallerServiceImplTest {
                     groupsInRepo,
                     authorizablesInConfig);
 
-            verifyZeroInteractions(group2); // in configuredGroups and in groupsInRepo
-            verifyZeroInteractions(externalGroup); // matches external.* and hence must not be removed (even though it is not in the
+            Mockito.verifyNoInteractions(group2); // in configuredGroups and in groupsInRepo
+            Mockito.verifyNoInteractions(externalGroup); // matches external.* and hence must not be removed (even though it is not in the
             // configuration)
 
             verify(group1).addMember(testGroup);
@@ -201,7 +198,7 @@ public class AuthorizableInstallerServiceImplTest {
         @Test
         public void testApplyGroupMembershipConfigMembers() throws Exception {
 
-            PersistableInstallationLogger history = new PersistableInstallationLogger();
+            InstallationLogger history = new PersistableInstallationLogger();
             acConfiguration.setGlobalConfiguration(new GlobalConfiguration());
 
             AuthorizableConfigBean authorizableConfigBean = new AuthorizableConfigBean();
@@ -278,23 +275,23 @@ public class AuthorizableInstallerServiceImplTest {
 
             cut.setAuthorizableProperties(regularUser1, authorizableConfig, null, session, status);
 
-            verify(regularUser1).setProperty(eq("profile/givenName"), Matchers.argThat(new ValueMatcher("John")));
-            verify(regularUser1).setProperty(eq("profile/familyName"), Matchers.argThat(new ValueMatcher("Doe")));
-            verify(regularUser1).setProperty(eq("profile/aboutMe"), Matchers.argThat(new ValueMatcher("Test Description")));
+            verify(regularUser1).setProperty(eq("profile/givenName"), ArgumentMatchers.argThat(new ValueMatcher("John")));
+            verify(regularUser1).setProperty(eq("profile/familyName"), ArgumentMatchers.argThat(new ValueMatcher("Doe")));
+            verify(regularUser1).setProperty(eq("profile/aboutMe"), ArgumentMatchers.argThat(new ValueMatcher("Test Description")));
 
             authorizableConfig.setName("Van der Broek, Sebastian");
             cut.setAuthorizableProperties(regularUser1, authorizableConfig, null, session, status);
-            verify(regularUser1).setProperty(eq("profile/givenName"), Matchers.argThat(new ValueMatcher("Sebastian")));
-            verify(regularUser1).setProperty(eq("profile/familyName"), Matchers.argThat(new ValueMatcher("Van der Broek")));
+            verify(regularUser1).setProperty(eq("profile/givenName"), ArgumentMatchers.argThat(new ValueMatcher("Sebastian")));
+            verify(regularUser1).setProperty(eq("profile/familyName"), ArgumentMatchers.argThat(new ValueMatcher("Van der Broek")));
 
             authorizableConfig.setName("Johann Sebastian Bach");
             cut.setAuthorizableProperties(regularUser1, authorizableConfig, null, session, status);
-            verify(regularUser1).setProperty(eq("profile/givenName"), Matchers.argThat(new ValueMatcher("Johann Sebastian")));
-            verify(regularUser1).setProperty(eq("profile/familyName"), Matchers.argThat(new ValueMatcher("Bach")));
+            verify(regularUser1).setProperty(eq("profile/givenName"), ArgumentMatchers.argThat(new ValueMatcher("Johann Sebastian")));
+            verify(regularUser1).setProperty(eq("profile/familyName"), ArgumentMatchers.argThat(new ValueMatcher("Bach")));
 
         }
 
-        private final class ValueMatcher extends BaseMatcher<Value> {
+        private final class ValueMatcher implements ArgumentMatcher<Value> {
             private String expectedVal;
 
             public ValueMatcher(String expectedVal) {
@@ -302,22 +299,12 @@ public class AuthorizableInstallerServiceImplTest {
             }
 
             @Override
-            public boolean matches(Object actualVal) {
-                if (!(actualVal instanceof Value)) {
-                    return false;
-                } else {
-                    try {
-                        return StringUtils.equals(((Value) actualVal).getString(), expectedVal);
-                    } catch (IllegalStateException | RepositoryException e) {
+            public boolean matches(Value argument) {
+                try {
+                        return StringUtils.equals(argument.getString(), expectedVal);
+                } catch (IllegalStateException | RepositoryException e) {
                         return false;
-                    }
                 }
-
-            }
-
-            @Override
-            public void describeTo(Description desc) {
-                desc.appendText(" is " + expectedVal);
             }
         }
     }
@@ -350,7 +337,7 @@ public class AuthorizableInstallerServiceImplTest {
 
         @Before
         public void setUp() throws CryptoException, RepositoryException {
-            initMocks(this);
+            MockitoAnnotations.openMocks(this);
 
             doReturn(USER_ID).when(user).getID();
 

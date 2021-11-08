@@ -14,7 +14,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
-import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
+import biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 
 public interface ConfigurationMerger {

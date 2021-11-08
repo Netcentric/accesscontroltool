@@ -10,6 +10,7 @@ package biz.netcentric.cq.tools.actool.history.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -33,11 +34,11 @@ import org.apache.jackrabbit.commons.JcrUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.api.InstallationResult;
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
 import biz.netcentric.cq.tools.actool.configuploadlistener.impl.UploadListenerServiceImpl.AcToolConfigUpdateListener;
 import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
 import biz.netcentric.cq.tools.actool.history.AcToolExecution;
-import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.jmx.AceServiceMBeanImpl;
 import biz.netcentric.cq.tools.actool.ui.AcToolTouchUiServlet;
 import biz.netcentric.cq.tools.actool.ui.AcToolWebconsolePlugin;
@@ -51,7 +52,6 @@ public class HistoryUtils {
 
     public static final String HISTORY_NODE_NAME_PREFIX = "history_";
     public static final String NODETYPE_NT_UNSTRUCTURED = "nt:unstructured";
-    private static final String PROPERTY_SLING_RESOURCE_TYPE = "sling:resourceType";
     public static final String ACHISTORY_ROOT_NODE = "achistory";
     public static final String STATISTICS_ROOT_NODE = "var/statistics";
     public static final String ACHISTORY_PATH = "/"+ HistoryUtils.STATISTICS_ROOT_NODE + "/" + HistoryUtils.ACHISTORY_ROOT_NODE;
@@ -148,7 +148,7 @@ public class HistoryUtils {
         return newHistoryNode;
     }
 
-    static void saveLogs(Node historyNode, PersistableInstallationLogger installLog) throws RepositoryException {
+    static void saveLogs(Node historyNode, InstallationResult installLog) throws RepositoryException {
         // not ideal to save both variants, but the easiest for now
         JcrUtils.putFile(historyNode, LOG_FILE_NAME_VERBOSE, "text/plain",
                 new ByteArrayInputStream(installLog.getVerboseMessageHistory().getBytes()));
@@ -197,7 +197,6 @@ public class HistoryUtils {
         historyNode.setProperty(PROPERTY_CONFIG_ROOT_PATH, getEffectiveConfigRootPath(installLog));
         
         historyNode.setProperty(PROPERTY_TIMESTAMP, installLog.getInstallationDate().getTime());
-        historyNode.setProperty(PROPERTY_SLING_RESOURCE_TYPE, "/apps/netcentric/actool/components/historyRenderer");
 
         Map<String, String> configFileContentsByName = installLog.getConfigFileContentsByName();
         if (configFileContentsByName != null) {
@@ -325,7 +324,7 @@ public class HistoryUtils {
                         logFileNode = historyNode.getNode(LOG_FILE_NAME);
                     }
                     sb.append(lineFeedSymbol
-                            +  IOUtils.toString(JcrUtils.readFile(logFileNode)).replace("\n", lineFeedSymbol));
+                            +  IOUtils.toString(JcrUtils.readFile(logFileNode), StandardCharsets.UTF_8).replace("\n", lineFeedSymbol));
                 }
 
                 sb.append(lineFeedSymbol

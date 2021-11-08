@@ -11,7 +11,7 @@
     <parent>
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
         <artifactId>accesscontroltool</artifactId>
-        <version>2.7.2-SNAPSHOT</version>
+        <version>3.0.4-SNAPSHOT</version>
     </parent>
 
     <!-- ====================================================================== -->
@@ -22,201 +22,115 @@
     <packaging>jar</packaging>
     <name>Access Control Tool Bundle</name>
     <description>The OSGi bundle containing all classes of the Access Control Tool.</description>
+    
+    <properties>
+        <tomcat.el.version>10.0.12</tomcat.el.version>
+    </properties>
 
     <dependencies>
+
+        <!-- OSGi annotations -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.annotation.versioning</artifactId>
+            <scope>provided</scope>
+        </dependency>
+         <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.annotation.bundle</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.component.annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.metatype.annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.servlets.annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- OSGi Core/Compendium individual dependencies -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.framework</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Config Admin -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.cm</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Event Admin -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.event</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- URL Handler -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.url</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.jcr</groupId>
+            <artifactId>jcr</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- embedded third party libraries -->
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>tomcat-el-api</artifactId>
+            <version>${tomcat.el.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>tomcat-jasper-el</artifactId>
+            <version>${tomcat.el.version}</version>
+        </dependency>
+
         <!-- due to https://bugs.openjdk.java.net/browse/JDK-8231581 OOTB JRE is not sufficient -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk15on</artifactId>
             <optional>true</optional>
         </dependency>
-        <!-- OSGi annotations (build time, but only use those compliant with R6) -->
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.annotation.versioning</artifactId>
-        </dependency>
-         <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.annotation.bundle</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.service.component.annotations</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.service.metatype.annotations</artifactId>
-        </dependency>
-        <!-- OSGi Core/Compendium individual dependencies -->
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.framework</artifactId>
-        </dependency>
-        <!-- Config Admin -->
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.service.cm</artifactId>
-        </dependency>
-        <!-- Event Admin -->
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.service.event</artifactId>
-        </dependency>
-        <!-- URL Handler -->
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.service.url</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.event.dea</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.commons.scheduler</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.jcr</groupId>
-            <artifactId>jcr</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.jcr.api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.commons.osgi</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-collections</groupId>
-            <artifactId>commons-collections</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.jackrabbit</groupId>
-            <artifactId>jackrabbit-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.jackrabbit</groupId>
-            <artifactId>jackrabbit-jcr-commons</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.settings</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.jackrabbit.vault</groupId>
-            <artifactId>org.apache.jackrabbit.vault</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.tomcat</groupId>
-            <artifactId>tomcat-el-api</artifactId>
-            <version>8.5.60</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.tomcat</groupId>
-            <artifactId>tomcat-jasper-el</artifactId>
-            <version>8.5.61</version>
-        </dependency>
 
-        <dependency>
-            <groupId>org.apache.jackrabbit</groupId>
-            <artifactId>oak-core</artifactId>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.jackrabbit</groupId>
-            <artifactId>oak-auth-external</artifactId>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.hc.core</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.servlets.annotations</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.webconsole</artifactId>
-            <optional>true</optional>
-        </dependency>
-
-        <!-- START: Optional AEM dependencies -->
-        <dependency>
-            <groupId>com.adobe.granite</groupId>
-            <artifactId>com.adobe.granite.jmx</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>com.day.cq</groupId>
-            <artifactId>cq-security</artifactId>
-            <optional>true</optional>
-        </dependency>
 
         <!-- use the uber-jar always as last dependency because a lot of classes are provided also by other artifacts
             It is only used here as replacement for com.adobe.granite:com.adobe.granite.crypto:3.0.0 whose pom.xml is not publicly available -->
         <dependency>
             <groupId>com.adobe.aem</groupId>
             <artifactId>uber-jar</artifactId>
-            <classifier>obfuscated-apis</classifier>
-            <optional>true</optional>
+            <classifier>apis</classifier>
+            <scope>provided</scope>
         </dependency>
-
-        <!-- END: Optional AEM dependencies -->
 
         <!-- START: Test Dependencies -->
         <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.commons.testing</artifactId>
-            <version>2.0.16</version>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <artifactId>slf4j-simple</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.10.19</version>
+            <artifactId>mockito-core</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -226,11 +140,10 @@
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
+            <artifactId>slf4j-simple</artifactId>
             <scope>test</scope>
         </dependency>
         <!-- END: Test Dependencies -->
-
 
     </dependencies>
 
@@ -238,47 +151,27 @@
     <!-- B U I L D D E F I N I T I O N -->
     <!-- ====================================================================== -->
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.owasp</groupId>
+                    <artifactId>dependency-check-maven</artifactId>
+                    <configuration>
+                        <skip>false</skip><!-- only enable in specific submodules -->
+                        <suppressionFile>${project.basedir}/suppression.xml</suppressionFile>
+                    </configuration>
+                 </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <!-- see https://github.com/apache/felix/tree/trunk/tools/osgicheck-maven-plugin -->
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>osgicheck-maven-plugin</artifactId>
-                <version>0.1.0</version>
-                <executions>
-                    <execution>
-                        <id>check-bundle</id>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>biz.aQute.bnd</groupId>
                 <artifactId>bnd-maven-plugin</artifactId>
-                <configuration>
-                    <bnd><![CDATA[
-Bundle-Description: ${project.description}
-Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
-Bundle-License: Eclipse Public License, Version 1.0; link="https://www.eclipse.org/legal/epl-v10.html"
-Bundle-Vendor: Netcentric
-Bundle-Name: ${project.name}
-# explicitly set BSN previously generated by maven-bundle-plugin (http://felix.apache.org/documentation/subprojects/apache-felix-maven-bundle-plugin-bnd.html#default-behavior)
-Bundle-SymbolicName: biz.netcentric.cq.tools.accesscontroltool.bundle
-# export all versioned packages by default
--exportcontents: ${packages;VERSIONED}
-# Embed (https://groups.google.com/g/bndtools-users/c/NAdU0_X8OKY)
--includeresource: tomcat-el-api-[0-9.]*.jar;lib:=true,tomcat-jasper-el-[0-9.]*.jar;lib:=true,snakeyaml-[0-9.]*.jar;lib:=true
-# broad version range for jackrabbit oak versions (as long as we need to support Oak < 1.7.12, see https://github.com/Netcentric/accesscontroltool/issues/435 and https://issues.apache.org/jira/browse/OAK-6945
-Import-Package: org.apache.jackrabbit.oak.spi.security.authentication.external;resolution:=optional;version="[0,3)",org.apache.jackrabbit.oak.spi.security.authentication.external.basic;resolution:=optional;version="[0,2)",org.apache.jackrabbit.oak.*;version="[0,2)",com.adobe.granite.crypto;resolution:=optional,com.adobe.granite.jmx.annotation;resolution:=optional,com.day.cq.security.util;resolution:=optional,org.bouncycastle.*;resolution:=optional,* ]]></bnd>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>bnd-process</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>biz.aQute.bnd</groupId>

@@ -8,7 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.helper;
 
-import static biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger.msHumanReadable;
+import static biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger.msHumanReadable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -31,6 +31,7 @@ import javax.jcr.query.Query;
 import javax.jcr.query.QueryResult;
 import javax.jcr.security.AccessControlList;
 import javax.jcr.security.AccessControlManager;
+import javax.jcr.security.AccessControlPolicy;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -232,7 +233,7 @@ public class QueryHelper {
                 jcrPathAcl = ROOT_REPO_POLICY_NODE;
             }
 
-            acl = (AccessControlList) aMgr.getPolicies(aclEffectiveOnPath)[0];
+            acl = getValidAccessControlList(aMgr, aclEffectiveOnPath);
             if (acl == null) {
                 LOG.warn("Path " + aclEffectiveOnPath + " unexpectedly does not have a ACL");
                 continue;
@@ -263,6 +264,17 @@ public class QueryHelper {
                 return querySb;
             }
         }
+    }
+
+    private static AccessControlList getValidAccessControlList(AccessControlManager aMgr, String aclEffectiveOnPath) throws RepositoryException {
+        AccessControlPolicy[] acps = aMgr.getPolicies(aclEffectiveOnPath);
+
+        for (AccessControlPolicy acp : acps) {
+            if (acp instanceof AccessControlList) {
+                return (AccessControlList) acp;
+            }
+        }
+        return null;
     }
 
 }

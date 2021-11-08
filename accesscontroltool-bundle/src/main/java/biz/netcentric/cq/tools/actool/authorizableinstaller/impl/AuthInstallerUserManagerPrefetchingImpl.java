@@ -1,6 +1,6 @@
 package biz.netcentric.cq.tools.actool.authorizableinstaller.impl;
 
-import static biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger.msHumanReadable;
+import static biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger.msHumanReadable;
 
 import java.security.Principal;
 import java.util.Collections;
@@ -8,11 +8,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.ValueFactory;
 
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
@@ -37,6 +39,10 @@ import biz.netcentric.cq.tools.actool.history.InstallationLogger;
  * upon creation.
  * </p>
  * <p>
+ * Authorizables as well as membership relationships are cached by their case-insensitive IDs in alignment
+ * with {@link org.apache.jackrabbit.oak.security.user.AuthorizableBaseProvider#getContentID(String authorizableId)}.
+ * </p>
+ * <p>
  * The membership relationships are cached in lookup maps to quickly be able to query the repository state for both
  * authorizable.declaredMemberOf() (this we call in this class also) and group.getDeclaredMembers(). Having called declaredMemberOf() for
  * all groups of the repository has also retrieved all memberships (expect regular user memberships), hence the method getDeclaredMembers()
@@ -50,10 +56,10 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
     private static final Logger LOG = LoggerFactory.getLogger(AuthInstallerUserManagerPrefetchingImpl.class);
 
     private final UserManager delegate;
-    private final Map<String, Authorizable> authorizableCache = new HashMap<>();
+    private final Map<String, Authorizable> authorizableCache = new CaseInsensitiveMap();
 
-    private final Map<String, Set<String>> nonRegularUserMembersByAuthorizableId = new HashMap<>();
-    private final Map<String, Set<String>> isMemberOfByAuthorizableId = new HashMap<>();
+    private final Map<String, Set<String>> nonRegularUserMembersByAuthorizableId = new CaseInsensitiveMap();
+    private final Map<String, Set<String>> isMemberOfByAuthorizableId = new CaseInsensitiveMap();
 
     public AuthInstallerUserManagerPrefetchingImpl(UserManager delegate, final ValueFactory valueFactory, InstallationLogger installLog)
             throws RepositoryException {
@@ -127,7 +133,7 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
 
     public Set<String> getDeclaredMembersWithoutRegularUsers(String id) {
         return nonRegularUserMembersByAuthorizableId.containsKey(id) ? nonRegularUserMembersByAuthorizableId.get(id)
-                : Collections.<String> emptySet();
+                : Collections.<String>emptySet();
     }
 
     public int getCacheSize() {
@@ -137,6 +143,33 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
     private void refreshAuthorizableCacheIfNeeded(final String id, final Authorizable authorizable) {
         if (authorizableCache.containsKey(id)) {
             authorizableCache.put(id, authorizable);
+        }
+    }
+
+    @Override
+    public void removeAuthorizable(final Authorizable authorizable) throws RepositoryException {
+        Objects.requireNonNull(authorizable);
+
+        // remove auth from cache
+        authorizableCache.remove(authorizable.getID());
+
+        // if auth is a group, remove auth from the cache which lists groups of a given user
+        if (authorizable instanceof Group) {
+            final Group group = (Group) authorizable;
+            removeGroupFromCache(group);
+        }
+        authorizable.remove();
+    }
+
+    private void removeGroupFromCache(final Group group) throws RepositoryException {
+        final String groupID = group.getID();
+        final Iterator<Authorizable> membersIt = group.getDeclaredMembers();
+        while (membersIt.hasNext()) {
+            final Authorizable member = membersIt.next();
+            final String memberID = member.getID();
+            if (isMemberOfByAuthorizableId.containsKey(memberID)) {
+                isMemberOfByAuthorizableId.get(memberID).remove(groupID);
+            }
         }
     }
 
@@ -169,4 +202,5 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
         refreshAuthorizableCacheIfNeeded(principal.getName(), group);
         return group;
     }
+
 }

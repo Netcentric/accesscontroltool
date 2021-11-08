@@ -50,4 +50,13 @@
           actions: read,acl_read
           privileges: 
           repGlob:          
-    
+
+    - if ${site["jcr:content"]["isCommerce"]}:
+
+        - content-commerce:
+
+            - path:  /content/BRAND
+              permission: allow
+              actions: read,acl_read
+              privileges:
+              repGlob:

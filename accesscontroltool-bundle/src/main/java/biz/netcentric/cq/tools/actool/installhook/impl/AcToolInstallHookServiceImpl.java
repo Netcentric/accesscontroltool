@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import javax.jcr.Session;
 
@@ -24,9 +23,11 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetriever;
-import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
-import biz.netcentric.cq.tools.actool.history.ProgressTrackerListenerInstallationLogger;
+import biz.netcentric.cq.tools.actool.history.InstallationLogger;
+import biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger;
+import biz.netcentric.cq.tools.actool.history.impl.ProgressTrackerListenerInstallationLogger;
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceInternal;
+import biz.netcentric.cq.tools.actool.installhook.AcToolInstallHookService;
 
 @Component
 public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
@@ -40,20 +41,19 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
     private ConfigFilesRetriever configFilesRetriever;
 
     @Override
-    public PersistableInstallationLogger installYamlFilesFromPackage(VaultPackage vaultPackage, Session session,
+    public InstallationLogger installYamlFilesFromPackage(VaultPackage vaultPackage, Session session,
             ProgressTrackerListener progressTrackerListener)
             throws Exception {
         Archive archive = vaultPackage.getArchive();
-        Properties packageProperties = vaultPackage.getMetaInf().getProperties();
+        Properties packageProperties = archive.getMetaInf().getProperties();
         List<String> configPathPatterns = new ArrayList<>();
-        Set<Object> propertiesKeys = packageProperties.keySet();
-        for (Object property : propertiesKeys) {
-            if (property.toString().matches(ACL_HOOK_PATHS)) {
-                configPathPatterns.add(JCR_ROOT_PREFIX + packageProperties.getProperty(property.toString()));
-                
+        if (packageProperties != null) {
+            for (Object property : packageProperties.keySet()) {
+                if (property.toString().matches(ACL_HOOK_PATHS)) {
+                    configPathPatterns.add(JCR_ROOT_PREFIX + packageProperties.getProperty(property.toString()));
+                }
             }
         }
-
         PersistableInstallationLogger history = progressTrackerListener != null
                 ? new ProgressTrackerListenerInstallationLogger(progressTrackerListener)
                 : new PersistableInstallationLogger();

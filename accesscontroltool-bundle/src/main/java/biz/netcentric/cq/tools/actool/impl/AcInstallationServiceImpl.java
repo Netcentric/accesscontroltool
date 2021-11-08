@@ -9,7 +9,7 @@
 package biz.netcentric.cq.tools.actool.impl;
 
 import static biz.netcentric.cq.tools.actool.helper.Constants.PRINCIPAL_EVERYONE;
-import static biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger.msHumanReadable;
+import static biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger.msHumanReadable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,18 +25,14 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.AccessDeniedException;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
-import javax.jcr.lock.LockException;
 import javax.jcr.security.AccessControlEntry;
-import javax.jcr.security.AccessControlException;
 import javax.jcr.security.AccessControlManager;
-import javax.jcr.version.VersionException;
 
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -60,7 +56,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.aceinstaller.AceBeanInstaller;
-import biz.netcentric.cq.tools.actool.aceservice.AceService;
 import biz.netcentric.cq.tools.actool.api.AcInstallationService;
 import biz.netcentric.cq.tools.actool.api.InstallationLog;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
@@ -82,20 +77,18 @@ import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
-import biz.netcentric.cq.tools.actool.history.PersistableInstallationLogger;
+import biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger;
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl.Configuration;
-import biz.netcentric.cq.tools.actool.installationhistory.AcInstallationHistoryPojo;
 import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService;
 
 @Component
 @Designate(ocd=Configuration.class)
-public class AcInstallationServiceImpl implements AcInstallationService, AcInstallationServiceInternal, AceService {
+public class AcInstallationServiceImpl implements AcInstallationService, AcInstallationServiceInternal {
     private static final Logger LOG = LoggerFactory.getLogger(AcInstallationServiceImpl.class);
 
     private static final String CONFIG_PID = "biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl";
     private static final String LEGACY_CONFIG_PID = "biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl";
     private static final String LEGACY_PROPERTY_CONFIGURATION_PATH = "AceService.configurationPath";
-    private static final String LEGACY_PROPERTY_INTERMEDIATE_SAVES = "intermediateSaves";
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     AuthorizableInstallerService authorizableCreatorService;
@@ -135,8 +128,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     
     private List<String> configurationRootPaths;
 
-    private boolean intermediateSaves;
-    
     @ObjectClassDefinition(name = "AC Tool Installation Service", 
             description="Service that installs groups & ACEs according to textual configuration files",
             id = CONFIG_PID)
@@ -144,16 +135,13 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         
         @AttributeDefinition(name="Configuration path(s)", description="JCR path(s) where the config files reside (usually it's just one, can be multiple for multitenant setups)")
         String[] configurationRootPaths() default {};
-
-        @AttributeDefinition(name="Use intermediate saves", description="Saves ACLs for each path individually - this can be used to avoid problems with large changesets and MongoDB (OAK-5557), however the rollback is disabled then.")
-        boolean intermediateSaves() default false;
     }
 
     @Activate
     public void activate(Configuration configuration, BundleContext bundleContext) throws Exception {
         Dictionary<String, Object> configDict = configAdmin.getConfiguration(CONFIG_PID).getProperties();
         
-        configurationRootPaths = new ArrayList<String>();
+        configurationRootPaths = new ArrayList<>();
         if(!ArrayUtils.isEmpty(configuration.configurationRootPaths())) {
             configurationRootPaths.addAll(Arrays.asList(configuration.configurationRootPaths()));
         } else {
@@ -163,8 +151,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 configurationRootPaths.add(PropertiesUtil.toString(configDict.get(LEGACY_PROPERTY_CONFIGURATION_PATH), ""));
             }
         }
-        
-        intermediateSaves = configuration.intermediateSaves();
 
         // Fallback to old PID: only fall back to legacy config if new config does not exist
         if (configDict == null) {
@@ -172,7 +158,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             if (legacyProps != null) {
                 LOG.warn("Using legacy configuration PID '{}'. Please remove this and switch to the new one with PID '{}',", LEGACY_CONFIG_PID, CONFIG_PID);
                 configurationRootPaths = Arrays.asList(PropertiesUtil.toString(legacyProps.get(LEGACY_PROPERTY_CONFIGURATION_PATH), ""));
-                intermediateSaves = PropertiesUtil.toBoolean(legacyProps.get(LEGACY_PROPERTY_INTERMEDIATE_SAVES), false);
             }
         }
 
@@ -252,7 +237,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     private InstallationLog applyMultipleConfigurations(String[] restrictedToPaths, boolean skipIfConfigUnchanged) {
-        PersistableInstallationLogger overviewInstallLog = new PersistableInstallationLogger();
+        InstallationLogger overviewInstallLog = new PersistableInstallationLogger();
         overviewInstallLog.addMessage(LOG, "Applying multiple configs (this log only shows what was applied, check the individual logs for details)");
         for(String rootPath: configurationRootPaths) {
             overviewInstallLog.addMessage(LOG, "Applying config at root path "+rootPath);
@@ -490,7 +475,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                             + aceBeanInstaller.getClass().getSimpleName() + "...");
 
             aceBeanInstaller.installPathBasedACEs(filteredPathBasedAceMapFromConfig, acConfiguration, session, installLog,
-                    principalsToRemoveAcesFor, intermediateSaves);
+                    principalsToRemoveAcesFor);
         } else {
             installLog.addMessage(LOG, "No relevant ACEs to install");
         }
@@ -549,17 +534,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         try {
             // only save session if no exceptions occurred
             authorizableCreatorService.installAuthorizables(acConfiguration, authorizablesConfig, session, installLog);
-
-            if (intermediateSaves) {
-                if (session.hasPendingChanges()) {
-                    session.save();
-                    installLog.addVerboseMessage(LOG, "Saved session after installing authorizables.");
-                } else {
-                    installLog.addVerboseMessage(LOG,
-                            "After installing authorizables, intermediateSaves is turned on but there are no pending changes.");
-                }
-            }
-
         } catch (Exception e) {
             throw new AuthorizableCreatorException(e);
         }
@@ -669,7 +643,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
     }
 
-    @Override
     public boolean isReadyToStart() {
         Session session = null;
         
@@ -964,12 +937,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         }
     }
 
-    @Override
-    @Deprecated
-    public String getConfiguredAcConfigurationRootPath() {
-        return !configurationRootPaths.isEmpty() ? configurationRootPaths.get(0): null;
-    }
-
     public List<String> getConfigurationRootPaths() {
         return configurationRootPaths;
     }
@@ -996,32 +963,9 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         return paths;
     }
 
-
-
     public String getVersion() {
         String bundleVersion = FrameworkUtil.getBundle(AcInstallationServiceImpl.class).getVersion().toString();
         return bundleVersion;
-    }
-
-    /* --- deprecated methods --- */
-    @Override
-    public AcInstallationHistoryPojo execute() {
-        return apply();
-    }
-
-    @Override
-    public AcInstallationHistoryPojo execute(String configurationRootPath) {
-        return apply(configurationRootPath);
-    }
-
-    @Override
-    public AcInstallationHistoryPojo execute(String[] restrictedToPaths) {
-        return apply(restrictedToPaths);
-    }
-
-    @Override
-    public AcInstallationHistoryPojo execute(String configurationRootPath, String[] restrictedToPaths) {
-        return apply(configurationRootPath, restrictedToPaths);
     }
 
 }

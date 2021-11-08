@@ -1,4 +1,4 @@
-package biz.netcentric.cq.tools.actool.history;
+package biz.netcentric.cq.tools.actool.history.impl;
 
 import java.util.Objects;
 

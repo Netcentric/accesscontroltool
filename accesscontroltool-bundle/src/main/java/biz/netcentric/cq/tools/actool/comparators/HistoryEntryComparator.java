@@ -10,7 +10,7 @@ package biz.netcentric.cq.tools.actool.comparators;
 
 import java.util.Comparator;
 
-import biz.netcentric.cq.tools.actool.history.HistoryEntry;
+import biz.netcentric.cq.tools.actool.api.HistoryEntry;
 
 public class HistoryEntryComparator implements Comparator<HistoryEntry> {
 

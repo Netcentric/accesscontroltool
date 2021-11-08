@@ -6,9 +6,9 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package biz.netcentric.cq.tools.actool.history;
+package biz.netcentric.cq.tools.actool.history.impl;
 
-public class HtmlConstants {
+public final class HtmlConstants {
 
     private HtmlConstants() {
     }

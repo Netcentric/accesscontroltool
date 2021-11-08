@@ -11,7 +11,7 @@
     <parent>
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
         <artifactId>accesscontroltool</artifactId>
-        <version>2.7.2-SNAPSHOT</version>
+        <version>3.0.4-SNAPSHOT</version>
     </parent>
 
     <!-- ====================================================================== -->
@@ -29,65 +29,53 @@
             <artifactId>accesscontroltool-bundle</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- only used for constant value (no run time dependency)  -->
-        <dependency>
-            <groupId>org.apache.jackrabbit</groupId>
-            <artifactId>oak-core</artifactId>
-            <optional>true</optional>
-        </dependency>
         <!-- OSGi annotations (build time, but only use those compliant with R6) -->
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.annotation.versioning</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.service.component.annotations</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.service.metatype.annotations</artifactId>
+            <scope>provided</scope>
         </dependency>
         <!-- OSGi Core/Compendium individual dependencies -->
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.framework</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.settings</artifactId>
-        </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.jcr.api</artifactId>
             <version>2.4.0</version><!-- required for https://issues.apache.org/jira/browse/SLING-5456, only available in AEM 6.3+ -->
             <scope>provided</scope>
        </dependency>
-
-        <!-- START: Test Dependencies -->
-        <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.commons.testing</artifactId>
-            <version>2.0.16</version>
-            <scope>test</scope>
+       <dependency>
+            <groupId>javax.jcr</groupId>
+            <artifactId>jcr</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.10.19</version>
-            <scope>test</scope>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <scope>provided</scope>
         </dependency>
+        <!-- use the uber-jar always as last dependency because a lot of classes are provided also by other artifacts
+            It is only used here as replacement for com.adobe.granite:com.adobe.granite.crypto:3.0.0 whose pom.xml is not publicly available -->
         <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-library</artifactId>
-            <scope>test</scope>
+            <groupId>com.adobe.aem</groupId>
+            <artifactId>uber-jar</artifactId>
+            <classifier>apis</classifier>
+            <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <!-- END: Test Dependencies -->
 
     </dependencies>
 
@@ -100,37 +88,10 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>osgicheck-maven-plugin</artifactId>
-                <version>0.1.0</version>
-                <executions>
-                    <execution>
-                        <id>check-bundle</id>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>biz.aQute.bnd</groupId>
                 <artifactId>bnd-maven-plugin</artifactId>
-                <configuration>
-                    <bnd><![CDATA[
-Bundle-Description: ${project.description}
-Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
-Bundle-License: Eclipse Public License, Version 1.0; link="https://www.eclipse.org/legal/epl-v10.html"
-Bundle-SymbolicName: biz.netcentric.cq.tools.accesscontroltool.startuphook.bundle
-Bundle-Vendor: Netcentric
-Bundle-Name: ${project.name}
-Conditional-Package: biz.netcentric.cq.tools.actool.helper.runtime
-                    ]]></bnd>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>bnd-process</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

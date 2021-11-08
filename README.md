@@ -1,6 +1,6 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/biz.netcentric.cq.tools.accesscontroltool/accesscontroltool/badge.svg)](https://maven-badges.herokuapp.com/maven-central/biz.netcentric.cq.tools.accesscontroltool/accesscontroltool)
 [![License](https://img.shields.io/badge/License-EPL%201.0-red.svg)](https://opensource.org/licenses/EPL-1.0)
-[![Build Status](https://travis-ci.org/Netcentric/accesscontroltool.svg?branch=develop)](https://travis-ci.org/Netcentric/accesscontroltool)
+[![Build Status](https://github.com/netcentric/accesscontroltool/actions/workflows/maven.yml/badge.svg?branch=develop)](https://github.com/Netcentric/accesscontroltool/actions/workflows/maven.yml)
 [![SonarCloud Status](https://sonarcloud.io/api/project_badges/measure?project=Netcentric_accesscontroltool&metric=alert_status)](https://sonarcloud.io/dashboard?id=Netcentric_accesscontroltool)
 [![SonarCloud Coverage](https://sonarcloud.io/api/project_badges/measure?project=Netcentric_accesscontroltool&metric=coverage)](https://sonarcloud.io/component_measures/metric/coverage/list?id=Netcentric_accesscontroltool)
 
@@ -11,6 +11,7 @@ The Access Control Tool for Adobe Experience Manager (AC Tool) simplifies the sp
 Instead of existing solutions that build e.g. a content package with actual ACL nodes you can write simple configuration files and deploy them with your content packages. See [Comparison to other approches](docs/Comparison.md) for a comprehensive overview.
 
 Features:
+
 * easy-to-read Yaml configuration file format
 * run mode support
 * automatic installation with install hook
@@ -20,11 +21,11 @@ Features:
 * ensured order of ACLs
 * built-in expression language to reduce rule duplication
 
-See also our talk at [AdaptTo 2016](https://adapt.to/2016/en/schedule/ac-tool.html)
+See also our talk at [adaptTo() 2016](https://adapt.to/2016/en/schedule/ac-tool.html)
 
 # Requirements
 
-The AC Tool requires **Java 7 and AEM 6.1 (SP1)** or above (use v1.x for older versions) for on-premise installations. Since v2.5.0 **[AEM as a Cloud Service](https://www.adobe.com/marketing/experience-manager/cloud-service.html)** is supported, see [Startup Hook](https://github.com/Netcentric/accesscontroltool/blob/develop/docs/ApplyConfig.md#startup-hook) for details.
+The AC Tool requires **Java 8 and AEM 6.4** or above (use v2.x for older AEM versions which runs on Java 7 and AEM 6.1 SP1 or above) for on-premise installations. Since v2.5.0 **[AEM as a Cloud Service](https://www.adobe.com/marketing/experience-manager/cloud-service.html)** is supported, see [Startup Hook](https://github.com/Netcentric/accesscontroltool/blob/develop/docs/ApplyConfig.md#startup-hook) for details.
 
 It is also possible to run the AC Tool on **Apache Sling 11** or above (ensure system user `actool-service` has `jcr:all` permissions on root). When using the AC Tool with Sling, actions in ACE definitions and encrypted passwords cannot be used. To use the `externalId` attribute, ensure bundle `oak-auth-external` installed (not part of default Sling distribution).
 
@@ -36,6 +37,14 @@ The [content package](https://jackrabbit.apache.org/filevault) is available from
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
     <artifactId>accesscontroltool-package</artifactId>
 ```
+(for AEM Classic/On Premise) or
+
+```
+    <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
+    <artifactId>accesscontroltool-package</artifactId>
+    <classifier>cloud</classifier>
+```
+(for AEM as a Cloud Service)
 
 Install it afterwards e.g. via AEM's package manager.
 

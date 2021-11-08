@@ -6,14 +6,17 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package biz.netcentric.cq.tools.actool.history;
+package biz.netcentric.cq.tools.actool.api;
 
 import java.sql.Timestamp;
+
+import org.osgi.annotation.versioning.ProviderType;
 
 /**
  * Represents one log line of an execution of the AC Tool.
  */
-public class HistoryEntry {
+@ProviderType
+public final class HistoryEntry {
 
     private Timestamp timestamp;
     private String message;
