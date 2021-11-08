@@ -1,21 +1,5 @@
 # Configuration File Format
 
-* [Overview](#overview)
-* [Storage of configurations in JCR](#storage-of-configurations-in-jcr)
-* [Run modes](#run-modes)
-* [Overall structure a of an AC configuration file](#overall-structure-a-of-an-ac-configuration-file)
-* [Configuration of groups](#configuration-of-groups)
-  * [Group migration](#group-migration)
-* [Configuration of users](#configuration-of-users)
-  * [Configuration of keys](#configuration-of-keys)
-    * [Creation of key pair](#creation-of-key-pair)
-    * [Encrypt private key](#encrypt-private-key)
-* [Configuration of ACEs](#configuration-of-aces)
-* [Global Configuration](#global-configuration)
-* [Validation](#validation)
-
-<!--- This table of contents has been generated with https://github.com/ekalinin/github-markdown-toc#gh-md-toc -->
-
 ## Overview
 For better human readability and easy editing the ACL configuration files use the YAML format.
 
@@ -118,7 +102,8 @@ preferencesContent | Allows to provide [enhanced docview xml](https://jackrabbit
 socialContent | Allows to provide [enhanced docview xml](https://jackrabbit.apache.org/filevault/docview.html) that will reset the social node to the given structure after each run | optional
 impersonationAllowedFor | List of users that may impersonate as this user. May be provided as yaml list or as comma-separated yaml string (*deprecated*). If this property is omitted the impersonators of the user remain untouched, otherwise impersonators are added as given in config (and existing ones not configured are removed). To force an empty list of impersonators, an empty yaml list may be used: `impersonationAllowedFor: []`. | optional
 appendToKeyStore | Boolean flag determining whether the user's key store should be extended with the given keys or replaced with a new key store only containing the given `keys` (default) | optional
-keys | Public/Private key pairs which will be added to the user's key store. The keystore is transparently created if it does not exist yet during installation (with a random password). Useful in the context of configuring [Adobe IO in AEM](https://docs.adobe.com/content/help/en/experience-manager-learn/foundation/authentication/set-up-public-private-keys-for-use-with-aem-and-adobe-io.html) e.g. for [Adobe Launch via Adobe IO](https://helpx.adobe.com/experience-manager/using/aem_launch_adobeio_integration.html) or for the [SAML Integration in AEM](https://helpx.adobe.com/experience-manager/6-5/sites/administering/using/saml-2-0-authenticationhandler.html). In general useful whenever the [AEM KeyStoreService](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/reference-materials/javadoc/com/adobe/granite/keystore/KeyStoreService.html) is being used. This property contains a number of keys, identified via their alias. The format of each key is described below. All encrypted private keys are decrypted before being added to the (encrypted) keystore. That means after they have been imported in AEM only the keystore password is necessary to access those.  | optional
+keyStorePassword | Optional predefined key store password. Only used if key store is (re)created. If not set and key store does not yet exist a random password is used. Is given either as plain text (only to be used for test users) or encrypted - use path `/system/console/crypto` on target instance to generate an encrypted password. Encrypted passwords have to be enclosed in brackets and should be quoted in yaml. Encrypted passwords are decrypted using com.adobe.granite.crypto.CryptoSupport by AC Tool during installation. You rarely need to use this option as in most cases the random password is sufficient. This option is supported since version 3.0.4. | optional
+keys | Public/Private key pairs which will be added to the user's key store. The key store is transparently created if it does not exist yet during installation (with a random password). Useful in the context of configuring [Adobe IO in AEM](https://docs.adobe.com/content/help/en/experience-manager-learn/foundation/authentication/set-up-public-private-keys-for-use-with-aem-and-adobe-io.html) e.g. for [Adobe Launch via Adobe IO](https://helpx.adobe.com/experience-manager/using/aem_launch_adobeio_integration.html) or for the [SAML Integration in AEM](https://helpx.adobe.com/experience-manager/6-5/sites/administering/using/saml-2-0-authenticationhandler.html). In general useful whenever the [AEM KeyStoreService](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/reference-materials/javadoc/com/adobe/granite/keystore/KeyStoreService.html) is being used. This property contains a number of keys, identified via their alias. The format of each key is described below. All encrypted private keys are decrypted before being added to the (encrypted) keystore. That means after they have been imported in AEM only the keystore password is necessary to access those.  | optional
 
 Example:
 
