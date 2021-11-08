@@ -38,8 +38,6 @@ import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +48,6 @@ import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
-import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 @Component
@@ -63,8 +60,8 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
 
     private Map<String, Set<AceBean>> actionsToPrivilegesMapping = new ConcurrentHashMap<String, Set<AceBean>>();
 
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
-    volatile AemCqActionsSupport aemCqActionsSupport;
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    AemCqActionsSupport aemCqActionsSupport;
     
     /** Installs a full set of ACE beans that form an ACL for the path
      * 
@@ -367,11 +364,6 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
 
         if (origAceBean.getActionMap().isEmpty()) {
             return;
-        }
-
-        if (aemCqActionsSupport == null) {
-            throw new IllegalArgumentException(
-                    "actions can only be used when using AC Tool in AEM (package com.day.cq.security.util with class CqActions is not available)");
         }
 
         AemCqActions cqActions = aemCqActionsSupport.getCqActions(session);

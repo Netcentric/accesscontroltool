@@ -8,10 +8,11 @@
  */
 package biz.netcentric.cq.tools.actool.validators;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.security.AccessControlManager;
@@ -20,12 +21,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.aem.AemCqActionsSupportImpl;
+
 public class Validators {
 
     private static final Logger LOG = LoggerFactory.getLogger(Validators.class);
-
-    // Constant here to avoid reference to com.day.cq.security.util.CqActions.ACTIONS  
-    public static final String[] CQ_ACTIONS = new String[] { "read", "modify", "create", "delete", "acl_read", "acl_edit", "replicate" };
 
     public static boolean isValidNodePath(final String path) {
         if (StringUtils.isBlank(path)) {
@@ -70,7 +70,7 @@ public class Validators {
     }
 
     public static boolean isValidAction(String action) {
-    	List<String> validActions = Arrays.asList(CQ_ACTIONS);
+        List<String> validActions = Stream.of(AemCqActionsSupportImpl.CqActions.values()).map(Enum::name).collect(Collectors.toList());
         if (action == null) {
             return false;
         }

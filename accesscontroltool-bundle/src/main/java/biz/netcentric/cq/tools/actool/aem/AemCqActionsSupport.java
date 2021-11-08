@@ -18,7 +18,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.security.Privilege;
 
-/** OSGi service that encapsulates the usage of class CqAction in AC Tool. If not available (e.g. for the Sling use case), "actions" will not be supported but only "privileges". */
+/** OSGi service that replicates the CqAction functionality in AC Tool. */
 public interface AemCqActionsSupport {
 
     public static interface AemCqActions {

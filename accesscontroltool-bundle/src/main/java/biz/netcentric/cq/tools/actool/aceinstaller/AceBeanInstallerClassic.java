@@ -32,8 +32,6 @@ import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,8 +50,8 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
 
     private static final Logger LOG = LoggerFactory.getLogger(AceBeanInstallerClassic.class);
 
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
-    volatile AemCqActionsSupport aemCqActionsSupport;
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    AemCqActionsSupport aemCqActionsSupport;
     
     /** Installs a full set of ACE beans that form an ACL for the path
      * 
@@ -136,11 +134,7 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
         if (actionMap.isEmpty()) {
             return acl;
         }
-        
-        if(aemCqActionsSupport==null) {
-            throw new IllegalArgumentException("actions can only be used when using AC Tool in AEM (package com.day.cq.security.util with class CqActions is not available)");
-        }
-        
+
         final AemCqActions cqActions = aemCqActionsSupport.getCqActions(session);
         final Collection<String> inheritedAllows = cqActions.getAllowedActions(
                 aceBean.getJcrPathForPolicyApi(), Collections.singleton(principal));
@@ -200,7 +194,6 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
         }
     }
 
-    @SuppressWarnings("unchecked")
     private List<AccessControlEntry> getModifiedAces(final JackrabbitAccessControlList oldAcl, JackrabbitAccessControlList newAcl)
             throws RepositoryException {
         final List<AccessControlEntry> oldAces = Arrays.asList(oldAcl.getAccessControlEntries());
