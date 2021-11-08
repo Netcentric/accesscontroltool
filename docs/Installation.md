@@ -4,19 +4,19 @@ The AC Tool [content package](https://jackrabbit.apache.org/filevault) contains 
 
 In addition, there needs to be another package containing the project/platform specific [AC Tool configuration](Configuration.md) which is typically part of the regular project source code and released along with it (e.g. as `myproject-permissions`).
 
-Due to the different nature of on-premise and cloud service infrastructure setup, the maven setup for installation of the two packages is slightly different (while the AC Tool configuration as such is compatible to both and can usually easily be lifted from on-premise to the cloud service).
+Due to the different nature of on-premise and cloud service infrastructure setup, the Maven setup for installation of the two packages is slightly different (while the AC Tool configuration as such is compatible with both setups and can usually easily be lifted from on-premise to the cloud service).
 
 ## Installation AEM On-Premise
 
-For AEM 6.4/6.5 use the following appraoch:
+For AEM 6.4/6.5 use the following approach:
 
-* Use a complete package that contains all project-related packages as sub package (hence in `/etc/packages`)
-* Include the `accesscontroltool-package` *without* the `cloud` classifier (this has the [Sling Installer Provider Install Hook](https://sling.apache.org/documentation/bundles/installer-provider-installhook.html) in place)
+* Use a [container package](https://jackrabbit.apache.org/filevault/packagetypes.html) that contains all project-related packages as sub package (hence in `/etc/packages`)
+* Include the `accesscontroltool-package` *without* the `cloud` classifier (this leverages the [Sling Installer Provider Install Hook](https://sling.apache.org/documentation/bundles/installer-provider-installhook.html) )
 * Include the permissions package containing the project/platform specific [AC Tool configuration](Configuration.md)
  * Ensure this permissions package declares the [dependency](#declaring-the-dependency) correctly
 
 
-Use the package with the GAV 
+Use the package with the following Maven coordinates:
 
 ```
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
@@ -28,15 +28,15 @@ without the `cloud` classifier.
 
 ## Installation AEM Cloud Service
 
-For AEMaaCS use the use the following appraoch:
+For AEMaaCS use the use the following approach:
 
-* Use an `all` package that contains all project-related packages as embedds (hence in `/apps`)
+* Use a  container package that contains all project-related packages as embedded artifacts (hence in `/apps`)
 * Include the `accesscontroltool-package` *with* the `cloud` classifier (this contains the startup hook bundle for installation)
 * Include the permissions package containing the project/platform specific [AC Tool configuration](Configuration.md)
  * Ensure this permissions package declares the [dependency](#declaring-the-dependency) correctly
 
 
-Use the package with the GAV and classifier `cloud`:
+Use the package with the group id, artifact id and classifier `cloud`:
  
 ```
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
@@ -109,4 +109,4 @@ You can get the content package containing the [index definition](http://jackrab
 ```
 (for AEM as a Cloud Service)
 
-Install it afterwards e.g. via AEM's package manager.
+Install it afterwards e.g. via AEM's package manager or embed it in your container package.

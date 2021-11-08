@@ -37,9 +37,9 @@ For quick ad hoc testing and getting to know the AC Tool, the easiest is to
 
 * Install the latest version via AEM's package manager
 * Create a sample YAML file in CRXDE (e.g. `/apps/actool-test/test.yaml`)
-* Apply this config using the UI (see [User Interface](#user-interface) below
+* Apply this config using the UI (see [User Interface](#user-interface) below)
 
-For properly integrating the AC Tool in the development process see [Installation](docs/Installation.md).
+For properly integrating the AC Tool in your own deployment package see [Installation](docs/Installation.md).
 
 # Configuration of the AC Tool
 
@@ -49,7 +49,7 @@ There are also some [advanced configuration options](docs/AdvancedFeatures.md) s
 
 # User Interface
 
-There is a Felix Web Console plugin (at `/system/console/actool`) as well as a Touch UI console (at `/mnt/overlay/netcentric/actool/content/overview.html`) to apply configurations and to inspect previous executions of the tool. Additionally there is a [JMX interface](docs/Jmx.md) interface for some advanced use cases.
+There is a Felix Web Console plugin (at `/system/console/actool`) as well as a Touch UI console (at `/mnt/overlay/netcentric/actool/content/overview.html`) to apply configurations and to inspect previous executions of the tool. Additionally there is a [JMX interface](docs/Jmx.md) for some advanced use cases.
 
 # Applying a AC Tool Configurations
 
