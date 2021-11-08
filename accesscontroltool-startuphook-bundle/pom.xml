@@ -51,12 +51,6 @@
             <artifactId>org.osgi.framework</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- required for https://issues.apache.org/jira/browse/SLING-5456, only available in AEM 6.3+ -->
-        <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.jcr.api</artifactId>
-            <scope>provided</scope>
-       </dependency>
        <dependency>
             <groupId>javax.jcr</groupId>
             <artifactId>jcr</artifactId>
