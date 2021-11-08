@@ -8,6 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.helper;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -42,9 +43,16 @@ public class ValidatorsTest {
         assertFalse(Validators.isValidAuthorizableId(null));
     }
 
+    // Constant CqActions.ACTIONS is optional at runtime (and cannot be inlined as arrays are not inlined) - check if the dependency
+    // available at test time has the exact same allowed CQ Actions
+    @Test
+    public void ensureValidatorsCqActionsAreComplete() {
+        assertArrayEquals(CqActions.ACTIONS, Validators.CQ_ACTIONS);
+    }
+
     @Test
     public void isValidActionTest() {
-        String[] actionStrings = CqActions.ACTIONS;
+        String[] actionStrings = Validators.CQ_ACTIONS;
 
         for (String action : actionStrings) {
             assertTrue(Validators.isValidAction(action));

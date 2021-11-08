@@ -20,12 +20,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.day.cq.security.util.CqActions;
-
 public class Validators {
 
     private static final Logger LOG = LoggerFactory.getLogger(Validators.class);
-    
+
+    // Constant here to avoid reference to com.day.cq.security.util.CqActions.ACTIONS  
+    public static final String[] CQ_ACTIONS = new String[] { "read", "modify", "create", "delete", "acl_read", "acl_edit", "replicate" };
+
     public static boolean isValidNodePath(final String path) {
         if (StringUtils.isBlank(path)) {
             return true; // repository level permissions are created with 'left-out' path property
@@ -69,7 +70,7 @@ public class Validators {
     }
 
     public static boolean isValidAction(String action) {
-    	List<String> validActions = Arrays.asList(CqActions.ACTIONS /* package com.day.cq.security.util is optional but constant is guaranteed to be inlined at compile time */);
+    	List<String> validActions = Arrays.asList(CQ_ACTIONS);
         if (action == null) {
             return false;
         }
