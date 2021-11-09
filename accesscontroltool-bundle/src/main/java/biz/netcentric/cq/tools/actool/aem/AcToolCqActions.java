@@ -30,7 +30,7 @@ import com.day.cq.replication.Replicator;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 
-/** Mimics the behaviour of the now deprecated <a href="https://www.adobe.io/experience-manager/reference-materials/6-5/javadoc/com/day/cq/security/util/CqActions.html">CqActions</a> class (behaviour should be in line with cq-security-5.6.2.  */
+/** Mimics the behaviour of the now deprecated <a href="https://www.adobe.io/experience-manager/reference-materials/6-5/javadoc/com/day/cq/security/util/CqActions.html">CqActions</a> class (behaviour should be in line with cq-security-5.6.2.)  */
 public class AcToolCqActions {
 
     private static final Logger LOG = LoggerFactory.getLogger(AcToolCqActions.class);
