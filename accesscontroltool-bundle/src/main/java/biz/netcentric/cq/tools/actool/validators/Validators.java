@@ -21,7 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.aem.AemCqActionsSupportImpl;
+import biz.netcentric.cq.tools.actool.aem.AcToolCqActions;
 
 public class Validators {
 
@@ -70,7 +70,7 @@ public class Validators {
     }
 
     public static boolean isValidAction(String action) {
-        List<String> validActions = Stream.of(AemCqActionsSupportImpl.CqActions.values()).map(Enum::name).collect(Collectors.toList());
+        List<String> validActions = Stream.of(AcToolCqActions.CqActions.values()).map(Enum::name).collect(Collectors.toList());
         if (action == null) {
             return false;
         }

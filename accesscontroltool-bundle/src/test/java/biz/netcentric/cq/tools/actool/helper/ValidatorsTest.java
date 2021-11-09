@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 
 import org.junit.Test;
 
-import biz.netcentric.cq.tools.actool.aem.AemCqActionsSupportImpl;
+import biz.netcentric.cq.tools.actool.aem.AcToolCqActions;
 import biz.netcentric.cq.tools.actool.validators.Validators;
 
 public class ValidatorsTest {
@@ -47,7 +47,7 @@ public class ValidatorsTest {
 
     @Test
     public void isValidActionTest() {
-        List<String> actionStrings = Stream.of(AemCqActionsSupportImpl.CqActions.values()).map(Enum::name).collect(Collectors.toList());
+        List<String> actionStrings = Stream.of(AcToolCqActions.CqActions.values()).map(Enum::name).collect(Collectors.toList());
 
         for (String action : actionStrings) {
             assertTrue(Validators.isValidAction(action));

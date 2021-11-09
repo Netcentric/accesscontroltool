@@ -31,13 +31,10 @@ import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.aem.AemCqActionsSupport;
-import biz.netcentric.cq.tools.actool.aem.AemCqActionsSupport.AemCqActions;
+import biz.netcentric.cq.tools.actool.aem.AcToolCqActions;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.RestrictionsHolder;
@@ -50,8 +47,6 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
 
     private static final Logger LOG = LoggerFactory.getLogger(AceBeanInstallerClassic.class);
 
-    @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    AemCqActionsSupport aemCqActionsSupport;
     
     /** Installs a full set of ACE beans that form an ACL for the path
      * 
@@ -135,8 +130,8 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
             return acl;
         }
 
-        final AemCqActions cqActions = aemCqActionsSupport.getCqActions(session);
-        final Collection<String> inheritedAllows = cqActions.getAllowedActions(
+        AcToolCqActions cqActions = new AcToolCqActions(session);
+        Collection<String> inheritedAllows = cqActions.getAllowedActions(
                 aceBean.getJcrPathForPolicyApi(), Collections.singleton(principal));
         // this does always install new entries
         cqActions.installActions(aceBean.getJcrPathForPolicyApi(), principal, actionMap, inheritedAllows);
@@ -214,8 +209,8 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
      * @throws RepositoryException */
     private Set<String> removeRedundantPrivileges(Session session, String[] privileges, String[] actions)
             throws RepositoryException {
-        final AemCqActions cqActions = aemCqActionsSupport.getCqActions(session);
-        final Set<String> cleanedPrivileges = new HashSet<String>();
+        AcToolCqActions cqActions = new AcToolCqActions(session);
+        Set<String> cleanedPrivileges = new HashSet<String>();
         if (privileges == null) {
             return cleanedPrivileges;
         }

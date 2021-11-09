@@ -42,8 +42,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import biz.netcentric.cq.tools.actool.aem.AemCqActionsSupport;
-import biz.netcentric.cq.tools.actool.aem.AemCqActionsSupport.AemCqActions;
+import biz.netcentric.cq.tools.actool.aem.AcToolCqActions;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
@@ -60,9 +59,6 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
 
     private Map<String, Set<AceBean>> actionsToPrivilegesMapping = new ConcurrentHashMap<String, Set<AceBean>>();
 
-    @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    AemCqActionsSupport aemCqActionsSupport;
-    
     /** Installs a full set of ACE beans that form an ACL for the path
      * 
      * @throws RepositoryException */
@@ -366,7 +362,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
             return;
         }
 
-        AemCqActions cqActions = aemCqActionsSupport.getCqActions(session);
+        AcToolCqActions cqActions = new AcToolCqActions(session);
         Collection<String> inheritedAllows = cqActions.getAllowedActions(origAceBean.getJcrPathForPolicyApi(),
                 Collections.singleton(principal));
         // this does always install new entries
@@ -396,11 +392,11 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
     }
 
     boolean definesContent(String pagePath, Session session) throws RepositoryException {
-        if (pagePath == null || pagePath.equals("/") || aemCqActionsSupport==null) {
+        if (pagePath == null || pagePath.equals("/")) {
             return false;
         }
         try {
-            return aemCqActionsSupport.definesContent(session.getNode(pagePath));
+            return AcToolCqActions.definesContent(session.getNode(pagePath));
         } catch (PathNotFoundException e) {
             return false;
         }
