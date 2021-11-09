@@ -179,11 +179,16 @@ public class AuthorizableInstallerServiceImpl implements
         }
 
         if (authorizableConfigBean.getKeys() != null) {
-            installKeys(authorizableConfigBean.isAppendToKeyStore(), (User)authorizableToInstall,  authorizableConfigBean.getKeys(), authorizableId, session, installLog);
+            try {
+                installKeys(authorizableConfigBean.isAppendToKeyStore(), (User)authorizableToInstall,  authorizableConfigBean.getKeys(), authorizableId, decryptionService.decrypt(authorizableConfigBean.getKeyStorePassword()), session, installLog);
+            } catch (UnsupportedOperationException e) {
+                throw new AuthorizableCreatorException(
+                        "Could not decrypt key store password for user " + authorizableConfigBean.getAuthorizableId() + ": " + e.getMessage(), e);
+            }
         }
     }
 
-    private void installKeys(boolean appendToKeyStore, User user, Map<String, Key> keys, String userId, Session session, InstallationLogger installLog) throws LoginException, SlingIOException, SecurityException, KeyStoreNotInitialisedException, IOException, GeneralSecurityException, UnsupportedRepositoryOperationException, RepositoryException {
+    private void installKeys(boolean appendToKeyStore, User user, Map<String, Key> keys, String userId, String keyStorePassword, Session session, InstallationLogger installLog) throws LoginException, SlingIOException, SecurityException, KeyStoreNotInitialisedException, IOException, GeneralSecurityException, UnsupportedRepositoryOperationException, RepositoryException {
         Map<String, Object> authInfo = new HashMap<>();
         authInfo.put(JcrResourceConstants.AUTHENTICATION_INFO_SESSION, session);
         ResourceResolver resolver = resourceResolverFactory.getResourceResolver(authInfo);
@@ -192,7 +197,7 @@ public class AuthorizableInstallerServiceImpl implements
                 // always remove old store to start from scratch
                 removeKeyStore(resolver, user, installLog);
             }
-            installKeys(keys, userId, resolver, installLog);
+            installKeys(keys, userId, keyStorePassword, resolver, installLog);
         } finally {
             // the underlying session is not closed(!)
             resolver.close();
@@ -210,15 +215,26 @@ public class AuthorizableInstallerServiceImpl implements
         }
     }
 
-    private void installKeys(Map<String, Key> keys, String userId, ResourceResolver resourceResolver, InstallationLogger installLog) throws SlingIOException, SecurityException, KeyStoreNotInitialisedException, IOException, GeneralSecurityException {
+    private void installKeys(Map<String, Key> keys, String userId, String keyStorePassword, ResourceResolver resourceResolver, InstallationLogger installLog) throws SlingIOException, SecurityException, KeyStoreNotInitialisedException, IOException, GeneralSecurityException {
         if (keyStoreService == null) {
             throw new IllegalStateException(
                     "Keys are used on the authorizable which require the AEM KeyStore Service which is missing.");
         }
         if (!keyStoreService.keyStoreExists(resourceResolver, userId)) {
-            char[] password = RandomPassword.generate(20);
-            keyStoreService.createKeyStore(resourceResolver, userId, password);
-            installLog.addMessage(LOG, "Created new key store with random password for user  '"+ userId +"'");
+            boolean isRandomPassword = false;
+            char[] keyStorePasswordCharArray;
+            if (keyStorePassword == null || keyStorePassword.isEmpty()) {
+                keyStorePasswordCharArray = RandomPassword.generate(20);
+                isRandomPassword = true;
+            } else {
+                keyStorePasswordCharArray = keyStorePassword.toCharArray();
+            }
+            keyStoreService.createKeyStore(resourceResolver, userId, keyStorePasswordCharArray);
+            installLog.addMessage(LOG, "Created new key store with "+ (isRandomPassword ? "random" : "predefined") + " password for user  '"+ userId +"'");
+        } else {
+            if (keyStorePassword != null) {
+                installLog.addWarning(LOG, "Key store for user " + userId + " does already exist, ignoring configured 'keystorePassword'");
+            }
         }
         for (Entry<String, Key> entry : keys.entrySet()) {
             Certificate certificate = entry.getValue().getCertificate();
@@ -259,7 +275,7 @@ public class AuthorizableInstallerServiceImpl implements
             return decryptionService.decrypt(password);
         } catch (UnsupportedOperationException e) {
             throw new AuthorizableCreatorException(
-                    "Could not decrypt password for user " + authorizableConfigBean.getAuthorizableId() + ": " + e);
+                    "Could not decrypt password for user " + authorizableConfigBean.getAuthorizableId() + ": " + e.getMessage(), e);
         }
     }
 

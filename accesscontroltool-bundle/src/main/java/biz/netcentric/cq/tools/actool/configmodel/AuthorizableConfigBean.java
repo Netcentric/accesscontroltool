@@ -55,6 +55,7 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     private boolean virtual;
     private boolean appendToKeyStore;
+    private String keyStorePassword;
     private Map<String, Key> keys;
     private List<String> impersonationAllowedFor;
 
@@ -301,7 +302,15 @@ public class AuthorizableConfigBean implements AcDumpElement {
     public void setImpersonationAllowedFor(List<String> impersonationAllowedFor) {
         this.impersonationAllowedFor = impersonationAllowedFor;
     }
-    
+
+    public String getKeyStorePassword() {
+        return keyStorePassword;
+    }
+
+    public void setKeyStorePassword(String keyStorePassword) {
+        this.keyStorePassword = keyStorePassword;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();

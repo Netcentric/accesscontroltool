@@ -92,7 +92,7 @@ public class YamlConfigReader implements ConfigReader {
     private static final String USER_CONFIG_DISABLED = "disabled";
     private static final String USER_CONFIG_KEYS = "keys";
     private static final String USER_CONFIG_APPEND_TO_KEYSTORE = "appendToKeyStore";
-
+    private static final String USER_CONFIG_KEYSTORE_PASSWORD = "keyStorePassword";
     private static final String USER_CONFIG_KEY_PUBLIC = "public";
     private static final String USER_CONFIG_KEY_PRIVATE_PASSWORD = "privatePassword";
     private static final String USER_CONFIG_KEY_PRIVATE = "private";
@@ -456,7 +456,10 @@ public class YamlConfigReader implements ConfigReader {
                 throw new InvalidAuthorizableException("Field '" + USER_CONFIG_IMPERSONATION_ALLOWED_FOR + "' must be a list (yaml list or comma-separated string) but is a " + configObjImpersonationAllowedFor.getClass());
             }
         }
-        
+        String keystorePassword = getMapValueAsString(currentPrincipalDataMap, USER_CONFIG_KEYSTORE_PASSWORD);
+        if (!keystorePassword.isEmpty()) {
+            authorizableConfigBean.setKeyStorePassword(keystorePassword);
+        }
     }
 
     private void setupAuthorizableKeys(final AuthorizableConfigBean authorizableConfigBean, Map<String, Object> keys) throws InvalidAuthorizableException, IOException, GeneralSecurityException {
