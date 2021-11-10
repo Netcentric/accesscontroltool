@@ -11,11 +11,14 @@ package biz.netcentric.cq.tools.actool.helper;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.junit.Test;
 
+import biz.netcentric.cq.tools.actool.aem.AcToolCqActions;
 import biz.netcentric.cq.tools.actool.validators.Validators;
-
-import com.day.cq.security.util.CqActions;
 
 public class ValidatorsTest {
 
@@ -44,7 +47,7 @@ public class ValidatorsTest {
 
     @Test
     public void isValidActionTest() {
-        String[] actionStrings = CqActions.ACTIONS;
+        List<String> actionStrings = Stream.of(AcToolCqActions.CqActions.values()).map(Enum::name).collect(Collectors.toList());
 
         for (String action : actionStrings) {
             assertTrue(Validators.isValidAction(action));

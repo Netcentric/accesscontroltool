@@ -8,10 +8,11 @@
  */
 package biz.netcentric.cq.tools.actool.validators;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.security.AccessControlManager;
@@ -20,12 +21,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.day.cq.security.util.CqActions;
+import biz.netcentric.cq.tools.actool.aem.AcToolCqActions;
 
 public class Validators {
 
     private static final Logger LOG = LoggerFactory.getLogger(Validators.class);
-    
+
     public static boolean isValidNodePath(final String path) {
         if (StringUtils.isBlank(path)) {
             return true; // repository level permissions are created with 'left-out' path property
@@ -69,7 +70,7 @@ public class Validators {
     }
 
     public static boolean isValidAction(String action) {
-    	List<String> validActions = Arrays.asList(CqActions.ACTIONS /* package com.day.cq.security.util is optional but constant is guaranteed to be inlined at compile time */);
+        List<String> validActions = Stream.of(AcToolCqActions.CqActions.values()).map(Enum::name).collect(Collectors.toList());
         if (action == null) {
             return false;
         }

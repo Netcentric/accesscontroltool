@@ -57,7 +57,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
-import biz.netcentric.cq.tools.actool.aem.AemCqActionsSupportImpl;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.configreader.YamlConfigReader;
@@ -102,9 +101,6 @@ public class AceBeanInstallerIncrementalTest {
     @Mock
     SlingRepository slingRepository;
 
-    @Spy
-    AemCqActionsSupportImpl aemCqActionsSupport  = new AemCqActionsSupportImpl();
-    
     @Before
     public void setup() throws RepositoryException {
 
