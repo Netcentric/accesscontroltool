@@ -15,6 +15,7 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.commons.JcrUtils;
 import org.apache.jackrabbit.vault.fs.io.Archive;
 import org.apache.jackrabbit.vault.fs.io.Archive.Entry;
@@ -31,6 +32,8 @@ import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService
 public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfigFilesRetrieverImpl.class);
+
+    private static final String PACKAGE_BASE_PATH = "/jcr_root";
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ExtendedSlingSettingsService slingSettingsService;
@@ -70,7 +73,8 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
             }
             if (isRelevantConfiguration(entry, configFileOrDir.getName(), slingSettingsService, configFilePatterns)) {
                 LOG.debug("Found relevant YAML file {}", entry.getName());
-                configs.put(entry.getPath(), entry.getContentAsString());
+                String pathWithoutJcrRoot = StringUtils.removeStart(entry.getPath(), PACKAGE_BASE_PATH);
+                configs.put(pathWithoutJcrRoot, entry.getContentAsString());
             }
         }
         return configs;
