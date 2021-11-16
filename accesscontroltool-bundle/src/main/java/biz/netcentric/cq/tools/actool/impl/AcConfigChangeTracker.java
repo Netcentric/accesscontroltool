@@ -41,7 +41,7 @@ public class AcConfigChangeTracker {
                 }
                 
                 acHistoryNode.setProperty(executionKey, hashOfConfigFilesThisExecution);
-                // save upon regular session save at the very end
+                session.save(); // save directly to avoid parallel executions of the exact same config in AEMaaCS 
             } else {
                 LOG.debug("Node {} does not exist yet", HistoryUtils.ACHISTORY_PATH);
             }
