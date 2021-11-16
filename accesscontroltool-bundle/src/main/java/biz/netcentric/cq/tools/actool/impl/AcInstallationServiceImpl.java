@@ -295,6 +295,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             sw.stop();
             long executionTime = sw.getTime();
             installLog.setExecutionTime(executionTime);
+            installLog.addVerboseMessage(LOG, "Finished at bundle start level " + RuntimeHelper.getCurrentStartLevel());
             installLog.addMessage(LOG, "Successfully applied AC Tool configuration in " + msHumanReadable(executionTime));
         } catch (Exception e) {
             installLog.addError("Could not process yaml files", e); // ensure exception is added to installLog before it's persisted in log in finally clause
