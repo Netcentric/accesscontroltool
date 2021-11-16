@@ -97,6 +97,11 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
                 Group memberOfGroup = declaredMemberOf.next();
                 String memberOfGroupId = memberOfGroup.getID();
                 isMemberOfByAuthorizableId.get(authId).add(memberOfGroupId);
+                if (!nonRegularUserMembersByAuthorizableId.containsKey(memberOfGroupId)) {
+                    throw new IllegalStateException("Group '" + memberOfGroupId
+                            + "' is not returned by query /jcr:root/home//element(*,rep:Authorizable)[(@jcr:primaryType!='rep:User' or @rep:authorizableId='anonymous')] "
+                            + "(as internally used by userManager.findAuthorizables()) - most likely there is a corrupt index on your platform.");
+                }
                 nonRegularUserMembersByAuthorizableId.get(memberOfGroupId).add(authId);
                 membershipCount++;
             }
