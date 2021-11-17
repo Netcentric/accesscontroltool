@@ -1,3 +1,2 @@
 Bundle-SymbolicName: biz.netcentric.cq.tools.accesscontroltool.startuphook.bundle
-Bundle-Activator: biz.netcentric.cq.tools.actool.startuphook.impl.StartupBundleActivator
 Conditional-Package: biz.netcentric.cq.tools.actool.helper.runtime

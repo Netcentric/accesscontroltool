@@ -51,7 +51,7 @@
             <artifactId>org.osgi.framework</artifactId>
             <scope>provided</scope>
         </dependency>
-        <dependency>
+       <dependency>
             <groupId>javax.jcr</groupId>
             <artifactId>jcr</artifactId>
             <scope>provided</scope>
