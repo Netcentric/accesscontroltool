@@ -41,6 +41,8 @@ import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
 public class AcToolStartupHookServiceImpl {
     private static final Logger LOG = LoggerFactory.getLogger(AcToolStartupHookServiceImpl.class);
 
+    private static final String THREAD_NAME_ASYNC = "actool-async";
+
     @ObjectClassDefinition(name = "AC Tool Startup Hook", description = "Applies AC Tool config automatically upon startup (depending on configuration/runtime)")
     public static @interface Config {
         public enum StartupHookActivation {
@@ -49,8 +51,11 @@ public class AcToolStartupHookServiceImpl {
 
         @AttributeDefinition(name = "Activation Mode", description = "Apply on startup - CLOUD_ONLY autodetects the cloud (by missing OSGi installer bundle) and only runs on startup if deployed in the cloud. ALWAYS can be useful for local testing. NEVER disables AC Tool runs on startup entirely.")
         StartupHookActivation activationMode() default StartupHookActivation.CLOUD_ONLY;
+
+        @AttributeDefinition(name = "Async for Mutable Content", description = "Will execute on the mutable content asynchronously using a Sling Job")
+        boolean runAsyncForMutableConent() default false;
     }
-    
+
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private AcInstallationService acInstallationService;
 
@@ -64,43 +69,65 @@ public class AcToolStartupHookServiceImpl {
 
         boolean isCloudReady = RuntimeHelper.isCloudReadyInstance();
         Config.StartupHookActivation activationMode = config.activationMode();
-        LOG.info("AcTool Startup Hook (start level: {}  isCloudReady: {}  activationMode: {})", 
-                RuntimeHelper.getCurrentStartLevel(bundleContext),
+        boolean runAsyncForMutableConent = config.runAsyncForMutableConent();
+        int currentStartLevel = RuntimeHelper.getCurrentStartLevel(bundleContext);
+        LOG.info("AcTool Startup Hook (start level: {}  isCloudReady: {}  activationMode: {}  runAsyncForMutableConent: {})",
+                currentStartLevel,
                 isCloudReady,
-                activationMode);
+                activationMode,
+                runAsyncForMutableConent);
 
-        boolean applyOnStartup = (activationMode == Config.StartupHookActivation.ALWAYS) 
+        boolean applyOnStartup = (activationMode == Config.StartupHookActivation.ALWAYS)
                 || (isCloudReady && activationMode == Config.StartupHookActivation.CLOUD_ONLY);
 
-        if(applyOnStartup) {
+        if (applyOnStartup) {
+
+            List<String> relevantPathsForInstallation = getRelevantPathsForInstallation();
+            LOG.info("Running AcTool with "
+                    + (relevantPathsForInstallation.isEmpty() ? "all paths" : "paths " + relevantPathsForInstallation) + "...");
             
-            try {
-
-                List<String> relevantPathsForInstallation = getRelevantPathsForInstallation();
-                LOG.info("Running AcTool with "
-                        + (relevantPathsForInstallation.isEmpty() ? "all paths" : "paths " + relevantPathsForInstallation) + "...");
-                acInstallationService.apply(null, relevantPathsForInstallation.toArray(new String[relevantPathsForInstallation.size()]),
-                        true);
-                LOG.info("AC Tool Startup Hook done. (start level " + RuntimeHelper.getCurrentStartLevel(bundleContext) + ")");
-
-                copyAcHistoryToOrFromApps(isCloudReady);
-
-            } catch (RepositoryException e) {
-                LOG.error("Exception while triggering AC Tool on startup: " + e, e);
+            if (runAsyncForMutableConent && isCompositeNodeStore) {
+                LOG.info(
+                        "Running AcTool asynchronously on mutable content of composite node store (config runAsyncForMutableConent=true)...");
+                runAcToolAsync(relevantPathsForInstallation, currentStartLevel, isCloudReady);
+            } else {
+                runAcTool(relevantPathsForInstallation, currentStartLevel, isCloudReady);
             }
+
         } else {
             LOG.debug("Skipping AcTool Startup Hook: activationMode: {} isCloudReady: {}", activationMode, isCloudReady);
         }
 
     }
 
-    private List<String> getRelevantPathsForInstallation() throws RepositoryException {
+    private void runAcTool(List<String> relevantPathsForInstallation, int currentStartLevel, boolean isCloudReady) {
+
+        acInstallationService.apply(null, relevantPathsForInstallation.toArray(new String[relevantPathsForInstallation.size()]),
+                true);
+        LOG.info("AC Tool Startup Hook done. (start level {})", currentStartLevel);
+
+        copyAcHistoryToOrFromApps(isCloudReady);
+
+    }
+
+    private void runAcToolAsync(final List<String> relevantPathsForInstallation, final int currentStartLevel, final boolean isCloudReady) {
+
+        final AcToolStartupHookServiceImpl startupHook = this;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                startupHook.runAcTool(relevantPathsForInstallation, currentStartLevel, isCloudReady);
+            }
+        }, THREAD_NAME_ASYNC).start();
+    }
+
+    private List<String> getRelevantPathsForInstallation() {
         Session session = null;
         try {
             session = repository.loginService(null, null);
 
             isCompositeNodeStore = RuntimeHelper.isCompositeNodeStore(session);
-            LOG.info("Repo is running with Composite NodeStore: " + isCompositeNodeStore);
+            LOG.info("Repo is running with Composite NodeStore: {}", isCompositeNodeStore);
             
             if(!isCompositeNodeStore) {
                 return Collections.emptyList();
@@ -131,6 +158,8 @@ public class AcToolStartupHookServiceImpl {
 
             return relevantPathsForInstallation;
 
+        } catch (RepositoryException e) {
+            throw new IllegalStateException("Could not retrieve relevant base paths for AC Tool installation: " + e, e);
         } finally {
             if (session != null) {
                 session.logout();
@@ -152,7 +181,7 @@ public class AcToolStartupHookServiceImpl {
                         NodeIterator nodesInAppsIt = session.getNode(HistoryUtils.AC_HISTORY_PATH_IN_APPS).getNodes();
                         while(nodesInAppsIt.hasNext()) {
                             Node historyNodeInApps = nodesInAppsIt.nextNode();
-                            String historyNodeInVarPath = HistoryUtils.ACHISTORY_PATH + "/"+ historyNodeInApps.getName();
+                            String historyNodeInVarPath = HistoryUtils.ACHISTORY_PATH + "/" + historyNodeInApps.getName();
                             if(!session.nodeExists(historyNodeInVarPath)) {
                                 LOG.info("   restoring history node {} to {}", historyNodeInApps.getPath(), historyNodeInVarPath);
                                 session.getWorkspace().copy(historyNodeInApps.getPath(), historyNodeInVarPath);
