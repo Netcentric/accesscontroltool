@@ -52,8 +52,8 @@ public class AcToolStartupHookServiceImpl {
         @AttributeDefinition(name = "Activation Mode", description = "Apply on startup - CLOUD_ONLY autodetects the cloud (by missing OSGi installer bundle) and only runs on startup if deployed in the cloud. ALWAYS can be useful for local testing. NEVER disables AC Tool runs on startup entirely.")
         StartupHookActivation activationMode() default StartupHookActivation.CLOUD_ONLY;
 
-        @AttributeDefinition(name = "Async for Mutable Content", description = "Will execute on the mutable content asynchronously using a Sling Job")
-        boolean runAsyncForMutableConent() default false;
+        @AttributeDefinition(name = "Async for Mutable Content", description = "Will execute on the mutable content asynchronously")
+        boolean runAsyncForMutableConent() default true;
     }
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
