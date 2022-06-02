@@ -24,7 +24,7 @@
     <description>The OSGi bundle containing all classes of the Access Control Tool.</description>
     
     <properties>
-        <tomcat.el.version>10.0.12</tomcat.el.version>
+        <tomcat.el.version>10.0.21</tomcat.el.version>
     </properties>
 
     <dependencies>
