@@ -8,7 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.validators;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -29,8 +29,8 @@ import javax.jcr.security.AccessControlPolicy;
 
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.sling.jcr.api.SlingRepository;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
@@ -39,7 +39,6 @@ import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
 import biz.netcentric.cq.tools.actool.configreader.TestAceBean;
 import biz.netcentric.cq.tools.actool.configreader.TestYamlConfigReader;
-import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
 import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
@@ -69,7 +68,7 @@ public class RestrictionValidationTest {
     List<AceBean> aceBeanList = new ArrayList<AceBean>();
     List<AuthorizableConfigBean> authorizableBeanList = new ArrayList<AuthorizableConfigBean>();
 
-    @Before
+    @BeforeEach
     public void setup() throws IOException, RepositoryException,
             AcConfigBeanValidationException {
 

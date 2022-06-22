@@ -1,9 +1,9 @@
 package biz.netcentric.cq.tools.actool.configreader;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 

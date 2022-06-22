@@ -3,16 +3,17 @@ package biz.netcentric.cq.tools.actool.configreader;
 
 import static biz.netcentric.cq.tools.actool.configreader.YamlConfigurationMergerTest.getAcConfigurationForFile;
 import static biz.netcentric.cq.tools.actool.configreader.YamlConfigurationMergerTest.getConfigurationMerger;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import javax.jcr.Session;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
@@ -31,27 +32,27 @@ public class VirtualGroupProcessorTest {
 
         assertNotNull(acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupBase"));
 
-        assertNull("virtual group must be gone", acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupVirtual"));
+        assertNull(acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupVirtual"), "virtual group must be gone");
 
         AuthorizableConfigBean group1UsingVirtual = acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("group1UsingVirtual");
         assertNotNull(group1UsingVirtual);
-        assertTrue("isMemberOf should now contain 'groupBase' instead of 'groupVirtual'",
-                ArrayUtils.contains(group1UsingVirtual.getIsMemberOf(), "groupBase"));
-        assertFalse("isMemberOf should not contain 'groupVirtual' anymore",
-                ArrayUtils.contains(group1UsingVirtual.getIsMemberOf(), "groupVirtual"));
+        assertTrue(ArrayUtils.contains(group1UsingVirtual.getIsMemberOf(), "groupBase"),
+                "isMemberOf should now contain 'groupBase' instead of 'groupVirtual'");
+        assertFalse(ArrayUtils.contains(group1UsingVirtual.getIsMemberOf(), "groupVirtual"),
+                "isMemberOf should not contain 'groupVirtual' anymore");
         AuthorizableConfigBean group2UsingVirtual = acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("group2UsingVirtual");
         assertNotNull(group2UsingVirtual);
-        assertTrue("isMemberOf should now contain 'groupBase' instead of 'groupVirtual'",
-                ArrayUtils.contains(group2UsingVirtual.getIsMemberOf(), "groupBase"));
-        assertFalse("isMemberOf should not contain 'groupVirtual' anymore",
-                ArrayUtils.contains(group2UsingVirtual.getIsMemberOf(), "groupVirtual"));
+        assertTrue(ArrayUtils.contains(group2UsingVirtual.getIsMemberOf(), "groupBase"),
+                "isMemberOf should now contain 'groupBase' instead of 'groupVirtual'");
+        assertFalse(ArrayUtils.contains(group2UsingVirtual.getIsMemberOf(), "groupVirtual"),
+                "isMemberOf should not contain 'groupVirtual' anymore");
 
-        assertEquals("Number of authorizables", 3, acConfiguration.getAuthorizablesConfig().size());
+        assertEquals(3, acConfiguration.getAuthorizablesConfig().size(), "Number of authorizables");
 
-        assertEquals("Number of ACEs", 4, acConfiguration.getAceConfig().size());
+        assertEquals(4, acConfiguration.getAceConfig().size(), "Number of ACEs");
 
     }
-    
+
     @Test
     public void testVirtualGroupsInheritFromMultiple() throws Exception {
 
@@ -59,17 +60,17 @@ public class VirtualGroupProcessorTest {
 
         assertNotNull(acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupUsingVirtual"));
 
-        assertNull("virtual group must be gone", acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupVirtual1"));
-        assertNull("virtual group must be gone", acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupVirtual2"));
-        assertNull("virtual group must be gone", acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupVirtual3"));
+        assertNull(acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupVirtual1"), "virtual group must be gone");
+        assertNull(acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupVirtual2"), "virtual group must be gone");
+        assertNull(acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupVirtual3"), "virtual group must be gone");
 
-        assertEquals("Number of authorizables", 1, acConfiguration.getAuthorizablesConfig().size());
+        assertEquals(1, acConfiguration.getAuthorizablesConfig().size(), "Number of authorizables");
 
-        assertEquals("Number of ACEs", 5, acConfiguration.getAceConfig().size());
-        assertEquals("Number of ACEs", 5, acConfiguration.getAceConfig().filterByAuthorizableId("groupUsingVirtual").size());
-        
-    }    
-    
+        assertEquals(5, acConfiguration.getAceConfig().size(), "Number of ACEs");
+        assertEquals(5, acConfiguration.getAceConfig().filterByAuthorizableId("groupUsingVirtual").size(), "Number of ACEs");
+
+    }
+
 
     @Test
     public void testVirtualGroupsMultipleLevels() throws Exception {
@@ -79,28 +80,27 @@ public class VirtualGroupProcessorTest {
 
         assertNotNull(acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupBase"));
 
-        assertNull("virtual group must be gone", acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupVirtual1"));
-        assertNull("virtual group must be gone", acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupVirtual2"));
-        assertNull("virtual group must be gone", acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupVirtual3"));
+        assertNull(acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupVirtual1"), "virtual group must be gone");
+        assertNull(acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupVirtual3"), "virtual group must be gone");
+        assertNull(acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupVirtual2"), "virtual group must be gone");
 
         AuthorizableConfigBean groupUsingVirtual = acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupUsingVirtual");
         assertNotNull(groupUsingVirtual);
-        assertTrue("isMemberOf should now contain 'groupBase' instead of 'groupVirtual3'",
-                ArrayUtils.contains(groupUsingVirtual.getIsMemberOf(), "groupBase"));
-        assertFalse("isMemberOf should not contain 'groupVirtual3' anymore",
-                ArrayUtils.contains(groupUsingVirtual.getIsMemberOf(), "groupVirtual3"));
-        
+        assertTrue(ArrayUtils.contains(groupUsingVirtual.getIsMemberOf(), "groupBase"),
+                "isMemberOf should now contain 'groupBase' instead of 'groupVirtual3'");
+        assertFalse(ArrayUtils.contains(groupUsingVirtual.getIsMemberOf(), "groupVirtual3"),
+                "isMemberOf should not contain 'groupVirtual3' anymore");
+
         assertEquals(5, acConfiguration.getAceConfig().size());
         assertEquals(1, acConfiguration.getAceConfig().filterByAuthorizableId("groupBase").size());
         assertEquals(4, acConfiguration.getAceConfig().filterByAuthorizableId("groupUsingVirtual").size());
 
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testVirtualGroupsInvalidMembersAttribute() throws Exception {
-
-        getAcConfigurationForFile(getConfigurationMerger(), session, "test-virtualgroups-invalid-use-of-members.yaml");
-
+        assertThrows(IllegalArgumentException.class,
+                () -> getAcConfigurationForFile(getConfigurationMerger(), session, "test-virtualgroups-invalid-use-of-members.yaml"));
     }
 
 }

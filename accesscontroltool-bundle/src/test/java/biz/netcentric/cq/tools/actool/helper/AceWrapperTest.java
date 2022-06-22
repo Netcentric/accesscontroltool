@@ -8,8 +8,8 @@
  */
 package biz.netcentric.cq.tools.actool.helper;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -18,7 +18,7 @@ import javax.jcr.Value;
 
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.oak.spi.security.privilege.PrivilegeConstants;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests the AceWrapper
  * 

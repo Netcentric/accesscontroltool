@@ -8,12 +8,12 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anySetOf;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -22,12 +22,14 @@ import java.io.IOException;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.ConfigurationPlugin;
@@ -44,7 +46,7 @@ public class YamlConfigurationMergerTest {
     @Mock
     Session session;
 
-    @Before
+    @BeforeEach
     public void setup() {
         initMocks(this);
     }
@@ -69,30 +71,31 @@ public class YamlConfigurationMergerTest {
         assertEquals("groupA", groupAConfig.getAuthorizableId());
         String[] members = groupAConfig.getIsMemberOf();
 
-        assertArrayEquals("check if groups have been copied over into isMemberOf field",
-                new String[] { "groupB", "groupC", "groupD" }, members);
+        assertArrayEquals(new String[]{"groupB", "groupC", "groupD"}, members, "check if groups have been copied over into isMemberOf field");
         //
         AuthorizableConfigBean groupBConfig = acConfiguration.getAuthorizablesConfig().getAuthorizableConfig("groupB");
 
-        assertArrayEquals("ensure that members that were added to isMemberOf are removed from original members arr", new String[0],
-                groupBConfig.getMembers());
+        assertArrayEquals(new String[0], groupBConfig.getMembers(), "ensure that members that were added to isMemberOf are removed from original members arr");
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testReadInvalidYaml1() throws IOException, RepositoryException, AcConfigBeanValidationException {
-        getAcConfigurationForFile(getConfigurationMerger(), session, "test-invalid1.yaml");
+        assertThrows(IllegalArgumentException.class,
+                () -> getAcConfigurationForFile(getConfigurationMerger(), session, "test-invalid1.yaml"));
     }
 
-    @Test(expected = AcConfigBeanValidationException.class)
+    @Test
     public void testReadInvalidYaml2() throws IOException, RepositoryException, AcConfigBeanValidationException {
-        getAcConfigurationForFile(getConfigurationMerger(), session, "test-invalid2.yaml");
+        assertThrows(AcConfigBeanValidationException.class,
+                () -> getAcConfigurationForFile(getConfigurationMerger(), session, "test-invalid2.yaml"));
     }
 
-    @Test(expected = AcConfigBeanValidationException.class)
+    @Test
     public void testReadInvalidYaml3() throws IOException, RepositoryException, AcConfigBeanValidationException {
-        getAcConfigurationForFile(getConfigurationMerger(), session, "test-invalid3.yaml");
+        assertThrows(AcConfigBeanValidationException.class,
+                () -> getAcConfigurationForFile(getConfigurationMerger(), session, "test-invalid3.yaml"));
     }
-    
+
     @Test()
     public void testReadEmptyYaml() throws IOException, RepositoryException, AcConfigBeanValidationException {
         getAcConfigurationForFile(getConfigurationMerger(), session, "test-empty.yaml");
@@ -121,7 +124,7 @@ public class YamlConfigurationMergerTest {
             @Override
             public void modifyConfiguration(ServiceReference<?> reference, Dictionary<String, Object> properties) {
                 // replace all placeholders
-                String value = (String)properties.get(YamlConfigurationAdminPluginScalarConstructor.KEY);
+                String value = (String) properties.get(YamlConfigurationAdminPluginScalarConstructor.KEY);
                 String newValue = value.replaceAll("\\$\\[(env|secret|prop):([^\\]]*)\\]", "resolved-$2");
                 properties.put(YamlConfigurationAdminPluginScalarConstructor.KEY, newValue);
             }
@@ -143,7 +146,7 @@ public class YamlConfigurationMergerTest {
 
     public static YamlConfigurationMerger getConfigurationMerger() {
         YamlConfigurationMerger merger = spy(new YamlConfigurationMerger());
-        doReturn(null).when(merger).getAceBeanValidator(anySetOf(String.class));
+        doReturn(null).when(merger).getAceBeanValidator(ArgumentMatchers.<Set<String>>any());
         merger.yamlMacroProcessor = new YamlMacroProcessorImpl();
         merger.obsoleteAuthorizablesValidator = new ObsoleteAuthorizablesValidatorImpl();
         merger.virtualGroupProcessor = new VirtualGroupProcessor();

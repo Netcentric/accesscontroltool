@@ -8,10 +8,10 @@
  */
 package biz.netcentric.cq.tools.actool.aceinstaller;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -47,14 +47,16 @@ import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlManager;
 import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.apache.sling.jcr.api.SlingRepository;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.mockito.stubbing.Answer;
 
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
@@ -62,7 +64,8 @@ import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.configreader.YamlConfigReader;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class AceBeanInstallerIncrementalTest {
 
     private static final String FAKE_PRINCIPAL_ID = "author";
@@ -101,7 +104,7 @@ public class AceBeanInstallerIncrementalTest {
     @Mock
     SlingRepository slingRepository;
 
-    @Before
+    @BeforeEach
     public void setup() throws RepositoryException {
 
         doReturn(accessControlManager).when(session).getAccessControlManager();

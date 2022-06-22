@@ -1,14 +1,14 @@
 package biz.netcentric.cq.tools.actool.configmodel;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AuthorizablesConfigTest {
 
@@ -17,7 +17,7 @@ public class AuthorizablesConfigTest {
     AuthorizableConfigBean testgroupPartlyManaged;
     AuthorizableConfigBean beanEveryone;
 
-    @Before
+    @BeforeEach
     public void setup() {
         authorizablesConfig = new AuthorizablesConfig();
 

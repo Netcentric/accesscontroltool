@@ -9,11 +9,11 @@
 package biz.netcentric.cq.tools.actool.configreader;
 
 import static biz.netcentric.cq.tools.actool.configreader.YamlConfigReaderTest.getYamlList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -30,8 +30,8 @@ import java.util.regex.Matcher;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
@@ -58,11 +58,11 @@ public class YamlMacroProcessorTest {
     YamlMacroProcessorImpl yamlMacroProcessor = new YamlMacroProcessorImpl();
 
     Map<String, Object> globalVariables = new HashMap<>();
-    
-    @Before
+
+    @BeforeEach
     public void setup() {
         initMocks(this);
-        
+
         globalVariables.put(YamlConfigurationMerger.GLOBAL_VAR_RUNMODES, Arrays.asList("runmode1", "runmode2", "runmode3"));
     }
 
@@ -74,17 +74,17 @@ public class YamlMacroProcessorTest {
         yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
-        assertEquals("Number of groups", 10, groups.size());
-        assertEquals("Path of group", "/home/groups/BRAND1", groups.getAuthorizableConfig("content-BRAND1-reader").getPath());
-        assertEquals("Path of group", "/home/groups/BRAND1", groups.getAuthorizableConfig("content-BRAND1-writer").getPath());
-        assertEquals("Path of group", "/home/groups/BRAND2", groups.getAuthorizableConfig("content-BRAND2-reader").getPath());
-        assertEquals("Path of group", "/home/groups/BRAND2", groups.getAuthorizableConfig("content-BRAND2-writer").getPath());
-        assertEquals("Path of group", "/home/groups/BRAND3", groups.getAuthorizableConfig("content-BRAND3-reader").getPath());
-        assertEquals("Path of group", "/home/groups/BRAND3", groups.getAuthorizableConfig("content-BRAND3-writer").getPath());
+        assertEquals(10, groups.size(), "Number of groups");
+        assertEquals( "/home/groups/BRAND1", groups.getAuthorizableConfig("content-BRAND1-reader").getPath(), "Path of group");
+        assertEquals( "/home/groups/BRAND1", groups.getAuthorizableConfig("content-BRAND1-writer").getPath(), "Path of group");
+        assertEquals( "/home/groups/BRAND2", groups.getAuthorizableConfig("content-BRAND2-reader").getPath(), "Path of group");
+        assertEquals( "/home/groups/BRAND2", groups.getAuthorizableConfig("content-BRAND2-writer").getPath(), "Path of group");
+        assertEquals( "/home/groups/BRAND3", groups.getAuthorizableConfig("content-BRAND3-reader").getPath(), "Path of group");
+        assertEquals( "/home/groups/BRAND3", groups.getAuthorizableConfig("content-BRAND3-writer").getPath(), "Path of group");
 
-        assertEquals("Path of group", "/home/groups/VAR1", groups.getAuthorizableConfig("content-VAR1").getPath());
-        assertEquals("Path of group", "/home/groups/VAR2", groups.getAuthorizableConfig("content-VAR2").getPath());
-        assertEquals("Path of group", "/home/groups/VAR3", groups.getAuthorizableConfig("content-VAR3").getPath());
+        assertEquals( "/home/groups/VAR1", groups.getAuthorizableConfig("content-VAR1").getPath(), "Path of group");
+        assertEquals( "/home/groups/VAR2", groups.getAuthorizableConfig("content-VAR2").getPath(), "Path of group");
+        assertEquals( "/home/groups/VAR3", groups.getAuthorizableConfig("content-VAR3").getPath(), "Path of group");
 
     }
 
@@ -97,9 +97,9 @@ public class YamlMacroProcessorTest {
 
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
 
-        assertEquals("Number of groups", 13, groups.size());
-        assertEquals("Path of group", "/home/groups/BRAND1", groups.getAuthorizableConfig("content-BRAND1-reader").getPath());
-        assertEquals("Path of group", "/home/groups/BRAND1/MKT1", groups.getAuthorizableConfig("content-BRAND1-MKT1-writer").getPath());
+        assertEquals(13, groups.size(), "Number of groups");
+        assertEquals("/home/groups/BRAND1", groups.getAuthorizableConfig("content-BRAND1-reader").getPath(), "Path of group");
+        assertEquals("/home/groups/BRAND1/MKT1", groups.getAuthorizableConfig("content-BRAND1-MKT1-writer").getPath(), "Path of group");
     }
 
     @Test
@@ -110,15 +110,17 @@ public class YamlMacroProcessorTest {
         yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AcesConfig aces = readAceConfigs(yamlList);
-        assertEquals("Number of ACEs", 7, aces.size());
+        assertEquals(7, aces.size(), "Number of ACEs");
         final Set<AceBean> group1 = aces.filterByAuthorizableId("content-BRAND-MKT1-reader");
-        assertEquals("Number of ACEs for groupA", 1, group1.size());
+        assertEquals(1, group1.size(), "Number of ACEs for groupA");
         final Set<AceBean> group2 = aces.filterByAuthorizableId("content-BRAND-MKT2-writer");
-        assertEquals("Number of ACEs for groupB", 2, group2.size());
+        assertEquals(2, group2.size(), "Number of ACEs for groupB");
     }
 
-    /** @see <a href=
-     *      "https://github.com/Netcentric/accesscontroltool/issues/14">https://github.com/Netcentric/accesscontroltool/issues/14</a> */
+    /**
+     * @see <a href=
+     * "https://github.com/Netcentric/accesscontroltool/issues/14">https://github.com/Netcentric/accesscontroltool/issues/14</a>
+     */
     @Test
     public void testAceLoopWithHyphen() throws IOException, AcConfigBeanValidationException, RepositoryException {
 
@@ -127,15 +129,17 @@ public class YamlMacroProcessorTest {
         yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AcesConfig aces = readAceConfigs(yamlList);
-        assertEquals("Number of ACEs", 7, aces.size());
+        assertEquals(7, aces.size(), "Number of ACEs");
         final Set<AceBean> group1 = aces.filterByAuthorizableId("content-BRAND-MKT-1-reader");
-        assertEquals("Number of ACEs for groupA", 1, group1.size());
+        assertEquals(1, group1.size(), "Number of ACEs for groupA");
         final Set<AceBean> group2 = aces.filterByAuthorizableId("content-BRAND-MKT-2-writer");
-        assertEquals("Number of ACEs for groupB", 2, group2.size());
+        assertEquals(2, group2.size(), "Number of ACEs for groupB");
     }
-    
-    /** @see <a href=
-     *      "https://github.com/Netcentric/accesscontroltool/issues/452">https://github.com/Netcentric/accesscontroltool/issues/452</a> */
+
+    /**
+     * @see <a href=
+     * "https://github.com/Netcentric/accesscontroltool/issues/452">https://github.com/Netcentric/accesscontroltool/issues/452</a>
+     */
     @Test
     public void testAceLoopWithColon() throws IOException, AcConfigBeanValidationException, RepositoryException {
 
@@ -144,17 +148,19 @@ public class YamlMacroProcessorTest {
         yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AcesConfig aces = readAceConfigs(yamlList);
-        assertEquals("Number of ACEs", 2, aces.size());
+        assertEquals(2, aces.size(), "Number of ACEs");
         final Set<AceBean> groups1 = aces.filterByAuthorizableId("content-tags-project1-reader");
-        assertEquals("Number of ACEs for project1", 1, groups1.size());
+        assertEquals(1, groups1.size(), "Number of ACEs for project1");
         assertEquals("/content/cq:tags/project1", groups1.iterator().next().getJcrPath());
         final Set<AceBean> groups2 = aces.filterByAuthorizableId("content-tags-project2-reader");
-        assertEquals("Number of ACEs for project2", 1, groups2.size());
+        assertEquals(1, groups2.size(), "Number of ACEs for project2");
         assertEquals("/content/cq:tags/project2", groups2.iterator().next().getJcrPath());
     }
 
-    /** @see <a href=
-     *      "https://github.com/Netcentric/accesscontroltool/issues/330">https://github.com/Netcentric/accesscontroltool/issues/330</a> */
+    /**
+     * @see <a href=
+     * "https://github.com/Netcentric/accesscontroltool/issues/330">https://github.com/Netcentric/accesscontroltool/issues/330</a>
+     */
     @Test
     public void testAceLoopWithSpecialCharacters() throws IOException, AcConfigBeanValidationException, RepositoryException {
 
@@ -164,14 +170,14 @@ public class YamlMacroProcessorTest {
 
         AuthorizablesConfig groupConfigs = readGroupConfigs(yamlList);
 
-        assertEquals("Number of groups in config", 4, groupConfigs.size());
-        
-        assertNotNull("Expected to find brand_1", groupConfigs.getAuthorizableConfig("brand_1"));
-        assertNotNull("Expected to find BRAND-2", groupConfigs.getAuthorizableConfig("BRAND-2"));
-        assertNotNull("Expected to find BRAND.3", groupConfigs.getAuthorizableConfig("BRAND.3"));
-        assertNotNull("Expected to find BRAND 4", groupConfigs.getAuthorizableConfig("BRAND 4"));
+        assertEquals(4, groupConfigs.size(), "Number of groups in config");
+
+        assertNotNull(groupConfigs.getAuthorizableConfig("brand_1"), "Expected to find brand_1");
+        assertNotNull(groupConfigs.getAuthorizableConfig("BRAND-2"), "Expected to find BRAND-2");
+        assertNotNull(groupConfigs.getAuthorizableConfig("BRAND.3"), "Expected to find BRAND.3");
+        assertNotNull(groupConfigs.getAuthorizableConfig("BRAND 4"), "Expected to find BRAND 4");
     }
-    
+
     @Test
     public void testNestedLoop() throws IOException, AcConfigBeanValidationException, RepositoryException {
 
@@ -180,7 +186,7 @@ public class YamlMacroProcessorTest {
         yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AcesConfig aces = readAceConfigs(yamlList);
-        assertEquals("Number of ACEs", 12, aces.size());
+        assertEquals(12, aces.size(), "Number of ACEs");
         assertFalse(aces.filterByAuthorizableId("content-BRAND1-reader").isEmpty());
         assertFalse(aces.filterByAuthorizableId("content-BRAND1-writer").isEmpty());
         assertFalse(aces.filterByAuthorizableId("content-BRAND2-reader").isEmpty());
@@ -206,15 +212,15 @@ public class YamlMacroProcessorTest {
 
         AcesConfig aces = readAceConfigs(yamlList);
 
-        assertEquals("Number of Groups in ACE Section", 3, aces.size());
+        assertEquals(3, aces.size(), "Number of Groups in ACE Section");
         final Set<AceBean> group1 = aces.filterByAuthorizableId("content-reader");
-        assertEquals("Number of ACEs for groupA", 1, group1.size());
+        assertEquals(1, group1.size(), "Number of ACEs for groupA");
         final Set<AceBean> group2 = aces.filterByAuthorizableId("content-writer");
-        assertEquals("Number of ACEs for groupB", 2, group2.size());
+        assertEquals(2, group2.size(), "Number of ACEs for groupB");
 
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
-        assertEquals("Number of groups", 1, groups.size());
-        assertEquals("Path of group", "/home/groups/folder2", groups.getAuthorizableConfig("content-writer").getPath());
+        assertEquals(1, groups.size(), "Number of groups");
+        assertEquals("/home/groups/folder2", groups.getAuthorizableConfig("content-writer").getPath(), "Path of group");
 
     }
 
@@ -326,7 +332,7 @@ public class YamlMacroProcessorTest {
         yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AuthorizablesConfig users = readUserConfigs(yamlList);
-        assertEquals("Number of users", 1, users.size());
+        assertEquals(1, users.size(), "Number of users");
         AuthorizableConfigBean user = users.getAuthorizableConfig("test-system-user");
         assertEquals(user.isSystemUser(), true);
         assertEquals(user.getName(), "Test System User");
@@ -405,14 +411,14 @@ public class YamlMacroProcessorTest {
     public void testDefRegEx() throws Exception {
 
         Matcher matcher = YamlMacroProcessorImpl.VARIABLE_DEF_PATTERN_ONE_LINE.matcher("DEF test=\"val\"");
-        
+
         assertTrue(matcher.find());
         assertEquals("test", matcher.group(1));
         assertEquals(null, matcher.group(2));
         assertEquals("\"", matcher.group(3));
         assertEquals("val", matcher.group(4));
         assertEquals("\"", matcher.group(5));
-        
+
         matcher = YamlMacroProcessorImpl.VARIABLE_DEF_PATTERN_ONE_LINE.matcher("DEF test=val");
 
         assertTrue(matcher.find());
@@ -441,9 +447,9 @@ public class YamlMacroProcessorTest {
         yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AcesConfig aces = readAceConfigs(yamlList);
-        assertEquals("Number of ACEs expected to be 2 and not 4", 2, aces.size());
+        assertEquals(2, aces.size(), "Number of ACEs expected to be 2 and not 4");
 
-    }    
+    }
 
     @Test
     public void testContainsAllItemsFunction() throws Exception {
@@ -452,7 +458,7 @@ public class YamlMacroProcessorTest {
         yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AcesConfig aces = readAceConfigs(yamlList);
-        assertEquals("Number of ACEs expected to be 9", 9, aces.size());
+        assertEquals(9, aces.size(), "Number of ACEs expected to be 9");
     }
 
     @Test
@@ -462,7 +468,7 @@ public class YamlMacroProcessorTest {
         yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AcesConfig aces = readAceConfigs(yamlList);
-        assertEquals("Number of ACEs expected to be 8", 8, aces.size());
+        assertEquals(8, aces.size(), "Number of ACEs expected to be 8");
     }
 
     @Test
@@ -474,7 +480,7 @@ public class YamlMacroProcessorTest {
 
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
         assertEquals(3, groups.size());
-        
+
         assertNotNull(groups.getAuthorizableConfig("testgroup-runmode1"));
         assertNotNull(groups.getAuthorizableConfig("testgroup-runmode2"));
         assertNotNull(groups.getAuthorizableConfig("testgroup-runmode3"));
@@ -490,7 +496,7 @@ public class YamlMacroProcessorTest {
 
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
         assertEquals(3, groups.size());
-        
+
         assertNotNull(groups.getAuthorizableConfig("content-tags-test1-reader"));
         assertNotNull(groups.getAuthorizableConfig("content-tags-test2-reader"));
         assertNotNull(groups.getAuthorizableConfig("content-tags-test3-reader"));
@@ -506,12 +512,12 @@ public class YamlMacroProcessorTest {
 
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
         assertEquals(12, groups.size());
-        
+
         AuthorizableConfigBean authorizableConfig1 = groups.getAuthorizableConfig("group-type1-val1");
         assertNotNull(authorizableConfig1);
         assertEquals("Type1 val1", authorizableConfig1.getName());
         assertEquals("value-buried-deep-in-structure", authorizableConfig1.getDescription());
-        
+
         assertNotNull(groups.getAuthorizableConfig("group-type1-val2"));
         assertNotNull(groups.getAuthorizableConfig("group-type1-val3"));
 
@@ -520,7 +526,7 @@ public class YamlMacroProcessorTest {
         assertEquals("Type2 mapval1", authorizableConfig2.getName());
         assertNotNull(groups.getAuthorizableConfig("group-type2-key2"));
         assertNotNull(groups.getAuthorizableConfig("group-type2-key3"));
-        
+
         AuthorizableConfigBean authorizableConfig3 = groups.getAuthorizableConfig("group-type3-obj1val1");
         assertNotNull(authorizableConfig3);
         assertEquals("Type3 obj1val2 obj1val3", authorizableConfig3.getName());
@@ -547,24 +553,24 @@ public class YamlMacroProcessorTest {
         AcesConfig aceConfigs = readAceConfigs(yamlList);
         assertEquals(8, aceConfigs.size());
         Iterator<AceBean> it = aceConfigs.iterator();
-        
-        String[][] expectedVals = new String[][] {
-                new String[] { "/content/base/level1name1", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level1title1\"/>"},
-                new String[] { "/content/base/level1name1/level2name1", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level2title1\"/>"},
-                new String[] { "/content/base/level1name1/level2name1/level3name1", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level3title1\"/>"},
-                new String[] { "/content/base/level1name1/level2name2", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level2title2\"/>"},
-                new String[] { "/content/base/level1name1/level2name3", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level2title3\"/>"},
-                new String[] { "/content/base/level1name1/level2name3/level3name1", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level3title1\"/>"},
-                new String[] { "/content/base/level1name1/level2name3/level3name2", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level3title2\"/>"},
-                new String[] { "/content/base/level1name1/level2name3/level3name3", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level3title3\"/>"},
+
+        String[][] expectedVals = new String[][]{
+                new String[]{"/content/base/level1name1", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level1title1\"/>"},
+                new String[]{"/content/base/level1name1/level2name1", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level2title1\"/>"},
+                new String[]{"/content/base/level1name1/level2name1/level3name1", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level3title1\"/>"},
+                new String[]{"/content/base/level1name1/level2name2", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level2title2\"/>"},
+                new String[]{"/content/base/level1name1/level2name3", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level2title3\"/>"},
+                new String[]{"/content/base/level1name1/level2name3/level3name1", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level3title1\"/>"},
+                new String[]{"/content/base/level1name1/level2name3/level3name2", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level3title2\"/>"},
+                new String[]{"/content/base/level1name1/level2name3/level3name3", "<jcr:root jcr:primaryType=\"sling:Folder\" jcr:title=\"level3title3\"/>"},
         };
-        
-        for(int i=0; i<expectedVals.length && it.hasNext(); i++) {
+
+        for (int i = 0; i < expectedVals.length && it.hasNext(); i++) {
             AceBean aceBean = it.next();
-            assertEquals("Expected path for bean "+i, expectedVals[i][0], aceBean.getJcrPath());
-            assertEquals("Expected initial content for bean "+i, expectedVals[i][1], aceBean.getInitialContent());
+            assertEquals("Expected path for bean " + i, expectedVals[i][0], aceBean.getJcrPath());
+            assertEquals("Expected initial content for bean " + i, expectedVals[i][1], aceBean.getInitialContent());
         }
-    
+
 
     }
 
@@ -574,15 +580,15 @@ public class YamlMacroProcessorTest {
         List<Map> yamlList = getYamlList("test-def-global-1-set.yaml");
 
         yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
-        
+
         assertEquals("xyz", globalVariables.get("groupPrefix"));
         assertEquals(Arrays.asList("val1", "val2"), globalVariables.get("comlexArr"));
         assertNull(globalVariables.get("varNotGlobal"));
-        
+
         List<Map> yamlList2 = getYamlList("test-def-global-2-use.yaml");
-        
+
         yamlList2 = yamlMacroProcessor.processMacros(yamlList2, globalVariables, installLog, session);
-        
+
         AuthorizablesConfig groups = readGroupConfigs(yamlList2);
         assertEquals(2, groups.size());
         AuthorizableConfigBean authorizableConfig1 = groups.getAuthorizableConfig("xyz-group-reader");

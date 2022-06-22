@@ -8,14 +8,14 @@
  */
 package biz.netcentric.cq.tools.actool.helper;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import biz.netcentric.cq.tools.actool.aem.AcToolCqActions;
 import biz.netcentric.cq.tools.actool.validators.Validators;
