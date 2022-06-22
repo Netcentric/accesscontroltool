@@ -41,9 +41,10 @@ import org.apache.jackrabbit.api.security.user.Query;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.jcr.api.SlingRepository;
-import org.junit.Before;
-import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.ArgumentMatchers;
@@ -53,7 +54,9 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.mockito.stubbing.Answer;
 
 import com.adobe.granite.crypto.CryptoException;
@@ -69,7 +72,8 @@ import biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger
 @RunWith(Enclosed.class)
 public class AuthorizableInstallerServiceImplTest {
 
-    @RunWith(MockitoJUnitRunner.class)
+    @ExtendWith(MockitoExtension.class)
+    @MockitoSettings(strictness = Strictness.LENIENT)
     public static final class BASE_TESTS {
         public static final String TESTGROUP = "testGroup";
 
@@ -126,7 +130,7 @@ public class AuthorizableInstallerServiceImplTest {
 
         private AuthInstallerUserManagerPrefetchingImpl prefetchingUserManager;
         
-        @Before
+        @BeforeEach
         public void setup() throws RepositoryException {
 
             doReturn(valueFactory).when(session).getValueFactory();
@@ -335,7 +339,7 @@ public class AuthorizableInstallerServiceImplTest {
 
         private AuthorizableConfigBean configBean;
 
-        @Before
+        @BeforeEach
         public void setUp() throws CryptoException, RepositoryException {
             MockitoAnnotations.openMocks(this);
 

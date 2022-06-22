@@ -8,10 +8,11 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
@@ -26,8 +27,8 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.apache.commons.io.IOUtils;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.yaml.snakeyaml.Yaml;
 
@@ -43,18 +44,18 @@ public class YamlConfigReaderTest {
     @Mock
     Session session;
 
-    @Before
+    @BeforeEach
     public void setup() {
         initMocks(this);
     }
 
     @Test
     public void testNullActions() throws IOException, AcConfigBeanValidationException, RepositoryException {
-        
+
         final AcesConfig acls = readAcesFromTestFile("test-null-actions.yaml", new YamlConfigReader());
         final Set<AceBean> acl = acls.filterByAuthorizableId("groupA");
         for (final AceBean ace : acl) {
-            assertNotNull("Testing null actions", ace.getActions());
+            assertNotNull(ace.getActions(), "Testing null actions");
         }
     }
 
@@ -67,11 +68,11 @@ public class YamlConfigReaderTest {
 
     @Test
     public void testNoActions() throws IOException, AcConfigBeanValidationException, RepositoryException {
-        
+
         final AcesConfig acls = readAcesFromTestFile("test-no-actions.yaml", new YamlConfigReader());
         final Set<AceBean> acl = acls.filterByAuthorizableId("groupA");
         final AceBean ace = acl.iterator().next();
-        assertEquals("Number of actions", 0, ace.getActions().length);
+        assertEquals(0, ace.getActions().length, "Number of actions");
     }
 
     @Test
@@ -79,8 +80,8 @@ public class YamlConfigReaderTest {
 
         final AcesConfig acls = readAcesFromTestFile("test-multiple-aces-same-path.yaml", new YamlConfigReader());
 
-        assertEquals("Number of ACLs", 3, acls.filterByAuthorizableId("groupA").size());
-        assertEquals("Number of ACLs", 2, acls.filterByAuthorizableId("groupB").size());
+        assertEquals(3, acls.filterByAuthorizableId("groupA").size(), "Number of ACLs");
+        assertEquals(2, acls.filterByAuthorizableId("groupB").size(), "Number of ACLs");
 
         Iterator<AceBean> iterator = acls.iterator();
         while (iterator.hasNext()) {
@@ -94,9 +95,9 @@ public class YamlConfigReaderTest {
         final AcesConfig acls = readAcesFromTestFile("test-empty-glob.yaml", new YamlConfigReader());
         final Iterator<AceBean> it = acls.filterByAuthorizableId("groupA").iterator();
         final AceBean ace1 = it.next();
-        assertNull("repGlob", ace1.getRepGlob());
+        assertNull(ace1.getRepGlob(), "repGlob");
         final AceBean ace2 = it.next();
-        assertEquals("repGlob", "", ace2.getRepGlob());
+        assertEquals("", ace2.getRepGlob(), "repGlob");
     }
 
     @Test
@@ -105,13 +106,13 @@ public class YamlConfigReaderTest {
         List<Map> yamlList = getYamlList("test-no-aces.yaml");
         Set<AuthorizableConfigBean> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
         AcesConfig acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session, "test-no-aces.yaml");
-        assertNull("No ACEs", acls);
+        assertNull(acls, "No ACEs");
         yamlList = getYamlList("test-no-groups.yaml");
         groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
-        assertNull("No groups", groups);
+        assertNull(groups, "No groups");
         acls = yamlConfigReader.getAceConfigurationBeans(yamlList, null, session, "test-no-groups.yaml");
-        assertNotNull("ACL for groupA", acls.filterByAuthorizableId("groupA"));
-        assertEquals("Number of ACEs", 1, acls.filterByAuthorizableId("groupA").size());
+        assertNotNull(acls.filterByAuthorizableId("groupA"), "ACL for groupA");
+        assertEquals(1, acls.filterByAuthorizableId("groupA").size(), "Number of ACEs");
     }
 
     @Test
@@ -119,7 +120,7 @@ public class YamlConfigReaderTest {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
         final List<Map> yamlList = getYamlList("test-membergroups.yaml");
         final Set<AuthorizableConfigBean> groups = yamlConfigReader.getGroupConfigurationBeans(yamlList, null);
-        assertEquals("Number of groups", 4, groups.size());
+        assertEquals(4, groups.size(), "Number of groups");
 
         Iterator<AuthorizableConfigBean> groupsIt = groups.iterator();
         AuthorizableConfigBean firstGroup = groupsIt.next();
@@ -128,8 +129,8 @@ public class YamlConfigReaderTest {
 
         AuthorizableConfigBean secondGroup = groupsIt.next();
         assertEquals("groupB", secondGroup.getAuthorizableId());
-        assertArrayEquals(new String[] {"groupA"}, secondGroup.getMembers());
-        
+        assertArrayEquals(new String[]{"groupA"}, secondGroup.getMembers());
+
         AuthorizableConfigBean thirdGroup = groupsIt.next();
         assertEquals("groupC", thirdGroup.getAuthorizableId());
         assertEquals("/home/groups/g", thirdGroup.getPath()); // strip "/" at the end
@@ -144,12 +145,13 @@ public class YamlConfigReaderTest {
         final List<Map> yamlList = getYamlList("test-user-with-keys.yaml");
         yamlConfigReader.getUserConfigurationBeans(yamlList, null);
     }
- 
-    @Test(expected=AcConfigBeanValidationException.class)
+
+    @Test
     public void testInvalidKeys() throws IOException, AcConfigBeanValidationException {
         final ConfigReader yamlConfigReader = new YamlConfigReader();
         final List<Map> yamlList = getYamlList("test-user-with-invalid-keys.yaml");
-        yamlConfigReader.getUserConfigurationBeans(yamlList, null);
+        assertThrows(AcConfigBeanValidationException.class,
+                () -> yamlConfigReader.getUserConfigurationBeans(yamlList, null));
     }
 
     static List<Map> getYamlList(final String filename) throws IOException {

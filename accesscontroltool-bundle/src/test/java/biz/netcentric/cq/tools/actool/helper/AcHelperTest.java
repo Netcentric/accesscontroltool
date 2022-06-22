@@ -11,15 +11,15 @@ package biz.netcentric.cq.tools.actool.helper;
 import static biz.netcentric.cq.tools.actool.helper.AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE;
 import static biz.netcentric.cq.tools.actool.helper.AcHelper.ACE_ORDER_NONE;
 import static org.apache.commons.lang3.StringUtils.rightPad;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +40,7 @@ public class AcHelperTest {
     AceBean aceBeanGroupC_2_content_deny_keepOrder;
     AceBean aceBeanGroupC_3_content_deny;
 
-    @Before
+    @BeforeEach
     public void setup() {
         // ACEs from groups contained in config
 
