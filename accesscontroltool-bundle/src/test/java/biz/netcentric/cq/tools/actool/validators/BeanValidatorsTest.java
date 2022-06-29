@@ -8,7 +8,7 @@
  */
 package biz.netcentric.cq.tools.actool.validators;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -29,8 +29,8 @@ import javax.jcr.security.AccessControlPolicy;
 
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.sling.jcr.api.SlingRepository;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
@@ -40,7 +40,6 @@ import biz.netcentric.cq.tools.actool.configreader.ConfigReader;
 import biz.netcentric.cq.tools.actool.configreader.TestAceBean;
 import biz.netcentric.cq.tools.actool.configreader.TestAuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configreader.TestYamlConfigReader;
-import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
 import biz.netcentric.cq.tools.actool.validators.impl.AceBeanValidatorImpl;
 import biz.netcentric.cq.tools.actool.validators.impl.AuthorizableValidatorImpl;
@@ -70,7 +69,7 @@ public class BeanValidatorsTest {
     List<AceBean> aceBeanList = new ArrayList<AceBean>();
     List<AuthorizableConfigBean> authorizableBeanList = new ArrayList<AuthorizableConfigBean>();
 
-    @Before
+    @BeforeEach
     public void setup() throws IOException, RepositoryException,
             AcConfigBeanValidationException {
 
@@ -79,9 +78,9 @@ public class BeanValidatorsTest {
 
         accessControlPolicy = mock(AccessControlList.class,
                 withSettings().extraInterfaces(JackrabbitAccessControlList.class));
-        doReturn(new String[] { "rep:glob" }).when((JackrabbitAccessControlList) accessControlPolicy).getRestrictionNames();
+        doReturn(new String[]{"rep:glob"}).when((JackrabbitAccessControlList) accessControlPolicy).getRestrictionNames();
         doReturn(accessControlManager).when(session).getAccessControlManager();
-        doReturn(new AccessControlPolicy[] { accessControlPolicy }).when(accessControlManager).getPolicies("/");
+        doReturn(new AccessControlPolicy[]{accessControlPolicy}).when(accessControlManager).getPolicies("/");
 
         doThrow(new RepositoryException("invalid permission")).when(accessControlManager).privilegeFromName("read");
         doThrow(new RepositoryException("invalid permission")).when(accessControlManager).privilegeFromName("jcr_all");
@@ -110,9 +109,10 @@ public class BeanValidatorsTest {
     public void testAceBeans() {
         final AceBeanValidator aceBeanValidator = new AceBeanValidatorImpl(groupsFromConfig);
         for (final AceBean aceBean : aceBeanList) {
-            assertEquals("Problem in bean " + aceBean, ((TestAceBean) aceBean).getAssertedExceptionString(),
-                    ValidatorTestHelper.getSimpleValidationException(aceBean, aceBeanValidator,
-                            accessControlManager));
+            assertEquals(
+                    ((TestAceBean) aceBean).getAssertedExceptionString(),
+                    ValidatorTestHelper.getSimpleValidationException(aceBean, aceBeanValidator, accessControlManager),
+                    "Problem in bean " + aceBean);
         }
     }
 

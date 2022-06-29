@@ -3,7 +3,8 @@
     and the accompanying materials are made available under the terms of the
     Eclipse Public License v1.0 which accompanies this distribution, and is available
     at http://www.eclipse.org/legal/epl-v10.html -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <!-- ====================================================================== -->
     <!-- P A R E N T P R O J E C T D E S C R I P T I O N -->
@@ -85,6 +86,8 @@
         <bnd.version>6.3.0</bnd.version>
         <bouncycastle.version>1.64</bouncycastle.version>
         <java.target.version>8</java.target.version>
+        <mockito.version>4.6.1</mockito.version>
+        <junit.version>5.8.2</junit.version>
     </properties>
 
     <modules>
@@ -123,16 +126,11 @@
             </dependency>
             <!-- testing dependencies -->
             <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>4.13.2</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.hamcrest</groupId>
-                <artifactId>hamcrest-core</artifactId>
-                <version>2.2</version>
-                <scope>test</scope>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.hamcrest</groupId>
@@ -143,7 +141,13 @@
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
-                <version>3.10.0</version>
+                <version>${mockito.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-junit-jupiter</artifactId>
+                <version>${mockito.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -164,11 +168,12 @@
                     <version>${bnd.version}</version>
                     <configuration>
                         <bnd>
-Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
-# generate error (instead of warning) when exported package uses private (non-exported) reference
--fixupmessages:"Export *,  has \\d+,  private references"; \
-    restrict:=warning; \
-    is:=error
+                            Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
+                            # generate error (instead of warning) when exported package uses private (non-exported)
+                            reference
+                            -fixupmessages:"Export *, has \\d+, private references"; \
+                            restrict:=warning; \
+                            is:=error
                         </bnd>
                     </configuration>
                     <executions>
@@ -227,10 +232,22 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.22.1</version>
+                    <version>3.0.0-M7</version>
                     <configuration>
                         <trimStackTrace>false</trimStackTrace>
                     </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.junit.jupiter</groupId>
+                            <artifactId>junit-jupiter-engine</artifactId>
+                            <version>${junit.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.junit.vintage</groupId>
+                            <artifactId>junit-vintage-engine</artifactId>
+                            <version>${junit.version}</version>
+                        </dependency>
+                    </dependencies>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -243,9 +260,9 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                     <version>3.2.1</version>
                 </plugin>
                 <plugin>
-                     <groupId>org.apache.maven.plugins</groupId>
-                     <artifactId>maven-gpg-plugin</artifactId>
-                     <version>3.0.1</version>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>3.0.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -283,7 +300,9 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                         <validatorsSettings>
                             <jackrabbit-filter>
                                 <options>
-                                    <validRoots>/,/libs,/libs/core/wcm,/apps,/apps/netcentric,/apps/netcentric/actool,/etc,/etc/packages,/tmp,/content,/oak:index</validRoots>
+                                    <validRoots>
+                                        /,/libs,/libs/core/wcm,/apps,/apps/netcentric,/apps/netcentric/actool,/etc,/etc/packages,/tmp,/content,/oak:index
+                                    </validRoots>
                                 </options>
                             </jackrabbit-filter>
                             <jackrabbit-nodetypes>
@@ -296,12 +315,15 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                                 <defaultSeverity>WARN</defaultSeverity>
                                 <options>
                                     <severitiesPerClassification>INTERNAL_DEPRECATED=WARN</severitiesPerClassification>
-                                    <maps>tccl:biz/netcentric/filevault/validator/maps/aem-classification-map-deprecations/coral2deprecations.map,tccl:biz/netcentric/filevault/validator/maps/aem-classification-map-deprecations/graniteuideprecations.map,tccl:biz/netcentric/filevault/validator/maps/aem-classification-map-repo-annotations.map</maps>
+                                    <maps>
+                                        tccl:biz/netcentric/filevault/validator/maps/aem-classification-map-deprecations/coral2deprecations.map,tccl:biz/netcentric/filevault/validator/maps/aem-classification-map-deprecations/graniteuideprecations.map,tccl:biz/netcentric/filevault/validator/maps/aem-classification-map-repo-annotations.map
+                                    </maps>
                                 </options>
                             </netcentric-aem-classification>
                             <netcentric-aem-cloud>
                                 <options>
-                                    <allowVarNodeOutsideContainer>false</allowVarNodeOutsideContainer><!-- default value is true, as it is allowed to have /var nodes inside author-only container -->
+                                    <allowVarNodeOutsideContainer>false
+                                    </allowVarNodeOutsideContainer><!-- default value is true, as it is allowed to have /var nodes inside author-only container -->
                                 </options>
                             </netcentric-aem-cloud>
                         </validatorsSettings>
@@ -382,7 +404,8 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                         <autoVersionSubmodules>true</autoVersionSubmodules>
                         <tagNameFormat>@{project.version}</tagNameFormat>
                         <!-- skip rebuilding the release with GitHub actions (https://github.blog/changelog/2021-02-08-github-actions-skip-pull-request-and-push-workflows-with-skip-ci/) -->
-                        <scmReleaseCommitComment>@{prefix} prepare release @{releaseLabel} [skip ci]</scmReleaseCommitComment>
+                        <scmReleaseCommitComment>@{prefix} prepare release @{releaseLabel} [skip ci]
+                        </scmReleaseCommitComment>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -417,7 +440,9 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                                 </requireMavenVersion>
                                 <requireJavaVersion>
                                     <version>1.8.0</version>
-                                    <message>Bnd requires Java 8 (https://github.com/bndtools/bnd/wiki/Changes-in-4.0.0)</message>
+                                    <message>Bnd requires Java 8
+                                        (https://github.com/bndtools/bnd/wiki/Changes-in-4.0.0)
+                                    </message>
                                 </requireJavaVersion>
                             </rules>
                         </configuration>
@@ -470,7 +495,7 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                                 <version>1.0</version>
                             </signature>
                         </configuration>
-                     </plugin>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
@@ -486,7 +511,7 @@ Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
                 https://docs.oracle.com/javase/9/tools/javac.htm#GUID-AEEC9F07-CB49-4E96-8BC7-BCC2C7F725C9__GUID-D343F6B4-3FDD-43A8-AD24-43DD70214471 
                 and http://openjdk.java.net/jeps/247 -->
                 <maven.compiler.release>${java.target.version}</maven.compiler.release>
-             </properties>
+            </properties>
         </profile>
         <profile>
             <id>release</id>

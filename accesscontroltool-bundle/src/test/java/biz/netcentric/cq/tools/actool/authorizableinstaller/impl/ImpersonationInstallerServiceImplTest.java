@@ -1,6 +1,6 @@
 package biz.netcentric.cq.tools.actool.authorizableinstaller.impl;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -16,18 +16,21 @@ import org.apache.jackrabbit.api.security.principal.PrincipalIterator;
 import org.apache.jackrabbit.api.security.user.Impersonation;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ImpersonationInstallerServiceImplTest {
 
     @InjectMocks
@@ -44,7 +47,7 @@ public class ImpersonationInstallerServiceImplTest {
 
     AuthorizablesConfig authorizablesConfig;
 
-    @Before
+    @BeforeEach
     public void setup() throws RepositoryException {
 
         when(user.getImpersonation()).thenReturn(impersonation);
@@ -96,7 +99,7 @@ public class ImpersonationInstallerServiceImplTest {
     public void testNothingToDo() throws RepositoryException {
 
         when(impersonation.getImpersonators()).thenReturn(new TestPrincipalIterator());
-        impersonationInstallerService.setupImpersonation(user, Collections.<String> emptyList(), authorizablesConfig, installationLog);
+        impersonationInstallerService.setupImpersonation(user, Collections.<String>emptyList(), authorizablesConfig, installationLog);
 
         verify(impersonation, never()).grantImpersonation(any(Principal.class));
         verify(impersonation, never()).revokeImpersonation(any(Principal.class));

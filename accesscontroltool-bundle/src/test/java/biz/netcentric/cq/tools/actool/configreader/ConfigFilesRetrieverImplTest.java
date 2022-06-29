@@ -8,6 +8,10 @@
  */
 package biz.netcentric.cq.tools.actool.configreader;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,8 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.hamcrest.Matchers;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.google.common.collect.ImmutableList;
 
@@ -29,16 +32,16 @@ public class ConfigFilesRetrieverImplTest {
 
     @Test
     public void testExtractRunModeSpecFromName() {
-        Assert.assertThat(ConfigFilesRetrieverImpl
+        assertThat(ConfigFilesRetrieverImpl
                 .extractRunModeSpecFromName(""), Matchers.equalTo(""));
-        Assert.assertThat(ConfigFilesRetrieverImpl
+        assertThat(ConfigFilesRetrieverImpl
                 .extractRunModeSpecFromName("namewithoutrunmodes"), Matchers.equalTo(""));
-        Assert.assertThat(ConfigFilesRetrieverImpl
+        assertThat(ConfigFilesRetrieverImpl
                 .extractRunModeSpecFromName("name.runmode1"), Matchers.equalTo("runmode1"));
-        Assert.assertThat(ConfigFilesRetrieverImpl
+        assertThat(ConfigFilesRetrieverImpl
                 .extractRunModeSpecFromName("name.runmode1.runmode2"), Matchers.equalTo("runmode1.runmode2"));
         // this specifies an empty run mode
-        Assert.assertThat(ConfigFilesRetrieverImpl
+        assertThat(ConfigFilesRetrieverImpl
                 .extractRunModeSpecFromName("namewithoutrunmodes."), Matchers.equalTo(""));
     }
 
@@ -49,25 +52,25 @@ public class ConfigFilesRetrieverImplTest {
 
         slingSettings = new ExtendedSlingSettingsServiceImpl(currentRunmodes);
         Collection<String> configFilePatterns = Collections.emptyList();
-        Assert.assertFalse(
+        assertFalse(
                 (ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry(""), "fragments", slingSettings, configFilePatterns)));
-        Assert.assertFalse(
+        assertFalse(
                 (ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test"), "fragments", slingSettings, configFilePatterns)));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments", slingSettings,
+        assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments", slingSettings,
                 configFilePatterns)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.publish", slingSettings,
+        assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.publish", slingSettings,
                 configFilePatterns)));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.author", slingSettings,
+        assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.author", slingSettings,
                 configFilePatterns)));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.samplecontent",
+        assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.samplecontent",
                 slingSettings, configFilePatterns)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yam"), "fragments.samplecontent",
+        assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yam"), "fragments.samplecontent",
                 slingSettings, configFilePatterns)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.samplecontent.publish",
+        assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.samplecontent.publish",
                 slingSettings, configFilePatterns)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.foo.publish",
+        assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.foo.publish",
                 slingSettings, configFilePatterns)));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.samplecontent.local",
+        assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.samplecontent.local",
                 slingSettings, configFilePatterns)));
 
     }
@@ -79,15 +82,15 @@ public class ConfigFilesRetrieverImplTest {
         slingSettings = new ExtendedSlingSettingsServiceImpl(currentRunmodes);
         Collection<String> configFilePatterns = Collections.emptyList();
         // testing 'or' combinations with
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.dev,local",
+        assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.dev,local",
                 slingSettings, configFilePatterns)));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.int,prod",
+        assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.int,prod",
                 slingSettings, configFilePatterns)));
 
         // combined 'and' and 'or'
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.author.dev,author.local",
+        assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.author.dev,author.local",
                 slingSettings, configFilePatterns)));
-        Assert.assertFalse(
+        assertFalse(
                 (ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("test.yaml"), "fragments.publish.dev,publish.local",
                         slingSettings, configFilePatterns)));
     }
@@ -97,15 +100,15 @@ public class ConfigFilesRetrieverImplTest {
         Set<String> currentRunmodes = new HashSet<String>(
                 Arrays.asList("author"));
         slingSettings = new ExtendedSlingSettingsServiceImpl(currentRunmodes);
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
+        assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
                 slingSettings, ImmutableList.<String> of())));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
+        assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
                 slingSettings, ImmutableList.<String> of("/noMatch", "/conf/.*"))));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
+        assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
                 slingSettings, ImmutableList.<String> of("/conf/test.*.yaml"))));
-        Assert.assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
+        assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
                 slingSettings, ImmutableList.<String> of("/conf/.*\\.yaml", "/noMatch"))));
-        Assert.assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
+        assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
                 slingSettings, ImmutableList.<String> of("/nonconf.*"))));
 
     }

@@ -8,10 +8,10 @@
  */
 package biz.netcentric.cq.tools.actool.aceinstaller;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -47,14 +47,16 @@ import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlManager;
 import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.apache.sling.jcr.api.SlingRepository;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.mockito.stubbing.Answer;
 
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
@@ -62,7 +64,8 @@ import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.configreader.YamlConfigReader;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class AceBeanInstallerIncrementalTest {
 
     private static final String FAKE_PRINCIPAL_ID = "author";
@@ -101,7 +104,7 @@ public class AceBeanInstallerIncrementalTest {
     @Mock
     SlingRepository slingRepository;
 
-    @Before
+    @BeforeEach
     public void setup() throws RepositoryException {
 
         doReturn(accessControlManager).when(session).getAccessControlManager();
@@ -118,13 +121,14 @@ public class AceBeanInstallerIncrementalTest {
         // default privilege is a simple privilege with the given string name
         doAnswer(new Answer<Privilege>() {
             public Privilege answer(InvocationOnMock invocation) {
-                Object[] args = invocation.getArguments();   
+                Object[] args = invocation.getArguments();
                 return new TestPrivilege(args[0].toString());
             }
         }).when(accessControlManager).privilegeFromName(anyString());
-        
+
         // to test aggregates
-        doReturn(new TestPrivilege("jcr:read", new String[] { "jcr:readNodes", "jcr:readProperties" })).when(accessControlManager)
+        doReturn(new TestPrivilege("jcr:read", new String[]{"jcr:readNodes", "jcr:readProperties"}))
+                .when(accessControlManager)
                 .privilegeFromName("jcr:read");
 
         // easier to mock than the static SessionUtil.clone()
@@ -144,25 +148,21 @@ public class AceBeanInstallerIncrementalTest {
         assertFalse(accessControlManager.privilegeFromName("jcr:lockManagement").isAggregate()); // default mocking
         assertTrue(accessControlManager.privilegeFromName("jcr:read").isAggregate()); // aggragate test mocking
 
-        assertEquals("simple non-aggregate must equal",
-                "[jcr:lockManagement]",
-                createComparablePrivSet("jcr:lockManagement"));
+        assertEquals("[jcr:lockManagement]", createComparablePrivSet("jcr:lockManagement"),
+                "simple non-aggregate must equal");
 
-        assertEquals("simple aggregate must be resolved to non-aggregates",
-                "[jcr:readNodes, jcr:readProperties]",
-                createComparablePrivSet("jcr:read"));
+        assertEquals("[jcr:readNodes, jcr:readProperties]", createComparablePrivSet("jcr:read"),
+                "simple aggregate must be resolved to non-aggregates");
 
-        assertEquals("non-aggregate order is sorted (test order un-changed)",
-                "[jcr:lockManagement, jcr:removeNode]",
-                createComparablePrivSet("jcr:lockManagement, jcr:removeNode"));
+        assertEquals("[jcr:lockManagement, jcr:removeNode]", createComparablePrivSet("jcr:lockManagement, jcr:removeNode"),
+                "non-aggregate order is sorted (test order un-changed)");
 
-        assertEquals("non-aggregate order is sorted (test order changed)",
-                "[jcr:lockManagement, jcr:removeNode]",
-                createComparablePrivSet("jcr:removeNode, jcr:lockManagement"));
+        assertEquals("[jcr:lockManagement, jcr:removeNode]", createComparablePrivSet("jcr:removeNode, jcr:lockManagement"),
+                "non-aggregate order is sorted (test order changed)");
 
-        assertEquals("privilege order not important even for mix of aggregate and non-aggregate privs (must be still equal)",
-                "[jcr:lockManagement, jcr:readNodes, jcr:readProperties, jcr:removeNode]",
-                createComparablePrivSet("jcr:removeNode, jcr:read, jcr:lockManagement"));
+        assertEquals("[jcr:lockManagement, jcr:readNodes, jcr:readProperties, jcr:removeNode]",
+                createComparablePrivSet("jcr:removeNode, jcr:read, jcr:lockManagement"),
+                "privilege order not important even for mix of aggregate and non-aggregate privs (must be still equal)");
 
     }
 
@@ -188,7 +188,7 @@ public class AceBeanInstallerIncrementalTest {
     public void testSimplePrivilegesAcesUnchanged() throws Exception {
 
         // make bean1 and bean
-        doReturn(new JackrabbitAccessControlEntry[] {
+        doReturn(new JackrabbitAccessControlEntry[]{
                 aceBeanToAce(bean1), aceBeanToAce(bean2), aceBeanToAce(bean3)
         }).when(jackrabbitAccessControlList).getAccessControlEntries();
 
@@ -210,10 +210,10 @@ public class AceBeanInstallerIncrementalTest {
         JackrabbitAccessControlEntry ace1 = aceBeanToAce(bean1);
         JackrabbitAccessControlEntry ace2 = aceBeanToAce(bean2);
         JackrabbitAccessControlEntry ace3 = aceBeanToAce(bean3);
-        doReturn(new JackrabbitAccessControlEntry[] { ace1, ace2, ace3 }).when(jackrabbitAccessControlList).getAccessControlEntries();
+        doReturn(new JackrabbitAccessControlEntry[]{ace1, ace2, ace3}).when(jackrabbitAccessControlList).getAccessControlEntries();
 
         aceBeanInstallerIncremental.installAcl(
-                Collections.<AceBean> emptySet(), testPath,
+                Collections.<AceBean>emptySet(), testPath,
                 asSet(testPrincipal1, testPrincipal2, testPrincipal3), session, installLog);
 
         verify(jackrabbitAccessControlList).removeAccessControlEntry(ace1);
@@ -257,7 +257,7 @@ public class AceBeanInstallerIncrementalTest {
         bean1Clone.setPrincipalName(FAKE_PRINCIPAL_ID);
 
         // test simple read bean
-        doReturn(new JackrabbitAccessControlEntry[] {
+        doReturn(new JackrabbitAccessControlEntry[]{
                 aceBeanToAce(bean1Clone)
         }).when(jackrabbitAccessControlList).getAccessControlEntries();
 
@@ -286,7 +286,7 @@ public class AceBeanInstallerIncrementalTest {
         AceBean bean2ContentClone = bean2Content.clone();
         bean2ContentClone.setPrincipalName(FAKE_PRINCIPAL_ID);
 
-        doReturn(new JackrabbitAccessControlEntry[] {
+        doReturn(new JackrabbitAccessControlEntry[]{
                 aceBeanToAce(bean2Clone), aceBeanToAce(bean2ContentClone)
         }).when(jackrabbitAccessControlList).getAccessControlEntries();
 
@@ -322,7 +322,7 @@ public class AceBeanInstallerIncrementalTest {
     }
 
     public static AceBean createTestBean(String path, String principalName, boolean isAllow, String privileges, String actions,
-            Restriction... restrictions) {
+                                         Restriction... restrictions) {
         AceBean testBean = new AceBean();
         testBean.setJcrPath(path);
         testBean.setPrincipalName(principalName);
@@ -501,7 +501,6 @@ public class AceBeanInstallerIncrementalTest {
             throw new UnsupportedOperationException();
         }
     }
-
 
 
 }
