@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <workspaceFilter version="1.0">
-	<filter root="/oak:index/repACL-custom-1"/>
+    <filter root="/oak:index/repACL" type="cleanup"/><!-- legacy index node name, used prior version 2.7.2  -->
+    <filter root="/oak:index/repACL-custom-1"/>
 </workspaceFilter>
