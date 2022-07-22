@@ -8,4 +8,11 @@ Reported at https://github.com/jeremylong/DependencyCheck/issues/3661.
     <packageUrl regex="true">^pkg:maven/org\.apache\.tomcat/tomcat\-jasper\-el@.*$</packageUrl>
     <cve>CVE-2020-8022</cve>
   </suppress>
+  <suppress>
+   <notes><![CDATA[
+   file name: tomcat-jasper-el-10.0.21.jar
+   ]]></notes>
+   <packageUrl regex="true">^pkg:maven/org\.apache\.tomcat/tomcat\-jasper\-el@.*$</packageUrl>
+   <cve>CVE-2022-34305</cve><!-- only affects examples web app (https://lists.apache.org/thread/k04zk0nq6w57m72w5gb0r6z9ryhmvr4k) -->
+</suppress>
 </suppressions>
