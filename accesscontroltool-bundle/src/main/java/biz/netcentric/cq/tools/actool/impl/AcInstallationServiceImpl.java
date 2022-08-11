@@ -16,13 +16,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Dictionary;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.RepositoryException;
@@ -498,7 +498,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             return pathBasedAceMapFromConfig;
         }
 
-        Map<String, Set<AceBean>> filteredPathBasedAceMapFromConfig = new HashMap<String, Set<AceBean>>();
+        Map<String, Set<AceBean>> filteredPathBasedAceMapFromConfig = new TreeMap<>();
         for (final String path : pathBasedAceMapFromConfig.keySet()) {
             boolean isRelevant = isRelevantPath(path, restrictedToPaths);
             if (isRelevant) {
