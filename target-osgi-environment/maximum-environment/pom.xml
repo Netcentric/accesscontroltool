@@ -21,7 +21,7 @@
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
         <artifactId>target-osgi-environment</artifactId>
         <relativePath>../pom.xml</relativePath>
-        <version>3.0.5-SNAPSHOT</version>
+        <version>3.0.5</version>
     </parent>
 
     <artifactId>maximum-environment</artifactId>
@@ -275,4 +275,8 @@
         </dependency>
     </dependencies>
 
+
+  <scm>
+    <tag>3.0.5</tag>
+  </scm>
 </project>
