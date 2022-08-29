@@ -23,7 +23,6 @@
 * [Providing Initial Content](#providing-initial-content)
 * [Health Check](#health-check)
 * [Use Manual ACL Ordering](#use-manual-acl-ordering)
-* [Intermediate save() calls during ACL installation](#intermediate-save-calls-during-acl-installation)
  
 <!--- This table of contents has been generated with https://github.com/ekalinin/github-markdown-toc#gh-md-toc -->
 
