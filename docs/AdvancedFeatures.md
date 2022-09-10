@@ -1,32 +1,5 @@
 # Advanced features
 
-* [Expressions](#expressions)
-* [Variables](#variables)
-  * [Simple variables](#simple-variables)
-  * [Complex variables with value from yaml structure](#complex-variables-with-value-from-yaml-structure)
-  * [Global variables](#global-variables)
-  * [Predefined variables](#predefined-variables)
-* [Loops](#loops)
-  * [Nested Loops](#nested-loops)
-  * [Loops derived from content structure](#loops-derived-from-content-structure)
-  * [Loops that traverse the full jcr:content structure](#loops-that-traverse-the-full-jcrcontent-structure)
-* [Conditional entries](#conditional-entries)
-* [Interpolate values](#interpolate-values)
-* [Auto-create test users for groups](#auto-create-test-users-for-groups)
-* [Configure unmanaged aspects](#configure-unmanaged-aspects)
-  * [Configure permissions for built-in users or groups (like anonymous)](#configure-permissions-for-built-in-users-or-groups-like-anonymous)
-  * [Configure memberships of/towards externally managed groups](#configure-memberships-oftowards-externally-managed-groups)
-    * [Examples](#examples)
-  * [Limiting where the AC Tool creates and removes ACEs](#limiting-where-the-ac-tool-creates-and-removes-aces)
-    * [Examples](#examples-1)
-* [Automatically purge obsolete groups and users](#automatically-purge-obsolete-groups-and-users)
-* [Providing Initial Content](#providing-initial-content)
-* [Health Check](#health-check)
-* [Use Manual ACL Ordering](#use-manual-acl-ordering)
- 
-<!--- This table of contents has been generated with https://github.com/ekalinin/github-markdown-toc#gh-md-toc -->
-
-
 ## Expressions
 
 Expressions are evaluated using the [Jakarta Expression Language 4.0](https://jakarta.ee/specifications/expression-language/4.0/jakarta-expression-language-spec-4.0.html) (since v3.0.3 of the AC tool, before [javax.el EL 2.2](https://docs.oracle.com/javaee/6/tutorial/doc/gjddd.html) was used). They can be used anywhere in the YAML and are processed after YAML parsing and interpolation. Note though that only the [*Immediate Evaluation* syntax `${...}`](https://docs.oracle.com/javaee/6/tutorial/doc/bnahr.html#bnahs) is supported but not the *Deferred Evaluation* syntax (`#{...}`).
