@@ -20,7 +20,7 @@
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
         <artifactId>accesscontroltool</artifactId>
         <relativePath>../pom.xml</relativePath>
-        <version>3.0.6-SNAPSHOT</version>
+        <version>3.0.6</version>
     </parent>
 
     <artifactId>target-osgi-environment</artifactId>
