@@ -4,7 +4,6 @@ import static biz.netcentric.cq.tools.actool.history.impl.PersistableInstallatio
 
 import java.security.Principal;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -56,10 +55,9 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
     private static final Logger LOG = LoggerFactory.getLogger(AuthInstallerUserManagerPrefetchingImpl.class);
 
     private final UserManager delegate;
-    private final Map<String, Authorizable> authorizableCache = new CaseInsensitiveMap();
 
-    private final Map<String, Set<String>> nonRegularUserMembersByAuthorizableId = new CaseInsensitiveMap();
-    private final Map<String, Set<String>> isMemberOfByAuthorizableId = new CaseInsensitiveMap();
+    private final Map<String, Set<String>> nonRegularUserMembersByAuthorizableId = new CaseInsensitiveMap<>();
+    private final Map<String, Set<String>> isMemberOfByAuthorizableId = new CaseInsensitiveMap<>();
 
     public AuthInstallerUserManagerPrefetchingImpl(UserManager delegate, final ValueFactory valueFactory, InstallationLogger installLog)
             throws RepositoryException {
@@ -75,34 +73,24 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
                 );
             }
         });
+        installLog.addMessage(LOG, "Prefetched authorizables in "
+                + msHumanReadable(System.currentTimeMillis() - startPrefetch));
+
+        int membershipCount = 0;
+        long startPrefetchMemberships = System.currentTimeMillis();
         while (authorizablesToPrefetchIt.hasNext()) {
             Authorizable auth = authorizablesToPrefetchIt.next();
             String authId = auth.getID();
-            authorizableCache.put(authId, auth);
 
-            // init lists
-            nonRegularUserMembersByAuthorizableId.put(authId, new HashSet<String>());
-            isMemberOfByAuthorizableId.put(authId, new HashSet<String>());
-        }
-
-        installLog.addMessage(LOG, "Prefetched " + authorizableCache.size() + " authorizables in "
-                + msHumanReadable(System.currentTimeMillis() - startPrefetch));
-
-        long startPrefetchMemberships = System.currentTimeMillis();
-        int membershipCount = 0;
-        for (Authorizable authorizable : authorizableCache.values()) {
-            String authId = authorizable.getID();
-            Iterator<Group> declaredMemberOf = authorizable.declaredMemberOf();
+            // also cache those groups which are not member of any other group!
+            Set<String> memberOfByAuthorizableIds = new HashSet<>();
+            this.isMemberOfByAuthorizableId.put(authId, memberOfByAuthorizableIds);
+            Iterator<Group> declaredMemberOf = auth.declaredMemberOf();
             while (declaredMemberOf.hasNext()) {
                 Group memberOfGroup = declaredMemberOf.next();
                 String memberOfGroupId = memberOfGroup.getID();
-                isMemberOfByAuthorizableId.get(authId).add(memberOfGroupId);
-                if (!nonRegularUserMembersByAuthorizableId.containsKey(memberOfGroupId)) {
-                    throw new IllegalStateException("Group '" + memberOfGroupId
-                            + "' is not returned by query /jcr:root/home//element(*,rep:Authorizable)[(@jcr:primaryType!='rep:User' or @rep:authorizableId='anonymous')] "
-                            + "(as internally used by userManager.findAuthorizables()) - most likely there is a corrupt index on your platform.");
-                }
-                nonRegularUserMembersByAuthorizableId.get(memberOfGroupId).add(authId);
+                memberOfByAuthorizableIds.add(memberOfGroupId);
+                nonRegularUserMembersByAuthorizableId.computeIfAbsent(memberOfGroupId, id -> new HashSet<>()).add(authId);
                 membershipCount++;
             }
         }
@@ -112,21 +100,17 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
     }
 
     public Authorizable getAuthorizable(String id) throws RepositoryException {
-        Authorizable authorizable = authorizableCache.get(id);
-        if (authorizable == null) {
-            authorizable = delegate.getAuthorizable(id);
-            authorizableCache.put(id, authorizable);
-        }
-        return authorizable;
+        // this is really fast in Oak (lookup by UUID, no query involved) -> no need to cache
+        // also the returned object is pretty huge, so it short be short-living
+        return delegate.getAuthorizable(id);
     }
 
     public Set<String> getDeclaredIsMemberOf(String id) throws RepositoryException {
-
         if (isMemberOfByAuthorizableId.containsKey(id)) {
             return isMemberOfByAuthorizableId.get(id);
         } else {
             // for users fall back to retrieve on demand
-            Set<String> memberOfSet = new HashSet<String>();
+            Set<String> memberOfSet = new HashSet<>();
             Iterator<Group> memberOfIt = getAuthorizable(id).declaredMemberOf();
             while (memberOfIt.hasNext()) {
                 Authorizable memberOfGroup = memberOfIt.next();
@@ -141,22 +125,9 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
                 : Collections.<String>emptySet();
     }
 
-    public int getCacheSize() {
-        return authorizableCache.size();
-    }
-
-    private void refreshAuthorizableCacheIfNeeded(final String id, final Authorizable authorizable) {
-        if (authorizableCache.containsKey(id)) {
-            authorizableCache.put(id, authorizable);
-        }
-    }
-
     @Override
     public void removeAuthorizable(final Authorizable authorizable) throws RepositoryException {
         Objects.requireNonNull(authorizable);
-
-        // remove auth from cache
-        authorizableCache.remove(authorizable.getID());
 
         // if auth is a group, remove auth from the cache which lists groups of a given user
         if (authorizable instanceof Group) {
@@ -186,25 +157,21 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
 
     public User createUser(String userID, String password, Principal principal, String intermediatePath) throws RepositoryException {
         final User user = delegate.createUser(userID, password, principal, intermediatePath);
-        refreshAuthorizableCacheIfNeeded(userID, user);
         return user;
     }
 
     public User createSystemUser(String userID, String intermediatePath) throws RepositoryException {
         final User user = delegate.createSystemUser(userID, intermediatePath);
-        refreshAuthorizableCacheIfNeeded(userID, user);
         return user;
     }
 
     public Group createGroup(Principal principal) throws RepositoryException {
         final Group group = delegate.createGroup(principal);
-        refreshAuthorizableCacheIfNeeded(principal.getName(), group);
         return group;
     }
 
     public Group createGroup(Principal principal, String intermediatePath) throws RepositoryException {
         final Group group = delegate.createGroup(principal, intermediatePath);
-        refreshAuthorizableCacheIfNeeded(principal.getName(), group);
         return group;
     }
 
