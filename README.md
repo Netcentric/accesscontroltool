@@ -51,9 +51,9 @@ There are also some [advanced configuration options](docs/AdvancedFeatures.md) s
 
 There is a Felix Web Console plugin (at `/system/console/actool`) as well as a Touch UI console (at `/mnt/overlay/netcentric/actool/content/overview.html`) to apply configurations and to inspect previous executions of the tool. Additionally there is a [JMX interface](docs/Jmx.md) for some advanced use cases.
 
-# Applying a AC Tool Configurations
+# Applying AC Tool Configurations
 
-Best practice is to apply the AC Tool Configuration using the install hook (or startup hook for CS) during your project's software package installation. See [applying the ACL entries](docs/ApplyConfig.md) for a full list of options.
+Best practice is to apply AC Tool Configurations using the install hook (or startup hook for Cloud Service) during your project's software package installation. See [applying the ACL entries](docs/ApplyConfig.md) for a full list of options.
 
 # Migration to AC Tool
 
