@@ -1,6 +1,6 @@
 # Comparison of AC Tool to other approaches
 
-We considered existing solutions before starting our own AC Tool. These are basically content packages (including rep:policy nodes) and the ACL Setup Service provided by AEM.
+We considered existing solutions before starting our own AC Tool. These are basically [Jackrabbit FileVault content packages (including rep:policy nodes)](https://jackrabbit.apache.org/filevault/), [Sling repository initialization](https://sling.apache.org/documentation/bundles/repository-initialization.html) and the ACL Setup Service provided by AEM.
 
 Aspect | AC Tool | Repo Init | Content Package | ACL Setup Service
 ------ | ------- | ---------------  | --------------- | -----------------
