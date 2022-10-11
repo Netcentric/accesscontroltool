@@ -82,11 +82,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <slf4j.version>1.7.25</slf4j.version>
-        <bnd.version>6.3.0</bnd.version>
+        <bnd.version>6.3.1</bnd.version>
         <bouncycastle.version>1.64</bouncycastle.version>
         <java.target.version>8</java.target.version>
-        <mockito.version>4.6.1</mockito.version>
-        <junit.version>5.8.2</junit.version>
+        <mockito.version>4.8.0</mockito.version>
+        <junit.version>5.9.0</junit.version>
     </properties>
 
     <modules>
@@ -168,10 +168,9 @@
                     <configuration>
                         <bnd>
                             Bundle-DocURL: https://github.com/Netcentric/accesscontroltool
-                            # generate error (instead of warning) when exported package uses private (non-exported)
-                            reference
-                            -fixupmessages:"Export *, has \\d+, private references"; \
-                            restrict:=warning; \
+                            # generate error (instead of warning) when exported package uses private (non-exported) reference
+                            -fixupmessages:"Export *, has \\d+, private references";\
+                            restrict:=warning;\
                             is:=error
                         </bnd>
                     </configuration>
@@ -211,12 +210,12 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>3.3.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
-                    <version>3.0.0-M2</version>
+                    <version>3.0.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -226,7 +225,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>3.0.0-M1</version>
+                    <version>3.0.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -251,7 +250,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.4.0</version>
+                    <version>3.4.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -266,7 +265,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.1.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.sonatype.plugins</groupId>
@@ -275,8 +274,8 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.sling</groupId>
-                    <artifactId>maven-sling-plugin</artifactId>
-                    <version>2.4.2</version>
+                    <artifactId>sling-maven-plugin</artifactId>
+                    <version>3.0.2</version>
                     <configuration>
                         <user>${crx.username}</user>
                         <password>${crx.password}</password>
@@ -331,13 +330,13 @@
                         <dependency>
                             <groupId>biz.netcentric.filevault.validator</groupId>
                             <artifactId>aem-classification-validator</artifactId>
-                            <version>1.0.0</version>
+                            <version>1.1.1</version>
                         </dependency>
                         <!-- the dependency containing the actual classification map -->
                         <dependency>
                             <groupId>biz.netcentric.filevault.validator.maps</groupId>
                             <artifactId>aem-classification-map-repo-annotations</artifactId>
-                            <version>6.5.3.0</version>
+                            <version>6.5.13.0</version>
                         </dependency>
                         <dependency>
                             <groupId>biz.netcentric.filevault.validator.maps</groupId>
@@ -384,7 +383,7 @@
                 <plugin>
                     <groupId>com.adobe.aem</groupId>
                     <artifactId>aemanalyser-maven-plugin</artifactId>
-                    <version>1.4.10</version>
+                    <version>1.4.16</version><!-- 1.4.18 has several regressions, e.g. https://github.com/adobe/aemanalyser-maven-plugin/issues/175 -->
                     <executions>
                         <execution>
                             <id>aem-analyser</id>
@@ -397,7 +396,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-release-plugin</artifactId>
-                    <version>3.0.0-M5</version>
+                    <version>3.0.0-M6</version>
                     <configuration>
                         <releaseProfiles>release</releaseProfiles>
                         <autoVersionSubmodules>true</autoVersionSubmodules>
@@ -410,7 +409,7 @@
                 <plugin>
                     <groupId>org.owasp</groupId>
                     <artifactId>dependency-check-maven</artifactId>
-                    <version>7.1.0</version>
+                    <version>7.1.2</version>
                     <configuration>
                         <cveValidForHours>24</cveValidForHours>
                         <failBuildOnAnyVulnerability>true</failBuildOnAnyVulnerability>
@@ -560,24 +559,74 @@
         <profile>
             <id>autoInstallBundle</id>
             <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.sling</groupId>
-                        <artifactId>maven-sling-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>install-bundle</id>
-                                <goals>
-                                    <goal>install</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <slingUrl>http://${crx.host}:${crx.port}/apps/netcentric/actool/install</slingUrl>
-                            <usePut>true</usePut>
-                        </configuration>
-                    </plugin>
-                </plugins>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.sling</groupId>
+                            <artifactId>sling-maven-plugin</artifactId>
+                            <executions>
+                                <execution>
+                                    <id>install-bundle</id>
+                                    <goals>
+                                        <goal>install</goal>
+                                    </goals>
+                                </execution>
+                            </executions>
+                            <configuration>
+                                <slingUrl>http://${crx.host}:${crx.port}/apps/netcentric/actool/install</slingUrl>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+        <profile>
+            <id>autoInstallPackage</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>com.day.jcr.vault</groupId>
+                            <artifactId>content-package-maven-plugin</artifactId>
+                            <executions>
+                                <execution>
+                                    <id>install-content-package</id>
+                                    <phase>install</phase>
+                                    <goals>
+                                        <goal>install</goal>
+                                    </goals>
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+        <profile>
+            <id>autoInstallPackagePublish</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>com.day.jcr.vault</groupId>
+                            <artifactId>content-package-maven-plugin</artifactId>
+                            <executions>
+                                <execution>
+                                    <id>install-content-package-publish</id>
+                                    <phase>install</phase>
+                                    <goals>
+                                        <goal>install</goal>
+                                    </goals>
+                                    <configuration>
+                                        <targetURL>http://${publish.crx.host}:${publish.crx.port}/crx/packmgr/service.jsp</targetURL>
+                                        <userId>${publish.crx.username}</userId>
+                                        <password>${publish.crx.password}</password>
+                                    </configuration>
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
             </build>
         </profile>
         <profile>

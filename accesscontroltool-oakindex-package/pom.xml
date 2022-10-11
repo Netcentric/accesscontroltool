@@ -37,34 +37,58 @@
                     <group>Netcentric</group>
                     <filterSource>src/main/META-INF/vault/filter.xml</filterSource>
                     <allowIndexDefinitions>true</allowIndexDefinitions>
-                    <!-- overwrite (compare with https://issues.apache.org/jira/browse/JCRVLT-496) -->
-                    <packageType>application</packageType>
-                    <validatorsSettings>
-                        <jackrabbit-packagetype>
-                            <!-- https://issues.apache.org/jira/browse/JCRVLT-496 -->
-                            <isDisabled>true</isDisabled>
-                        </jackrabbit-packagetype>
-                    </validatorsSettings>
+                    <packageType>content</packageType><!-- regular mutable content for AEM Classic -->
                 </configuration>
                 <executions>
                     <execution>
-                        <id>generate-metadata-for-cloud</id>
+                        <id>cloud-generate-metadata</id>
                         <goals>
                             <goal>generate-metadata</goal>
+                        </goals>
+                        <configuration>
+                            <!-- application type for AEMaaCS,  -->
+                            <packageType>application</packageType>
+                            <classifier>cloud</classifier>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>cloud-package</id>
+                        <goals>
+                            <goal>package</goal>
                         </goals>
                         <configuration>
                             <classifier>cloud</classifier>
                         </configuration>
                     </execution>
                     <execution>
-                        <id>package-for-cloud</id>
+                        <id>cloud-validate-package</id>
                         <goals>
-                            <goal>package</goal>
+                            <goal>validate-package</goal>
                         </goals>
                         <configuration>
-                            <classifier>cloud</classifier>
-                            <!-- due to https://issues.apache.org/jira/browse/JCRVLT-498 -->
-                            <workDirectory>${project.build.directory}/vault-work-cloud</workDirectory>
+                            <!-- workaround for https://issues.apache.org/jira/browse/JCRVLT-651  -->
+                            <packageFile>${project.build.directory}/${project.build.finalName}-cloud.zip</packageFile>
+                            <validatorsSettings>
+                                <jackrabbit-packagetype>
+                                    <options>
+                                        <!-- https://experienceleague.adobe.com/docs/experience-manager-cloud-service/content/operations/indexing.html?lang=en#project-configuration -->
+                                        <immutableRootNodeNames>apps,libs,oak:index</immutableRootNodeNames>
+                                    </options>
+                                </jackrabbit-packagetype>
+                            </validatorsSettings>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-validate-package</id>
+                        <goals>
+                            <goal>validate-package</goal>
+                        </goals>
+                        <configuration>
+                            <validatorsSettings>
+                                <netcentric-aem-cloud>
+                                    <isDisabled>true</isDisabled>
+                                </netcentric-aem-cloud>
+                            </validatorsSettings>
                         </configuration>
                     </execution>
                 </executions>
@@ -81,7 +105,6 @@
             <plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
-				<version>2.10</version>
 				<executions>
 					<execution>
 						<!-- integrate the hook from https://github.com/code-distillery/filevault-oak-reindex-hook to only reindex if really necessary -->
@@ -140,51 +163,4 @@
 			</plugins>
 		</pluginManagement>
     </build>
-    <profiles>
-        <profile>
-            <id>autoInstallOakIndexPackage</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.day.jcr.vault</groupId>
-                        <artifactId>content-package-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>install-content-package</id>
-                                <phase>install</phase>
-                                <goals>
-                                    <goal>install</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>autoInstallOakIndexPackagePublish</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.day.jcr.vault</groupId>
-                        <artifactId>content-package-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>install-content-package-publish</id>
-                                <phase>install</phase>
-                                <goals>
-                                    <goal>install</goal>
-                                </goals>
-                                <configuration>
-                                    <targetURL>http://${publish.crx.host}:${publish.crx.port}/crx/packmgr/service.jsp</targetURL>
-                                    <username>${publish.crx.username}</username>
-                                    <password>${publish.crx.password}</password>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>
