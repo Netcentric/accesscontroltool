@@ -83,7 +83,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
 
             String mergedAndProcessedConfig = installLog.getMergedAndProcessedConfig();
             if (StringUtils.isNotBlank(mergedAndProcessedConfig)) {
-                JcrUtils.putFile(historyNode, "mergedConfig.yaml", "text/yaml",
+                JcrUtils.putFile(historyNode, "mergedConfig.txt", "text/plain",
                         new ByteArrayInputStream(mergedAndProcessedConfig.getBytes()));
             }
 
