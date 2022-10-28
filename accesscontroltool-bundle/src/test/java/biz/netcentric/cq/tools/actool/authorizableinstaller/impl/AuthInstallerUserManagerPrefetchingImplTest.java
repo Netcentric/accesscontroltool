@@ -3,10 +3,12 @@ package biz.netcentric.cq.tools.actool.authorizableinstaller.impl;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.security.Principal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -25,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -75,9 +78,14 @@ class AuthInstallerUserManagerPrefetchingImplTest {
 
         when(userManager.findAuthorizables(any(Query.class))).thenReturn(Arrays.asList(group1, group2, group3, user1, user2).iterator());
         when(userManager.getAuthorizable("invalidid")).thenThrow(new RepositoryException("Unknown authorizable id 'invalidid'"));
+        when(userManager.createUser(anyString(), anyString(), any(Principal.class), anyString())).thenReturn(Mockito.mock(User.class));
+        when(userManager.createSystemUser(anyString(), anyString())).thenReturn(Mockito.mock(User.class));
+        when(userManager.createGroup(any(Principal.class), anyString())).thenReturn(Mockito.mock(Group.class));
+        when(userManager.createGroup(any(Principal.class))).thenReturn(Mockito.mock(Group.class));
     }
 
     private void setupAuthorizable(Authorizable auth, String id, List<Group> memberOf) throws RepositoryException {
+        when(auth.getPath()).thenReturn("/home/userorgroup/"+id);
         when(auth.getID()).thenReturn(id);
         when(auth.declaredMemberOf()).thenReturn(memberOf.iterator());
     }

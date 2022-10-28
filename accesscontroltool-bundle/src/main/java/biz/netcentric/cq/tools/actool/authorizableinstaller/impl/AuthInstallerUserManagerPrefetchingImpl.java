@@ -58,6 +58,7 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
 
     private final Map<String, Set<String>> nonRegularUserMembersByAuthorizableId = new CaseInsensitiveMap<>();
     private final Map<String, Set<String>> isMemberOfByAuthorizableId = new CaseInsensitiveMap<>();
+    private final Map<String, String> authorizableIdsAndPaths = new CaseInsensitiveMap<>();
 
     public AuthInstallerUserManagerPrefetchingImpl(UserManager delegate, final ValueFactory valueFactory, InstallationLogger installLog)
             throws RepositoryException {
@@ -93,6 +94,7 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
                 nonRegularUserMembersByAuthorizableId.computeIfAbsent(memberOfGroupId, id -> new HashSet<>()).add(authId);
                 membershipCount++;
             }
+            authorizableIdsAndPaths.put(auth.getID(), auth.getPath());
         }
 
         installLog.addMessage(LOG, "Prefetched " + membershipCount + " memberships in "
@@ -100,9 +102,16 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
     }
 
     public Authorizable getAuthorizable(String id) throws RepositoryException {
-        // this is really fast in Oak (lookup by UUID, no query involved) -> no need to cache
+        // lookup by path is faster than looking up by id (which uses a query under the hood)
+        Authorizable authorizable = null;
+        if (authorizableIdsAndPaths.containsKey(id)) {
+            authorizable = delegate.getAuthorizableByPath(authorizableIdsAndPaths.get(id));
+        }
+        if (authorizable == null) {
+            authorizable = delegate.getAuthorizable(id);
+        }
         // also the returned object is pretty huge, so it short be short-living
-        return delegate.getAuthorizable(id);
+        return authorizable;
     }
 
     public Set<String> getDeclaredIsMemberOf(String id) throws RepositoryException {
@@ -135,6 +144,7 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
             removeGroupFromCache(group);
         }
         authorizable.remove();
+        authorizableIdsAndPaths.remove(authorizable.getID());
     }
 
     private void removeGroupFromCache(final Group group) throws RepositoryException {
@@ -157,21 +167,25 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
 
     public User createUser(String userID, String password, Principal principal, String intermediatePath) throws RepositoryException {
         final User user = delegate.createUser(userID, password, principal, intermediatePath);
+        authorizableIdsAndPaths.put(userID, user.getPath());
         return user;
     }
 
     public User createSystemUser(String userID, String intermediatePath) throws RepositoryException {
         final User user = delegate.createSystemUser(userID, intermediatePath);
+        authorizableIdsAndPaths.put(userID, user.getPath());
         return user;
     }
 
     public Group createGroup(Principal principal) throws RepositoryException {
         final Group group = delegate.createGroup(principal);
+        authorizableIdsAndPaths.put(group.getID(), group.getPath());
         return group;
     }
 
     public Group createGroup(Principal principal, String intermediatePath) throws RepositoryException {
         final Group group = delegate.createGroup(principal, intermediatePath);
+        authorizableIdsAndPaths.put(group.getID(), group.getPath());
         return group;
     }
 
