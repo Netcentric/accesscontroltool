@@ -1,18 +1,18 @@
 package biz.netcentric.cq.tools.actool.authorizableinstaller.impl;
 
+import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.security.Principal;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.ValueFactory;
@@ -27,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -35,10 +36,9 @@ import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class AuthInstallerUserManagerPrefetchingImplTest {
+class AuthInstallerUserManagerPrefetchingImplTest {
 
     private static final String GROUP_1 = "group1";
-    private static final String GROUP1_PATH = "/home/groups/actool";
     private static final String USER_1 = "user1";
 
     @Mock
@@ -60,54 +60,57 @@ public class AuthInstallerUserManagerPrefetchingImplTest {
     Group group3;
 
     @Mock
-    Group groupCreated;
-
-    @Mock
     User user1;
 
     @Mock
     User user2;
 
-    @Mock
-    User userCreated;
-
-    @Mock
-    User userNonCached;
-
     AuthInstallerUserManagerPrefetchingImpl prefetchingUserManager;
 
     @BeforeEach
-    public void before() throws RepositoryException {
+    void before() throws RepositoryException {
 
         setupAuthorizable(group1, GROUP_1, Collections.<Group>emptyList());
         setupAuthorizable(group2, "group2", Arrays.asList(group1));
         setupAuthorizable(group3, "group3", Arrays.asList(group2));
         setupAuthorizable(user1, USER_1, Arrays.asList(group3));
         setupAuthorizable(user2, "user2", Arrays.asList(group3));
-        setupAuthorizable(userNonCached, "userNonCached", Arrays.asList(group3));
 
         when(userManager.findAuthorizables(any(Query.class))).thenReturn(Arrays.asList(group1, group2, group3, user1, user2).iterator());
+        when(userManager.getAuthorizable("invalidid")).thenThrow(new RepositoryException("Unknown authorizable id 'invalidid'"));
+        when(userManager.createUser(anyString(), anyString(), any(Principal.class), anyString())).thenReturn(Mockito.mock(User.class));
+        when(userManager.createSystemUser(anyString(), anyString())).thenReturn(Mockito.mock(User.class));
+        when(userManager.createGroup(any(Principal.class), anyString())).thenReturn(Mockito.mock(Group.class));
+        when(userManager.createGroup(any(Principal.class))).thenReturn(Mockito.mock(Group.class));
     }
 
     private void setupAuthorizable(Authorizable auth, String id, List<Group> memberOf) throws RepositoryException {
+        when(auth.getPath()).thenReturn("/home/userorgroup/"+id);
         when(auth.getID()).thenReturn(id);
         when(auth.declaredMemberOf()).thenReturn(memberOf.iterator());
     }
 
     @Test
-    public void testPrefetchedAuthorizablesUserManager() throws RepositoryException {
+    void testGetDeclaredIsMemberOfAndGetDeclaredMembersWithoutRegularUsers() throws RepositoryException {
         prefetchingUserManager = new AuthInstallerUserManagerPrefetchingImpl(userManager, valueFactory, installationLogger);
 
-        assertEquals(5, prefetchingUserManager.getCacheSize());
-        assertEquals(group1, prefetchingUserManager.getAuthorizable(GROUP_1));
-        assertEquals(null, prefetchingUserManager.getAuthorizable("userNonCached"));
+        assertEquals(Collections.emptySet(), prefetchingUserManager.getDeclaredIsMemberOf("group1"));
+        assertEquals(Collections.singleton("group1"), prefetchingUserManager.getDeclaredIsMemberOf("group2"));
+        assertEquals(Collections.singleton("group2"), prefetchingUserManager.getDeclaredIsMemberOf("group3"));
+        assertEquals(Collections.singleton("group3"), prefetchingUserManager.getDeclaredIsMemberOf("user1"));
+        assertEquals(Collections.singleton("group3"), prefetchingUserManager.getDeclaredIsMemberOf("user2"));
+        assertThrows(RepositoryException.class, () -> prefetchingUserManager.getDeclaredIsMemberOf("invalidid"));
 
-        when(userManager.getAuthorizable("userNonCached")).thenReturn(userNonCached);
-        assertEquals(userNonCached, prefetchingUserManager.getAuthorizable("userNonCached"));
+        assertEquals(Collections.singleton("group2"), prefetchingUserManager.getDeclaredMembersWithoutRegularUsers("group1"));
+        assertEquals(Collections.singleton("group3"), prefetchingUserManager.getDeclaredMembersWithoutRegularUsers("group2"));
+        assertEquals(new HashSet<>(Arrays.asList("user1", "user2")), prefetchingUserManager.getDeclaredMembersWithoutRegularUsers("group3"));
+        assertEquals(Collections.emptySet(), prefetchingUserManager.getDeclaredMembersWithoutRegularUsers("user1"));
+        assertEquals(Collections.emptySet(), prefetchingUserManager.getDeclaredMembersWithoutRegularUsers("user2"));
+        assertEquals(Collections.emptySet(), prefetchingUserManager.getDeclaredMembersWithoutRegularUsers("invalidid"));
     }
 
     @Test
-    public void testDelegation() throws RepositoryException {
+    void testDelegation() throws RepositoryException {
         prefetchingUserManager = new AuthInstallerUserManagerPrefetchingImpl(userManager, valueFactory, installationLogger);
 
         String testuser = "test";
@@ -128,105 +131,9 @@ public class AuthInstallerUserManagerPrefetchingImplTest {
         verify(userManager, times(1)).createGroup(testPrincipal, userPath);
     }
 
-    @Test
-    public void testCacheShouldRefreshedAfterGroupCreation() throws RepositoryException {
-        prefetchingUserManager = new AuthInstallerUserManagerPrefetchingImpl(userManager, valueFactory, installationLogger);
-
-        final PrincipalImpl group = new PrincipalImpl(GROUP_1);
-        setupAuthorizable(groupCreated, GROUP_1, Collections.<Group>emptyList());
-        when(userManager.createGroup(group)).thenReturn(groupCreated);
-
-        final Authorizable groupBeforeRecreation = prefetchingUserManager.getAuthorizable(GROUP_1);
-        final Authorizable groupRecreated = prefetchingUserManager.createGroup(group);
-        final Authorizable groupAfterRecreation = prefetchingUserManager.getAuthorizable(GROUP_1);
-
-        assertEquals(groupRecreated, groupAfterRecreation);
-        assertEquals(groupCreated, groupAfterRecreation);
-        assertNotEquals(groupBeforeRecreation, groupAfterRecreation);
-    }
 
     @Test
-    public void testCacheShouldRefreshedAfterGroupWithPathCreation() throws RepositoryException {
-        prefetchingUserManager = new AuthInstallerUserManagerPrefetchingImpl(userManager, valueFactory, installationLogger);
-
-        final PrincipalImpl group = new PrincipalImpl(GROUP_1);
-        setupAuthorizable(groupCreated, GROUP_1, Collections.<Group>emptyList());
-        when(userManager.createGroup(group, GROUP1_PATH)).thenReturn(groupCreated);
-
-        final Authorizable groupBeforeRecreation = prefetchingUserManager.getAuthorizable(GROUP_1);
-        final Authorizable groupRecreated = prefetchingUserManager.createGroup(group, GROUP1_PATH);
-        final Authorizable groupAfterRecreation = prefetchingUserManager.getAuthorizable(GROUP_1);
-
-        assertEquals(groupRecreated, groupAfterRecreation);
-        assertEquals(groupCreated, groupAfterRecreation);
-        assertNotEquals(groupBeforeRecreation, groupAfterRecreation);
-    }
-
-    @Test
-    public void testCacheShouldRefreshedAfterSystemUserCreation() throws RepositoryException {
-        prefetchingUserManager = new AuthInstallerUserManagerPrefetchingImpl(userManager, valueFactory, installationLogger);
-
-        setupAuthorizable(userCreated, USER_1, Arrays.asList(group3));
-        when(userManager.createSystemUser(USER_1, null)).thenReturn(userCreated);
-
-        final Authorizable userBeforeRecreation = prefetchingUserManager.getAuthorizable(USER_1);
-        final Authorizable userRecreated = prefetchingUserManager.createSystemUser(USER_1, null);
-        final Authorizable userAfterRecreation = prefetchingUserManager.getAuthorizable(USER_1);
-
-        assertEquals(userRecreated, userAfterRecreation);
-        assertEquals(userCreated, userAfterRecreation);
-        assertNotEquals(userBeforeRecreation, userAfterRecreation);
-    }
-
-    @Test
-    public void testCacheShouldRefreshedAfterUserCreation() throws RepositoryException {
-        prefetchingUserManager = new AuthInstallerUserManagerPrefetchingImpl(userManager, valueFactory, installationLogger);
-
-        setupAuthorizable(userCreated, USER_1, Arrays.asList(group3));
-        final PrincipalImpl user = new PrincipalImpl(GROUP_1);
-        when(userManager.createUser(USER_1, "pass", user, null)).thenReturn(userCreated);
-
-        final Authorizable userBeforeRecreation = prefetchingUserManager.getAuthorizable(USER_1);
-        final Authorizable userRecreated = prefetchingUserManager.createUser(USER_1, "pass", user, null);
-        final Authorizable userAfterRecreation = prefetchingUserManager.getAuthorizable(USER_1);
-
-        assertEquals(userRecreated, userAfterRecreation);
-        assertEquals(userCreated, userAfterRecreation);
-        assertNotEquals(userBeforeRecreation, userAfterRecreation);
-    }
-
-    @Test
-    public void testCacheShouldRefreshedAfterAuthorizableDeletion() throws RepositoryException {
-        //when(group3.getDeclaredMembers()).thenReturn(Arrays.asList((Authorizable) user1).iterator());
-
-        prefetchingUserManager = new AuthInstallerUserManagerPrefetchingImpl(userManager, valueFactory, installationLogger);
-
-        prefetchingUserManager.removeAuthorizable(user1);
-
-        final Authorizable retrievedUser1 = prefetchingUserManager.getAuthorizable(user1.getID());
-        final Set<String> groups = prefetchingUserManager.getDeclaredIsMemberOf(user1.getID());
-
-        assertNull(retrievedUser1);
-        assertFalse(groups.isEmpty());
-    }
-
-    @Test
-    public void testCacheShouldRefreshedAfterGroupDeletion() throws RepositoryException {
-        when(group3.getDeclaredMembers()).thenReturn(Arrays.asList((Authorizable) user1).iterator());
-
-        prefetchingUserManager = new AuthInstallerUserManagerPrefetchingImpl(userManager, valueFactory, installationLogger);
-
-        prefetchingUserManager.removeAuthorizable(group3);
-
-        final Authorizable retrievedGroup3 = prefetchingUserManager.getAuthorizable(group3.getID());
-        final Set<String> groups = prefetchingUserManager.getDeclaredIsMemberOf(user1.getID());
-
-        assertNull(retrievedGroup3);
-        assertFalse(groups.contains(group3.getID()));
-    }
-
-    @Test
-    public void testCaseSensitiveAuthorizableCacheRetrieval() throws RepositoryException {
+    void testCaseSensitiveAuthorizableCacheRetrieval() throws RepositoryException {
         prefetchingUserManager = new AuthInstallerUserManagerPrefetchingImpl(userManager, valueFactory, installationLogger);
         final Authorizable retrievedGroup3 = prefetchingUserManager.getAuthorizable(group1.getID());
         final Authorizable retrievedGroup3Alternative = prefetchingUserManager.getAuthorizable(group1.getID().toUpperCase());
