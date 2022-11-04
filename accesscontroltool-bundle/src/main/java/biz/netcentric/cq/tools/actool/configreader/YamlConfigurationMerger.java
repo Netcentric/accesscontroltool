@@ -24,7 +24,6 @@ import java.util.regex.Pattern;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.apache.commons.lang3.time.StopWatch;
 import org.osgi.service.cm.ConfigurationPlugin;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -135,7 +134,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             yamlRootList = yamlMacroProcessor.processMacros(yamlRootList, globalVariables, installLog, session);
             // set merged config per file to ensure it is there in case of validation errors (for success, the actual merged config is set
             // after this loop)
-            installLog.setMergedAndProcessedConfig("# File " + sourceFile + "\n" + yamlParser.dump(yamlRootList));
+            installLog.setMergedAndProcessedConfig("# File " + sourceFile + "\n" + yamlRootList);
 
             final Set<String> sectionIdentifiers = new LinkedHashSet<String>();
 
@@ -225,7 +224,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
         }
         
         installLog.setMergedAndProcessedConfig(
-                "# Merged configuration of " + configFileContentByFilename.size() + " files \n" + yamlParser.dump(acConfiguration));
+                "# Merged configuration of " + configFileContentByFilename.size() + " files \n" + acConfiguration);
 
         installLog.addMessage(LOG, "Loaded configuration in " + msHumanReadable(System.currentTimeMillis() - wholeConfigStart));
 

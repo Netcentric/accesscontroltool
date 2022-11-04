@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,5 +100,15 @@ public class AcConfiguration {
     public void setVirtualGroups(List<AuthorizableConfigBean> virtualGroups) {
         this.virtualGroups = virtualGroups;
     }
-    
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("globalConfiguration", globalConfiguration)
+                .append("authorizablesConfig", authorizablesConfig)
+                .append("aceBeansConfig", aceBeansConfig)
+                .append("obsoleteAuthorizables", obsoleteAuthorizables)
+                .append("virtualGroups", virtualGroups)
+                .toString();
+    }
 }
