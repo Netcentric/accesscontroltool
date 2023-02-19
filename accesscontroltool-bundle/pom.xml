@@ -25,6 +25,7 @@
     
     <properties>
         <tomcat.el.version>10.0.27</tomcat.el.version>
+        <oak.version>1.48.0</oak.version>
     </properties>
 
     <dependencies>
@@ -112,16 +113,6 @@
             <optional>true</optional>
         </dependency>
 
-
-        <!-- use the uber-jar always as last dependency because a lot of classes are provided also by other artifacts
-            It is only used here as replacement for com.adobe.granite:com.adobe.granite.crypto:3.0.0 whose pom.xml is not publicly available -->
-        <dependency>
-            <groupId>com.adobe.aem</groupId>
-            <artifactId>uber-jar</artifactId>
-            <classifier>apis</classifier>
-            <scope>provided</scope>
-        </dependency>
-
         <!-- START: Test Dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -133,7 +124,7 @@
             <artifactId>junit-jupiter-params</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- temporarily needed until the tests migration -->
+        <!-- temporarily needed until the tests migration to JUnit5 is complete -->
         <dependency>
             <groupId>org.junit.vintage</groupId>
             <artifactId>junit-vintage-engine</artifactId>
@@ -159,8 +150,50 @@
             <artifactId>slf4j-simple</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- IT dependencies -->
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-core</artifactId>
+            <version>${oak.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-jcr</artifactId>
+            <version>${oak.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-segment-tar</artifactId>
+            <version>${oak.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- transitive dependency of oak-segment-tar, necessary for filedatastore (https://issues.apache.org/jira/browse/OAK-6542) -->
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>3.2.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit.vault</groupId>
+            <artifactId>org.apache.jackrabbit.vault</artifactId>
+            <!-- compile against old version but test with newest release -->
+            <version>3.6.8</version>
+            <scope>test</scope>
+        </dependency>
+        
         <!-- END: Test Dependencies -->
 
+        <!-- use the uber-jar always as last dependency because a lot of classes are provided also by other artifacts
+            It is only used here as replacement for com.adobe.granite:com.adobe.granite.crypto:3.0.0 whose pom.xml is not publicly available -->
+        <dependency>
+            <groupId>com.adobe.aem</groupId>
+            <artifactId>uber-jar</artifactId>
+            <classifier>apis</classifier>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <!-- ====================================================================== -->
@@ -239,6 +272,7 @@
                     
                 </configuration>
             </plugin>
+            
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>

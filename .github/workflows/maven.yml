@@ -34,8 +34,7 @@ jobs:
 
       - name: Build with Maven
         if: '!matrix.isMainBuildEnv'
-        run: mvn -e -B -V clean verify
-
+        run: mvn -e -B -V -Pintegration-tests clean verify
       - name: Build and Analyse with Maven
         if: github.ref != 'refs/heads/develop' && matrix.isMainBuildEnv
         env: 
@@ -43,7 +42,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           # Needed to get some information about the pull request, if any
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: mvn -e -B -V clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Netcentric_accesscontroltool -Dsonar.organization=netcentric -Dsonar.host.url=https://sonarcloud.io -Pdependency-check,coverage-report
+        run: mvn -e -B -V -Pintegration-tests clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Netcentric_accesscontroltool -Dsonar.organization=netcentric -Dsonar.host.url=https://sonarcloud.io -Pdependency-check,coverage-report
 
       - name: Build, Analyse and Deploy with Maven
         if: github.ref == 'refs/heads/develop' && matrix.isMainBuildEnv
@@ -54,4 +53,4 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           # Needed to get some information about the pull request, if any
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: mvn -e -B -V clean deploy org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Netcentric_accesscontroltool -Dsonar.organization=netcentric -Dsonar.host.url=https://sonarcloud.io -Pdependency-check,coverage-report
+        run: mvn -e -B -V -Pintegration-tests clean deploy org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Netcentric_accesscontroltool -Dsonar.organization=netcentric -Dsonar.host.url=https://sonarcloud.io -Pdependency-check,coverage-report

@@ -66,7 +66,7 @@ public class ContentHelper {
 
             try {
 
-                String parentPath = StringUtils.substringBeforeLast(path, "/");
+                String parentPath = Text.getRelativeParent(path, 1);
                 if (!session.nodeExists(parentPath)) {
                     history.incMissingParentPathsForInitialContent();
                     history.addVerboseMessage(LOG, "Parent path " + parentPath + " missing for initial content at " + path);
@@ -77,8 +77,7 @@ public class ContentHelper {
                 history.addMessage(LOG, "Created initial content for path " + path);
                 return true;
             } catch (Exception e) {
-                history.addWarning(LOG, "Failed creating initial content for path " + path + ": " + e);
-                LOG.debug("Exception: " + e, e); // log stack trace only debug
+                history.addError(LOG, "Failed creating initial content for path " + path + ": " + e, e);
                 return false;
             }
 
@@ -104,7 +103,7 @@ public class ContentHelper {
 
     public static void importContent(final Session session, final String path,
             String contentXmlStr) throws RepositoryException {
-        String parentPath = StringUtils.substringBeforeLast(path, "/");
+        String parentPath = Text.getRelativeParent(path, 1);
         try {
             session.getNode(parentPath);
         } catch (PathNotFoundException e) {
@@ -137,7 +136,11 @@ public class ContentHelper {
 
             ImportOptions importOptions = new ImportOptions();
             importOptions.setAutoSaveThreshold(Integer.MAX_VALUE); // IMPORTANT: this disables saving the session in Importer
-            importOptions.setStrict(true);
+            /**
+             * Non-strict mode necessary as otherwise session.reset(false) might be executed (https://issues.apache.org/jira/browse/JCRVLT-690),
+             * and installation should continue in case of errors within initial content in a best effort basis (for backwards-compatibility reasons)
+             */
+            importOptions.setStrict(false); 
             importOptions.setListener(new ProgressTrackerListener() {
 
                 @Override
