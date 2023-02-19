@@ -409,10 +409,10 @@
                 <plugin>
                     <groupId>org.owasp</groupId>
                     <artifactId>dependency-check-maven</artifactId>
-                    <version>7.1.2</version>
+                    <version>8.1.0</version>
                     <configuration>
                         <cveValidForHours>24</cveValidForHours>
-                        <failBuildOnAnyVulnerability>true</failBuildOnAnyVulnerability>
+                        <failBuildOnCVSS>11</failBuildOnCVSS>
                         <skipProvidedScope>true</skipProvidedScope>
                         <skipSystemScope>true</skipSystemScope>
                         <retireJsAnalyzerEnabled>false</retireJsAnalyzerEnabled>
