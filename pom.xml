@@ -383,7 +383,7 @@
                 <plugin>
                     <groupId>com.adobe.aem</groupId>
                     <artifactId>aemanalyser-maven-plugin</artifactId>
-                    <version>1.4.16</version><!-- 1.4.18 has several regressions, e.g. https://github.com/adobe/aemanalyser-maven-plugin/issues/175 -->
+                    <version>1.5.8</version>
                     <executions>
                         <execution>
                             <id>aem-analyser</id>
