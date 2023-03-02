@@ -6,6 +6,7 @@ import java.util.Hashtable;
 import org.osgi.service.cm.ConfigurationPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.constructor.AbstractConstruct;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.env.EnvScalarConstructor;
@@ -23,7 +24,7 @@ import biz.netcentric.cq.tools.actool.history.InstallationLogger;
  * Usually this is called with 
  * <a href="https://github.com/apache/felix-dev/tree/master/configadmin-plugins/interpolation">Felix Configadmin Interpolation Plugin</a>.
  * 
- * @see <a href="https://bitbucket.org/asomov/snakeyaml/wiki/Variable%20substitution">Variable substitution</a>
+ * @see <a href="https://bitbucket.org/snakeyaml/snakeyaml/wiki/Variable%20substitution">Variable substitution</a>
  *
  */
 public class YamlConfigurationAdminPluginScalarConstructor extends Constructor {
@@ -37,6 +38,7 @@ public class YamlConfigurationAdminPluginScalarConstructor extends Constructor {
     private final InstallationLogger installLog;
 
     public YamlConfigurationAdminPluginScalarConstructor(InstallationLogger installLog, ConfigurationPlugin interpolationPlugin) {
+        super(new LoaderOptions());
         this.yamlConstructors.put(TAG, new ConstructYamlConfigurationAdminPlugin());
         this.interpolationPlugin = interpolationPlugin;
         this.installLog = installLog;
