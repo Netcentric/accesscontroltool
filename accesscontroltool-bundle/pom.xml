@@ -209,7 +209,18 @@
                         <skip>false</skip><!-- only enable in specific submodules -->
                         <suppressionFile>${project.basedir}/suppression.xml</suppressionFile>
                     </configuration>
-                 </plugin>
+                </plugin>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <configuration>
+                        <excludes>
+                            <!-- Exclude multi-version snakeyaml for Jacoco due to https://github.com/jacoco/jacoco/issues/407 -->
+                            <exclude>snakeyaml-2.0.jar</exclude>
+                            <exclude>tomcat-*.jar</exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
