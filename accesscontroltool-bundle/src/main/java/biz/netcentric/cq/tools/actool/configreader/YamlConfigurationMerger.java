@@ -31,7 +31,10 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
@@ -106,7 +109,7 @@ public class YamlConfigurationMerger implements ConfigurationMerger {
             yamlParser.addImplicitResolver(YamlConfigurationAdminPluginScalarConstructor.TAG, CONFIG_ADMIN_INTERPOLATOR_FORMAT, null);
             installLog.addMessage(LOG, "Using YAML parser with ConfigurationAdmin Plugin placeholder support");
         } else {
-            yamlParser = new Yaml();
+            yamlParser = new Yaml(new SafeConstructor(new LoaderOptions()));
         }
         final ConfigurationsValidator configurationsValidator = new YamlConfigurationsValidator();
 

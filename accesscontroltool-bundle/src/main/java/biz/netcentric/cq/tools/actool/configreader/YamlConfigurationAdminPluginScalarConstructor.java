@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.constructor.AbstractConstruct;
-import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.env.EnvScalarConstructor;
 import org.yaml.snakeyaml.error.YAMLException;
 import org.yaml.snakeyaml.nodes.Node;
@@ -27,7 +27,7 @@ import biz.netcentric.cq.tools.actool.history.InstallationLogger;
  * @see <a href="https://bitbucket.org/snakeyaml/snakeyaml/wiki/Variable%20substitution">Variable substitution</a>
  *
  */
-public class YamlConfigurationAdminPluginScalarConstructor extends Constructor {
+public class YamlConfigurationAdminPluginScalarConstructor extends SafeConstructor {
 
     // this tag is not used explicitly in YAML but bound implicitly via Yaml.addImplicitResolver(...)
     public static final Tag TAG = new Tag("!CONFIGADMIN");
