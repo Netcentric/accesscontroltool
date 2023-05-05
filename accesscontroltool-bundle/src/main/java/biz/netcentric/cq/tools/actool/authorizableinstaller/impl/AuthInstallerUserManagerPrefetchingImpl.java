@@ -68,9 +68,10 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
         Iterator<Authorizable> authorizablesToPrefetchIt = delegate.findAuthorizables(new Query() {
             public <T> void build(QueryBuilder<T> builder) {
                 builder.setCondition(
-                        builder.or( //
-                                builder.neq("@" + JcrConstants.JCR_PRIMARYTYPE, valueFactory.createValue(UserConstants.NT_REP_USER)),
-                                builder.eq("@" + UserConstants.REP_AUTHORIZABLE_ID, valueFactory.createValue(Constants.USER_ANONYMOUS))) //
+                    builder.or(
+                        builder.eq("@" + JcrConstants.JCR_PRIMARYTYPE, valueFactory.createValue(UserConstants.NT_REP_SYSTEM_USER)),
+                        builder.eq("@" + JcrConstants.JCR_PRIMARYTYPE, valueFactory.createValue(UserConstants.NT_REP_GROUP))
+                    )
                 );
             }
         });
@@ -81,20 +82,14 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
         long startPrefetchMemberships = System.currentTimeMillis();
         while (authorizablesToPrefetchIt.hasNext()) {
             Authorizable auth = authorizablesToPrefetchIt.next();
-            String authId = auth.getID();
-
-            // also cache those groups which are not member of any other group!
-            Set<String> memberOfByAuthorizableIds = new HashSet<>();
-            this.isMemberOfByAuthorizableId.put(authId, memberOfByAuthorizableIds);
-            Iterator<Group> declaredMemberOf = auth.declaredMemberOf();
-            while (declaredMemberOf.hasNext()) {
-                Group memberOfGroup = declaredMemberOf.next();
-                String memberOfGroupId = memberOfGroup.getID();
-                memberOfByAuthorizableIds.add(memberOfGroupId);
-                nonRegularUserMembersByAuthorizableId.computeIfAbsent(memberOfGroupId, id -> new HashSet<>()).add(authId);
-                membershipCount++;
-            }
+            membershipCount += prefetchAuthorizable(auth);
             authorizableIdsAndPaths.put(auth.getID(), auth.getPath());
+        }
+
+        Authorizable anonymous = delegate.getAuthorizable(UserConstants.DEFAULT_ANONYMOUS_ID);
+        if (anonymous != null) {
+            membershipCount += prefetchAuthorizable(anonymous);
+            authorizableIdsAndPaths.put(anonymous.getID(), anonymous.getPath());
         }
 
         installLog.addMessage(LOG, "Prefetched " + membershipCount + " memberships in "
@@ -145,6 +140,27 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
         }
         authorizable.remove();
         authorizableIdsAndPaths.remove(authorizable.getID());
+    }
+
+    private int prefetchAuthorizable(final Authorizable authorizable) throws RepositoryException {
+        Objects.requireNonNull(authorizable);
+
+        int membershipCount = 0;
+        String authId = authorizable.getID();
+
+        // also cache those groups which are not member of any other group!
+        Set<String> memberOfByAuthorizableIds = new HashSet<>();
+        this.isMemberOfByAuthorizableId.put(authId, memberOfByAuthorizableIds);
+        Iterator<Group> declaredMemberOf = authorizable.declaredMemberOf();
+        while (declaredMemberOf.hasNext()) {
+            Group memberOfGroup = declaredMemberOf.next();
+            String memberOfGroupId = memberOfGroup.getID();
+            memberOfByAuthorizableIds.add(memberOfGroupId);
+            nonRegularUserMembersByAuthorizableId.computeIfAbsent(memberOfGroupId, id -> new HashSet<>()).add(authId);
+            membershipCount++;
+        }
+        authorizableIdsAndPaths.put(authorizable.getID(), authorizable.getPath());
+        return membershipCount;
     }
 
     private void removeGroupFromCache(final Group group) throws RepositoryException {
