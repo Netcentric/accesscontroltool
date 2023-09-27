@@ -1,10 +1,3 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
-    <suppress>
-       <notes><![CDATA[
-Snakeyaml 2.0.0 is not out yet, and the yaml is only executed by admins (compare with https://bitbucket.org/snakeyaml/snakeyaml/issues/561/cve-2022-1471-vulnerability-in)
-       ]]></notes>
-       <packageUrl regex="true">^pkg:maven/org\.yaml/snakeyaml@.*$</packageUrl>
-       <vulnerabilityName>CVE-2022-1471</vulnerabilityName>
-    </suppress>
 </suppressions>
