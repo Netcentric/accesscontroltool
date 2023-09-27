@@ -9,9 +9,9 @@ jobs:
         os: [ubuntu-latest, windows-latest, macOS-latest]
         jdk: [8, 11, 17]
         include:
-          # lengthy build steps should only be performed on linux with Java 11 (Sonar analysis, deployment)
+          # lengthy build steps should only be performed on linux with Java 17 (Sonarcloud analysis, deployment)
           - os: ubuntu-latest
-            jdk: 11
+            jdk: 17
             isMainBuildEnv: true
       fail-fast: false
 
