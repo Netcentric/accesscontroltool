@@ -16,3 +16,6 @@ org.apache.sling.commons.scheduler.*;resolution:=optional,\
 org.apache.jackrabbit.oak.spi.security.principal;version="[1.5.0,3)",\
 !jakarta.servlet*,\
 *
+
+# snakeyaml 2.0 uses multi version jars which are not supported: https://github.com/bndtools/bnd/issues/3514
+-fixupmessages "Classes found in the wrong directory"; restrict:=error; is:=warning
