@@ -179,7 +179,7 @@ AEMs Crypto Support provides a 128 bit AES encryption which is stronger than the
 
 To encrypt an unencrypted PKCS#8 private key (in PEM format) you can use the command
 `openssl pkcs8 -topk8 -in <unencrypted-private-key-file> -out <encrypted-private-key-file>`. It will ask you for the password interactively.
-By default this will use the unsafe `PbeWithMD5AndDES-CBC` algorithm (with 56 bit key). You should consider using more secure algorithms with parameter `v2`, those are only supported with [Bouncy Castle][bouncycastle], though. For more details refer also to [RFC 8018](https://tools.ietf.org/html/rfc8018#appendix-B.2)
+By default this will use the unsafe `PbeWithMD5AndDES-CBC` algorithm (with 56 bit key). You should consider using more secure algorithms with parameter `v2`, those are only supported with [Bouncy Castle][bouncycastle] or [Java 21+](https://bugs.openjdk.org/browse/JDK-8288050), though. For more details refer also to [RFC 8018](https://tools.ietf.org/html/rfc8018#appendix-B.2)
 
 ### Install Bouncy Castle
 
