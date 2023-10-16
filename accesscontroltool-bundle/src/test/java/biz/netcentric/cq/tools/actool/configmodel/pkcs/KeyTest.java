@@ -14,6 +14,8 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCSException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledForJreRange;
+import org.junit.jupiter.api.condition.JRE;
 
 import biz.netcentric.cq.tools.actool.configmodel.TestDecryptionService;
 import biz.netcentric.cq.tools.actool.crypto.DecryptionService;
@@ -65,14 +67,27 @@ public class KeyTest {
     }
 
     @Test
-    // https://bugs.openjdk.java.net/browse/JDK-8231581 (Java 11) or https://bugs.openjdk.java.net/browse/JDK-8076999 (Java 8)
-    public void testEncryptedPkcs8Pbes2RsaKeyWithCertificateOnJCASDefault() throws IOException, GeneralSecurityException, OperatorCreationException, PKCSException {
+    @EnabledForJreRange(max = JRE.JAVA_17)
+    // https://bugs.openjdk.java.net/browse/JDK-8231581 (Java 11) or https://bugs.openjdk.java.net/browse/JDK-8076999 (Java 8) but works with Java 21 (https://bugs.openjdk.org/browse/JDK-8288050)
+    public void testEncryptedPkcs8Pbes2RsaKeyWithCertificateOnJCASDefaultPriorJava21() throws IOException, GeneralSecurityException, OperatorCreationException, PKCSException {
         try (InputStream inputPkcs8 = this.getClass().getResourceAsStream("example5_rsa_pkcs8");
              InputStream inputPemCert = this.getClass().getResourceAsStream("example5_rsa.crt")) {
             String privateKey = IOUtils.toString(inputPkcs8, StandardCharsets.US_ASCII);
             String certificate = IOUtils.toString(inputPemCert, StandardCharsets.US_ASCII);
             assertThrows(NoSuchAlgorithmException.class,
                     () -> Key.createFromPrivateKeyAndCertificate(descryptionService, privateKey, "{password}", certificate, privateKeyDecryptor));
+        }
+    }
+
+    @Test
+    @EnabledForJreRange(min = JRE.JAVA_21)
+    public void testEncryptedPkcs8Pbes2RsaKeyWithCertificateOnJCASDefaultJava21() throws IOException, GeneralSecurityException, OperatorCreationException, PKCSException {
+        try (InputStream inputPkcs8 = this.getClass().getResourceAsStream("example5_rsa_pkcs8");
+             InputStream inputPemCert = this.getClass().getResourceAsStream("example5_rsa.crt")) {
+            String privateKey = IOUtils.toString(inputPkcs8, StandardCharsets.US_ASCII);
+            String certificate = IOUtils.toString(inputPemCert, StandardCharsets.US_ASCII);
+            Key key = Key.createFromPrivateKeyAndCertificate(descryptionService, privateKey, "{password}", certificate, privateKeyDecryptor);
+            key.getKeyPair();
         }
     }
 

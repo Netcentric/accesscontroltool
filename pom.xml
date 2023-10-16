@@ -84,9 +84,10 @@
         <slf4j.version>1.7.25</slf4j.version>
         <bnd.version>6.3.1</bnd.version>
         <bouncycastle.version>1.64</bouncycastle.version>
-        <java.target.version>8</java.target.version>
+        <!-- release sets API classpath, source and target, see  https://docs.oracle.com/javase/9/tools/javac.htm#GUID-AEEC9F07-CB49-4E96-8BC7-BCC2C7F725C9__GUID-D343F6B4-3FDD-43A8-AD24-43DD70214471  and http://openjdk.java.net/jeps/247 -->
+        <maven.compiler.release>8</maven.compiler.release>
         <mockito.version>4.8.0</mockito.version>
-        <junit.version>5.9.0</junit.version>
+        <junit.version>5.10.0</junit.version>
     </properties>
 
     <modules>
@@ -296,11 +297,6 @@
                         <password>${crx.password}</password>
                     </configuration>
                 </plugin>
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>animal-sniffer-maven-plugin</artifactId>
-                    <version>1.21</version>
-                </plugin>
                 <!-- for building content packages -->
                 <plugin>
                     <groupId>org.apache.jackrabbit</groupId>
@@ -457,10 +453,7 @@
                                     <version>3.6.1</version>
                                 </requireMavenVersion>
                                 <requireJavaVersion>
-                                    <version>1.8.0</version>
-                                    <message>Bnd requires Java 8
-                                        (https://github.com/bndtools/bnd/wiki/Changes-in-4.0.0)
-                                    </message>
+                                    <version>${maven.compiler.release}</version>
                                 </requireJavaVersion>
                             </rules>
                         </configuration>
@@ -484,53 +477,6 @@
     </build>
 
     <profiles>
-        <profile>
-            <id>jdk8</id>
-            <activation>
-                <jdk>1.8</jdk>
-            </activation>
-            <properties>
-                <!-- this affects m-compiler-p and m-javadoc-p -->
-                <maven.compiler.source>1.8</maven.compiler.source>
-                <maven.compiler.target>1.8</maven.compiler.target>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>animal-sniffer-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>check</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <signature>
-                                <groupId>org.codehaus.mojo.signature</groupId>
-                                <artifactId>java18</artifactId>
-                                <version>1.0</version>
-                            </signature>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>jdk9-or-higher</id>
-            <activation>
-                <!-- syntax according to http://maven.apache.org/enforcer/enforcer-rules/versionRanges.html -->
-                <jdk>[9,)</jdk>
-            </activation>
-            <properties>
-                <!-- 
-                release sets API classpath, source and target, see 
-                https://docs.oracle.com/javase/9/tools/javac.htm#GUID-AEEC9F07-CB49-4E96-8BC7-BCC2C7F725C9__GUID-D343F6B4-3FDD-43A8-AD24-43DD70214471 
-                and http://openjdk.java.net/jeps/247 -->
-                <maven.compiler.release>${java.target.version}</maven.compiler.release>
-            </properties>
-        </profile>
         <profile>
             <id>release</id>
             <build>
