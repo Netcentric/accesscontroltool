@@ -46,7 +46,7 @@ public class QueryHelper {
     private static final String ROOT_REP_POLICY_NODE = "/rep:policy";
     private static final String ROOT_REPO_POLICY_NODE = "/" + Constants.REPO_POLICY_NODE;
     private static final String HOME_REP_POLICY = "/home/rep:policy";
-    private static final String OAK_INDEX_PATH_REP_ACL = "/oak:index/repACL-custom-1";
+    private static final String OAK_INDEX_PATH_REP_ACL = "/oak:index/actool.repACL-custom-1";
 
     /** Method that returns a set containing all rep:policy nodes from repository excluding those contained in paths which are excluded from
      * search
