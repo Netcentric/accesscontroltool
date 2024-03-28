@@ -24,6 +24,7 @@ Function Signature | Description
 `startsWith(String str, String prefix)`| [`StringUtils.startsWith(...)`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringUtils.html#startsWith(java.lang.CharSequence,%20java.lang.CharSequence))
 `length(String string)`| [`StringUtils.length(...)`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringUtils.html#length(java.lang.CharSequence))
 `defaultIfEmpty(String str, String default)` | [`StringUtils.defaultIfEmpty(...)`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringUtils.html#defaultIfEmpty(T,%20T))
+`escapeXml11(String str)` | [`StringEscapeUtils.escapeXml11(...)`](https://commons.apache.org/proper/commons-lang/javadocs/api-3.3/org/apache/commons/lang3/StringEscapeUtils.html#escapeXml11(java.lang.String))
 `containsItem(List<String> list, String item)`| Returns `true` if the item is contained in the given list.
 `containsAnyItem(List<String> list, List<String> items)`| Returns `true` if any of the items is contained in the given list.
 `containsAllItems(List<String> list, List<String> items)`| Returns `true` if all of the items are contained in the given list (independent of their order).

@@ -30,6 +30,7 @@ import jakarta.el.ValueExpression;
 import jakarta.el.VariableMapper;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.el.ExpressionFactoryImpl;
 
@@ -129,6 +130,7 @@ public class YamlMacroElEvaluator {
                         StringUtils.class.getMethod("replace", new Class<?>[] { String.class, String.class, String.class }),
                         StringUtils.class.getMethod("length", new Class<?>[] { CharSequence.class }),
                         StringUtils.class.getMethod("defaultIfEmpty", new Class<?>[] { CharSequence.class, CharSequence.class }),
+                        StringEscapeUtils.class.getMethod("escapeXml11", new Class<?>[] { String.class }),
 
                         YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("containsItem", new Class<?>[] { List.class, String.class }),
                         YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("containsAllItems", new Class<?>[] { List.class, List.class }),
