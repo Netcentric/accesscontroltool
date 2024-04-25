@@ -56,6 +56,13 @@
             <artifactId>org.apache.sling.servlets.annotations</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- null annotations, being used transitively -->
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>24.0.0</version>
+            <scope>provided</scope>
+        </dependency>
         <!-- OSGi Core/Compendium individual dependencies -->
         <dependency>
             <groupId>org.osgi</groupId>
@@ -150,6 +157,12 @@
             <artifactId>slf4j-simple</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.util.converter</artifactId>
+            <version>1.0.9</version>
+            <scope>test</scope>
+        </dependency>
         <!-- IT dependencies -->
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>
@@ -183,7 +196,17 @@
             <version>3.6.8</version>
             <scope>test</scope>
         </dependency>
-        
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient-osgi</artifactId>
+            <version>4.5.13</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <scope>test</scope>
+        </dependency>
         <!-- END: Test Dependencies -->
 
         <!-- use the uber-jar always as last dependency because a lot of classes are provided also by other artifacts

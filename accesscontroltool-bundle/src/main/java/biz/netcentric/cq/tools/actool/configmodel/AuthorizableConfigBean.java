@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import biz.netcentric.cq.tools.actool.configmodel.pkcs.Key;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElement;
 import biz.netcentric.cq.tools.actool.dumpservice.AcDumpElementVisitor;
+import biz.netcentric.cq.tools.actool.externalusermanagement.ExternalGroupManagement;
 
 public class AuthorizableConfigBean implements AcDumpElement {
 
@@ -59,6 +60,11 @@ public class AuthorizableConfigBean implements AcDumpElement {
     private Map<String, Key> keys;
     private List<String> impersonationAllowedFor;
 
+    /**
+     * if {@true} synchronized with external user managed. Synchronization happens via all active services of type {@link ExternalGroupManagement}
+     */
+    private boolean externalSync;
+    
     public String getAuthorizableId() {
         return authorizableId;
     }
@@ -320,8 +326,9 @@ public class AuthorizableConfigBean implements AcDumpElement {
         sb.append("isMemberOf: " + getIsMemberOfString() + "\n");
         sb.append("members: " + getMembersString() + "\n");
         sb.append("appendToKeyStore: " + isAppendToKeyStore() + "\n");
-        sb.append("keys:" + getKeys());
-        sb.append("impersonationAllowedFor:" + getImpersonationAllowedFor());
+        sb.append("keys:" + getKeys() + "\n");
+        sb.append("impersonationAllowedFor:" + getImpersonationAllowedFor() + "\n");
+        sb.append("externalSync: " + isExternalSync());
         return sb.toString();
     }
 
@@ -339,6 +346,14 @@ public class AuthorizableConfigBean implements AcDumpElement {
     @Override
     public void accept(final AcDumpElementVisitor acDumpElementVisitor) {
         acDumpElementVisitor.visit(this);
+    }
+
+    public boolean isExternalSync() {
+        return externalSync;
+    }
+
+    public void setExternalSync(boolean externalSync) {
+        this.externalSync = externalSync;
     }
 
 }

@@ -303,9 +303,8 @@ Example:
      name: "TU %{group.name}"
      path: /home/users/myproj-test-users
      skipForRunmodes: prod, preprod
-``` 
+```
 
-  
 ## Configure unmanaged aspects
 
 The following table gives an overview of what is managed (in terms of authorizables themselves, group memberships and ACLs) by AC Tool and what is not:
@@ -433,6 +432,15 @@ Sometimes it is also useful to create intermediate paths that do not even contai
                                 	   sling:resourceType="site1/home"
                             </jcr:root>                    
 ```
+
+## Update Groups in External User Management Systems
+
+Since AC Tool 3.1.0 there is support for creating/updating groups in [Adobe IMS](https://www.adobe.com/content/dam/cc/en/trust-center/ungated/whitepapers/corporate/adobe-identity-management-services-security-overview.pdf). Those are the groups which are exposed in the Adobe Admin Console and automatically used for [AEMaaCS](https://experienceleague.adobe.com/en/docs/experience-manager-cloud-service/content/security/ims-support) and also [AEM 6.5 hosted by AMS](https://experienceleague.adobe.com/en/docs/experience-manager-learn/foundation/authentication/adobe-ims-authentication-technical-video-understand).
+
+To enable that feature, just set the property `externalSync` on the group to be synced in the YAML file to `true`.
+In addition an OSGi configuration for the leveraged [UMAPI](https://adobe-apiplatform.github.io/umapi-documentation/en/) needs to be provided in the configuration PID `biz.netcentric.cq.tools.actool.ims.IMSUserManagement`. This configuration should only be provided for run mode `author` to prevent the same groups from being created/updated multiple times. Also make sure you don't trigger the update too often due to [throttling of that API](https://adobe-apiplatform.github.io/umapi-documentation/en/API_introduction.html#throttling-and-error-handling).
+
+Only the group id (called name in IMS context) and the description are set for synchronized groups in IMS. Memberships are not modified and external groups are never deleted.
 
 ## Health Check
 

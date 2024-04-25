@@ -24,5 +24,6 @@
 # workaround for https://issues.apache.org/jira/browse/SLING-7608 and https://issues.apache.org/jira/browse/SLING-7604
 -runsystemcapabilities: osgi.service;objectClass=org.apache.sling.commons.classloader.DynamicClassLoaderManager,\
 osgi.service;objectClass=com.adobe.granite.crypto.CryptoSupport,\
+osgi.service;objectClass=org.apache.http.osgi.services.HttpClientBuilderFactory,\
 osgi.service;objectClass=org.apache.sling.api.resource.ResourceResolverFactory,\
 osgi.service;objectClass:List<String>="javax.jcr.Repository,org.apache.sling.jcr.api.SlingRepository"

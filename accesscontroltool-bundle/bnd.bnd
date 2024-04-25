@@ -11,6 +11,8 @@ Import-Package: \
 com.adobe.granite.crypto;resolution:=optional,\
 com.adobe.granite.keystore;resolution:=optional,\
 com.adobe.granite.jmx.annotation;resolution:=optional,\
+com.fasterxml.jackson.databind;resolution:=optional,\
+org.apache.http.*;resolution:=optional,\
 org.bouncycastle.*;resolution:=optional,\
 org.apache.sling.commons.scheduler.*;resolution:=optional,\
 org.apache.jackrabbit.oak.spi.security.principal;version="[1.5.0,3)",\

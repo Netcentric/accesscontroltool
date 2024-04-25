@@ -35,6 +35,11 @@ jobs:
 
       - name: Build with Maven
         if: '!matrix.isMainBuildEnv'
+        env:
+          # Necessary for IMS IT
+          ACTOOL_IMS_IT_ORGANIZATIONID: ${{ vars.ACTOOL_IMS_IT_ORGANIZATIONID }}
+          ACTOOL_IMS_IT_CLIENTID: ${{ vars.ACTOOL_IMS_IT_CLIENTID }}
+          ACTOOL_IMS_IT_CLIENTSECRET: ${{ secrets.ACTOOL_IMS_IT_CLIENTSECRET }}
         run: mvn -e -B -V -Pintegration-tests clean verify
       - name: Build and Analyse with Maven
         if: github.ref != 'refs/heads/develop' && matrix.isMainBuildEnv
@@ -45,6 +50,10 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           # Needed to get some information about the pull request, if any
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Necessary for IMS IT
+          ACTOOL_IMS_IT_ORGANIZATIONID: ${{ vars.ACTOOL_IMS_IT_ORGANIZATIONID }}
+          ACTOOL_IMS_IT_CLIENTID: ${{ vars.ACTOOL_IMS_IT_CLIENTID }}
+          ACTOOL_IMS_IT_CLIENTSECRET: ${{ secrets.ACTOOL_IMS_IT_CLIENTSECRET }}
         run: mvn -e -B -V clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Netcentric_accesscontroltool -Dsonar.organization=netcentric -Dsonar.host.url=https://sonarcloud.io -DnvdApiKeyEnvironmentVariable=NVD_API_KEY -Pdependency-check,coverage-report,integration-tests
 
       - name: Build, Analyse and Deploy with Maven
@@ -58,4 +67,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           # Needed to get some information about the pull request, if any
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Necessary for IMS IT
+          ACTOOL_IMS_IT_ORGANIZATIONID: ${{ vars.ACTOOL_IMS_IT_ORGANIZATIONID }}
+          ACTOOL_IMS_IT_CLIENTID: ${{ vars.ACTOOL_IMS_IT_CLIENTID }}
+          ACTOOL_IMS_IT_CLIENTSECRET: ${{ secrets.ACTOOL_IMS_IT_CLIENTSECRET }}
         run: mvn -e -B -V clean deploy org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Netcentric_accesscontroltool -Dsonar.organization=netcentric -Dsonar.host.url=https://sonarcloud.io -DnvdApiKeyEnvironmentVariable=NVD_API_KEY -Pdependency-check,coverage-report,integration-tests

@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -65,6 +66,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.pkcs.Key;
 import biz.netcentric.cq.tools.actool.configmodel.pkcs.RandomPassword;
 import biz.netcentric.cq.tools.actool.crypto.DecryptionService;
+import biz.netcentric.cq.tools.actool.externalusermanagement.ExternalGroupManagement;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.Constants;
@@ -102,7 +104,10 @@ public class AuthorizableInstallerServiceImpl implements
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     SlingRepository repository;
-    
+
+    @Reference(policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.MULTIPLE)
+    List<ExternalGroupManagement> externalGroupManagementServices;
+
     @Override
     public void installAuthorizables(
             AcConfiguration acConfiguration,
@@ -113,16 +118,32 @@ public class AuthorizableInstallerServiceImpl implements
         AuthInstallerUserManager userManager = new AuthInstallerUserManagerPrefetchingImpl(AccessControlUtils.getUserManagerAutoSaveDisabled(session), session.getValueFactory(), installLog);
 
         Set<String> authorizablesFromConfigurations = authorizablesConfigBeans.getAuthorizableIds();
+        Collection<AuthorizableConfigBean> groupsToSyncWithExternalUserMgmt = new LinkedList<>();
         for (AuthorizableConfigBean authorizableConfigBean : authorizablesConfigBeans) {
 
             installAuthorizableConfigurationBean(session, userManager, acConfiguration,
                     authorizableConfigBean, installLog, authorizablesFromConfigurations);
+            
+            if (authorizableConfigBean.isExternalSync() && authorizableConfigBean.isGroup() && !externalGroupManagementServices.isEmpty()) {
+                groupsToSyncWithExternalUserMgmt.add(authorizableConfigBean);
+            }
         }
 
         installLog.addMessage(LOG, "Created "+installLog.getCountAuthorizablesCreated() + " authorizables (moved "+installLog.getCountAuthorizablesMoved() + " authorizables)");
+        syncWithExternalGroupManagement(groupsToSyncWithExternalUserMgmt, installLog);
 
     }
 
+    private void syncWithExternalGroupManagement(Collection<AuthorizableConfigBean> groupConfigBeans, InstallationLogger installLog) throws IOException {
+        if (groupConfigBeans.isEmpty()) {
+            return;
+        }
+        for (ExternalGroupManagement externalGroupManagement : externalGroupManagementServices) {
+            externalGroupManagement.updateGroups(groupConfigBeans);
+            installLog.addMessage(LOG, "Synchronized " + groupConfigBeans.size() + " groups with external user management " + externalGroupManagement.getLabel());
+        }
+    }
+    
     private void installAuthorizableConfigurationBean(final Session session,
             AuthInstallerUserManager userManager,
             AcConfiguration acConfiguration,

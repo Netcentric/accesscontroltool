@@ -142,7 +142,7 @@ public class AcToolUiService {
     }
 
     /**
-     * Replicates the logic of the <a href="Sling Web Console Security Provider">https://sling.apache.org/documentation/bundles/web-console-extensions.html#authentication-handling</a>.
+     * Replicates the logic of the <a href="https://sling.apache.org/documentation/bundles/web-console-extensions.html#authentication-handling">Sling Web Console Security Provider</a>.
      * @param req the request
      * @return {@code true} if the user bound to the given request may also access the Felix Web Console or if we are outside of Sling, {@code false} otherwise
      */

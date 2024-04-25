@@ -80,6 +80,7 @@ public class YamlConfigReader implements ConfigReader {
     private static final String GROUP_CONFIG_PROPERTY_UNMANAGED_EXTERNAL_MEMBERS_REGEX = "unmanagedExternalMembersRegex";
 
     private static final String GROUP_CONFIG_IS_VIRTUAL = "virtual";
+    private static final String GROUP_CONFIG_EXTERNAL_SYNC = "externalSync";
 
     private static final String USER_CONFIG_PROPERTY_IS_SYSTEM_USER = "isSystemUser";
 
@@ -426,6 +427,9 @@ public class YamlConfigReader implements ConfigReader {
 
         authorizableConfigBean.setVirtual(Boolean.valueOf(getMapValueAsString(currentPrincipalDataMap,
                 GROUP_CONFIG_IS_VIRTUAL)));
+
+        authorizableConfigBean.setExternalSync(Boolean.valueOf(getMapValueAsString(currentPrincipalDataMap,
+                GROUP_CONFIG_EXTERNAL_SYNC)));
 
         authorizableConfigBean.setIsGroup(isGroupSection);
         authorizableConfigBean.setIsSystemUser(Boolean.valueOf(getMapValueAsString(currentPrincipalDataMap,
