@@ -41,44 +41,6 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <id>cloud-generate-metadata</id>
-                        <goals>
-                            <goal>generate-metadata</goal>
-                        </goals>
-                        <configuration>
-                            <!-- application type for AEMaaCS,  -->
-                            <packageType>application</packageType>
-                            <classifier>cloud</classifier>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>cloud-package</id>
-                        <goals>
-                            <goal>package</goal>
-                        </goals>
-                        <configuration>
-                            <classifier>cloud</classifier>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>cloud-validate-package</id>
-                        <goals>
-                            <goal>validate-package</goal>
-                        </goals>
-                        <configuration>
-                            <!-- workaround for https://issues.apache.org/jira/browse/JCRVLT-651  -->
-                            <packageFile>${project.build.directory}/${project.build.finalName}-cloud.zip</packageFile>
-                            <validatorsSettings>
-                                <jackrabbit-packagetype>
-                                    <options>
-                                        <!-- https://experienceleague.adobe.com/docs/experience-manager-cloud-service/content/operations/indexing.html?lang=en#project-configuration -->
-                                        <immutableRootNodeNames>apps,libs,oak:index</immutableRootNodeNames>
-                                    </options>
-                                </jackrabbit-packagetype>
-                            </validatorsSettings>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>default-validate-package</id>
                         <goals>
                             <goal>validate-package</goal>
@@ -97,9 +59,6 @@
             <plugin>
                 <groupId>com.day.jcr.vault</groupId>
                 <artifactId>content-package-maven-plugin</artifactId>
-                <configuration>
-                    <targetURL>http://${crx.host}:${crx.port}/crx/packmgr/service.jsp</targetURL>
-                </configuration>
             </plugin>
             
             <plugin>
@@ -163,4 +122,71 @@
 			</plugins>
 		</pluginManagement>
     </build>
+    <profiles>
+        <profile>
+            <id>cloud</id>
+            <!-- automatically active on CI -->
+            <activation>
+                <property>
+                    <name>env.CI</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <!-- optionally generate two packages: one for cloud (classifier "cloud") and one for classic (no classifier) -->
+                        <groupId>org.apache.jackrabbit</groupId>
+                        <artifactId>filevault-package-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>cloud-generate-metadata</id>
+                                <goals>
+                                    <goal>generate-metadata</goal>
+                                </goals>
+                                <configuration>
+                                    <!-- application type for AEMaaCS,  -->
+                                    <packageType>application</packageType>
+                                    <classifier>cloud</classifier>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>cloud-package</id>
+                                <goals>
+                                    <goal>package</goal>
+                                </goals>
+                                <configuration>
+                                    <classifier>cloud</classifier>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>cloud-validate-package</id>
+                                <goals>
+                                    <goal>validate-package</goal>
+                                </goals>
+                                <configuration>
+                                    <classifier>cloud</classifier>
+                                    <skipPackageFile>true</skipPackageFile>
+                                    <validatorsSettings>
+                                        <jackrabbit-packagetype>
+                                            <options>
+                                                <!-- https://experienceleague.adobe.com/docs/experience-manager-cloud-service/content/operations/indexing.html?lang=en#project-configuration -->
+                                                <immutableRootNodeNames>apps,libs,oak:index</immutableRootNodeNames>
+                                            </options>
+                                        </jackrabbit-packagetype>
+                                    </validatorsSettings>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>com.adobe.aem</groupId>
+                        <artifactId>aemanalyser-maven-plugin</artifactId>
+                        <configuration>
+                            <classifier>cloud</classifier>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

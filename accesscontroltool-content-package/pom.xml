@@ -52,7 +52,6 @@
                 <groupId>com.day.jcr.vault</groupId>
                 <artifactId>content-package-maven-plugin</artifactId>
             </plugin>
-            
         </plugins>
     </build>
 </project>

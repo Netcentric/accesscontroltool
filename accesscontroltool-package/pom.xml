@@ -55,7 +55,6 @@
             <artifactId>aem-sdk-api</artifactId>
             <version>2021.5.5343.20210524T070738Z-210527</version>
         </dependency>
-        
     </dependencies>
     <build>
         <pluginManagement>
@@ -77,30 +76,7 @@
             </plugins>
         </pluginManagement>
         <plugins>
-            <!-- for "cloud" package use repoinit instead of actool-content-package -->
-            <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-cloud-package-resources</id>
-                        <!-- here the phase you need -->
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/vault-work-cloud/jcr_root</outputDirectory>
-                            <resources>
-                              <resource>
-                                <directory>src/main/jcr_root-cloud</directory>
-                                <filtering>false</filtering>
-                              </resource>
-                            </resources>
-                        </configuration> 
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- generate two packages: one for cloud (classifier "cloud") and one for classic (no classifier) -->
+            <!-- optionally generate two packages: one for cloud (classifier "cloud") and one for classic (no classifier) -->
             <plugin>
                 <groupId>org.apache.jackrabbit</groupId>
                 <artifactId>filevault-package-maven-plugin</artifactId>
@@ -142,45 +118,6 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>cloud-generate-metadata</id>
-                        <goals>
-                            <goal>generate-metadata</goal>
-                        </goals>
-                        <configuration>
-                            <!-- everything via embed, no subpackages, no accesscontroltool-content-package -->
-                            <embeddeds>
-                                <embedded>
-                                    <artifactId>accesscontroltool-bundle</artifactId>
-                                </embedded>
-                                <embedded>
-                                    <artifactId>accesscontroltool-apps-package</artifactId>
-                                </embedded>
-                                <embedded>
-                                    <artifactId>accesscontroltool-startuphook-bundle</artifactId>
-                                    <target>/apps/netcentric/actool/install/27</target>
-                                </embedded>
-                            </embeddeds>
-                            <classifier>cloud</classifier>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>cloud-package</id>
-                        <goals>
-                            <goal>package</goal>
-                        </goals>
-                        <configuration>
-                            <classifier>cloud</classifier>
-                            <failOnDuplicateEntries>false</failOnDuplicateEntries>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>default-validate-package</id>
-                        <configuration>
-                            <!-- validate both generated packages in one execution -->
-                            <classifier>cloud</classifier>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>default-analyze-classes</id>
                         <phase>invalid</phase>
                     </execution>
@@ -193,10 +130,98 @@
             <plugin>
                 <groupId>com.adobe.aem</groupId>
                 <artifactId>aemanalyser-maven-plugin</artifactId>
-                <configuration>
-                    <classifier>cloud</classifier>
-                </configuration>
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>cloud</id>
+            <!-- automatically active on CI -->
+            <activation>
+                <property>
+                    <name>env.CI</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                     <!-- for "cloud" package use repoinit instead of actool-content-package -->
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>copy-cloud-package-resources</id>
+                                <!-- here the phase you need -->
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}/vault-work-cloud/jcr_root</outputDirectory>
+                                    <resources>
+                                      <resource>
+                                        <directory>src/main/jcr_root-cloud</directory>
+                                        <filtering>false</filtering>
+                                      </resource>
+                                    </resources>
+                                </configuration> 
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <!-- optionally generate two packages: one for cloud (classifier "cloud") and one for classic (no classifier) -->
+                        <groupId>org.apache.jackrabbit</groupId>
+                        <artifactId>filevault-package-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>cloud-generate-metadata</id>
+                                <goals>
+                                    <goal>generate-metadata</goal>
+                                </goals>
+                                <configuration>
+                                    <!-- everything via embed, no subpackages, no accesscontroltool-content-package -->
+                                    <embeddeds>
+                                        <embedded>
+                                            <artifactId>accesscontroltool-bundle</artifactId>
+                                        </embedded>
+                                        <embedded>
+                                            <artifactId>accesscontroltool-apps-package</artifactId>
+                                        </embedded>
+                                        <embedded>
+                                            <artifactId>accesscontroltool-startuphook-bundle</artifactId>
+                                            <target>/apps/netcentric/actool/install/27</target>
+                                        </embedded>
+                                    </embeddeds>
+                                    <classifier>cloud</classifier>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>cloud-package</id>
+                                <goals>
+                                    <goal>package</goal>
+                                </goals>
+                                <configuration>
+                                    <classifier>cloud</classifier>
+                                    <failOnDuplicateEntries>false</failOnDuplicateEntries>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>default-validate-package</id>
+                                <configuration>
+                                    <!-- validate both generated packages in one execution -->
+                                    <classifier>cloud</classifier>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>com.adobe.aem</groupId>
+                        <artifactId>aemanalyser-maven-plugin</artifactId>
+                        <configuration>
+                            <classifier>cloud</classifier>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
