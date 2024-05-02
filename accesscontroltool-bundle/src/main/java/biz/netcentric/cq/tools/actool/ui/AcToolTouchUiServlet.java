@@ -38,65 +38,23 @@ public class AcToolTouchUiServlet extends SlingAllMethodsServlet {
     private static final Logger LOG = LoggerFactory.getLogger(AcToolTouchUiServlet.class);
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    private WebConsoleConfigTracker webConsoleConfigTracker;
-
-    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private AcToolUiService acToolUiService;
 
     @Override
     protected void doGet(SlingHttpServletRequest req, SlingHttpServletResponse resp) throws ServletException, IOException {
-
         if (StringUtils.isBlank(req.getRequestPathInfo().getSuffix())) {
             String targetUrl = req.getResourceResolver().resolve(req.getPathInfo()).getPath() + ".html/" + AcToolUiService.PAGE_NAME;
             resp.getWriter().println("<script type=\"text/javascript\">location.href='" + targetUrl + "'</script>");
             return;
         }
-
         acToolUiService.doGet(req, resp, req.getRequestPathInfo().getResourcePath(), true);
-
     }
 
     @Override
     protected void doPost(SlingHttpServletRequest req, SlingHttpServletResponse resp) throws ServletException, IOException {
-
-        if (!mayApplyConfig(req.getResourceResolver().adaptTo(User.class))) {
-            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not have sufficent permissions to apply the configuration");
-            return;
-        }
-
         acToolUiService.doPost(req, resp);
         LOG.debug("Applied AC tool config via Touch UI by user {}", req.getUserPrincipal());
     }
 
-    private boolean mayApplyConfig(User requestUser) {
-
-        try {
-
-            if (requestUser != null) {
-                if (StringUtils.equals(requestUser.getID(), "admin")) {
-                    LOG.debug("Admin user is allowed to apply AC Tool");
-                    return true;
-                }
-
-                if (ArrayUtils.contains(webConsoleConfigTracker.getAllowedUsers(), requestUser.getID())) {
-                    LOG.debug("User {} is allowed to apply AC Tool (allowed users: {})", requestUser.getID(), ArrayUtils.toString(webConsoleConfigTracker.getAllowedUsers()));
-                    return true;
-                }
-
-                Iterator<Group> memberOfIt = requestUser.memberOf();
-
-                while (memberOfIt.hasNext()) {
-                    Group memberOfGroup = memberOfIt.next();
-                    if (ArrayUtils.contains(webConsoleConfigTracker.getAllowedGroups(), memberOfGroup.getID())) {
-                        LOG.debug("Group {} is allowed to apply AC Tool (allowed groups: {})", memberOfGroup.getID(), ArrayUtils.toString(webConsoleConfigTracker.getAllowedGroups()));
-                        return true;
-                    }
-                }
-            }
-            return false;
-        } catch (Exception e) {
-            throw new IllegalStateException("Could not check if user may apply AC Tool configuration: " + e, e);
-        }
-    }
 
 }

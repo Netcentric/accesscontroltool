@@ -4,18 +4,33 @@ import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
+import javax.jcr.RepositoryException;
+import javax.jcr.Value;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.webconsole.WebConsoleConstants;
+import org.apache.jackrabbit.api.security.user.Group;
+import org.apache.jackrabbit.api.security.user.User;
+import org.apache.jackrabbit.oak.spi.security.principal.EveryonePrincipal;
+import org.apache.sling.api.SlingHttpServletRequest;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
@@ -26,10 +41,12 @@ import biz.netcentric.cq.tools.actool.api.AcInstallationService;
 import biz.netcentric.cq.tools.actool.api.InstallationLog;
 import biz.netcentric.cq.tools.actool.api.InstallationResult;
 import biz.netcentric.cq.tools.actool.dumpservice.ConfigDumpService;
+import biz.netcentric.cq.tools.actool.helper.UncheckedRepositoryException;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
 import biz.netcentric.cq.tools.actool.history.AcToolExecution;
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl;
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceInternal;
+import biz.netcentric.cq.tools.actool.user.UserProcessor;
 
 @Component(service = { AcToolUiService.class })
 public class AcToolUiService {
@@ -44,10 +61,14 @@ public class AcToolUiService {
 
     public static final String PAGE_NAME = "actool";
 
-    static final String PATH_SEGMENT_DUMP = "dump.yaml";
+    static final String SUFFIX_DUMP_YAML = "dump.yaml";
+    static final String SUFFIX_USERS_CSV = "users.csv";
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ConfigDumpService dumpService;
+
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    private UserProcessor userProcessor;
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     AcInstallationServiceInternal acInstallationService;
@@ -58,21 +79,48 @@ public class AcToolUiService {
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private AcHistoryService acHistoryService;
 
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp, String postPath, boolean isTouchUi)
-            throws ServletException, IOException {
+    private final Map<String, String> countryCodePerName;
 
-        if (req.getRequestURI().endsWith(PATH_SEGMENT_DUMP)) {
-            streamDumpToResponse(resp);
-        } else {
-            renderUi(req, resp, postPath, isTouchUi);
+    public AcToolUiService() {
+        countryCodePerName = new HashMap<>();
+        for (String iso : Locale.getISOCountries()) {
+            Locale l = new Locale(Locale.ENGLISH.getLanguage(), iso);
+            countryCodePerName.put(l.getDisplayCountry(), iso);
         }
     }
 
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp, String path, boolean isTouchUi)
+            throws ServletException, IOException {
+
+        if (req.getRequestURI().endsWith(SUFFIX_DUMP_YAML)) {
+            callWhenAuthorized(req, resp, this::streamDumpToResponse);
+        } else if (req.getRequestURI().endsWith(SUFFIX_USERS_CSV)) {
+            callWhenAuthorized(req, resp, this::streamUsersCsvToResponse);
+        } else {
+            renderUi(req, resp, path, isTouchUi);
+        }
+    }
+
+    private void callWhenAuthorized(HttpServletRequest req, HttpServletResponse resp, Consumer<HttpServletResponse> responseConsumer) throws IOException {
+        if (!hasAccessToFelixWebConsole(req)) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not have sufficent permissions to export users/groups/permissions");
+            return;
+        }
+        try {
+            responseConsumer.accept(resp);
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
+        }
+    }
     @SuppressWarnings(/* SonarCloud false positive */ {
             "javasecurity:S5131" /* response is sent as text/plain, it's not interpreted */,
             "javasecurity:S5145" /* logging the path is fine */ })
     protected void doPost(final HttpServletRequest req, final HttpServletResponse resp) throws IOException, ServletException {
 
+        if (!hasAccessToFelixWebConsole(req)) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not have sufficent permissions to apply the configuration");
+            return;
+        }
         RequestParameters reqParams = RequestParameters.fromRequest(req, acInstallationService);
         LOG.info("Received POST request to apply AC Tool config with configurationRootPath={} basePaths={}", reqParams.configurationRootPath, reqParams.basePaths);
 
@@ -93,18 +141,64 @@ public class AcToolUiService {
         }
     }
 
+    /**
+     * Replicates the logic of the <a href="Sling Web Console Security Provider">https://sling.apache.org/documentation/bundles/web-console-extensions.html#authentication-handling</a>.
+     * @param req the request
+     * @return {@code true} if the user bound to the given request may also access the Felix Web Console or if we are outside of Sling, {@code false} otherwise
+     */
+    private boolean hasAccessToFelixWebConsole(HttpServletRequest req) {
+
+        if (!(req instanceof SlingHttpServletRequest)) {
+            // outside Sling this is only called by the Felix Web Console, which has its own security layer
+            LOG.debug("Outside Sling no additional security checks are performed!");
+            return true;
+        }
+        try {
+            User requestUser = SlingHttpServletRequest.class.cast(req).getResourceResolver().adaptTo(User.class);
+            if (requestUser != null) {
+                if (StringUtils.equals(requestUser.getID(), "admin")) {
+                    LOG.debug("Admin user is allowed to apply AC Tool");
+                    return true;
+                }
+
+                if (ArrayUtils.contains(webConsoleConfig.getAllowedUsers(), requestUser.getID())) {
+                    LOG.debug("User {} is allowed to apply AC Tool (allowed users: {})", requestUser.getID(), ArrayUtils.toString(webConsoleConfig.getAllowedUsers()));
+                    return true;
+                }
+
+                Iterator<Group> memberOfIt = requestUser.memberOf();
+
+                while (memberOfIt.hasNext()) {
+                    Group memberOfGroup = memberOfIt.next();
+                    if (ArrayUtils.contains(webConsoleConfig.getAllowedGroups(), memberOfGroup.getID())) {
+                        LOG.debug("Group {} is allowed to apply AC Tool (allowed groups: {})", memberOfGroup.getID(), ArrayUtils.toString(webConsoleConfig.getAllowedGroups()));
+                        return true;
+                    }
+                }
+            }
+            LOG.debug("Could not get associated user for Sling request");
+            return false;
+        } catch (Exception e) {
+            throw new IllegalStateException("Could not check if user may apply AC Tool configuration: " + e, e);
+        }
+    }
+
     public String getWebConsoleRoot(HttpServletRequest req) {
         return (String) req.getAttribute(WebConsoleConstants.ATTR_APP_ROOT);
     }
-    
-    private void renderUi(HttpServletRequest req, HttpServletResponse resp, String postPath, boolean isTouchUi) throws IOException {
+
+    private void renderUi(HttpServletRequest req, HttpServletResponse resp, String path, boolean isTouchUi) throws IOException {
         RequestParameters reqParams = RequestParameters.fromRequest(req, acInstallationService);
 
         final PrintWriter out = resp.getWriter();
+        final HtmlWriter writer = new HtmlWriter(out, isTouchUi);
+        
+        printCss(isTouchUi, writer);
+        printVersion(writer);
+        printImportSection(writer, reqParams, path, isTouchUi, getWebConsoleRoot(req));
+        printExportSection(writer, reqParams, path, isTouchUi, getWebConsoleRoot(req));
 
-        printForm(out, reqParams, postPath, isTouchUi, getWebConsoleRoot(req));
-
-        printInstallationLogsSection(out, reqParams, isTouchUi);
+        printInstallationLogsSection(writer, reqParams, isTouchUi);
 
         if(!isTouchUi) {
             String jmxUrl = getWebConsoleRoot(req) + "/jmx/"
@@ -113,20 +207,112 @@ public class AcToolUiService {
         }
     }
 
-    void streamDumpToResponse(final HttpServletResponse resp) throws IOException {
+    void streamDumpToResponse(final HttpServletResponse resp) {
         resp.setContentType("application/x-yaml");
         resp.setHeader("Content-Disposition", "inline; filename=\"actool-dump.yaml\"");
         String dumpAsString = dumpService.getCompletePrincipalBasedDumpsAsString();
-        PrintWriter out = resp.getWriter();
-        out.println(dumpAsString);
-        out.flush();
+        try {
+            PrintWriter out;
+            out = resp.getWriter();
+            out.println(dumpAsString);
+            out.flush();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
-    private void printInstallationLogsSection(PrintWriter out, RequestParameters reqParams, boolean isTouchUi) {
+    private void streamUsersCsvToResponse(HttpServletResponse resp) {
+        resp.setContentType("text/csv");
+        resp.setHeader("Content-Disposition", "inline; filename=\"users.csv\"");
+        try {
+            PrintWriter out = resp.getWriter();
+            out.println("Identity Type,Username,Domain,Email,First Name,Last Name,Country Code,ID,Product Configurations,Admin Roles,Product Configurations Administered,User Groups,User Groups Administered,Products Administered,Developer Access");
+            try {
+                userProcessor.forEachNonSystemUser(u -> {
+                    try {
+                        out.println(String.format(",%s,,%s,%s,%s,%s,,,,,%s", u.getID(), 
+                                escapeAsCsvValue(getUserPropertyAsString(u, "profile/email")),
+                                escapeAsCsvValue(getUserPropertyAsString(u, "profile/givenName")),
+                                escapeAsCsvValue(getUserPropertyAsString(u, "profile/familyName")),
+                                escapeAsCsvValue(getCountyCodeFromName(getUserPropertyAsString(u, "profile/country"))),
+                                escapeAsCsvValue(getDeclaredMemberOfAsStrings(u))));
+                    } catch (RepositoryException e) {
+                        throw new UncheckedRepositoryException(e);
+                    } 
+                });
+            } catch (UncheckedRepositoryException|RepositoryException e) {
+                throw new IOException("Could not access users or their properties", e);
+            }
+            out.println();
+            out.flush();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private String getCountyCodeFromName(String countryName) {
+        String countryCode = countryCodePerName.get(countryName);
+        return countryCode != null ? countryCode : "";
+    }
+
+    private static String escapeAsCsvValue(String text) {
+        if (text.contains(",")) {
+            return "\"" + text.replace("\"", "\"\"") + "\"";
+        } else {
+            return text;
+        }
+    }
+
+    private static String getDeclaredMemberOfAsStrings(User user) throws RepositoryException {
+        List<String> groupNames = new LinkedList<>();
+        try {
+            user.declaredMemberOf().forEachRemaining(g -> {
+                try {
+                    if (!EveryonePrincipal.NAME.equals(g.getID())) {
+                        groupNames.add(g.getID());
+                    }
+                } catch (RepositoryException e) {
+                    throw new UncheckedRepositoryException(e);
+                }
+            });
+        } catch (UncheckedRepositoryException e) {
+            throw e.getCause();
+        }
+        return String.join(",", groupNames);
+    }
+
+    private static String getUserPropertyAsString(User user, String propertyName) throws RepositoryException {
+        Value[] values = user.getProperty(propertyName);
+        if (values == null) {
+            return "";
+        }
+        try {
+            return Arrays.stream(values).map(t -> {
+                try {
+                    return t.getString();
+                } catch (RepositoryException e) {
+                    throw new UncheckedRepositoryException(new RepositoryException("Could not convert property \"" + propertyName + "\" of user \"" + user + " to string", e));
+                }
+            }).collect(Collectors.joining(", "));
+        } catch (UncheckedRepositoryException e) {
+            throw e.getCause();
+        }
+    }
+
+    private void printVersion(HtmlWriter writer) {
+        writer.openTable("version");
+        writer.tableHeader("Version", 1);
+        writer.tr();
+        writer.td("v" + acInstallationService.getVersion());
+        writer.closeTd();
+        writer.closeTr();
+        writer.closeTable();
+    }
+
+    private void printInstallationLogsSection(HtmlWriter writer, RequestParameters reqParams, boolean isTouchUi) {
 
         List<AcToolExecution> acToolExecutions = acHistoryService.getAcToolExecutions();
 
-        final HtmlWriter writer = new HtmlWriter(out, isTouchUi);
         writer.openTable("previousLogs");
         writer.tableHeader("Previous Logs", 5);
 
@@ -208,14 +394,11 @@ public class AcToolUiService {
         return acToolExecution.isSuccess() ? "SUCCESS" : "<span style='color:red;font-weight: bold;'>FAILED</span>";
     }
 
-    private void printForm(final PrintWriter out, RequestParameters reqParams, String postPath, boolean isTouchUI, String webConsoleRoot) throws IOException {
-        final HtmlWriter writer = new HtmlWriter(out, isTouchUI);
+    private void printImportSection(final HtmlWriter writer, RequestParameters reqParams, String path, boolean isTouchUI, String webConsoleRoot) throws IOException {
 
-        printCss(isTouchUI, writer);
-
-        writer.print("<form id='acForm' action='" + postPath + "'>");
+        writer.print("<form id='acForm' action='" + path + "'>");
         writer.openTable("acFormTable");
-        writer.tableHeader("AC Tool v" + acInstallationService.getVersion(), 3);
+        writer.tableHeader("Import", 2);
 
         writer.tr();
         writer.openTd();
@@ -237,10 +420,6 @@ public class AcToolUiService {
                 + (reqParams.applyOnlyIfChanged ? " checked='checked'" : "") + " /> apply only if config changed");
         writer.closeTd();
 
-        writer.openTd();
-        writer.println("<button " + getCoralButtonAtts(isTouchUI) + " id='downloadDumpButton' onclick=\"window.open('" + postPath + ".html/"
-                + PATH_SEGMENT_DUMP + "', '_blank');return false;\"> Download Dump </button>");
-        writer.closeTd();
 
         writer.closeTr();
 
@@ -257,10 +436,6 @@ public class AcToolUiService {
         writer.println("' class='input' size='70'>");
         writer.closeTd();
 
-        writer.openTd();
-        writer.println("");
-        writer.closeTd();
-
         writer.closeTr();
 
         writer.tr();
@@ -272,8 +447,6 @@ public class AcToolUiService {
         writer.openTd();
         writer.println("<div id='applySpinner' style='display:none' class='spinner'><div></div><div></div><div></div></div>");
 
-        writer.openTd();
-        writer.println("");
         writer.closeTd();
 
         writer.closeTr();
@@ -282,6 +455,31 @@ public class AcToolUiService {
         writer.closeTable();
     }
 
+
+    private void printExportSection(final HtmlWriter writer, RequestParameters reqParams, String path, boolean isTouchUI, String webConsoleRoot) throws IOException {
+        writer.openTable("acExportTable");
+        writer.tableHeader("Export", 2);
+        writer.tr();
+        writer.openTd();
+        writer.print("Export in AC Tool YAML format. This includes groups and permissions (in form of ACEs).");
+        writer.closeTd();
+        writer.openTd();
+        writer.println("<button " + getCoralButtonAtts(isTouchUI) + " id='downloadDumpButton' onclick=\"window.open('" + path + ".html/"
+                + SUFFIX_DUMP_YAML + "', '_blank');return false;\"> Download YAML </button>");
+        writer.closeTd();
+        writer.closeTr();
+        writer.tr();
+        writer.openTd();
+        writer.print("Export Users in Admin Console CSV format. This includes non-system users, their profiles and their direct group memberships.");
+        writer.closeTd();
+        writer.openTd();
+        writer.println("<button " + getCoralButtonAtts(isTouchUI) + " id='downloadCsvButton' onclick=\"window.open('" + path + ".html/"
+                + SUFFIX_USERS_CSV + "', '_blank');return false;\"> Download CSV </button>");
+        writer.closeTd();
+        writer.closeTr();
+
+        writer.closeTable();
+    }
 
     private void printCss(boolean isTouchUI, final HtmlWriter writer) {
         StringBuilder css = new StringBuilder();
