@@ -27,6 +27,7 @@ import javax.jcr.Session;
 import javax.jcr.query.InvalidQueryException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.util.ISO9075;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -293,7 +294,7 @@ public class YamlConfigReader implements ConfigReader {
             final AceBean tmpAclBean) throws InvalidQueryException,
             RepositoryException {
         // perform query using the path containing wildcards
-        final String query = "/jcr:root" + tmpAclBean.getJcrPath();
+        final String query = createXPathQueryForPathWithWildcards(tmpAclBean.getJcrPath());
         final Set<String> result = QueryHelper.getNodePathsFromQuery(session, query);
 
         if (result.isEmpty()) {
@@ -314,6 +315,19 @@ public class YamlConfigReader implements ConfigReader {
                 }
             }
         }
+    }
+
+    /**
+     * Create an XPath query for the given JCR path (which may contain wildcards ({@code *}) which should be preserved).
+     * @param jcrPathWithWildcard a valid JCR path where some names/elements might be wildcards.
+     * 
+     * @see <a href="https://jackrabbit.apache.org/archive/wiki/JCR/EncodingAndEscaping_115513396.html#EncodingAndEscaping-Encodingpathinqueries">Encoding Path In XPath Queries</a>
+     * @see <a href="https://issues.apache.org/jira/browse/JCR-5051">JCR-5051</a>
+     */
+    static final String createXPathQueryForPathWithWildcards(String jcrPathWithWildcard) {
+        final String query = "/jcr:root" + ISO9075.encodePath(jcrPathWithWildcard);
+        // decode wildcards again (https://issues.apache.org/jira/browse/JCR-5051)
+        return query.replace("_x002a_", "*");
     }
 
     protected AceBean getNewAceBean() {

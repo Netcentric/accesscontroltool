@@ -154,6 +154,12 @@ public class YamlConfigReaderTest {
                 () -> yamlConfigReader.getUserConfigurationBeans(yamlList, null));
     }
 
+    @Test
+    public void testCreateXPathQueryForPathWithWildcards() {
+        assertEquals("/jcr:root/var/test", YamlConfigReader.createXPathQueryForPathWithWildcards("/var/test"));
+        assertEquals("/jcr:root/var/*/_x0031_2node/*", YamlConfigReader.createXPathQueryForPathWithWildcards("/var/*/12node/*"));
+    }
+
     static List<Map> getYamlList(final String filename) throws IOException {
         final String configString = getTestConfigAsString(filename);
 
