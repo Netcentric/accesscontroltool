@@ -15,8 +15,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.Properties;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import javax.jcr.LoginException;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -77,6 +79,26 @@ public class OakRepository implements BeforeAllCallback, BeforeEachCallback, Aft
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OakRepository.class);
 
+    /**
+     * Optionally uses a dedicated BlobStore with Oak, otherwise just in memory
+     */
+    private final boolean useFileStore; 
+    
+    private final Consumer<Jcr> jcrInitCallback;
+
+    public OakRepository() {
+        this(true);
+    }
+
+    public OakRepository(boolean useFileStore) {
+        this(useFileStore, null);
+    }
+
+    public OakRepository(boolean useFileStore, Consumer<Jcr> jcrInitCallback) {
+        this.useFileStore = useFileStore;
+        this.jcrInitCallback = jcrInitCallback;
+    }
+    
     @Override
     public void afterAll(ExtensionContext context) throws Exception {
         shutdownRepository();
@@ -84,12 +106,12 @@ public class OakRepository implements BeforeAllCallback, BeforeEachCallback, Aft
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
-        initRepository(true);
+        initRepository();
     }
 
     @Override
     public void beforeEach(ExtensionContext context) throws Exception {
-        admin = repository.login(new SimpleCredentials("admin", "admin".toCharArray()));
+        admin = createAdminSession();
     }
 
     @Override
@@ -110,11 +132,11 @@ public class OakRepository implements BeforeAllCallback, BeforeEachCallback, Aft
     }
 
     /** 
-     * @param useFileStore only evaluated for Oak. Optionally uses a dedicated BlobStore with Oak
+     * @param useFileStore only evaluated for Oak. O
      * @throws RepositoryException
      * @throws IOException
      * @throws InvalidFileStoreVersionException */
-    private void initRepository(boolean useFileStore) throws RepositoryException, IOException, InvalidFileStoreVersionException {
+    private void initRepository() throws RepositoryException, IOException, InvalidFileStoreVersionException {
         Jcr jcr;
         if (useFileStore) {
             BlobStore blobStore = createBlobStore();
@@ -128,7 +150,9 @@ public class OakRepository implements BeforeAllCallback, BeforeEachCallback, Aft
             // in-memory repo
             jcr = new Jcr();
         }
-
+        if (jcrInitCallback != null) {
+            jcrInitCallback.accept(jcr);
+        }
         repository = jcr
                 .with(createSecurityProvider())
                 .withAtomicCounter()
@@ -151,8 +175,8 @@ public class OakRepository implements BeforeAllCallback, BeforeEachCallback, Aft
             if (fileStore != null) {
                 fileStore.close();
                 fileStore = null;
+                deleteDirectory(DIR_OAK_REPO_HOME);
             }
-            deleteDirectory(DIR_OAK_REPO_HOME);
         }
         repository = null;
     }
@@ -205,5 +229,9 @@ public class OakRepository implements BeforeAllCallback, BeforeEachCallback, Aft
         return ConfigurationParameters.of(
                 UserConfiguration.NAME, ConfigurationParameters.of(userProps),
                 AuthorizationConfiguration.NAME, ConfigurationParameters.of(authzProps));
+    }
+
+    public Session createAdminSession() throws RepositoryException {
+        return repository.login(new SimpleCredentials("admin", "admin".toCharArray()));
     }
 }

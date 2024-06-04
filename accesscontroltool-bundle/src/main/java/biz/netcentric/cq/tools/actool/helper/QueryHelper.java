@@ -10,6 +10,7 @@ package biz.netcentric.cq.tools.actool.helper;
 
 import static biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger.msHumanReadable;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -29,6 +30,7 @@ import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.query.InvalidQueryException;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryResult;
+import javax.jcr.query.Row;
 import javax.jcr.security.AccessControlList;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.AccessControlPolicy;
@@ -40,13 +42,18 @@ import org.apache.jackrabbit.util.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public class QueryHelper {
     public static final Logger LOG = LoggerFactory.getLogger(QueryHelper.class);
 
     private static final String ROOT_REP_POLICY_NODE = "/rep:policy";
     private static final String ROOT_REPO_POLICY_NODE = "/" + Constants.REPO_POLICY_NODE;
     private static final String HOME_REP_POLICY = "/home/rep:policy";
-    private static final String OAK_INDEX_PATH_REP_ACL = "/oak:index/repACL-custom-1";
+
+    /** every query cost below that threshold means a dedicated index exists, above that threshold means: fallback to traversal */
+    private static final double COST_THRESHOLD_FOR_QUERY_INDEX = 100d;
 
     /** Method that returns a set containing all rep:policy nodes from repository excluding those contained in paths which are excluded from
      * search
@@ -98,7 +105,12 @@ public class QueryHelper {
                 paths.add(HOME_REP_POLICY);
             }
 
-            boolean indexForRepACLExists = session.nodeExists(OAK_INDEX_PATH_REP_ACL);
+            boolean indexForRepACLExists = false;
+            try {
+                indexForRepACLExists = hasQueryIndexForACLs(session);
+            } catch(IOException|RepositoryException e) {
+                LOG.warn("Cannot figure out if query index for rep:ACL nodes exist", e);
+            }
             LOG.debug("Index for repACL exists: {}",indexForRepACLExists);
             String queryForAClNodes = indexForRepACLExists ? 
                     "SELECT * FROM [rep:ACL] WHERE ISDESCENDANTNODE([%s])" : 
@@ -125,10 +137,32 @@ public class QueryHelper {
         return paths;
     }
 
+    static boolean hasQueryIndexForACLs(final Session session) throws RepositoryException, IOException {
+        Query query = session.getWorkspace().getQueryManager().createQuery("EXPLAIN MEASURE SELECT * FROM [rep:ACL] AS s WHERE ISDESCENDANTNODE([/])", Query.JCR_SQL2);
+        QueryResult queryResult = query.execute();
+        Row row = queryResult.getRows().nextRow();
+        // inspired by https://github.com/apache/jackrabbit-oak/blob/cc8adb42d89bc4625138a62ab074e7794a4d39ab/oak-jcr/src/test/java/org/apache/jackrabbit/oak/jcr/query/QueryTest.java#L1092
+        String plan = row.getValue("plan").getString();
+        String costJson = plan.substring(plan.lastIndexOf('{'));
+        
+        // use jackson for JSON parsing
+        ObjectMapper mapper = new ObjectMapper();
+
+        // read the json strings and convert it into JsonNode
+        JsonNode node = mapper.readTree(costJson);
+        double cost = node.get("s").asDouble(Double.MAX_VALUE);
+        // look at https://jackrabbit.apache.org/oak/docs/query/query-engine.html#cost-calculation for the threshold
+        // https://github.com/apache/jackrabbit-oak/blob/cc8adb42d89bc4625138a62ab074e7794a4d39ab/oak-core/src/main/java/org/apache/jackrabbit/oak/query/index/TraversingIndex.java#L75
+
+        // for traversing cost = estimation of node count
+        // for property index = between 2 and 100
+        LOG.debug("Cost for rep:ACL query is estimated with {}", cost);
+        return cost <= COST_THRESHOLD_FOR_QUERY_INDEX;
+    }
+
     /** Get Nodes with XPATH Query. */
     public static Set<String> getNodePathsFromQuery(final Session session,
-            final String xpathQuery) throws InvalidQueryException,
-            RepositoryException {
+            final String xpathQuery) throws RepositoryException {
         return getNodePathsFromQuery(session, xpathQuery, Query.XPATH);
     }
 
