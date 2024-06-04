@@ -47,6 +47,11 @@ class IMSUserManagementIT {
         group.setAuthorizableId("testGroup");
         group.setDescription("my description");
         imsUserManagement.updateGroups(Collections.singleton(group));
+        
+        // test without description
+        AuthorizableConfigBean group2 = new AuthorizableConfigBean();
+        group2.setAuthorizableId("testGroup");
+        imsUserManagement.updateGroups(Collections.singleton(group2));
     }
 
     private static String getMandatoryEnvironmentVariable(String name) {

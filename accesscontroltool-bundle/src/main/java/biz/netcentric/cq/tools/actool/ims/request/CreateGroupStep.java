@@ -1,9 +1,12 @@
 package biz.netcentric.cq.tools.actool.ims.request;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 @JsonTypeName("createUserGroup")
+@JsonInclude(Include.NON_NULL)
 public class CreateGroupStep implements Step {
 
     // this cannot be a constant, but still needs to be serialized as literal
@@ -13,6 +16,5 @@ public class CreateGroupStep implements Step {
     //@JsonProperty
     //String name; 
     @JsonProperty
-    public
-    String description;
+    public String description; // this may be null
 }
