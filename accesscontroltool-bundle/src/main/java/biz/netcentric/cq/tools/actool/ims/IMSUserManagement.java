@@ -1,5 +1,6 @@
 package biz.netcentric.cq.tools.actool.ims;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -10,12 +11,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.apache.http.Consts;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.StatusLine;
@@ -103,31 +107,40 @@ public class IMSUserManagement implements ExternalGroupManagement {
     static final class TooManyRequestsRetryStrategy implements ServiceUnavailableRetryStrategy {
         private final int maxRetryCount;
         private final int defaultRetryDelayInSeconds;
-        private int retryDelayInSeconds;
+        private long retryDelayInMilliseconds;
+        private final Random random = new Random();
  
         public TooManyRequestsRetryStrategy(int maxRetryCount, int defaultRetryDelayInSeconds) {
             super();
             this.maxRetryCount = maxRetryCount;
             this.defaultRetryDelayInSeconds = defaultRetryDelayInSeconds;
-            retryDelayInSeconds = defaultRetryDelayInSeconds;
+            this.retryDelayInMilliseconds = defaultRetryDelayInSeconds * 1000l;
         }
 
         @Override
         public boolean retryRequest(HttpResponse response, int executionCount, HttpContext context) {
-            retryDelayInSeconds = defaultRetryDelayInSeconds;
+            retryDelayInMilliseconds = defaultRetryDelayInSeconds * 1000l;
             boolean shouldRetry = (executionCount <= maxRetryCount && response.getStatusLine().getStatusCode() == 429);
             if (shouldRetry) {
                 Header retryAfterHeader = response.getFirstHeader("Retry-After");
                 if (retryAfterHeader != null) {
-                    retryDelayInSeconds = Integer.parseInt(retryAfterHeader.getValue());
+                    // just using the retry-after as is does not work reliably (due to potential concurrent requests)
+                    retryDelayInMilliseconds = Integer.parseInt(retryAfterHeader.getValue()) * 1000l;
+                    LOG.info("Received 429 status with Retry-After header {}", retryAfterHeader.getValue());
                 }
+                // make it exponential because the retry-after is unreliable (particularly with multiple requests in parallel)
+                retryDelayInMilliseconds *= executionCount;
+                // always add some jitter between 0 and default delay in seconds
+                long jitter= random.nextInt(defaultRetryDelayInSeconds) * 1000l;
+                retryDelayInMilliseconds += jitter;
+                LOG.info("Schedule retry no {} of {} in {} milliseconds (with jitter of {} ms) due to 429 response", executionCount, maxRetryCount, retryDelayInMilliseconds, jitter);
             }
             return shouldRetry;
         }
 
         @Override
         public long getRetryInterval() {
-            return retryDelayInSeconds * 1000l;
+            return retryDelayInMilliseconds;
         } 
     }
 
@@ -182,12 +195,28 @@ public class IMSUserManagement implements ExternalGroupManagement {
         for (List<ActionCommand> actionCommandBatch : actionCommandsBatches) {
             ActionCommandResponse response = sendActionCommand(token, actionCommandBatch);
             if (!response.errors.isEmpty()) {
-                throw new IOException("Errors updating groups: " + response.errors);
+                throw new IOException("Errors updating groups: " + response.errors + " for request " + getRequestInfo(response.associatedRequest));
             }
             if (!response.warnings.isEmpty()) {
+                LOG.warn("Some warnings during updating groups with request {}", getRequestInfo(response.associatedRequest));
                 response.warnings.stream().forEach(w -> LOG.warn("Warning updating a group: {}", w));
             }
         }
+    }
+
+    static String getRequestInfo(HttpRequest request) throws IOException {
+        if (request == null) {
+            return "Unknown";
+        }
+        StringBuilder requestInfo = new StringBuilder();
+        requestInfo.append(request);
+        if (request instanceof HttpEntityEnclosingRequest) {
+            HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+            ByteArrayOutputStream bs = new ByteArrayOutputStream();
+            entity.writeTo(bs);
+            requestInfo.append("\nwith payload:\n").append(new String(bs.toByteArray()));
+        }
+        return requestInfo.toString();
     }
 
     private ActionCommandResponse sendActionCommand(String token, Collection<ActionCommand> actions) throws IOException {
@@ -211,12 +240,14 @@ public class IMSUserManagement implements ExternalGroupManagement {
                 if (statusLine.getStatusCode() >= 300) {
                     throw new HttpResponseException(
                             statusLine.getStatusCode(),
-                            statusLine.getReasonPhrase() + ", body:" + EntityUtils.toString(entity));
+                            statusLine.getReasonPhrase() + ", body:" + EntityUtils.toString(entity) + ", for request " + getRequestInfo(httpPost));
                 }
                 if (entity == null) {
-                    throw new ClientProtocolException("Response contains no content");
+                    throw new ClientProtocolException("Response contains no content for request" + getRequestInfo(httpPost));
                 }
-                return objectMapper.readValue(entity.getContent(), ActionCommandResponse.class);
+                ActionCommandResponse actionCommandResponse = objectMapper.readValue(entity.getContent(), ActionCommandResponse.class);
+                actionCommandResponse.associatedRequest = httpPost;
+                return actionCommandResponse;
             }
         };
         LOG.debug("Calling UMAPI via {}", httpPost);

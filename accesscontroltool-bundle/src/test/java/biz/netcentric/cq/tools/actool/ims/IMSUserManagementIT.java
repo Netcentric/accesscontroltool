@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.osgi.util.converter.Converters;
 
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
-import biz.netcentric.cq.tools.actool.ims.IMSUserManagement;
 import biz.netcentric.cq.tools.actool.ims.IMSUserManagement.Configuration;
 
 /**

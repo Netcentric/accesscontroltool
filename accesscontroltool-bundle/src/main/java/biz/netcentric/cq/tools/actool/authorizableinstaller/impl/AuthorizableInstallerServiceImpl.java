@@ -125,6 +125,7 @@ public class AuthorizableInstallerServiceImpl implements
                     authorizableConfigBean, installLog, authorizablesFromConfigurations);
             
             if (authorizableConfigBean.isExternalSync() && authorizableConfigBean.isGroup() && !externalGroupManagementServices.isEmpty()) {
+                installLog.addVerboseMessage(LOG, "Synchronizing external group with id " + authorizableConfigBean.getAuthorizableId() + " and description " + authorizableConfigBean.getDescription());
                 groupsToSyncWithExternalUserMgmt.add(authorizableConfigBean);
             }
         }
