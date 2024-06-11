@@ -1,6 +1,8 @@
 package biz.netcentric.cq.tools.actool.ims;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -9,6 +11,8 @@ import java.util.Map;
 
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.osgi.services.HttpClientBuilderFactory;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.osgi.util.converter.Converters;
 
@@ -26,15 +30,22 @@ import biz.netcentric.cq.tools.actool.ims.IMSUserManagement.Configuration;
  */
 class IMSUserManagementIT {
 
-    @Test
-    void test() throws IOException {
-        Map<String, Object> properties = new HashMap<>();
+    Map<String, Object> properties;
+
+    @BeforeEach
+    void setUp() {
+        String orgId = System.getenv("ACTOOL_IMS_IT_ORGANIZATIONID");
+        Assumptions.assumeTrue(orgId != null, "Skipping IMS ITs because environment variable 'ACTOOL_IMS_IT_ORGANIZATIONID' is not set!");
+        properties = new HashMap<>();
         properties.put("organizationId", getMandatoryEnvironmentVariable("ACTOOL_IMS_IT_ORGANIZATIONID"));
         properties.put("clientId", getMandatoryEnvironmentVariable("ACTOOL_IMS_IT_CLIENTID"));
         properties.put("clientSecret", getMandatoryEnvironmentVariable("ACTOOL_IMS_IT_CLIENTSECRET"));
         properties.put("isTestOnly", Boolean.TRUE);
+    }
+
+    @Test
+    void testSimpleGroup() throws IOException {
         Configuration config = Converters.standardConverter().convert(properties).to(Configuration.class);
-        
         IMSUserManagement imsUserManagement = new IMSUserManagement(config, new HttpClientBuilderFactory() {
             @Override
             public HttpClientBuilder newBuilder() {
@@ -57,6 +68,39 @@ class IMSUserManagementIT {
         group3.setAuthorizableId("testGroup");
         group3.setDescription("");
         imsUserManagement.updateGroups(Collections.singleton(group3));
+    }
+
+    @Test
+    void testGroupWithProductProfileMembership() throws IOException {
+        properties.put("productProfiles", getMandatoryEnvironmentVariable("ACTOOL_IMS_IT_PRODUCTPROFILE"));
+        Configuration config = Converters.standardConverter().convert(properties).to(Configuration.class);
+        IMSUserManagement imsUserManagement = new IMSUserManagement(config, new HttpClientBuilderFactory() {
+            @Override
+            public HttpClientBuilder newBuilder() {
+                return HttpClientBuilder.create();
+            }
+        });
+        AuthorizableConfigBean group = new AuthorizableConfigBean();
+        group.setAuthorizableId("testGroup");
+        group.setDescription("my description");
+        imsUserManagement.updateGroups(Collections.singleton(group));
+    }
+
+    @Test
+    void testGroupWithInvalidProductProfileMembership() throws IOException {
+        properties.put("productProfiles", "Invalid name");
+        Configuration config = Converters.standardConverter().convert(properties).to(Configuration.class);
+        IMSUserManagement imsUserManagement = new IMSUserManagement(config, new HttpClientBuilderFactory() {
+            @Override
+            public HttpClientBuilder newBuilder() {
+                return HttpClientBuilder.create();
+            }
+        });
+        AuthorizableConfigBean group = new AuthorizableConfigBean();
+        group.setAuthorizableId("testGroup");
+        group.setDescription("my description");
+        IOException t = assertThrows(IOException.class, () -> { imsUserManagement.updateGroups(Collections.singleton(group)); });
+        assertTrue(t.getMessage().contains("error.plc.not_found"), "Exceptions message is supposed to contain 'error.plc.not_found' but was " + t.getMessage());
     }
 
     private static String getMandatoryEnvironmentVariable(String name) {

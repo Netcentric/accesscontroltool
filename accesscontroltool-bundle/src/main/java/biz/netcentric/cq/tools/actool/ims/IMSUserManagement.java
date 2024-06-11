@@ -8,7 +8,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -55,6 +57,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.externalusermanagement.ExternalGroupManagement;
 import biz.netcentric.cq.tools.actool.ims.IMSUserManagement.Configuration;
 import biz.netcentric.cq.tools.actool.ims.request.ActionCommand;
+import biz.netcentric.cq.tools.actool.ims.request.AddMembershipStep;
 import biz.netcentric.cq.tools.actool.ims.request.CreateGroupStep;
 import biz.netcentric.cq.tools.actool.ims.request.UserGroupActionCommand;
 import biz.netcentric.cq.tools.actool.ims.response.AccessToken;
@@ -89,6 +92,8 @@ public class IMSUserManagement implements ExternalGroupManagement {
         int connectTimeout() default 2000;
         @AttributeDefinition(name = "Socket Timeout", description = "The time waiting for data – after establishing the connection; maximum time of inactivity between two data packets. Given in milliseconds.")
         int socketTimeout() default 10000;
+        @AttributeDefinition(name = "AEM Product Profiles", description = "The given product profile names are automatically added to each synchronized IMS group. The given product profile names must exist for an AEM product!")
+        String[] productProfiles() default {};
     }
 
     public static final Logger LOG = LoggerFactory.getLogger(IMSUserManagement.class);
@@ -184,6 +189,12 @@ public class IMSUserManagement implements ExternalGroupManagement {
             CreateGroupStep createGroupStep = new CreateGroupStep();
             createGroupStep.description = groupConfig.getDescription();
             actionCommand.addStep(createGroupStep);
+            // optionally maintain product profile memberships in the group as well
+            if (config.productProfiles() != null && config.productProfiles().length > 0) {
+                AddMembershipStep addMembershipStep = new AddMembershipStep();
+                addMembershipStep.productProfileIds =  new HashSet<>(Arrays.asList(config.productProfiles()));
+                actionCommand.addStep(addMembershipStep);
+            }
             actionCommands.add(actionCommand);
         }
         // update in batches of 10 commands
