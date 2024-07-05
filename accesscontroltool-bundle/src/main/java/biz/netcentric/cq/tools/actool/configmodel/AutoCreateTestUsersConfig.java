@@ -27,6 +27,7 @@ public class AutoCreateTestUsersConfig {
     private static final String KEY_SKIP_FOR_RUNMODES = "skipForRunmodes";
     private static final String KEY_CREATE_FOR_GROUP_NAMES_REG_EX = "createForGroupNamesRegEx";
     private static final String KEY_PATH = "path";
+    private static final String KEY_IMPERSONATION_ALLOWED_FOR = "impersonationAllowedFor";
 
     private static final List<String> DEFAULT_PRODUCTION_RUNMODES = Arrays.asList("prod", "production");
 
@@ -38,6 +39,7 @@ public class AutoCreateTestUsersConfig {
     private final List<String> skipForRunmodes;
     private final String createForGroupNamesRegEx;
     private final String path;
+    private List<String> impersonationAllowedFor;
 
     public AutoCreateTestUsersConfig(Map map) {
         if (!map.containsKey(KEY_PREFIX)) {
@@ -73,6 +75,10 @@ public class AutoCreateTestUsersConfig {
         }
 
         this.path = String.valueOf(map.get(KEY_PATH));
+        Object impersonationAllowedForObj = map.get(KEY_IMPERSONATION_ALLOWED_FOR);
+        if (impersonationAllowedForObj instanceof List) {
+            this.impersonationAllowedFor = (List<String>) impersonationAllowedForObj;
+        }
     }
 
     public String getPrefix() {
@@ -105,5 +111,13 @@ public class AutoCreateTestUsersConfig {
 
     public String getEmail() {
         return email;
+    }
+
+    public List<String> getImpersonationAllowedFor() {
+        return impersonationAllowedFor;
+    }
+
+    public void setImpersonationAllowedFor(List<String> impersonationAllowedFor) {
+        this.impersonationAllowedFor = impersonationAllowedFor;
     }
 }

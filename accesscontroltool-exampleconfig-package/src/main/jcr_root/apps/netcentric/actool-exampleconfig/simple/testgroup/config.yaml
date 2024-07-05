@@ -1,3 +1,11 @@
+- global_config:
+    autoCreateTestUsers:
+      createForGroupNamesRegEx: "(testgroup)-.*"
+      prefix: "testuser-"
+      name: "TU %{group.name}"
+      path: /home/users/myproj-test-users
+      impersonationAllowedFor: [dummy]
+
 - group_config:
 
     - testgroup-tags:
@@ -7,6 +15,13 @@
          members: 
          path: t
 
+    - dummygroup-dam:
+
+        - name: Dummy group for DAM management
+          isMemberOf:
+          members:
+          path: d
+
 - ace_config:
 
     - testgroup-tags:
@@ -14,4 +29,16 @@
        - path: /content/cq:tags
          permission: allow
          actions: read
-         privileges: 
+         privileges:
+
+    - dummygroup-dam:
+
+        - path: /content/dam
+          permission: allow
+          actions: read
+          privileges:
+
+- user_config:
+    - dummy:
+        - isMemberOf: dummygroup-dam
+          password: "password"
