@@ -82,7 +82,8 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
         int currentPositionConfig = 0;
 
         boolean changeHasBeenFound = false;
-            
+        boolean everyoneDenyFound = false;
+
         AccessControlManager acMgr = session.getAccessControlManager();
 
         JackrabbitAccessControlList acl = getAccessControlList(acMgr, path);
@@ -97,6 +98,12 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
             if (!principalsInConfiguration.contains(acePrincipalName)) {
                 countOutsideConfig++;
                 diffLog.append("    OUTSIDE (not in Config) " + actualAceBeanCompareStr + "\n");
+                // Condition will check if everyone deny was added at the bottom, blocking all permissions created by actool
+                // usually happens when SP installs some rep:policy nodes
+                if ((acl.size() - countOutsideConfig <= configuredAceEntries.size())
+                        && (StringUtils.startsWith(actualAceBeanCompareStr, "everyone") && StringUtils.contains(actualAceBeanCompareStr, "deny"))) {
+                    everyoneDenyFound = true;
+                }
                 continue;
             }
 
@@ -132,6 +139,18 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
             countNoChange++;
             diffLog.append("    UNCHANGED               " + actualAceBeanCompareStr + "\n");
 
+        }
+
+        // will override the logic to apply all ACLs on the path, and removing all elements present in config files
+        if (everyoneDenyFound && !changeHasBeenFound) {
+            Iterator<AccessControlEntry> items = Arrays.asList(acl.getAccessControlEntries()).iterator();
+            while (items.hasNext()) {
+                AccessControlEntry currentEntry = items.next();
+                if (principalsInConfiguration.contains(currentEntry.getPrincipal().getName())) {
+                    acl.removeAccessControlEntry(currentEntry);
+                }
+            }
+            currentPositionConfig = 0;
         }
 
         // install missing - this can be either because not all configured ACEs were found (append) or because a change was detected and old
