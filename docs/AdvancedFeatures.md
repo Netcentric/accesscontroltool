@@ -284,7 +284,7 @@ It is possible to automatically create test users (since v2.1.0) for groups give
 
 property | comment | required
 --- | --- | ---
-`createForGroupNamesRegEx` | A regex (matched against authorizableId of groups) to select the groups, test users should be created for | required
+`createForGroupNamesRegEx` | A regex (matched against authorizableId of groups) to select the groups, test users should be created for. The regular expression may contain [capturing groups](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html#cg). | required
 `prefix` | The prefix for the authorizable id, for instance if prefix "tu-" is given, a user "tu-myproject-editors" will be created for group "myproject-editors" | required
 `name` | The name as configured in user's profile, allows for interpolation with EL *) | optional, defaults to "Test User %{group.name}"
 `description` | The description as configured in user's profile, allows for interpolation with EL *) | optional, not set by default
@@ -294,6 +294,8 @@ property | comment | required
 `skipForRunmodes` | The configuration is placed in a regular config file, hence it is possible to add one to an author configuration (located in e.g. in a folder "config.author" and one to a publish configuration (e.g. folder "config.publish"). To avoid creating special runmodes folders just for this configuration that list all runmodes except production, skipForRunmodes can be a comma-separated list of runmodes, where the users are not created.  Defaults to prod,production | optional
 
 *) Interpolation of group properties can be used with EL, however as `$` is evaluated at an earlier stage, `%{}` is used here. Available is `%{group.id}`, `%{group.name}`, `%{group.path}` or expressions like `%{split(group.path,'/')[2]}`.
+
+The special variables `%{cg<capturingGroupIndex>}` may be used to reference a capturing group from the regular expression given in `createForGroupNamesRegEx` matched against the group id. The variable `%{cg0}` stands for the complete group id (since version 3.2.0).
 
 Example:
 

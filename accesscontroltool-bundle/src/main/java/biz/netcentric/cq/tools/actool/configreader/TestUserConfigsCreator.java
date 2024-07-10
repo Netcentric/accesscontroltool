@@ -1,4 +1,3 @@
-
 package biz.netcentric.cq.tools.actool.configreader;
 
 /*-
@@ -18,6 +17,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -71,10 +72,14 @@ public class TestUserConfigsCreator {
                 continue;
             }
             String groupId = groupAuthConfigBean.getAuthorizableId();
-            if (groupId.matches(autoCreateTestUsersConf.getCreateForGroupNamesRegEx())) {
+            Pattern pattern = Pattern.compile(autoCreateTestUsersConf.getCreateForGroupNamesRegEx());
+            Matcher matcher = pattern.matcher(groupId);
+            if (matcher.matches()) {
                 
                 Map<String, Object> vars = getVarsForAuthConfigBean(groupAuthConfigBean);
-                
+                // also add all captured groups from the matcher as variables
+                vars.putAll(getVarsForCapturedGroups(matcher));
+
                 AuthorizableConfigBean testUserConfigBean = new AuthorizableConfigBean();
                 testUserConfigBean.setIsGroup(false);
                 String testUserAuthId = autoCreateTestUsersConf.getPrefix() + groupId;
@@ -117,6 +122,14 @@ public class TestUserConfigsCreator {
                 "Created  " + testUserConfigBeansToAdd.size() + " test user configs at path " + autoCreateTestUsersConf.getPath()
                         + " (for groups matching " + autoCreateTestUsersConf.getCreateForGroupNamesRegEx() + ")");
 
+    }
+
+    Map<String, Object> getVarsForCapturedGroups(Matcher matcher) {
+        Map<String,Object> vars = new HashMap<>();
+        for (int i=0; i <= matcher.groupCount(); i++) {
+            vars.put("cg"+i, matcher.group(i));
+        }
+        return vars;
     }
 
     Map<String, Object> getVarsForAuthConfigBean(AuthorizableConfigBean groupAuthConfigBean) {
