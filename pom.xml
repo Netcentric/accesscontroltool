@@ -448,7 +448,6 @@
                     <configuration>
                         <licenseName>epl_only_v1</licenseName>
                         <excludes>test/resources/**,it/**</excludes>
-                        <addJavaLicenseAfterPackage>false</addJavaLicenseAfterPackage>
                     </configuration>
                 </plugin>
             </plugins>
