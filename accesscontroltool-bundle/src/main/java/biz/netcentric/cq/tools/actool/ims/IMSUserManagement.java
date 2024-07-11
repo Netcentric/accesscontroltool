@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -70,8 +71,10 @@ import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.externalusermanagement.ExternalGroupManagement;
 import biz.netcentric.cq.tools.actool.ims.IMSUserManagement.Configuration;
 import biz.netcentric.cq.tools.actool.ims.request.ActionCommand;
-import biz.netcentric.cq.tools.actool.ims.request.AddMembershipStep;
+import biz.netcentric.cq.tools.actool.ims.request.AddGroupMembers;
+import biz.netcentric.cq.tools.actool.ims.request.AddGroupMembership;
 import biz.netcentric.cq.tools.actool.ims.request.CreateGroupStep;
+import biz.netcentric.cq.tools.actool.ims.request.UserActionCommand;
 import biz.netcentric.cq.tools.actool.ims.request.UserGroupActionCommand;
 import biz.netcentric.cq.tools.actool.ims.response.AccessToken;
 import biz.netcentric.cq.tools.actool.ims.response.ActionCommandResponse;
@@ -107,6 +110,8 @@ public class IMSUserManagement implements ExternalGroupManagement {
         int socketTimeout() default 10000;
         @AttributeDefinition(name = "AEM Product Profiles", description = "The given product profile names are automatically added to each synchronized IMS group. The given product profile names must exist for an AEM product!")
         String[] productProfiles() default {};
+        @AttributeDefinition(name = "Group Administrators", description = "The given users are automatically added to each synchronized IMS group as administrator. The given user ids must already exist!")
+        String[] groupAdmins() default {};
     }
 
     public static final Logger LOG = LoggerFactory.getLogger(IMSUserManagement.class);
@@ -199,17 +204,30 @@ public class IMSUserManagement implements ExternalGroupManagement {
     public void updateGroups(Collection<AuthorizableConfigBean> groupConfigs) throws IOException {
         List<ActionCommand> actionCommands = new LinkedList<>();
         for (AuthorizableConfigBean groupConfig : groupConfigs) {
-            UserGroupActionCommand actionCommand = new UserGroupActionCommand(groupConfig.getAuthorizableId());
+            ActionCommand actionCommand = new UserGroupActionCommand(groupConfig.getAuthorizableId());
             CreateGroupStep createGroupStep = new CreateGroupStep();
             createGroupStep.description = groupConfig.getDescription();
             actionCommand.addStep(createGroupStep);
             // optionally maintain product profile memberships in the group as well
             if (config.productProfiles() != null && config.productProfiles().length > 0) {
-                AddMembershipStep addMembershipStep = new AddMembershipStep();
-                addMembershipStep.productProfileIds =  new HashSet<>(Arrays.asList(config.productProfiles()));
-                actionCommand.addStep(addMembershipStep);
+                AddGroupMembers addMembers = new AddGroupMembers();
+                addMembers.productProfileIds =  new HashSet<>(Arrays.asList(config.productProfiles()));
+                actionCommand.addStep(addMembers);
             }
             actionCommands.add(actionCommand);
+        }
+        // optionally make users group administrators
+        if (config.groupAdmins() != null && config.groupAdmins().length > 0) {
+            Set<String> adminGroupNames = groupConfigs.stream()
+                    .map(AuthorizableConfigBean::getAuthorizableId)
+                    .map(id -> "_admin_" + id) // https://adobe-apiplatform.github.io/umapi-documentation/en/api/ActionsCmds.html#addRemoveAttr
+                    .collect(Collectors.toSet());
+            for (String groupAdmin : config.groupAdmins()) {
+                ActionCommand actionCommand = new UserActionCommand(groupAdmin);
+                AddGroupMembership addGroupMembership = new AddGroupMembership(adminGroupNames);
+                actionCommand.addStep(addGroupMembership);
+                actionCommands.add(actionCommand);
+            }
         }
         // update in batches of 10 commands
         AtomicInteger counter = new AtomicInteger();

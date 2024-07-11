@@ -101,7 +101,7 @@ class IMSUserManagementIT {
 
     @Test
     void testGroupWithInvalidProductProfileMembership() throws IOException {
-        properties.put("productProfiles", "Invalid name");
+        properties.put("productProfiles", "invalid");
         Configuration config = Converters.standardConverter().convert(properties).to(Configuration.class);
         IMSUserManagement imsUserManagement = new IMSUserManagement(config, new HttpClientBuilderFactory() {
             @Override
@@ -114,6 +114,22 @@ class IMSUserManagementIT {
         group.setDescription("my description");
         IOException t = assertThrows(IOException.class, () -> { imsUserManagement.updateGroups(Collections.singleton(group)); });
         assertTrue(t.getMessage().contains("error.plc.not_found"), "Exceptions message is supposed to contain 'error.plc.not_found' but was " + t.getMessage());
+    }
+
+    @Test
+    void testGroupWithAdmin() throws IOException {
+        properties.put("groupAdmins", getMandatoryEnvironmentVariable("ACTOOL_IMS_IT_USERID"));
+        Configuration config = Converters.standardConverter().convert(properties).to(Configuration.class);
+        IMSUserManagement imsUserManagement = new IMSUserManagement(config, new HttpClientBuilderFactory() {
+            @Override
+            public HttpClientBuilder newBuilder() {
+                return HttpClientBuilder.create();
+            }
+        });
+        AuthorizableConfigBean group = new AuthorizableConfigBean();
+        group.setAuthorizableId("testGroup");
+        group.setDescription("my description");
+        imsUserManagement.updateGroups(Collections.singleton(group));
     }
 
     private static String getMandatoryEnvironmentVariable(String name) {
