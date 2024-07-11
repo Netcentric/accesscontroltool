@@ -13,6 +13,7 @@ package biz.netcentric.cq.tools.actool.configmodel;
  * #L%
  */
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -24,14 +25,15 @@ import org.apache.commons.lang3.StringUtils;
 /** Allows to automatically create test users. */
 public class AutoCreateTestUsersConfig {
 
-    private static final String KEY_PREFIX = "prefix";
+    static final String KEY_PREFIX = "prefix";
     private static final String KEY_NAME = "name";
     private static final String KEY_EMAIL = "email";
     private static final String KEY_DESCRIPTION = "description";
     private static final String KEY_PASSWORD = "password";
     private static final String KEY_SKIP_FOR_RUNMODES = "skipForRunmodes";
-    private static final String KEY_CREATE_FOR_GROUP_NAMES_REG_EX = "createForGroupNamesRegEx";
-    private static final String KEY_PATH = "path";
+    static final String KEY_CREATE_FOR_GROUP_NAMES_REG_EX = "createForGroupNamesRegEx";
+    static final String KEY_PATH = "path";
+    static final String KEY_IMPERSONATION_ALLOWED_FOR = "impersonationAllowedFor";
 
     private static final List<String> DEFAULT_PRODUCTION_RUNMODES = Arrays.asList("prod", "production");
 
@@ -43,6 +45,7 @@ public class AutoCreateTestUsersConfig {
     private final List<String> skipForRunmodes;
     private final String createForGroupNamesRegEx;
     private final String path;
+    private List<String> impersonationAllowedFor;
 
     public AutoCreateTestUsersConfig(Map map) {
         if (!map.containsKey(KEY_PREFIX)) {
@@ -78,6 +81,16 @@ public class AutoCreateTestUsersConfig {
         }
 
         this.path = String.valueOf(map.get(KEY_PATH));
+
+        Object impersonationAllowedForObj = map.get(KEY_IMPERSONATION_ALLOWED_FOR);
+        if (impersonationAllowedForObj == null) {
+            this.impersonationAllowedFor = new ArrayList<>();
+        }
+        else if (impersonationAllowedForObj instanceof List) {
+            this.impersonationAllowedFor = (List<String>) impersonationAllowedForObj;
+        } else {
+            throw new IllegalArgumentException("Property \"" + KEY_IMPERSONATION_ALLOWED_FOR + "\" must be a list");
+        }
     }
 
     public String getPrefix() {
@@ -110,5 +123,9 @@ public class AutoCreateTestUsersConfig {
 
     public String getEmail() {
         return email;
+    }
+
+    public List<String> getImpersonationAllowedFor() {
+        return impersonationAllowedFor;
     }
 }

@@ -81,6 +81,7 @@ public class TestUserConfigsCreator {
                 testUserConfigBean.setAuthorizableId(testUserAuthId);
                 testUserConfigBean.setPath(autoCreateTestUsersConf.getPath());
                 testUserConfigBean.setIsMemberOf(new String[] { groupId });
+                testUserConfigBean.setImpersonationAllowedFor(autoCreateTestUsersConf.getImpersonationAllowedFor());
 
                 String name = StringUtils.defaultIfEmpty(autoCreateTestUsersConf.getName(), "Test User %{group.name}");
                 testUserConfigBean.setName(processValue(name, vars));
@@ -91,7 +92,7 @@ public class TestUserConfigsCreator {
                 if(StringUtils.isNotBlank(autoCreateTestUsersConf.getDescription())) {
                     testUserConfigBean.setDescription(processValue(autoCreateTestUsersConf.getDescription(), vars));
                 }
-                
+
                 String password = autoCreateTestUsersConf.getPassword();
                 if(StringUtils.isNotBlank(password)) {
                     password = processValue(password, vars); // allow for pws ala "pw%{group.id}"

@@ -292,6 +292,7 @@ property | comment | required
 `path` | The location where the test users shall be created | required
 `password` | The password for all test users to be created. Can be encrypted using CryptoSupport. Defaults simply to the authorizable id of the test user. Allows for interpolation with EL *) | optional
 `skipForRunmodes` | The configuration is placed in a regular config file, hence it is possible to add one to an author configuration (located in e.g. in a folder "config.author" and one to a publish configuration (e.g. folder "config.publish"). To avoid creating special runmodes folders just for this configuration that list all runmodes except production, skipForRunmodes can be a comma-separated list of runmodes, where the users are not created.  Defaults to prod,production | optional
+`impersonationAllowedFor` | List of users that can impersonate auto-created test users | optional
 
 *) Interpolation of group properties can be used with EL, however as `$` is evaluated at an earlier stage, `%{}` is used here. Available is `%{group.id}`, `%{group.name}`, `%{group.path}` or expressions like `%{split(group.path,'/')[2]}`.
 
