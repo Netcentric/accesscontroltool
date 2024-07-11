@@ -17,6 +17,7 @@
     <name>Access Control Tool</name>
     <description>Maven Multimodule project for Access Control Tool.</description>
     <url>https://github.com/Netcentric/accesscontroltool</url>
+    <inceptionYear>2015</inceptionYear>
     <organization>
         <name>Cognizant Netcentric</name>
         <url>https://www.netcentric.biz/</url>
@@ -426,7 +427,7 @@
                 <plugin>
                     <groupId>org.owasp</groupId>
                     <artifactId>dependency-check-maven</artifactId>
-                    <version>9.0.10</version>
+                    <version>10.0.2</version>
                     <configuration>
                         <failBuildOnCVSS>11</failBuildOnCVSS>
                         <skipProvidedScope>true</skipProvidedScope>
@@ -439,6 +440,15 @@
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
                     <version>0.8.8</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>license-maven-plugin</artifactId>
+                    <version>2.4.0</version>
+                    <configuration>
+                        <licenseName>epl_only_v1</licenseName>
+                        <excludes>test/resources/**,it/**</excludes>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -461,6 +471,24 @@
                                     <version>11</version>
                                 </requireJavaVersion>
                             </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>check-license-header</id>
+                        <goals>
+                            <goal>check-file-header</goal>
+                        </goals>
+                        <phase>validate</phase>
+                        <configuration>
+                            <failOnMissingHeader>true</failOnMissingHeader>
+                            <failOnNotUptodateHeader>true</failOnNotUptodateHeader>
+                            <ignoreNoFileToScan>true</ignoreNoFileToScan>
                         </configuration>
                     </execution>
                 </executions>

@@ -1,3 +1,4 @@
+
 package biz.netcentric.cq.tools.actool.configreader;
 
 /*-
