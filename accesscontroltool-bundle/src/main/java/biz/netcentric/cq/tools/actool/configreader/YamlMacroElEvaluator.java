@@ -136,6 +136,8 @@ public class YamlMacroElEvaluator {
                         StringUtils.class.getMethod("replace", new Class<?>[] { String.class, String.class, String.class }),
                         StringUtils.class.getMethod("length", new Class<?>[] { CharSequence.class }),
                         StringUtils.class.getMethod("defaultIfEmpty", new Class<?>[] { CharSequence.class, CharSequence.class }),
+                        StringUtils.class.getMethod("isEmpty", new Class<?>[] { CharSequence.class }),
+                        StringUtils.class.getMethod("isBlank", new Class<?>[] { CharSequence.class }),
 
                         YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("containsItem", new Class<?>[] { List.class, String.class }),
                         YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("containsAllItems", new Class<?>[] { List.class, List.class }),
