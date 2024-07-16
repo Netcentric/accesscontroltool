@@ -20,6 +20,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -130,6 +132,26 @@ class IMSUserManagementIT {
         group.setAuthorizableId("testGroup");
         group.setDescription("my description");
         imsUserManagement.updateGroups(Collections.singleton(group));
+    }
+
+    @Test
+    void test25GroupsWithAdmin() throws IOException {
+        properties.put("groupAdmins", getMandatoryEnvironmentVariable("ACTOOL_IMS_IT_USERID"));
+        Configuration config = Converters.standardConverter().convert(properties).to(Configuration.class);
+        IMSUserManagement imsUserManagement = new IMSUserManagement(config, new HttpClientBuilderFactory() {
+            @Override
+            public HttpClientBuilder newBuilder() {
+                return HttpClientBuilder.create();
+            }
+        });
+        List<AuthorizableConfigBean> groups = new LinkedList<>();
+        for (int n=0; n<25; n++) {
+            AuthorizableConfigBean group = new AuthorizableConfigBean();
+            group.setAuthorizableId("testGroup" + n);
+            group.setDescription("my description" + n);
+            groups.add(group);
+        }
+        imsUserManagement.updateGroups(groups);
     }
 
     private static String getMandatoryEnvironmentVariable(String name) {
