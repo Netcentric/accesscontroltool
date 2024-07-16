@@ -116,6 +116,7 @@ public class IMSUserManagement implements ExternalGroupManagement {
 
     public static final Logger LOG = LoggerFactory.getLogger(IMSUserManagement.class);
     private static final int MAX_NUM_COMMANDS_PER_REQUEST = 10;
+    private static final int MAX_NUM_GROUPS_PER_ADD_STEP = 10;
 
     private final Configuration config;
     private final CloseableHttpClient client;
@@ -218,15 +219,20 @@ public class IMSUserManagement implements ExternalGroupManagement {
         }
         // optionally make users group administrators
         if (config.groupAdmins() != null && config.groupAdmins().length > 0) {
-            Set<String> adminGroupNames = groupConfigs.stream()
+            // at most 10 groups per add command
+            AtomicInteger groupCounter = new AtomicInteger();
+            Collection<List<String>> adminGroupNameBatches = groupConfigs.stream()
                     .map(AuthorizableConfigBean::getAuthorizableId)
                     .map(id -> "_admin_" + id) // https://adobe-apiplatform.github.io/umapi-documentation/en/api/ActionsCmds.html#addRemoveAttr
-                    .collect(Collectors.toSet());
-            for (String groupAdmin : config.groupAdmins()) {
-                ActionCommand actionCommand = new UserActionCommand(groupAdmin);
-                AddGroupMembership addGroupMembership = new AddGroupMembership(adminGroupNames);
-                actionCommand.addStep(addGroupMembership);
-                actionCommands.add(actionCommand);
+                    .collect(Collectors.groupingBy
+                    (it->groupCounter.getAndIncrement() / MAX_NUM_GROUPS_PER_ADD_STEP)).values();
+            for (List<String> adminGroupNames : adminGroupNameBatches) {
+                for (String groupAdmin : config.groupAdmins()) {
+                    ActionCommand actionCommand = new UserActionCommand(groupAdmin);
+                    AddGroupMembership addGroupMembership = new AddGroupMembership(adminGroupNames);
+                    actionCommand.addStep(addGroupMembership);
+                    actionCommands.add(actionCommand);
+                }
             }
         }
         // update in batches of 10 commands
