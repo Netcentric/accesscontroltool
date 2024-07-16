@@ -34,9 +34,15 @@ class YamlMacroElEvaluatorTest {
 
     @Test
     void testFunctions() {
+        assertEquals(true, evaluateSimpleExpression("isBlank(\"\")"));
+        assertEquals(true, evaluateSimpleExpression("isBlank(\"      \")"));
+        assertEquals(true, evaluateSimpleExpression("isEmpty(\"\")"));
+        assertEquals(false, evaluateSimpleExpression("isEmpty(\"      \")"));
         assertEquals("bread&amp;butter", evaluateSimpleExpression("escapeXml(\"bread&butter\")"));
         assertEquals("Test", evaluateSimpleExpression("capitalize(\"test\")"));
         assertEquals("item1,item2", evaluateSimpleExpression("join(var1, \",\")", Collections.singletonMap("var1", new Object[] {"item1", "item2"})));
+        assertEquals("foo", evaluateSimpleExpression("defaultIfBlank(\"    \",\"foo\")"));
+        assertEquals("bar", evaluateSimpleExpression("defaultIfBlank(\"bar\",\"foo\")"));
     }
 
     @Test
