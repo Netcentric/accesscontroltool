@@ -23,18 +23,23 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.http.Consts;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpMessage;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -45,6 +50,7 @@ import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.ServiceUnavailableRetryStrategy;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -78,6 +84,10 @@ import biz.netcentric.cq.tools.actool.ims.request.UserActionCommand;
 import biz.netcentric.cq.tools.actool.ims.request.UserGroupActionCommand;
 import biz.netcentric.cq.tools.actool.ims.response.AccessToken;
 import biz.netcentric.cq.tools.actool.ims.response.ActionCommandResponse;
+import biz.netcentric.cq.tools.actool.ims.response.GroupResponse;
+import biz.netcentric.cq.tools.actool.ims.response.IMSGroup;
+import biz.netcentric.cq.tools.actool.ims.response.IMSUser;
+import biz.netcentric.cq.tools.actool.ims.response.UsersInGroupResponse;
 
 /**
  * Managing Adobe IMS groups via the UMAPI.
@@ -90,8 +100,8 @@ public class IMSUserManagement implements ExternalGroupManagement {
 
     @ObjectClassDefinition(name = "AC Tool Adobe IMS User Management", description = "Settings of the API for user management tasks (UMAPI) in the Adobe IMS")
     protected static @interface Configuration {
-        @AttributeDefinition(name = "UMAPI Base URL", description = "UMAPI Endpoint Base URL (the part prior the organization id)")
-        String umapiBaseUrl() default "https://usermanagement.adobe.io/v2/usermanagement/action/";
+        @AttributeDefinition(name = "UMAPI Base URL", description = "UMAPI Endpoint Base URL (the common part of all UMAPI endpoints)")
+        String umapiBaseUrl() default "https://usermanagement.adobe.io/v2/usermanagement/";
         @AttributeDefinition(name = "Organization ID", description = "The unique identifier for an organization. This is a string of the form A495E53@AdobeOrg where the prefix before the @ is a hexadecimal number. You can find this value as part of the URL path for the organization in the Adobe Admin Console or in the Adobe Developer Console for your User Management integration.")
         String organizationId();
         @AttributeDefinition(name = "Test Only", description = "If true, parameter syntactic and (limited) semantic checking is done, but the specified operations are not performed, so no user/group accounts or group memberships are created, changed, or deleted.")
@@ -112,6 +122,8 @@ public class IMSUserManagement implements ExternalGroupManagement {
         String[] productProfiles() default {};
         @AttributeDefinition(name = "Group Administrators", description = "The given users are automatically added to each synchronized IMS group as administrator. The given user ids must already exist!")
         String[] groupAdmins() default {};
+        @AttributeDefinition(name = "Differential Updates", description = "If true, only groups that have changed are updated. This is only a heuristics and currently leads to only adding new groups but never updating existing group (with same names). Also in some cases the additional request to get all groups may be more expensive than just updating all groups.")
+        boolean isDifferentialUpdates() default false;
     }
 
     public static final Logger LOG = LoggerFactory.getLogger(IMSUserManagement.class);
@@ -188,12 +200,16 @@ public class IMSUserManagement implements ExternalGroupManagement {
     }
 
     private URI getUserManagementActionUrl() throws URISyntaxException {
-        URI uri = new URI(config.umapiBaseUrl() + config.organizationId());
-        if (config.isTestOnly()) {
-            uri = new URI(uri.getScheme(), uri.getAuthority(),
-                    uri.getPath(), "testOnly=true", uri.getFragment());
-        }
-        return uri;
+        return new URI(config.umapiBaseUrl()).resolve(new URI(null, null, "action/"+ config.organizationId(), config.isTestOnly() ? "testOnly=true" : null, null));
+    }
+
+    private URI getUserManagementGroupsUrl(int page) throws URISyntaxException {
+        return new URI(config.umapiBaseUrl()).resolve(new URI(null, null, "groups/"+ config.organizationId() + "/" + page, null));
+    }
+
+    private URI getUserManagementUsersInGroupUrl(int page, String groupName) throws URISyntaxException {
+        // group names may have spaces and require percent encoding as defined by RFC 3986
+        return new URI(config.umapiBaseUrl()).resolve(new URI(null, null, "users/"+ config.organizationId() + "/" + page+ "/" + groupName, null));
     }
 
     @Override
@@ -201,10 +217,32 @@ public class IMSUserManagement implements ExternalGroupManagement {
         return "Adobe IMS";
     }
 
+    private boolean requireGroupUpdate(Map<String, IMSGroup> existingImsGroups, AuthorizableConfigBean groupConfig) {
+        // since group names are case insensitive always compare in lower case
+        IMSGroup existingImsGroup = existingImsGroups.get(groupConfig.getAuthorizableId().toLowerCase(Locale.ROOT));
+        if (existingImsGroup == null) {
+            LOG.debug("Group {} does not exist yet", groupConfig.getAuthorizableId());
+            return true;
+        } else {
+            // this is just a heuristics as the group description is not returned (https://adminconsole.adobe.com/FA907D44536A3C2B0A490D4D@AdobeOrg/support/support-cases/E-001297310)
+            return false;
+        }
+    }
+
     @Override
-    public void updateGroups(Collection<AuthorizableConfigBean> groupConfigs) throws IOException {
+    public int updateGroups(Collection<AuthorizableConfigBean> groupConfigs) throws IOException {
+        String token = getOAuthServer2ServerToken();
+        Map<String, IMSGroup> existingImsGroups = Collections.emptyMap();
+        if (config.isDifferentialUpdates()) {
+            existingImsGroups = getGroups(token);
+        }
         List<ActionCommand> actionCommands = new LinkedList<>();
+        List<String> updatedGroupNames = new LinkedList<>();
         for (AuthorizableConfigBean groupConfig : groupConfigs) {
+            if (config.isDifferentialUpdates() && !requireGroupUpdate(existingImsGroups, groupConfig)) {
+                LOG.info("Skip updating IMS group {} as considered up to date", groupConfig.getAuthorizableId());
+                continue;
+            }
             ActionCommand actionCommand = new UserGroupActionCommand(groupConfig.getAuthorizableId());
             CreateGroupStep createGroupStep = new CreateGroupStep();
             createGroupStep.description = groupConfig.getDescription();
@@ -215,14 +253,14 @@ public class IMSUserManagement implements ExternalGroupManagement {
                 addMembers.productProfileIds =  new HashSet<>(Arrays.asList(config.productProfiles()));
                 actionCommand.addStep(addMembers);
             }
+            updatedGroupNames.add(groupConfig.getAuthorizableId());
             actionCommands.add(actionCommand);
         }
         // optionally make users group administrators
         if (config.groupAdmins() != null && config.groupAdmins().length > 0) {
             // at most 10 groups per add command
             AtomicInteger groupCounter = new AtomicInteger();
-            Collection<List<String>> adminGroupNameBatches = groupConfigs.stream()
-                    .map(AuthorizableConfigBean::getAuthorizableId)
+            Collection<List<String>> adminGroupNameBatches = updatedGroupNames.stream()
                     .map(id -> "_admin_" + id) // https://adobe-apiplatform.github.io/umapi-documentation/en/api/ActionsCmds.html#addRemoveAttr
                     .collect(Collectors.groupingBy
                     (it->groupCounter.getAndIncrement() / MAX_NUM_GROUPS_PER_ADD_STEP)).values();
@@ -240,7 +278,7 @@ public class IMSUserManagement implements ExternalGroupManagement {
         final Collection<List<ActionCommand>> actionCommandsBatches = actionCommands.stream().collect(Collectors.groupingBy
                 (it->counter.getAndIncrement() / MAX_NUM_COMMANDS_PER_REQUEST))
                 .values();
-        String token = getOAuthServer2ServerToken();
+
         for (List<ActionCommand> actionCommandBatch : actionCommandsBatches) {
             ActionCommandResponse response = sendActionCommand(token, actionCommandBatch);
             if (!response.errors.isEmpty()) {
@@ -251,6 +289,7 @@ public class IMSUserManagement implements ExternalGroupManagement {
                 response.warnings.stream().forEach(w -> LOG.warn("Warning updating a group: {}", w));
             }
         }
+        return updatedGroupNames.size();
     }
 
     static String getRequestInfo(HttpRequest request) throws IOException {
@@ -268,6 +307,118 @@ public class IMSUserManagement implements ExternalGroupManagement {
         return requestInfo.toString();
     }
 
+    private void setHttpAuthenticationHeaders(HttpMessage httpMessage, String token) {
+        httpMessage.setHeader("Authorization", "Bearer " + token);
+        httpMessage.setHeader("X-Api-Key", config.clientId());
+        
+    }
+
+    /** 
+     * Retrieves all groups and product profiles with the API endpoint described at <a href="https://adobe-apiplatform.github.io/umapi-documentation/en/api/group.html">Get User Groups and Product Profiles</a>.
+     * <p>
+     * Maximum 5 requests per minute per a client.
+     * @param token the access token
+     * @throws IOException 
+     * @return a map with group names (lower-case) as keys and {@link IMSGroup}s as values
+     */
+    Map<String, IMSGroup> getGroups(String token) throws IOException {
+        int page = 0;
+        boolean isLastPage = false;
+        Map<String, IMSGroup> groups = new HashMap<>();
+        while (!isLastPage) {
+            GroupResponse response = getGroups(token, page++);
+            isLastPage = response.isLastPage;
+            groups.putAll(response.groups.stream().collect(Collectors.toMap(g -> g.getGroupName().toLowerCase(Locale.ROOT), Function.identity())));
+        }
+        return groups;
+    }
+
+    private GroupResponse getGroups(String token, int page) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        HttpGet httpGet;
+        try {
+            httpGet = new HttpGet(getUserManagementGroupsUrl(page));
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Could not create valid URI from configuration", e);
+        }
+        setHttpAuthenticationHeaders(httpGet, token);
+        ResponseHandler<GroupResponse> rh = new ResponseHandler<GroupResponse>() {
+            @Override
+            public GroupResponse handleResponse(
+                    final HttpResponse response) throws IOException {
+                StatusLine statusLine = response.getStatusLine();
+                HttpEntity entity = response.getEntity();
+                if (statusLine.getStatusCode() >= 300) {
+                    throw new HttpResponseException(
+                            statusLine.getStatusCode(),
+                            statusLine.getReasonPhrase() + ", body:" + EntityUtils.toString(entity) + ", for request " + getRequestInfo(httpGet));
+                }
+                if (entity == null) {
+                    throw new ClientProtocolException("Response contains no content for request " + getRequestInfo(httpGet));
+                }
+                //System.out.println(EntityUtils.toString(entity));
+                GroupResponse groupResponse = objectMapper.readValue(entity.getContent(), GroupResponse.class);
+                groupResponse.associatedRequest = httpGet;
+                return groupResponse;
+            }
+        };
+        LOG.debug("Calling UMAPI via {}", httpGet);
+        return client.execute(httpGet, rh);
+    }
+
+    /** 
+     * Retrieves all members of a group with the API endpoint described at <a href="https://adobe-apiplatform.github.io/umapi-documentation/en/api/getUsersByGroup.html">Get Users in a User Group or Product Profile</a>.
+     * <p>
+     * Maximum 25 requests per minute per a client.
+     * @param token the access token
+     * @param name the group name
+     * @throws IOException 
+     * @return a map with group names as keys and {@link IMSGroup}s as values
+     */
+    Map<String, IMSUser> getUsersInGroup(String token, String name) throws IOException {
+        int page = 0;
+        boolean isLastPage = false;
+        Map<String, IMSUser> users = new HashMap<>();
+        while (!isLastPage) {
+            UsersInGroupResponse response = getUsersInGroup(token, name, page++);
+            isLastPage = response.isLastPage;
+            users.putAll(response.users.stream().collect(Collectors.toMap(IMSUser::getUsername, Function.identity())));
+        }
+        return users;
+    }
+
+    private UsersInGroupResponse getUsersInGroup(String token, String name, int page) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        HttpGet httpGet;
+        try {
+            httpGet = new HttpGet(getUserManagementUsersInGroupUrl(page, name));
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Could not create valid URI from configuration", e);
+        }
+        setHttpAuthenticationHeaders(httpGet, token);
+        ResponseHandler<UsersInGroupResponse> rh = new ResponseHandler<UsersInGroupResponse>() {
+            @Override
+            public UsersInGroupResponse handleResponse(
+                    final HttpResponse response) throws IOException {
+                StatusLine statusLine = response.getStatusLine();
+                HttpEntity entity = response.getEntity();
+                if (statusLine.getStatusCode() >= 300) {
+                    throw new HttpResponseException(
+                            statusLine.getStatusCode(),
+                            statusLine.getReasonPhrase() + ", body:" + EntityUtils.toString(entity) + ", for request " + getRequestInfo(httpGet));
+                }
+                if (entity == null) {
+                    throw new ClientProtocolException("Response contains no content for request " + getRequestInfo(httpGet));
+                }
+                UsersInGroupResponse groupResponse = objectMapper.readValue(entity.getContent(), UsersInGroupResponse.class);
+                groupResponse.associatedRequest = httpGet;
+                return groupResponse;
+            }
+        };
+        LOG.debug("Calling UMAPI via {}", httpGet);
+        return client.execute(httpGet, rh);
+    }
+
     private ActionCommandResponse sendActionCommand(String token, Collection<ActionCommand> actions) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         HttpPost httpPost;
@@ -278,8 +429,7 @@ public class IMSUserManagement implements ExternalGroupManagement {
         }
         String jsonPayload = objectMapper.writeValueAsString(actions);
         httpPost.setEntity(new StringEntity(jsonPayload, ContentType.create("application/json"))); // must be without charset
-        httpPost.setHeader("Authorization", "Bearer " + token);
-        httpPost.setHeader("X-Api-Key", config.clientId());
+        setHttpAuthenticationHeaders(httpPost, token);
         ResponseHandler<ActionCommandResponse> rh = new ResponseHandler<ActionCommandResponse>() {
             @Override
             public ActionCommandResponse handleResponse(
@@ -292,7 +442,7 @@ public class IMSUserManagement implements ExternalGroupManagement {
                             statusLine.getReasonPhrase() + ", body:" + EntityUtils.toString(entity) + ", for request " + getRequestInfo(httpPost));
                 }
                 if (entity == null) {
-                    throw new ClientProtocolException("Response contains no content for request" + getRequestInfo(httpPost));
+                    throw new ClientProtocolException("Response contains no content for request " + getRequestInfo(httpPost));
                 }
                 ActionCommandResponse actionCommandResponse = objectMapper.readValue(entity.getContent(), ActionCommandResponse.class);
                 actionCommandResponse.associatedRequest = httpPost;
@@ -310,7 +460,7 @@ public class IMSUserManagement implements ExternalGroupManagement {
      * @throws IOException 
      * @see <a href="https://adobe-apiplatform.github.io/umapi-documentation/en/UM_Authentication.html">OAuth Server to Server Authentication</a>
      */
-    private String getOAuthServer2ServerToken() throws IOException {
+    String getOAuthServer2ServerToken() throws IOException {
         HttpPost httpPost = new HttpPost(config.imsTokenEndpointUrl());
         List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair("client_id", config.clientId()));

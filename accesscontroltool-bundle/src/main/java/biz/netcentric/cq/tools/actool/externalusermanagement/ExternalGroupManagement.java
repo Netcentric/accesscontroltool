@@ -22,7 +22,13 @@ import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
  * Implementations of this service synchronize (i.e. create/update/delete) groups in an external directory (outside AEM).
  */
 public interface ExternalGroupManagement {
-    void updateGroups(Collection<AuthorizableConfigBean> groupConfigs) throws IOException;
+    /**
+     * Updates the groups in the external directory.
+     * @param groupConfigs the groups to be updated
+     * @return the effective number of groups updated (may be less than the number of groups in {@code groupConfigs}) if some are considered up to date
+     * @throws IOException
+     */
+    int updateGroups(Collection<AuthorizableConfigBean> groupConfigs) throws IOException;
 
     /**
      * 

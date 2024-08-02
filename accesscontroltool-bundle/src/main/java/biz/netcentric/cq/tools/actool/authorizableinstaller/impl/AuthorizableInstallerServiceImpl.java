@@ -145,8 +145,8 @@ public class AuthorizableInstallerServiceImpl implements
             return;
         }
         for (ExternalGroupManagement externalGroupManagement : externalGroupManagementServices) {
-            externalGroupManagement.updateGroups(groupConfigBeans);
-            installLog.addMessage(LOG, "Synchronized " + groupConfigBeans.size() + " groups with external user management " + externalGroupManagement.getLabel());
+            int numGroupsSynced = externalGroupManagement.updateGroups(groupConfigBeans);
+            installLog.addMessage(LOG, "Synchronized " + numGroupsSynced + " groups with external user management " + externalGroupManagement.getLabel());
         }
     }
     
