@@ -14,6 +14,7 @@ package biz.netcentric.cq.tools.actool.ims;
  */
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -33,6 +34,8 @@ import org.osgi.util.converter.Converters;
 
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.ims.IMSUserManagement.Configuration;
+import biz.netcentric.cq.tools.actool.ims.response.IMSGroup;
+import biz.netcentric.cq.tools.actool.ims.response.IMSUser;
 
 /**
  * Example Adobe Developer Console Project: https://developer.adobe.com/console/projects/25605/4566206088345177434/overview (Organization: Netcentric).
@@ -56,10 +59,11 @@ class IMSUserManagementIT {
         properties.put("clientId", getMandatoryEnvironmentVariable("ACTOOL_IMS_IT_CLIENTID"));
         properties.put("clientSecret", getMandatoryEnvironmentVariable("ACTOOL_IMS_IT_CLIENTSECRET"));
         properties.put("isTestOnly", Boolean.TRUE);
+        properties.put("socketTimeout", "60000");
     }
 
     @Test
-    void testSimpleGroup() throws IOException {
+    void testAddSimpleGroup() throws IOException {
         Configuration config = Converters.standardConverter().convert(properties).to(Configuration.class);
         IMSUserManagement imsUserManagement = new IMSUserManagement(config, new HttpClientBuilderFactory() {
             @Override
@@ -71,22 +75,37 @@ class IMSUserManagementIT {
         AuthorizableConfigBean group = new AuthorizableConfigBean();
         group.setAuthorizableId("testGroup");
         group.setDescription("my description");
-        imsUserManagement.updateGroups(Collections.singleton(group));
-        
+        assertEquals(1, imsUserManagement.updateGroups(Collections.singleton(group)));
+
         // test without description
         AuthorizableConfigBean group2 = new AuthorizableConfigBean();
         group2.setAuthorizableId("testGroup");
-        imsUserManagement.updateGroups(Collections.singleton(group2));
-        
+        assertEquals(1, imsUserManagement.updateGroups(Collections.singleton(group2)));
+
         // test with empty description
         AuthorizableConfigBean group3 = new AuthorizableConfigBean();
         group3.setAuthorizableId("testGroup");
         group3.setDescription("");
-        imsUserManagement.updateGroups(Collections.singleton(group3));
+        assertEquals(1, imsUserManagement.updateGroups(Collections.singleton(group3)));
     }
 
     @Test
-    void testGroupWithProductProfileMembership() throws IOException {
+    void testAddAlreadyExistingGroupInDifferentialUpdatesMode() throws IOException {
+        properties.put("isDifferentialUpdates", Boolean.TRUE);
+        Configuration config = Converters.standardConverter().convert(properties).to(Configuration.class);
+        IMSUserManagement imsUserManagement = new IMSUserManagement(config, new HttpClientBuilderFactory() {
+            @Override
+            public HttpClientBuilder newBuilder() {
+                return HttpClientBuilder.create();
+            }
+        });
+        AuthorizableConfigBean group = new AuthorizableConfigBean();
+        group.setAuthorizableId("testGroup"); // this group is already there
+        assertEquals(0, imsUserManagement.updateGroups(Collections.singleton(group)));
+    }
+
+    @Test
+    void testAddGroupWithProductProfileMembership() throws IOException  {
         properties.put("productProfiles", getMandatoryEnvironmentVariable("ACTOOL_IMS_IT_PRODUCTPROFILE"));
         Configuration config = Converters.standardConverter().convert(properties).to(Configuration.class);
         IMSUserManagement imsUserManagement = new IMSUserManagement(config, new HttpClientBuilderFactory() {
@@ -102,7 +121,7 @@ class IMSUserManagementIT {
     }
 
     @Test
-    void testGroupWithInvalidProductProfileMembership() throws IOException {
+    void testAddGroupWithInvalidProductProfileMembership() {
         properties.put("productProfiles", "invalid");
         Configuration config = Converters.standardConverter().convert(properties).to(Configuration.class);
         IMSUserManagement imsUserManagement = new IMSUserManagement(config, new HttpClientBuilderFactory() {
@@ -119,7 +138,7 @@ class IMSUserManagementIT {
     }
 
     @Test
-    void testGroupWithAdmin() throws IOException {
+    void testAddGroupWithAdmin() throws IOException {
         properties.put("groupAdmins", getMandatoryEnvironmentVariable("ACTOOL_IMS_IT_USERID"));
         Configuration config = Converters.standardConverter().convert(properties).to(Configuration.class);
         IMSUserManagement imsUserManagement = new IMSUserManagement(config, new HttpClientBuilderFactory() {
@@ -131,11 +150,11 @@ class IMSUserManagementIT {
         AuthorizableConfigBean group = new AuthorizableConfigBean();
         group.setAuthorizableId("testGroup");
         group.setDescription("my description");
-        imsUserManagement.updateGroups(Collections.singleton(group));
+        assertEquals(1, imsUserManagement.updateGroups(Collections.singleton(group)));
     }
 
     @Test
-    void test25GroupsWithAdmin() throws IOException {
+    void testAdd25GroupsWithAdmin() throws IOException {
         properties.put("groupAdmins", getMandatoryEnvironmentVariable("ACTOOL_IMS_IT_USERID"));
         Configuration config = Converters.standardConverter().convert(properties).to(Configuration.class);
         IMSUserManagement imsUserManagement = new IMSUserManagement(config, new HttpClientBuilderFactory() {
@@ -151,7 +170,35 @@ class IMSUserManagementIT {
             group.setDescription("my description" + n);
             groups.add(group);
         }
-        imsUserManagement.updateGroups(groups);
+        assertEquals(25, imsUserManagement.updateGroups(groups));
+    }
+
+    @Test
+    void testGetGroups() throws IOException {
+        Configuration config = Converters.standardConverter().convert(properties).to(Configuration.class);
+        IMSUserManagement imsUserManagement = new IMSUserManagement(config, new HttpClientBuilderFactory() {
+            @Override
+            public HttpClientBuilder newBuilder() {
+                return HttpClientBuilder.create();
+            }
+        });
+        String token = imsUserManagement.getOAuthServer2ServerToken();
+        Map<String, IMSGroup> groups = imsUserManagement.getGroups(token);
+        assertFalse(groups.isEmpty());
+    }
+
+    @Test
+    void testGetUserInGroup() throws IOException {
+        Configuration config = Converters.standardConverter().convert(properties).to(Configuration.class);
+        IMSUserManagement imsUserManagement = new IMSUserManagement(config, new HttpClientBuilderFactory() {
+            @Override
+            public HttpClientBuilder newBuilder() {
+                return HttpClientBuilder.create();
+            }
+        });
+        String token = imsUserManagement.getOAuthServer2ServerToken();
+        Map<String, IMSUser> users = imsUserManagement.getUsersInGroup(token, "AEM Users-3e6e8bd0a05f39bc82d788bb27ac83b4");
+        assertFalse(users.isEmpty());
     }
 
     private static String getMandatoryEnvironmentVariable(String name) {

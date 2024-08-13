@@ -13,7 +13,6 @@ package biz.netcentric.cq.tools.actool.ims.response;
  * #L%
  */
 
-import java.util.Collections;
 import java.util.List;
 
 import org.apache.http.client.methods.HttpRequestBase;
@@ -22,30 +21,21 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/** General response format for UMAPI action requests */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ActionCommandResponse {
+public class UsersInGroupResponse {
 
-    public ActionCommandResponse() {
-        errors = Collections.emptyList();
-        warnings = Collections.emptyList();
-    }
-
-    @JsonProperty("completed")
-    public int numCompletedActions;
+    @JsonProperty("lastPage")
+    public boolean isLastPage;
     
-    @JsonProperty("notCompleted")
-    public int numNotCompletedActions;
+    @JsonProperty("result")
+    public String result;
     
-    @JsonProperty("completedInTestMode")
-    public int numCompletedActionsInTestMode;
+    @JsonProperty("groupName")
+    public String groupName;
     
-    @JsonProperty("errors")
-    public List<ActionCommandError> errors;
+    @JsonProperty("users")
+    public List<IMSUser> users;
     
-    @JsonProperty("warnings")
-    public List<ActionCommandWarning> warnings;
-
     @JsonIgnore
     public HttpRequestBase associatedRequest;
 }
