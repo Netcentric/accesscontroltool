@@ -109,17 +109,13 @@ public class AcHistoryServiceImpl implements AcHistoryService {
     }
 
     @Override
-    public List<AcToolExecution> getAcToolExecutions() {
+    public List<AcToolExecution> getAcToolExecutions() throws RepositoryException {
         
         Session session = null;
         try {
             session = repository.loginService(null, null);
             List<AcToolExecution> historyItems = HistoryUtils.getAcToolExecutions(session);
             return historyItems;
-            
-        } catch (RepositoryException e) {
-            LOG.error("Could not get history items: "+e, e);
-            return Collections.<AcToolExecution>emptyList();
         } finally {
             if (session != null) {
                 session.logout();
@@ -214,6 +210,22 @@ public class AcHistoryServiceImpl implements AcHistoryService {
             }
         }
         return history;
+    }
+
+    @Override
+    public String getLogFromHistory(String id, boolean inHtmlFormat, boolean includeVerbose) throws RepositoryException {
+        Session session = null;
+        try {
+            session = repository.loginService(null, null);
+            // construct path from id
+            Node acHistoryRootNode = HistoryUtils.getAcHistoryRootNode(session);
+            String path = HistoryUtils.getPathFromId(id, acHistoryRootNode.getPath());
+            return inHtmlFormat ? getLogHtml(session, path, includeVerbose) : getLogTxt(session, path, includeVerbose);
+        } finally {
+            if (session != null) {
+                session.logout();
+            }
+        }
     }
 
     @Override

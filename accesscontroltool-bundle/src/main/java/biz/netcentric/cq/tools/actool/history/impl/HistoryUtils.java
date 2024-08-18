@@ -39,6 +39,8 @@ import org.apache.jackrabbit.commons.JcrUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.day.text.Text;
+
 import biz.netcentric.cq.tools.actool.api.InstallationResult;
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
 import biz.netcentric.cq.tools.actool.configuploadlistener.impl.UploadListenerServiceImpl.AcToolConfigUpdateListener;
@@ -284,7 +286,8 @@ public class HistoryUtils {
                 int authorizableChanges = node.hasProperty(PROPERTY_AUTHORIZABLES_CHANGES) ? (int) node.getProperty(PROPERTY_AUTHORIZABLES_CHANGES).getLong() : -1;
                 int aclChanges = node.hasProperty(PROPERTY_ACL_CHANGES) ? (int) node.getProperty(PROPERTY_ACL_CHANGES).getLong() : -1;
 
-                historyInfos.add(new AcToolExecutionImpl(node.getPath(), 
+                historyInfos.add(new AcToolExecutionImpl(getIdFromPath(node.getPath()),
+                        node.getPath(), 
                         new Date(node.getProperty(PROPERTY_TIMESTAMP).getLong()), 
                         node.getProperty(PROPERTY_SUCCESS).getBoolean(),
                         configRoot, authorizableChanges, aclChanges));
@@ -292,6 +295,14 @@ public class HistoryUtils {
 
         }
         return new ArrayList<>(historyInfos);
+    }
+
+    static String getIdFromPath(String path) {
+        return StringUtils.removeStart(Text.getName(path), HISTORY_NODE_NAME_PREFIX);
+    }
+
+    static String getPathFromId(String id, String rootPath) {
+        return rootPath + "/" + HISTORY_NODE_NAME_PREFIX + id;
     }
 
     public static String getLogTxt(final Session session, final String path, boolean includeVerbose) {

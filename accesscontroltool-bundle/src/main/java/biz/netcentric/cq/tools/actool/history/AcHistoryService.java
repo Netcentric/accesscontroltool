@@ -15,6 +15,8 @@ package biz.netcentric.cq.tools.actool.history;
 
 import java.util.List;
 
+import javax.jcr.RepositoryException;
+
 import org.osgi.annotation.versioning.ProviderType;
 
 import biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger;
@@ -28,12 +30,24 @@ public interface AcHistoryService {
 
     /** Returns history items of previous runs
      * 
-     * @return Set of AcToolExecutions */
-    public List<AcToolExecution> getAcToolExecutions();
+     * @return Set of AcToolExecutions 
+     * @throws RepositoryException */
+    public List<AcToolExecution> getAcToolExecutions() throws RepositoryException;
 
     public String getLastInstallationHistory();
 
+    /**
+     * Exposes the log contents of a specific run of the AC Tool. The given index is volatile (due to history order changes), 
+     * so consider using {@link #getLogFromHistory(String, boolean, boolean)} instead.
+     * @param n the index of the child node below the history root node which should be returned
+     * @param inHtmlFormat
+     * @param includeVerbose
+     * @return the log's content
+     * @see #getLogFromHistory(String, boolean, boolean)
+     */
     public String getLogFromHistory(int n, boolean inHtmlFormat, boolean includeVerbose);
+
+    public String getLogFromHistory(String id, boolean inHtmlFormat, boolean includeVerbose) throws RepositoryException;
 
     public boolean wasLastPersistHistoryCallSuccessful();
 

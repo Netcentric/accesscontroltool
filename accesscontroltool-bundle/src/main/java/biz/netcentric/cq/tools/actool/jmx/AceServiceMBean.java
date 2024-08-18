@@ -77,7 +77,7 @@ public interface AceServiceMBean {
     @Description("Returns installation log for the given ordinal")
     public String showInstallationLog(
             @Name("installationLogNumber") @Description("Ordinal of the installation log to be shown") final String historyLogNumber, 
-            @Name("includeVerbose") @Description("Include verbose messages") boolean verbose);
+            @Name("includeVerbose") @Description("Include verbose messages") boolean verbose) throws RepositoryException;
 
     @Description("Purges authorizable(s) and respective ACEs from the system.")
     public String purgeAuthorizables(

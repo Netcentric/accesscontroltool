@@ -142,6 +142,10 @@
                     <name>env.CI</name>
                 </property>
             </activation>
+            <properties>
+                <!-- install package with "cloud" classifier to AEM -->
+                <contentPackageFile>${project.build.directory}/${project.build.finalName}-cloud.zip</contentPackageFile>
+            </properties>
             <build>
                 <plugins>
                      <!-- for "cloud" package use repoinit instead of actool-content-package -->
