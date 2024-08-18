@@ -24,11 +24,13 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.jcr.RepositoryException;
@@ -69,7 +71,7 @@ public class AcToolUiService {
     public static final String PARAM_CONFIGURATION_ROOT_PATH = "configurationRootPath";
     public static final String PARAM_APPLY_ONLY_IF_CHANGED = "applyOnlyIfChanged";
     public static final String PARAM_BASE_PATHS = "basePaths";
-    public static final String PARAM_SHOW_LOG_NO = "showLogNo";
+    public static final String PARAM_SHOW_LOG_ID = "showLogId";
     public static final String PARAM_SHOW_LOG_VERBOSE = "showLogVerbose";
 
     public static final String PAGE_NAME = "actool";
@@ -200,7 +202,7 @@ public class AcToolUiService {
         return (String) req.getAttribute(WebConsoleConstants.ATTR_APP_ROOT);
     }
 
-    private void renderUi(HttpServletRequest req, HttpServletResponse resp, String path, boolean isTouchUi) throws IOException {
+    private void renderUi(HttpServletRequest req, HttpServletResponse resp, String path, boolean isTouchUi) throws ServletException, IOException {
         RequestParameters reqParams = RequestParameters.fromRequest(req, acInstallationService);
 
         final PrintWriter out = resp.getWriter();
@@ -211,7 +213,11 @@ public class AcToolUiService {
         printImportSection(writer, reqParams, path, isTouchUi, getWebConsoleRoot(req));
         printExportSection(writer, reqParams, path, isTouchUi, getWebConsoleRoot(req));
 
-        printInstallationLogsSection(writer, reqParams, isTouchUi);
+        try {
+            printInstallationLogsSection(writer, reqParams, isTouchUi);
+        } catch (RepositoryException e) {
+            throw new ServletException("Could not read log from repository", e);
+        }
 
         if(!isTouchUi) {
             String jmxUrl = getWebConsoleRoot(req) + "/jmx/"
@@ -322,9 +328,17 @@ public class AcToolUiService {
         writer.closeTable();
     }
 
-    private void printInstallationLogsSection(HtmlWriter writer, RequestParameters reqParams, boolean isTouchUi) {
+    private void printInstallationLogsSection(HtmlWriter writer, RequestParameters reqParams, boolean isTouchUi) throws RepositoryException {
 
-        List<AcToolExecution> acToolExecutions = acHistoryService.getAcToolExecutions();
+        // generate an ordered map of all executions (key = id, value = execution)
+        Map<String, AcToolExecution> acToolExecutions = acHistoryService.getAcToolExecutions().stream().collect(
+                Collectors.toMap(
+                        AcToolExecution::getId, 
+                        Function.identity(),
+                        (u, v) -> {
+                            throw new IllegalStateException(String.format("Duplicate key %s", u));
+                        },
+                        LinkedHashMap::new));
 
         writer.openTable("previousLogs");
         writer.tableHeader("Previous Logs", 5);
@@ -337,9 +351,8 @@ public class AcToolUiService {
             return;
         }
 
-        for (int i = 1; i <= acToolExecutions.size(); i++) {
-            AcToolExecution acToolExecution = acToolExecutions.get(i - 1);
-            String linkToLog = PAGE_NAME + "?showLogNo=" + i;
+        for (AcToolExecution acToolExecution : acToolExecutions.values()) {
+            String linkToLog = PAGE_NAME + "?" + PARAM_SHOW_LOG_ID + "=" + acToolExecution.getId();
             writer.tr();
             writer.openTd();
             writer.println(getExecutionDateStr(acToolExecution));
@@ -360,20 +373,25 @@ public class AcToolUiService {
         }
         writer.closeTable();
 
-        if (reqParams.showLogNo > 0 && reqParams.showLogNo <= acToolExecutions.size()) {
+        if (StringUtils.isNotBlank(reqParams.showLogId)) {
 
-            AcToolExecution acToolExecution = acToolExecutions.get(reqParams.showLogNo - 1);
-            String logLabel = "Previous Log " + reqParams.showLogNo + ": " + getExecutionLabel(acToolExecution);
-            String logHtml = acHistoryService.getLogFromHistory(reqParams.showLogNo, true, reqParams.showLogVerbose);
+            AcToolExecution acToolExecution = acToolExecutions.get(reqParams.showLogId);
+            if (acToolExecution == null) {
+                writer.println("No log found for id " + reqParams.showLogId);
+                return;
+            } else {
+                String logLabel = "Previous Log " + reqParams.showLogId + ": " + getExecutionLabel(acToolExecution);
+                String logHtml = acHistoryService.getLogFromHistory(reqParams.showLogId, true, reqParams.showLogVerbose);
 
-            writer.openTable("logTable");
-            writer.tableHeader(logLabel, 1, false);
-            writer.tr();
-            writer.openTd();
-            writer.println(logHtml);
-            writer.closeTd();
-            writer.closeTr();
-            writer.closeTable();
+                writer.openTable("logTable");
+                writer.tableHeader(logLabel, 1, false);
+                writer.tr();
+                writer.openTd();
+                writer.println(logHtml);
+                writer.closeTd();
+                writer.closeTr();
+                writer.closeTable();
+            }
         }
 
     }
@@ -453,8 +471,8 @@ public class AcToolUiService {
 
         writer.tr();
         writer.openTd();
-        String onClick = "var as=$('#applySpinner');as.show(); var b=$('#applyButton');b.prop('disabled', true); oldL = b.text();b.text(' Applying AC Tool Configuration... ');var f=$('#acForm');var fd=f.serialize();$.post(f.attr('action'), fd).done(function(text){alert(text)}).fail(function(xhr){alert(xhr.status===403?'Permission Denied':'Config could not be applied - check log for errors')}).always(function(text) { var ll=text&amp;&amp;text.indexOf&amp;&amp;text.indexOf('identical to last execution')===-1?'"
-                + PARAM_SHOW_LOG_NO + "=1&':'';as.hide();b.text(oldL);b.prop('disabled', false);location.href='" + PAGE_NAME + "?'+ll+fd; });return false";
+        String onClick = "var as=$('#applySpinner');as.show(); var b=$('#applyButton');b.prop('disabled', true); oldL = b.text();b.text(' Applying AC Tool Configuration... ');var f=$('#acForm');var fd=f.serialize();$.post(f.attr('action'), fd).done(function(text){alert(text)}).fail(function(xhr){alert(xhr.status===403?'Permission Denied':'Config could not be applied - check log for errors')}).always(function(text) { "
+                + "as.hide();b.text(oldL);b.prop('disabled', false);location.href='" + PAGE_NAME + "?'+fd; });return false";
         writer.println("<button " + getCoralButtonAtts(isTouchUI) + " id='applyButton' onclick=\"" + onClick + "\"> Apply AC Tool Configuration </button>");
         writer.closeTd();
         writer.openTd();
@@ -524,23 +542,23 @@ public class AcToolUiService {
             return new RequestParameters(
                     configRootPath,
                     StringUtils.isNotBlank(basePathsParam) ? Arrays.asList(basePathsParam.split(" *, *")) : null,
-                    Integer.parseInt(getParam(req, AcToolUiService.PARAM_SHOW_LOG_NO, "0")),
+                    getParam(req, AcToolUiService.PARAM_SHOW_LOG_ID, null),
                     Boolean.valueOf(req.getParameter(AcToolUiService.PARAM_SHOW_LOG_VERBOSE)),
                     Boolean.valueOf(req.getParameter(AcToolUiService.PARAM_APPLY_ONLY_IF_CHANGED)));
         }
         
         final String configurationRootPath;
         final List<String> basePaths;
-        final int showLogNo;
+        final String showLogId;
         final boolean showLogVerbose;
         final boolean applyOnlyIfChanged;
 
-        public RequestParameters(String configurationRootPath, List<String> basePaths, int showLogNo, boolean showLogVerbose,
+        public RequestParameters(String configurationRootPath, List<String> basePaths, String showLogId, boolean showLogVerbose,
                 boolean applyOnlyIfChanged) {
             super();
             this.configurationRootPath = configurationRootPath;
             this.basePaths = basePaths;
-            this.showLogNo = showLogNo;
+            this.showLogId = showLogId;
             this.showLogVerbose = showLogVerbose;
             this.applyOnlyIfChanged = applyOnlyIfChanged;
         }

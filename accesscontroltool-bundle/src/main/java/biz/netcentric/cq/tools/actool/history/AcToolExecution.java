@@ -22,7 +22,8 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface AcToolExecution {
-    
+    public String getId();
+
     public String getLogsPath();
 
     public Date getInstallationDate();

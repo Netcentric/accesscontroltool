@@ -22,6 +22,7 @@ import biz.netcentric.cq.tools.actool.history.AcToolExecution;
 public class AcToolExecutionImpl implements AcToolExecution, Comparable<AcToolExecution> {
     static final String TRIGGER_SEPARATOR_IN_NODE_NAME = "_via_";
 
+    private final String id;
     private final String path;
     private final Date installationDate;
     private final boolean isSuccess;
@@ -30,8 +31,9 @@ public class AcToolExecutionImpl implements AcToolExecution, Comparable<AcToolEx
     private final int authorizableChanges;
     private final int aclChanges;
     
-    public AcToolExecutionImpl(String path, Date installationDate, boolean isSuccess, String configurationRootPath, int authorizableChanges, int aclChanges) {
+    public AcToolExecutionImpl(String id, String path, Date installationDate, boolean isSuccess, String configurationRootPath, int authorizableChanges, int aclChanges) {
         super();
+        this.id = id;
         this.path = path;
         this.installationDate = installationDate;
         this.isSuccess = isSuccess;
@@ -45,6 +47,11 @@ public class AcToolExecutionImpl implements AcToolExecution, Comparable<AcToolEx
     public String toString() {
         String successStatusString = isSuccess ? "ok" : "failed";
         return path + " (" + installationDate.toString() + ")(" + successStatusString  + ")";
+    }
+
+    @Override
+    public String getId() {
+        return id;
     }
 
     public String getLogsPath() {

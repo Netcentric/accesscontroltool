@@ -781,10 +781,6 @@
                     <name>env.CI</name>
                 </property>
             </activation>
-            <properties>
-                <!-- install package with "cloud" classifier to AEM -->
-                <contentPackageFile>${project.build.directory}/${project.build.finalName}-cloud.zip</contentPackageFile>
-            </properties>
         </profile>
     </profiles>
 

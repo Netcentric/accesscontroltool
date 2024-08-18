@@ -16,6 +16,7 @@ package biz.netcentric.cq.tools.actool.jmx;
 import java.util.List;
 import java.util.Set;
 
+import javax.jcr.RepositoryException;
 import javax.management.NotCompliantMBeanException;
 
 import org.apache.commons.lang3.StringUtils;
@@ -110,7 +111,7 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
     }
 
     @Override
-    public String[] getSavedLogs() {
+    public String[] getSavedLogs() throws RepositoryException {
         List<AcToolExecution> executions = acHistoryService.getAcToolExecutions();
         if (executions.isEmpty()) {
             return new String[] { "no executions found" };
@@ -139,7 +140,7 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
     }
 
     @Override
-    public String showInstallationLog(final String n, boolean verbose) {
+    public String showInstallationLog(final String n, boolean verbose) throws RepositoryException {
         int i;
         String[] logs = getSavedLogs();
         if (logs.length == 0) {
