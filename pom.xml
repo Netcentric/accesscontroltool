@@ -388,6 +388,7 @@
                         <failOnError>true</failOnError>
                         <userId>${crx.username}</userId>
                         <password>${crx.password}</password>
+                        <targetURL>http://${crx.host}:${crx.port}/crx/packmgr/service.jsp</targetURL>
                         <!-- this should either point to the primary artifact file or a secondary one. There is no direct "classifier" support in this maven plugin -->
                         <packageFile>${contentPackageFile}</packageFile>
                     </configuration>
@@ -585,11 +586,6 @@
                                     <goals>
                                         <goal>install</goal>
                                     </goals>
-                                    <configuration>
-                                        <targetURL>http://${crx.host}:${crx.port}/crx/packmgr/service.jsp</targetURL>
-                                        <username>${crx.username}</username>
-                                        <password>${crx.password}</password>
-                                    </configuration>
                                 </execution>
                             </executions>
                         </plugin>
