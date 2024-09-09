@@ -30,7 +30,7 @@ public class RuntimeHelper {
 
     private static final String INSTALLER_CORE_BUNDLE_SYMBOLIC_ID = "org.apache.sling.installer.core";
 
-    public static boolean isCompositeNodeStore(Session session) {
+    public static boolean isAppsReadOnly(Session session) {
         
         try {
             String pathToCheck = "/apps";
@@ -60,7 +60,7 @@ public class RuntimeHelper {
         return bundleContext.getBundle(Constants.SYSTEM_BUNDLE_ID).adapt(FrameworkStartLevel.class).getStartLevel();
     }
     
-    public static boolean isCloudReadyInstance() {
+    public static boolean isCompositeNodeStore() {
         
         boolean isCloudReadyInstance = true;
         Bundle[] bundles = FrameworkUtil.getBundle(RuntimeHelper.class).getBundleContext().getBundles();

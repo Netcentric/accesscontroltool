@@ -127,8 +127,8 @@ public class HistoryUtils {
                 trigger = "startup_hook_pckmgr)";
             } else {
                 // if the history is not yet copied to apps, it's the image build
-                boolean isImageBuild = RuntimeHelper.isCloudReadyInstance() && !session.itemExists(AC_HISTORY_PATH_IN_APPS);
-                if(isImageBuild) {
+                boolean isCompositeNodeStore = RuntimeHelper.isCompositeNodeStore() && !session.itemExists(AC_HISTORY_PATH_IN_APPS);
+                if(isCompositeNodeStore) {
                     trigger = "startup_hook_image_build";
                 } else {
                     trigger = "startup_hook";

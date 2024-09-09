@@ -66,10 +66,10 @@ public class AcConfigChangeTracker {
     }
 
     private String createExecutionKey(Map<String, String> configFiles, String[] restrictedToPaths, Session session) {
-        boolean isCompositeNodeStore= RuntimeHelper.isCompositeNodeStore(session);
+        boolean isAppsReadOnly= RuntimeHelper.isAppsReadOnly(session);
         String restrictedToPathsKey = restrictedToPaths==null || restrictedToPaths.length==0 ? "ALL_PATHS" : StringUtils.join(restrictedToPaths, "+").replace("$", "").replace("^", "");
         String effectiveRootPathOfConfigs = getEffectiveConfigRootPath(configFiles);
-        String executionKey = "hash("+StringUtils.removeEnd(effectiveRootPathOfConfigs, "/").replace('/', '\\') + "," + restrictedToPathsKey.replace('/', '\\').replace(':', '_')+","+(isCompositeNodeStore?"compNodeStore":"stdRepo")+")";
+        String executionKey = "hash("+StringUtils.removeEnd(effectiveRootPathOfConfigs, "/").replace('/', '\\') + "," + restrictedToPathsKey.replace('/', '\\').replace(':', '_')+","+(isAppsReadOnly?"compNodeStore":"stdRepo")+")";
         return executionKey;
     }
 

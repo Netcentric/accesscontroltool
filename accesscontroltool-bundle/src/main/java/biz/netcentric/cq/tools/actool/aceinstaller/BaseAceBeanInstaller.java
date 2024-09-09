@@ -111,8 +111,8 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
 
     private Set<String> filterReadOnlyPaths(Set<String> paths, InstallationLogger history, Session session) {
 
-        boolean isCompositeNodeStore = RuntimeHelper.isCompositeNodeStore(session);
-        if (isCompositeNodeStore) {
+        boolean isAppsReadOnly = RuntimeHelper.isAppsReadOnly(session);
+        if (isAppsReadOnly) {
             Set<String> pathsToKeep = new TreeSet<String>();
             Set<String> readOnlyPaths = new TreeSet<String>();
             for (final String path : paths) {
