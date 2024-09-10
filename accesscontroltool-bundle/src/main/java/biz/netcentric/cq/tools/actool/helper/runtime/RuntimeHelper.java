@@ -45,8 +45,8 @@ public class RuntimeHelper {
             // see https://issues.apache.org/jira/browse/OAK-6563
             boolean hasCapability = session.hasCapability("addNode", appsNode, new Object[] { "nt:folder" });
             
-            boolean isCompositeNode = hasPermission && !hasCapability;
-            return isCompositeNode;
+            boolean isAppsReadOnly = hasPermission && !hasCapability;
+            return isAppsReadOnly;
         } catch(Exception e) {
             throw new IllegalStateException("Could not check if session is connected to a composite node store: "+e, e);
         }

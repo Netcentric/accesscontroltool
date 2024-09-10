@@ -19,6 +19,8 @@ import org.apache.sling.jcr.api.SlingRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -29,9 +31,12 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.startlevel.FrameworkStartLevel;
 
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import static org.apache.sling.api.resource.runtime.dto.AuthType.no;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -47,19 +52,32 @@ class AcToolStartupHookServiceImplTest {
     AcToolStartupHookServiceImpl.Config config;
 
     @Mock
+    Session session;
+
+    @Mock
     SlingRepository repository;
+
+    @Mock
+    Node rootNode;
+
+    @Mock
+    NodeIterator noChildren;
 
     @Spy
     AcInstallationService installationService;
 
-    @BeforeEach
-    void setup() throws RepositoryException {
+    void setup(boolean canReadApps) throws RepositoryException {
         FrameworkStartLevel startLevel = Mockito.mock(FrameworkStartLevel.class);
         when(startLevel.getStartLevel()).thenReturn(0);
 
         when(config.activationMode()).thenReturn(AcToolStartupHookServiceImpl.Config.StartupHookActivation.ALWAYS);
 
-        Session session = mock(Session.class);
+        when(session.hasPermission("/", Session.ACTION_SET_PROPERTY)).thenReturn(canReadApps);
+        if (canReadApps) {
+            when(noChildren.hasNext()).thenReturn(false);
+            when(rootNode.getNodes()).thenReturn(noChildren);
+            when(session.getRootNode()).thenReturn(rootNode);
+        }
         when(repository.loginService(null, null)).thenReturn(session);
 
         when(bundle.getBundleContext()).thenReturn(bundleContext);
@@ -70,19 +88,24 @@ class AcToolStartupHookServiceImplTest {
         when(bundleContext.getBundle(anyLong())).thenReturn(bundle);
     }
 
-    @Test
-    void testActivationSync() {
-        try (MockedStatic<FrameworkUtil> mockedFrameworkUtil = mockStatic(FrameworkUtil.class)) {
-            createAndActivateStartupHookService(mockedFrameworkUtil, false);
-            verify(installationService, times(1)).apply(null,  new String[]{}, true);
-        }
-    }
+    @ParameterizedTest
+    @CsvSource({
+            "false, false, true",
+            "false, true, false",
+            "true, false, true"
+            // "true, true, false"
+            /*
+                last case is excluded, because it starts a thread in AcToolStartupHookServiceImpl#runAcToolAsync
+                so AcToolStartupHookServiceImpl#apply is invoked asynchronously and can not be checked easily in
+                unit test
+             */
 
-    @Test
-    void testActivationAsync() {
+    })
+    void testActivationSync(boolean runAsync, boolean canReadApps, boolean pathsForInstallationEmpty) throws RepositoryException {
+        setup(canReadApps);
         try (MockedStatic<FrameworkUtil> mockedFrameworkUtil = mockStatic(FrameworkUtil.class)) {
-            createAndActivateStartupHookService(mockedFrameworkUtil, true);
-            verify(installationService, times(1)).apply(null,  new String[]{}, true);
+            createAndActivateStartupHookService(mockedFrameworkUtil, runAsync);
+            verify(installationService, times(1)).apply(null,  pathsForInstallationEmpty ? new String[]{} : new String[]{ "^/$", "^$" }, true);
         }
     }
 
