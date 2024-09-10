@@ -66,6 +66,25 @@ class AcToolStartupHookServiceImplTest {
     @Spy
     AcInstallationService installationService;
 
+    @ParameterizedTest
+    @CsvSource({
+            "false, false, true",
+            "false, true, false",
+            "true, false, true",
+            "true, true, false"
+    })
+    void testActivationSync(boolean runAsync, boolean canReadApps, boolean pathsForInstallationEmpty) throws RepositoryException, InterruptedException {
+        setup(canReadApps);
+        try (MockedStatic<FrameworkUtil> mockedFrameworkUtil = mockStatic(FrameworkUtil.class)) {
+            createAndActivateStartupHookService(mockedFrameworkUtil, runAsync);
+            // wait for the thread in AcToolStartupHookServiceImpl#runAcToolAsync to get started
+            if (runAsync && canReadApps) {
+                Thread.sleep(1000L);
+            }
+            verify(installationService, times(1)).apply(null,  pathsForInstallationEmpty ? new String[]{} : new String[]{ "^/$", "^$" }, true);
+        }
+    }
+
     void setup(boolean canReadApps) throws RepositoryException {
         FrameworkStartLevel startLevel = Mockito.mock(FrameworkStartLevel.class);
         when(startLevel.getStartLevel()).thenReturn(0);
@@ -86,27 +105,6 @@ class AcToolStartupHookServiceImplTest {
 
         when(bundleContext.getBundles()).thenReturn(new Bundle[] { bundle });
         when(bundleContext.getBundle(anyLong())).thenReturn(bundle);
-    }
-
-    @ParameterizedTest
-    @CsvSource({
-            "false, false, true",
-            "false, true, false",
-            "true, false, true"
-            // "true, true, false"
-            /*
-                last case is excluded, because it starts a thread in AcToolStartupHookServiceImpl#runAcToolAsync
-                so AcToolStartupHookServiceImpl#apply is invoked asynchronously and can not be checked easily in
-                unit test
-             */
-
-    })
-    void testActivationSync(boolean runAsync, boolean canReadApps, boolean pathsForInstallationEmpty) throws RepositoryException {
-        setup(canReadApps);
-        try (MockedStatic<FrameworkUtil> mockedFrameworkUtil = mockStatic(FrameworkUtil.class)) {
-            createAndActivateStartupHookService(mockedFrameworkUtil, runAsync);
-            verify(installationService, times(1)).apply(null,  pathsForInstallationEmpty ? new String[]{} : new String[]{ "^/$", "^$" }, true);
-        }
     }
 
     private void createAndActivateStartupHookService(MockedStatic<FrameworkUtil> mockedFrameworkUtil, boolean runAsyncForMutableContent) {
