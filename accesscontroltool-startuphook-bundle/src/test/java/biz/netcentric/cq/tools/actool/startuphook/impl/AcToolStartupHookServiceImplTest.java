@@ -69,15 +69,29 @@ class AcToolStartupHookServiceImplTest {
         when(bundleContext.getBundles()).thenReturn(new Bundle[] { bundle });
         when(bundleContext.getBundle(anyLong())).thenReturn(bundle);
     }
+
     @Test
-    void testActivation() {
+    void testActivationSync() {
         try (MockedStatic<FrameworkUtil> mockedFrameworkUtil = mockStatic(FrameworkUtil.class)) {
-            mockedFrameworkUtil.when(() -> FrameworkUtil.getBundle(RuntimeHelper.class)).thenReturn(bundle);
-            AcToolStartupHookServiceImpl startupHookService = new AcToolStartupHookServiceImpl();
-            startupHookService.repository = repository;
-            startupHookService.acInstallationService = installationService;
-            startupHookService.activate(bundleContext, config);
+            createAndActivateStartupHookService(mockedFrameworkUtil, false);
             verify(installationService, times(1)).apply(null,  new String[]{}, true);
         }
+    }
+
+    @Test
+    void testActivationAsync() {
+        try (MockedStatic<FrameworkUtil> mockedFrameworkUtil = mockStatic(FrameworkUtil.class)) {
+            createAndActivateStartupHookService(mockedFrameworkUtil, true);
+            verify(installationService, times(1)).apply(null,  new String[]{}, true);
+        }
+    }
+
+    private void createAndActivateStartupHookService(MockedStatic<FrameworkUtil> mockedFrameworkUtil, boolean runAsyncForMutableContent) {
+        mockedFrameworkUtil.when(() -> FrameworkUtil.getBundle(RuntimeHelper.class)).thenReturn(bundle);
+        AcToolStartupHookServiceImpl startupHookService = new AcToolStartupHookServiceImpl();
+        startupHookService.repository = repository;
+        startupHookService.acInstallationService = installationService;
+        when(config.runAsyncForMutableConent()).thenReturn(runAsyncForMutableContent);
+        startupHookService.activate(bundleContext, config);
     }
 }
