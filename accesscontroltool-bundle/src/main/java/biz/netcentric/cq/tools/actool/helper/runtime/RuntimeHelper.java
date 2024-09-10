@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 public class RuntimeHelper {
     public static final Logger LOG = LoggerFactory.getLogger(RuntimeHelper.class);
 
-    private static final String INSTALLER_CORE_BUNDLE_SYMBOLIC_ID = "org.apache.sling.installer.core";
+    public static final String INSTALLER_CORE_BUNDLE_SYMBOLIC_ID = "org.apache.sling.installer.core";
 
     public static boolean isAppsReadOnly(Session session) {
         

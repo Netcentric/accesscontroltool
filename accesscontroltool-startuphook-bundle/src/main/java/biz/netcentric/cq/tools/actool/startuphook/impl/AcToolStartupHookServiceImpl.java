@@ -62,10 +62,10 @@ public class AcToolStartupHookServiceImpl {
     }
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    private AcInstallationService acInstallationService;
+    AcInstallationService acInstallationService;
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    private SlingRepository repository;
+    SlingRepository repository;
 
     private boolean isAppsReadOnly;
 
@@ -118,12 +118,7 @@ public class AcToolStartupHookServiceImpl {
     private void runAcToolAsync(final List<String> relevantPathsForInstallation, final int currentStartLevel, final boolean isCloudReady) {
 
         final AcToolStartupHookServiceImpl startupHook = this;
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                startupHook.runAcTool(relevantPathsForInstallation, currentStartLevel, isCloudReady);
-            }
-        }, THREAD_NAME_ASYNC).start();
+        new Thread(() -> startupHook.runAcTool(relevantPathsForInstallation, currentStartLevel, isCloudReady), THREAD_NAME_ASYNC).start();
     }
 
     private List<String> getRelevantPathsForInstallation() {
