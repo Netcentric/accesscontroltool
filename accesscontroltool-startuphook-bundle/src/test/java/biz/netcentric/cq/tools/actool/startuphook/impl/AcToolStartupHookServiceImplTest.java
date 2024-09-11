@@ -112,7 +112,7 @@ class AcToolStartupHookServiceImplTest {
             when(noChildren.hasNext()).thenReturn(false);
             when(rootNode.getNodes()).thenReturn(noChildren);
             when(session.getRootNode()).thenReturn(rootNode);
-        } else if (!canSetPropertiesOnRootNode && !cloudOnly){
+        } else if (!canSetPropertiesOnRootNode && !cloudOnly) {
             when(session.hasPermission("/", Session.ACTION_SET_PROPERTY)).thenReturn(false);
         }
         if (!cloudOnly) {
