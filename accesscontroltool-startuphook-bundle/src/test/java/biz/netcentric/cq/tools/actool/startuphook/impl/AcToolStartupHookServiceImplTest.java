@@ -98,6 +98,7 @@ class AcToolStartupHookServiceImplTest {
         setup(canSetPropertiesOnRootNode, runAsync, cloudOnly);
         try (MockedStatic<FrameworkUtil> mockedFrameworkUtil = mockStatic(FrameworkUtil.class)) {
             createAndActivateStartupHookService(mockedFrameworkUtil);
+            // best attempt to test asynchronous invocation in AcToolStartupHookServiceImpl#runAcToolAsync
             Thread.sleep(1000L);
             verify(installationService, times(1)).apply(null, new String[]{"^/$", "^$"}, true);
         }
@@ -112,7 +113,7 @@ class AcToolStartupHookServiceImplTest {
             when(noChildren.hasNext()).thenReturn(false);
             when(rootNode.getNodes()).thenReturn(noChildren);
             when(session.getRootNode()).thenReturn(rootNode);
-        } else if (!canSetPropertiesOnRootNode && !cloudOnly) {
+        } else if (!cloudOnly) {
             when(session.hasPermission("/", Session.ACTION_SET_PROPERTY)).thenReturn(false);
         }
         if (!cloudOnly) {
