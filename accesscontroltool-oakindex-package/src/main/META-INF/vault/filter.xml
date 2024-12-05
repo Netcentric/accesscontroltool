@@ -14,6 +14,6 @@
 
 <workspaceFilter version="1.0">
     <filter root="/oak:index/repACL" type="cleanup"/><!-- legacy index node name, used prior version 2.7.2  -->
-    <filter root="/oak:index/repACL-custom-1" type="cleanup"/>
+    <filter root="/oak:index/repACL-1-custom-1" type="cleanup"/>
     <filter root="/oak:index/actool.repACL-custom-1"/>
 </workspaceFilter>
