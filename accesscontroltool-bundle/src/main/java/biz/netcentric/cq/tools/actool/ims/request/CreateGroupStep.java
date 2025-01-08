@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 @JsonTypeName("createUserGroup")
-@JsonInclude(Include.NON_EMPTY) // neither empty strings nor null values are allowed for "description", compare with https://github.com/Netcentric/accesscontroltool/issues/724
+@JsonInclude(Include.NON_NULL)
 public class CreateGroupStep implements Step {
 
     // this cannot be a constant, but still needs to be serialized as literal
@@ -29,5 +29,5 @@ public class CreateGroupStep implements Step {
     //@JsonProperty
     //String name; 
     @JsonProperty
-    public String description; // this may be null
+    public String description; // this may be empty
 }
