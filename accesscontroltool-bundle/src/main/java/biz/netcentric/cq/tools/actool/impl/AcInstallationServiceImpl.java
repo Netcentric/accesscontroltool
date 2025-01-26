@@ -202,7 +202,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 return applyMultipleConfigurations(restrictedToPaths, skipIfConfigUnchanged);
             }
         }
-        
         PersistableInstallationLogger installLog = new PersistableInstallationLogger();
         Session session = null;
         try {
@@ -214,13 +213,11 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 configFiles = configFilesRetriever.getConfigFileContentFromNode(configurationRootPath, session);
             } catch (Exception e) {
                 installLog.addError("Could not retrieve configuration from path "+configurationRootPath+": "+e.getMessage(), e);
-                persistHistory(installLog);
                 return installLog;
             }
 
             // install config files
             installConfigurationFiles(installLog, configFiles, restrictedToPaths, session, skipIfConfigUnchanged);
-            
         } catch (AuthorizableCreatorException e) {
             // exception was added to history in installConfigurationFiles() before it was saved
             LOG.warn("Exception during installation of authorizables (no rollback), e=" + e, e);
@@ -234,6 +231,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             LOG.error("Exception in AceServiceImpl: {}", e);
             // exception was added to history in installConfigurationFiles() before it was saved
         } finally {
+            persistHistory(installLog);
             if (session != null) {
                 session.logout();
             }
