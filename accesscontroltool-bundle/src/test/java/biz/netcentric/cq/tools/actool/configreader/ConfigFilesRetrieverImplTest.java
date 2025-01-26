@@ -28,8 +28,6 @@ import java.util.Set;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
-import com.google.common.collect.ImmutableList;
-
 import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsServiceImpl;
 
 public class ConfigFilesRetrieverImplTest {
@@ -107,15 +105,15 @@ public class ConfigFilesRetrieverImplTest {
                 Arrays.asList("author"));
         slingSettings = new ExtendedSlingSettingsServiceImpl(currentRunmodes);
         assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
-                slingSettings, ImmutableList.<String> of())));
+                slingSettings, List.of())));
         assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
-                slingSettings, ImmutableList.<String> of("/noMatch", "/conf/.*"))));
+                slingSettings, List.of("/noMatch", "/conf/.*"))));
         assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
-                slingSettings, ImmutableList.<String> of("/conf/test.*.yaml"))));
+                slingSettings, List.of("/conf/test.*.yaml"))));
         assertTrue((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
-                slingSettings, ImmutableList.<String> of("/conf/.*\\.yaml", "/noMatch"))));
+                slingSettings, List.of("/conf/.*\\.yaml", "/noMatch"))));
         assertFalse((ConfigFilesRetrieverImpl.isRelevantConfiguration(new StubEntry("/conf", "file.yaml"), "config.author",
-                slingSettings, ImmutableList.<String> of("/nonconf.*"))));
+                slingSettings, List.of("/nonconf.*"))));
 
     }
 
