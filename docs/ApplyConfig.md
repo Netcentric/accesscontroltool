@@ -88,7 +88,10 @@ A Felix Web Console UI is available at "Main" -> "AC Tool". The web console prov
 
 ### Touch UI
 
-The same interface as available via Web Console is also available via Touch UI at `Tools -> Security -> Netcentric AC Tool` if you are admin on the instance. When using [AEM as a Cloud Service](https://www.adobe.com/marketing/experience-manager/cloud-service.html), the console will be available if you are in the admin group for the AEM env as set up in [adminconsole](https://adminconsole.adobe.com/).
+The same interface as available via Web Console is also available via Touch UI at `Tools -> Security -> Netcentric AC Tool`.
+It allows viewing the logs of ACTool installations and both applying of ACLs as well as reading of users/ACLs of the system. The latter two require permissions which by default are only granted to the `admin` user and members of the `administrators` group. When using [AEM as a Cloud Service](https://www.adobe.com/marketing/experience-manager/cloud-service.html) in addition also to members of the IMS admin group for the AEM env as set up in [adminconsole](https://adminconsole.adobe.com/). In case you are not having the according permissions the buttons are disabled.
+
+Adjusting the permissions requires configuring the OSGi config with PID `biz.netcentric.cq.tools.actool.ui.AcToolUiService`.
 
 ### JMX
 

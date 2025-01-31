@@ -442,7 +442,7 @@
                     <version>2.4.0</version>
                     <configuration>
                         <licenseName>epl_only_v1</licenseName>
-                        <excludes>test/resources/**,it/**</excludes>
+                        <excludes>test/resources/**,it/**,**/*.cfg.json</excludes>
                     </configuration>
                 </plugin>
             </plugins>

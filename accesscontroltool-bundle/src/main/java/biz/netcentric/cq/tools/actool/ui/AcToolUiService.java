@@ -23,7 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,21 +33,25 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.webconsole.WebConsoleConstants;
-import org.apache.jackrabbit.api.security.user.Group;
+import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.oak.spi.security.principal.EveryonePrincipal;
 import org.apache.sling.api.SlingHttpServletRequest;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.Designate;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,6 +67,7 @@ import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceInternal;
 import biz.netcentric.cq.tools.actool.user.UserProcessor;
 
 @Component(service = { AcToolUiService.class })
+@Designate(ocd=biz.netcentric.cq.tools.actool.ui.AcToolUiService.Configuration.class)
 public class AcToolUiService {
 
     private static final Logger LOG = LoggerFactory.getLogger(AcToolUiService.class);
@@ -89,14 +93,26 @@ public class AcToolUiService {
     AcInstallationServiceInternal acInstallationService;
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    private WebConsoleConfigTracker webConsoleConfig;
-
-    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private AcHistoryService acHistoryService;
+
+    @ObjectClassDefinition(name = "AC Tool UI Service", 
+            description="Service that allows to apply AC Tool configuration and gather status of users/groups and permissions from a Web UI (either Touch UI or Web Console Plugin).")
+    protected static @interface Configuration {
+        
+        @AttributeDefinition(name="Read access", description="Principal names allowed to export all users/groups and permissions in the system. Only leveraged for Touch UI but not for Web Console Plugin.")
+        String[] readAccessPrincipalNames() default { "administrators", "admin" };
+        
+        @AttributeDefinition(name="Write access", description="Principal names allowed to modify users/groups and permissions in the system via ACTool configuration files. Only leveraged for Touch UI but not for Web Console Plugin.")
+        String[] writeAccessPrincipalNames() default { "administrators", "admin" };
+    }
 
     private final Map<String, String> countryCodePerName;
 
-    public AcToolUiService() {
+    private final Configuration config;
+
+    @Activate
+    public AcToolUiService(Configuration config) {
+        this.config = config;
         countryCodePerName = new HashMap<>();
         for (String iso : Locale.getISOCountries()) {
             Locale l = new Locale(Locale.ENGLISH.getLanguage(), iso);
@@ -108,16 +124,17 @@ public class AcToolUiService {
             throws ServletException, IOException {
 
         if (req.getRequestURI().endsWith(SUFFIX_DUMP_YAML)) {
-            callWhenAuthorized(req, resp, this::streamDumpToResponse);
+            callWhenReadAccessGranted(req, resp, this::streamDumpToResponse);
         } else if (req.getRequestURI().endsWith(SUFFIX_USERS_CSV)) {
-            callWhenAuthorized(req, resp, this::streamUsersCsvToResponse);
+            callWhenReadAccessGranted(req, resp, this::streamUsersCsvToResponse);
         } else {
+            // everyone is allows to see the UI in general
             renderUi(req, resp, path, isTouchUi);
         }
     }
 
-    private void callWhenAuthorized(HttpServletRequest req, HttpServletResponse resp, Consumer<HttpServletResponse> responseConsumer) throws IOException {
-        if (!hasAccessToFelixWebConsole(req)) {
+    private void callWhenReadAccessGranted(HttpServletRequest req, HttpServletResponse resp, Consumer<HttpServletResponse> responseConsumer) throws IOException, ServletException {
+        if (!isOneOfPrincipalNamesBound(req, config.readAccessPrincipalNames())) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not have sufficent permissions to export users/groups/permissions");
             return;
         }
@@ -127,12 +144,13 @@ public class AcToolUiService {
             throw e.getCause();
         }
     }
+
     @SuppressWarnings(/* SonarCloud false positive */ {
             "javasecurity:S5131" /* response is sent as text/plain, it's not interpreted */,
             "javasecurity:S5145" /* logging the path is fine */ })
     protected void doPost(final HttpServletRequest req, final HttpServletResponse resp) throws IOException, ServletException {
 
-        if (!hasAccessToFelixWebConsole(req)) {
+        if (!isOneOfPrincipalNamesBound(req, config.writeAccessPrincipalNames())) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not have sufficent permissions to apply the configuration");
             return;
         }
@@ -157,45 +175,31 @@ public class AcToolUiService {
     }
 
     /**
-     * Replicates the logic of the <a href="https://sling.apache.org/documentation/bundles/web-console-extensions.html#authentication-handling">Sling Web Console Security Provider</a>.
+     * Similar to the logic of the <a href="https://sling.apache.org/documentation/bundles/web-console-extensions.html#authentication-handling">Sling Web Console Security Provider</a> but acting on principal names
      * @param req the request
-     * @return {@code true} if the user bound to the given request may also access the Felix Web Console or if we are outside of Sling, {@code false} otherwise
+     * @param principalNames the principal names to check against
+     * @return {@code true} if the session bound to the given request is bound to any of the given principal names
+     * @throws ServletException 
+     * @throws RepositoryException 
      */
-    private boolean hasAccessToFelixWebConsole(HttpServletRequest req) {
-
+    private boolean isOneOfPrincipalNamesBound(HttpServletRequest req, String[] principalNames) throws ServletException {
         if (!(req instanceof SlingHttpServletRequest)) {
             // outside Sling this is only called by the Felix Web Console, which has its own security layer
             LOG.debug("Outside Sling no additional security checks are performed!");
             return true;
         }
+        Session session = SlingHttpServletRequest.class.cast(req).getResourceResolver().adaptTo(Session.class);
+        return isOneOfPrincipalNamesBound(JackrabbitSession.class.cast(session), principalNames);
+    }
+
+    private boolean isOneOfPrincipalNamesBound(JackrabbitSession session, String[] principalNames) throws ServletException {
+        BoundPrincipals boundPrincipals;
         try {
-            User requestUser = SlingHttpServletRequest.class.cast(req).getResourceResolver().adaptTo(User.class);
-            if (requestUser != null) {
-                if (StringUtils.equals(requestUser.getID(), "admin")) {
-                    LOG.debug("Admin user is allowed to apply AC Tool");
-                    return true;
-                }
-
-                if (ArrayUtils.contains(webConsoleConfig.getAllowedUsers(), requestUser.getID())) {
-                    LOG.debug("User {} is allowed to apply AC Tool (allowed users: {})", requestUser.getID(), ArrayUtils.toString(webConsoleConfig.getAllowedUsers()));
-                    return true;
-                }
-
-                Iterator<Group> memberOfIt = requestUser.memberOf();
-
-                while (memberOfIt.hasNext()) {
-                    Group memberOfGroup = memberOfIt.next();
-                    if (ArrayUtils.contains(webConsoleConfig.getAllowedGroups(), memberOfGroup.getID())) {
-                        LOG.debug("Group {} is allowed to apply AC Tool (allowed groups: {})", memberOfGroup.getID(), ArrayUtils.toString(webConsoleConfig.getAllowedGroups()));
-                        return true;
-                    }
-                }
-            }
-            LOG.debug("Could not get associated user for Sling request");
-            return false;
-        } catch (Exception e) {
-            throw new IllegalStateException("Could not check if user may apply AC Tool configuration: " + e, e);
+            boundPrincipals = new BoundPrincipals(JackrabbitSession.class.cast(session));
+        } catch (RepositoryException e) {
+           throw new ServletException("Could not determine bound principals", e);
         }
+        return boundPrincipals.containsOneOf(Arrays.asList(principalNames));
     }
 
     public String getWebConsoleRoot(HttpServletRequest req) {
@@ -210,8 +214,8 @@ public class AcToolUiService {
         
         printCss(isTouchUi, writer);
         printVersion(writer);
-        printImportSection(writer, reqParams, path, isTouchUi, getWebConsoleRoot(req));
-        printExportSection(writer, reqParams, path, isTouchUi, getWebConsoleRoot(req));
+        printImportSection(writer, reqParams, path, isTouchUi, getWebConsoleRoot(req), isOneOfPrincipalNamesBound(req, config.writeAccessPrincipalNames()));
+        printExportSection(writer, reqParams, path, isTouchUi, getWebConsoleRoot(req), isOneOfPrincipalNamesBound(req, config.readAccessPrincipalNames()));
 
         try {
             printInstallationLogsSection(writer, reqParams, isTouchUi);
@@ -425,7 +429,7 @@ public class AcToolUiService {
         return acToolExecution.isSuccess() ? "SUCCESS" : "<span style='color:red;font-weight: bold;'>FAILED</span>";
     }
 
-    private void printImportSection(final HtmlWriter writer, RequestParameters reqParams, String path, boolean isTouchUI, String webConsoleRoot) throws IOException {
+    private void printImportSection(final HtmlWriter writer, RequestParameters reqParams, String path, boolean isTouchUI, String webConsoleRoot, boolean hasWritePermission) throws IOException {
 
         writer.print("<form id='acForm' action='" + path + "'>");
         writer.openTable("acFormTable");
@@ -473,7 +477,7 @@ public class AcToolUiService {
         writer.openTd();
         String onClick = "var as=$('#applySpinner');as.show(); var b=$('#applyButton');b.prop('disabled', true); oldL = b.text();b.text(' Applying AC Tool Configuration... ');var f=$('#acForm');var fd=f.serialize();$.post(f.attr('action'), fd).done(function(text){alert(text)}).fail(function(xhr){alert(xhr.status===403?'Permission Denied':'Config could not be applied - check log for errors')}).always(function(text) { "
                 + "as.hide();b.text(oldL);b.prop('disabled', false);location.href='" + PAGE_NAME + "?'+fd; });return false";
-        writer.println("<button " + getCoralButtonAtts(isTouchUI) + " id='applyButton' onclick=\"" + onClick + "\"> Apply AC Tool Configuration </button>");
+        writer.println("<button " + getCoralButtonAtts(isTouchUI) + (!hasWritePermission ? " disabled" : "") + " id='applyButton' onclick=\"" + onClick + "\"> Apply AC Tool Configuration </button>");
         writer.closeTd();
         writer.openTd();
         writer.println("<div id='applySpinner' style='display:none' class='spinner'><div></div><div></div><div></div></div>");
@@ -487,7 +491,7 @@ public class AcToolUiService {
     }
 
 
-    private void printExportSection(final HtmlWriter writer, RequestParameters reqParams, String path, boolean isTouchUI, String webConsoleRoot) throws IOException {
+    private void printExportSection(final HtmlWriter writer, RequestParameters reqParams, String path, boolean isTouchUI, String webConsoleRoot, boolean hasReadPermission) throws IOException {
         writer.openTable("acExportTable");
         writer.tableHeader("Export", 2);
         writer.tr();
@@ -495,7 +499,7 @@ public class AcToolUiService {
         writer.print("Export in AC Tool YAML format. This includes groups and permissions (in form of ACEs).");
         writer.closeTd();
         writer.openTd();
-        writer.println("<button " + getCoralButtonAtts(isTouchUI) + " id='downloadDumpButton' onclick=\"window.open('" + path + ".html/"
+        writer.println("<button " + getCoralButtonAtts(isTouchUI) + (!hasReadPermission ? " disabled" : "") + " id='downloadDumpButton' onclick=\"window.open('" + path + ".html/"
                 + SUFFIX_DUMP_YAML + "', '_blank');return false;\"> Download YAML </button>");
         writer.closeTd();
         writer.closeTr();
@@ -504,7 +508,7 @@ public class AcToolUiService {
         writer.print("Export Users in Admin Console CSV format. This includes non-system users, their profiles and their direct group memberships.");
         writer.closeTd();
         writer.openTd();
-        writer.println("<button " + getCoralButtonAtts(isTouchUI) + " id='downloadCsvButton' onclick=\"window.open('" + path + ".html/"
+        writer.println("<button " + getCoralButtonAtts(isTouchUI) + (!hasReadPermission ? " disabled" : "") + " id='downloadCsvButton' onclick=\"window.open('" + path + ".html/"
                 + SUFFIX_USERS_CSV + "', '_blank');return false;\"> Download CSV </button>");
         writer.closeTd();
         writer.closeTr();
