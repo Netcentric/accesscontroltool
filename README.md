@@ -50,7 +50,7 @@ There are also some [advanced configuration options](docs/AdvancedFeatures.md) s
 
 # User Interface
 
-There is a Felix Web Console plugin (at `/system/console/actool`) as well as a Touch UI console (at `/mnt/overlay/netcentric/actool/content/overview.html`) to apply configurations and to inspect previous executions of the tool. Additionally there is a [JMX interface](docs/Jmx.md) for some advanced use cases.
+There is a [Felix Web Console plugin (at `/system/console/actool`)](docs/ApplyConfig.md#web-console) as well as a [Touch UI console (at `/mnt/overlay/netcentric/actool/content/overview.html`)](docs/ApplyConfig.md#touch-ui) to apply configurations and to inspect previous executions of the tool. Additionally there is a [JMX interface](docs/Jmx.md) for some advanced use cases.
 
 # Applying AC Tool Configurations
 
