@@ -1,0 +1,12 @@
+{
+  "writeAccessPrincipalNames":[
+    "administrators",
+    "admin",
+    "$[env:aemCloudAdministrators;default=administrators]"
+  ],
+  "readAccessPrincipalNames":[
+    "administrators",
+    "admin",
+    "$[env:aemCloudAdministrators;default=administrators]"
+  ]
+}

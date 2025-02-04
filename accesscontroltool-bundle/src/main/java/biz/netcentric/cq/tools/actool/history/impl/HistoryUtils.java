@@ -58,12 +58,12 @@ public class HistoryUtils {
 
     public static final String HISTORY_NODE_NAME_PREFIX = "history_";
     public static final String NODETYPE_NT_UNSTRUCTURED = "nt:unstructured";
-    public static final String ACHISTORY_ROOT_NODE = "achistory";
-    public static final String STATISTICS_ROOT_NODE = "var/statistics";
-    public static final String ACHISTORY_PATH = "/"+ HistoryUtils.STATISTICS_ROOT_NODE + "/" + HistoryUtils.ACHISTORY_ROOT_NODE;
+    public static final String ACHISTORY_ROOT_NODE_NAME = "achistory";
+    public static final String STATISTICS_ROOT_NODE_PATH = "/var/statistics";
+    public static final String ACHISTORY_PATH = HistoryUtils.STATISTICS_ROOT_NODE_PATH + "/" + HistoryUtils.ACHISTORY_ROOT_NODE_NAME;
 
     private static final String AC_ROOT_PATH_IN_APPS = "/apps/netcentric";
-    public static final String AC_HISTORY_PATH_IN_APPS = AC_ROOT_PATH_IN_APPS + "/" + ACHISTORY_ROOT_NODE;
+    public static final String AC_HISTORY_PATH_IN_APPS = AC_ROOT_PATH_IN_APPS + "/" + ACHISTORY_ROOT_NODE_NAME;
     
     public static final String PROPERTY_TIMESTAMP = "timestamp";
     private static final String PROPERTY_MESSAGES = "messages";
@@ -85,10 +85,8 @@ public class HistoryUtils {
 
     public static Node getAcHistoryRootNode(final Session session)
             throws RepositoryException {
-        final Node rootNode = session.getRootNode();
-        Node statisticsRootNode = safeGetNode(rootNode, STATISTICS_ROOT_NODE, NODETYPE_NT_UNSTRUCTURED);
-        Node acHistoryRootNode = safeGetNode(statisticsRootNode, ACHISTORY_ROOT_NODE, "sling:OrderedFolder");
-        return acHistoryRootNode;
+        Node statisticsRootNode = JcrUtils.getOrCreateByPath(STATISTICS_ROOT_NODE_PATH, NODETYPE_NT_UNSTRUCTURED, session);
+        return JcrUtils.getOrAddNode(statisticsRootNode, ACHISTORY_ROOT_NODE_NAME, "sling:OrderedFolder");
     }
 
     /**
@@ -139,7 +137,7 @@ public class HistoryUtils {
         }
         name += AcToolExecutionImpl.TRIGGER_SEPARATOR_IN_NODE_NAME + trigger;
 
-        Node newHistoryNode = safeGetNode(acHistoryRootNode, name, NODETYPE_NT_UNSTRUCTURED);
+        Node newHistoryNode = JcrUtils.getOrAddNode(acHistoryRootNode, name, NODETYPE_NT_UNSTRUCTURED);
         String path = newHistoryNode.getPath();
         setHistoryNodeProperties(newHistoryNode, installLog, trigger);
         saveLogs(newHistoryNode, installLog);
@@ -175,17 +173,6 @@ public class HistoryUtils {
             }
         }
         return false;
-    }
-
-    private static Node safeGetNode(final Node baseNode, final String name,
-            final String typeToCreate) throws RepositoryException {
-        if (!baseNode.hasNode(name)) {
-            LOG.debug("create node: {}", name);
-            return baseNode.addNode(name, typeToCreate);
-
-        } else {
-            return baseNode.getNode(name);
-        }
     }
 
     public static void setHistoryNodeProperties(final Node historyNode,
