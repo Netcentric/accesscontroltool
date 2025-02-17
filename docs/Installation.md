@@ -31,9 +31,9 @@ without the `cloud` classifier.
 For AEMaaCS use the use the following approach:
 
 * Use a  container package that contains all project-related packages as embedded artifacts (hence in `/apps`)
-* Include the `accesscontroltool-package` *with* the `cloud` classifier (this contains the startup hook bundle for installation)
+* Include the `accesscontroltool-package` *with* the `cloud` classifier (this contains the startup hook bundle for installation and AEMaaCS specific configuration)
 * Include the permissions package containing the project/platform specific [AC Tool configuration](Configuration.md)
- * Ensure this permissions package declares the [dependency](#declaring-the-dependency) correctly
+* Ensure this permissions package declares the [dependency](#declaring-the-dependency) correctly
 
 
 Use the package with the group id, artifact id and classifier `cloud`:
