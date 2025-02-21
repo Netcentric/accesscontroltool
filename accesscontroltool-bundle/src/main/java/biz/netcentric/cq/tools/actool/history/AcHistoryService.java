@@ -37,7 +37,7 @@ public interface AcHistoryService {
     public String getLastInstallationHistory();
 
     /**
-     * Exposes the log contents of a specific run of the AC Tool. The given index is volatile (due to history order changes), 
+     * Returns the log's content of a specific run of the AC Tool. The given index is volatile (due to history order changes), 
      * so consider using {@link #getLogFromHistory(String, boolean, boolean)} instead.
      * @param n the index of the child node below the history root node which should be returned
      * @param inHtmlFormat
@@ -47,7 +47,26 @@ public interface AcHistoryService {
      */
     public String getLogFromHistory(int n, boolean inHtmlFormat, boolean includeVerbose);
 
+    /**
+     * Shortcut for {@link #getLogFromHistory(String, boolean, boolean, int)} with last argument being -1 (no line wrapping).
+     * @param id
+     * @param inHtmlFormat
+     * @param includeVerbose
+     * @return
+     * @throws RepositoryException
+     */
     public String getLogFromHistory(String id, boolean inHtmlFormat, boolean includeVerbose) throws RepositoryException;
+
+    /**
+     * Returns the log's content of a specific run of the AC Tool.
+     * @param id the id of the child node below the history root node which should be returned
+     * @param inHtmlFormat
+     * @param includeVerbose
+     * @param maxLineWidth
+     * @return
+     * @throws RepositoryException
+     */
+    public String getLogFromHistory(String id, boolean inHtmlFormat, boolean includeVerbose, int maxLineWidth) throws RepositoryException;
 
     public boolean wasLastPersistHistoryCallSuccessful();
 

@@ -15,7 +15,6 @@ package biz.netcentric.cq.tools.actool.history.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +24,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
 import org.apache.jackrabbit.commons.JcrUtils;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.annotations.Activate;
@@ -123,12 +123,12 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         }
     }
 
-    private String getLogHtml(Session session, String path, boolean includeVerbose) {
-        return HistoryUtils.getLogHtml(session, path, includeVerbose);
+    private String getLogHtml(Session session, String path, boolean includeVerbose, int maxLineWidth) {
+        return HistoryUtils.getLogHtml(session, path, includeVerbose, maxLineWidth);
     }
 
-    private String getLogTxt(Session session, String path, boolean includeVerbose) {
-        return HistoryUtils.getLogTxt(session, path, includeVerbose);
+    private String getLogTxt(Session session, String path, boolean includeVerbose, int maxLineWidth) {
+        return HistoryUtils.getLogTxt(session, path, includeVerbose, maxLineWidth);
     }
 
     @Override
@@ -145,7 +145,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
                 Node lastHistoryNode = it.nextNode();
 
                 if (lastHistoryNode != null) {
-                    history = getLogHtml(session, lastHistoryNode.getName(), true);
+                    history = getLogHtml(session, lastHistoryNode.getName(), true, -1);
                 }
             } else {
                 history = "no history found!";
@@ -199,7 +199,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
             if(n <= acToolExecutions.size()) {
                 AcToolExecution acToolExecution =  acToolExecutions.get(n-1);
                 String path = acToolExecution.getLogsPath();
-                history = inHtmlFormat ? getLogHtml(session, path, includeVerbose) : getLogTxt(session, path, includeVerbose);
+                history = inHtmlFormat ? getLogHtml(session, path, includeVerbose, -1) : getLogTxt(session, path, includeVerbose, -1);
             }
 
         } catch (RepositoryException e) {
@@ -214,13 +214,18 @@ public class AcHistoryServiceImpl implements AcHistoryService {
 
     @Override
     public String getLogFromHistory(String id, boolean inHtmlFormat, boolean includeVerbose) throws RepositoryException {
+        return getLogFromHistory(id, inHtmlFormat, includeVerbose, -1);
+    }
+
+    @Override
+    public String getLogFromHistory(String id, boolean inHtmlFormat, boolean includeVerbose, int maxLineWidth) throws RepositoryException {
         Session session = null;
         try {
             session = repository.loginService(null, null);
             // construct path from id
             Node acHistoryRootNode = HistoryUtils.getAcHistoryRootNode(session);
             String path = HistoryUtils.getPathFromId(id, acHistoryRootNode.getPath());
-            return inHtmlFormat ? getLogHtml(session, path, includeVerbose) : getLogTxt(session, path, includeVerbose);
+            return inHtmlFormat ? getLogHtml(session, path, includeVerbose, maxLineWidth) : getLogTxt(session, path, includeVerbose, maxLineWidth);
         } finally {
             if (session != null) {
                 session.logout();
