@@ -1,6 +1,9 @@
 
 package biz.netcentric.cq.tools.actool.history.impl;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 /*-
  * #%L
  * Access Control Tool Bundle
@@ -35,6 +38,7 @@ import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 public class PersistableInstallationLogger implements InstallationLogger, InstallationLog, InstallationResult {
 
+    static final String EOL = "\n";
     protected static final String MSG_IDENTIFIER_ERROR = "ERROR: ";
     protected static final String MSG_IDENTIFIER_WARNING = "WARNING: ";
 
@@ -145,16 +149,29 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
 
     @Override
     public void addError(Logger log, String error, Throwable e) {
-        log.error(error, e);
+        if (e != null) {
+            log.error(error, e);
+        } else {
+            log.error(error);
+        }
         addError(error, e);
     }
 
     public void addError(final String error, Throwable e) {
-        String fullErrorValue = error + " / e=" + e;
+        String fullErrorValue = error;
+        if (e != null) {
+            fullErrorValue += " / e=" + e;
+        }
         errors.add(new HistoryEntry(msgIndex, new Timestamp(
                 new Date().getTime()), MSG_IDENTIFIER_ERROR + fullErrorValue));
         success = false;
         msgIndex++;
+        if (e != null) {
+            // add the stack trace as verbose message
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            addVerboseMessage(sw.toString());
+        }
     }
 
     @Override
@@ -192,11 +209,11 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("\n" + getMessageHistory() + "\n");
+        sb.append(EOL + getMessageHistory() + EOL);
 
-        sb.append("\n" + "Execution time: " + msHumanReadable(executionTime) + "\n");
+        sb.append(EOL + "Execution time: " + msHumanReadable(executionTime) + EOL);
 
-        sb.append("\n" + "Success: " + success);
+        sb.append(EOL + "Success: " + success);
 
         return sb.toString();
     }
@@ -236,7 +253,7 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
         StringBuilder sb = new StringBuilder();
         if (!messageHistorySet.isEmpty()) {
             for (HistoryEntry entry : messageHistorySet) {
-                sb.append("\n" + timestampFormat.format(entry.getTimestamp()) + ": "
+                sb.append(EOL + timestampFormat.format(entry.getTimestamp()) + ": "
                         + entry.getMessage());
             }
         }

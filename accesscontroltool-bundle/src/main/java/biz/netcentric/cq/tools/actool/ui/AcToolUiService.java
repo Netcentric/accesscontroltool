@@ -83,6 +83,8 @@ public class AcToolUiService {
     static final String SUFFIX_DUMP_YAML = "dump.yaml";
     static final String SUFFIX_USERS_CSV = "users.csv";
 
+    private static final int MAX_LINE_WIDTH = 180; // max line width for log output in characters
+
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ConfigDumpService dumpService;
 
@@ -385,7 +387,7 @@ public class AcToolUiService {
                 return;
             } else {
                 String logLabel = "Previous Log " + reqParams.showLogId + ": " + getExecutionLabel(acToolExecution);
-                String logHtml = acHistoryService.getLogFromHistory(reqParams.showLogId, true, reqParams.showLogVerbose);
+                String logHtml = acHistoryService.getLogFromHistory(reqParams.showLogId, true, reqParams.showLogVerbose, MAX_LINE_WIDTH);
 
                 writer.openTable("logTable");
                 writer.tableHeader(logLabel, 1, false);

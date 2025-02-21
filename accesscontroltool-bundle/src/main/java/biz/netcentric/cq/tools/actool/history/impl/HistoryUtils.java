@@ -1,5 +1,7 @@
 package biz.netcentric.cq.tools.actool.history.impl;
 
+import java.io.BufferedReader;
+
 /*-
  * #%L
  * Access Control Tool Bundle
@@ -15,6 +17,7 @@ package biz.netcentric.cq.tools.actool.history.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
@@ -35,6 +38,7 @@ import javax.jcr.version.VersionException;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
 import org.apache.jackrabbit.commons.JcrUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -292,12 +296,12 @@ public class HistoryUtils {
         return rootPath + "/" + HISTORY_NODE_NAME_PREFIX + id;
     }
 
-    public static String getLogTxt(final Session session, final String path, boolean includeVerbose) {
-        return getLog(session, path, "\n", includeVerbose).toString();
+    public static String getLogTxt(final Session session, final String path, boolean includeVerbose, int maxLineWidth) {
+        return getLog(session, path, "\n", includeVerbose, maxLineWidth);
     }
 
-    public static String getLogHtml(final Session session, final String path, boolean includeVerbose) {
-        return getLog(session, path, "<br />", includeVerbose).toString();
+    public static String getLogHtml(final Session session, final String path, boolean includeVerbose, int maxLineWidth) {
+        return getLog(session, path, "<br />", includeVerbose, maxLineWidth);
     }
 
     /**
@@ -305,7 +309,7 @@ public class HistoryUtils {
      * of the respective history node which is specified by the path parameter
      */
     public static String getLog(final Session session, final String path,
-            final String lineFeedSymbol, boolean includeVerbose) {
+            final String lineFeedSymbol, boolean includeVerbose, int maxLineWidth) {
 
         StringBuilder sb = new StringBuilder();
         try {
@@ -318,9 +322,9 @@ public class HistoryUtils {
                                 .getString());
                 
                 if(historyNode.hasProperty(PROPERTY_MESSAGES)) {
-                    sb.append(lineFeedSymbol
-                            + historyNode.getProperty(PROPERTY_MESSAGES)
-                                    .getString().replace("\n", lineFeedSymbol));
+                    sb.append(PersistableInstallationLogger.EOL);
+                    sb.append(historyNode.getProperty(PROPERTY_MESSAGES)
+                                    .getString());
                 } else {
                     Node logFileNode;
                     if(includeVerbose) {
@@ -328,8 +332,8 @@ public class HistoryUtils {
                     } else {
                         logFileNode = historyNode.getNode(LOG_FILE_NAME);
                     }
-                    sb.append(lineFeedSymbol
-                            +  IOUtils.toString(JcrUtils.readFile(logFileNode), StandardCharsets.UTF_8).replace("\n", lineFeedSymbol));
+                    sb.append(PersistableInstallationLogger.EOL);
+                    sb.append(IOUtils.toString(JcrUtils.readFile(logFileNode), StandardCharsets.UTF_8));
                 }
 
                 sb.append(lineFeedSymbol
@@ -341,11 +345,23 @@ public class HistoryUtils {
                         + historyNode.getProperty(PROPERTY_SUCCESS)
                                 .getBoolean());
             }
+            // normalize line feeds and wrap lines
+            StringReader reader = new StringReader(sb.toString());
+            BufferedReader bufferedReader = new BufferedReader(reader);
+            StringBuilder normalizingLineFeedStringBuilder = new StringBuilder();
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                if (maxLineWidth > 0 && line.length() > maxLineWidth) {
+                    line = WordUtils.wrap(line, maxLineWidth, lineFeedSymbol, false);
+                }
+                normalizingLineFeedStringBuilder.append(line);
+                normalizingLineFeedStringBuilder.append(lineFeedSymbol);
+            }
+            return normalizingLineFeedStringBuilder.toString();
         } catch (IOException|RepositoryException e) {
-            sb.append(lineFeedSymbol+"ERROR while retrieving log: "+e);
             LOG.error("ERROR while retrieving log: "+e, e);
+            return "ERROR while retrieving log: "+e;
         }
-        return sb.toString();
     }
 
 }
