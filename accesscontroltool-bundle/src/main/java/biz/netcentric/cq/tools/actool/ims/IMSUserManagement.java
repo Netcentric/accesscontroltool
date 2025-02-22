@@ -334,12 +334,20 @@ public class IMSUserManagement implements ExternalGroupManagement {
         while (!isLastPage) {
             GroupResponse response = getGroups(token, page++);
             isLastPage = response.isLastPage;
-            groups.putAll(response.groups.stream().collect(Collectors.toMap(g -> g.getGroupName().toLowerCase(Locale.ROOT), Function.identity())));
+            groups.putAll(response.groups.stream()
+                    .filter(g -> "USER_GROUP".equals(g.type))
+                    .collect(Collectors.toMap(
+                            g -> g.getGroupName().toLowerCase(Locale.ROOT), 
+                            Function.identity(),
+                            (a,b) -> {
+                                LOG.warn("Duplicate group name {} found, keeping first occurrence", a.getGroupName());
+                                return a;
+                            })));
         }
         return groups;
     }
 
-    private GroupResponse getGroups(String token, int page) throws IOException {
+    GroupResponse getGroups(String token, int page) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         HttpGet httpGet;
         try {
