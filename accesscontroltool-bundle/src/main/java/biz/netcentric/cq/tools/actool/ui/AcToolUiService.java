@@ -388,7 +388,7 @@ public class AcToolUiService {
                         LinkedHashMap::new));
 
         writer.openTable("previousLogs");
-        writer.tableHeader("Previous Logs", 5);
+        writer.tableHeader("Execution Logs", 5);
 
         if (acToolExecutions.isEmpty()) {
             writer.tr();
@@ -428,7 +428,7 @@ public class AcToolUiService {
                 writer.println("No log found for id " + reqParams.showLogId);
                 return;
             } else {
-                String logLabel = "Previous Log " + reqParams.showLogId + ": " + getExecutionLabel(acToolExecution);
+                String logLabel = "Execution Log " + reqParams.showLogId + ": " + getExecutionLabel(acToolExecution);
                 String logHtml = acHistoryService.getLogFromHistory(reqParams.showLogId, true, reqParams.showLogVerbose, MAX_LINE_WIDTH);
 
                 writer.openTable("logTable");
