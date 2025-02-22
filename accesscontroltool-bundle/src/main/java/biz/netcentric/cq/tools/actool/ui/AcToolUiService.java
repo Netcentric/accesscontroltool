@@ -70,6 +70,8 @@ import biz.netcentric.cq.tools.actool.user.UserProcessor;
 @Designate(ocd=biz.netcentric.cq.tools.actool.ui.AcToolUiService.Configuration.class)
 public class AcToolUiService {
 
+    private static final String CONTENT_DISPOSITION = "Content-Disposition";
+
     private static final Logger LOG = LoggerFactory.getLogger(AcToolUiService.class);
 
     public static final String PARAM_CONFIGURATION_ROOT_PATH = "configurationRootPath";
@@ -82,8 +84,10 @@ public class AcToolUiService {
 
     static final String SUFFIX_DUMP_YAML = "dump.yaml";
     static final String SUFFIX_USERS_CSV = "users.csv";
+    static final String SUFFIX_DOWNLOAD_LOG = "download.log";
 
     private static final int MAX_LINE_WIDTH = 180; // max line width for log output in characters
+
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ConfigDumpService dumpService;
@@ -129,6 +133,8 @@ public class AcToolUiService {
             callWhenReadAccessGranted(req, resp, this::streamDumpToResponse);
         } else if (req.getRequestURI().endsWith(SUFFIX_USERS_CSV)) {
             callWhenReadAccessGranted(req, resp, this::streamUsersCsvToResponse);
+        } else if (req.getRequestURI().endsWith(SUFFIX_DOWNLOAD_LOG)) {
+            streamLogToResponse(req, resp);
         } else {
             // everyone is allows to see the UI in general
             renderUi(req, resp, path, isTouchUi);
@@ -220,7 +226,7 @@ public class AcToolUiService {
         printExportSection(writer, reqParams, path, isTouchUi, getWebConsoleRoot(req), isOneOfPrincipalNamesBound(req, config.readAccessPrincipalNames()));
 
         try {
-            printInstallationLogsSection(writer, reqParams, isTouchUi);
+            printInstallationLogsSection(writer, reqParams, path, isTouchUi);
         } catch (RepositoryException e) {
             throw new ServletException("Could not read log from repository", e);
         }
@@ -232,9 +238,44 @@ public class AcToolUiService {
         }
     }
 
+    void streamLogToResponse(HttpServletRequest req, final HttpServletResponse resp) {
+        RequestParameters reqParams = RequestParameters.fromRequest(req, acInstallationService);
+        try {
+            if (StringUtils.isBlank(reqParams.showLogId)) {
+                resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "No log id provided");
+                return;
+            }
+            // generate an ordered map of all executions (key = id, value = execution)
+            Map<String, AcToolExecution> acToolExecutions = acHistoryService.getAcToolExecutions().stream().collect(
+                    Collectors.toMap(
+                            AcToolExecution::getId, 
+                            Function.identity(),
+                            (u, v) -> {
+                                throw new IllegalStateException(String.format("Duplicate key %s", u));
+                            },
+                            LinkedHashMap::new));
+            AcToolExecution acToolExecution = acToolExecutions.get(reqParams.showLogId);
+            if (acToolExecution == null) {
+                resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+            String filename = "actool-execution-" + reqParams.showLogId + ".log";
+            String logPlain = acHistoryService.getLogFromHistory(reqParams.showLogId, false, reqParams.showLogVerbose, -1);
+    
+            resp.setContentType("text/plain");
+            // get id from request
+            resp.setHeader(CONTENT_DISPOSITION, "attachment; filename=\""+filename+"\"");
+            resp.getWriter().print(logPlain);
+        } catch (RepositoryException e) {
+            throw new IllegalStateException("Could not read log from repository", e);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     void streamDumpToResponse(final HttpServletResponse resp) {
         resp.setContentType("application/x-yaml");
-        resp.setHeader("Content-Disposition", "inline; filename=\"actool-dump.yaml\"");
+        resp.setHeader(CONTENT_DISPOSITION, "inline; filename=\"actool-dump.yaml\"");
         String dumpAsString = dumpService.getCompletePrincipalBasedDumpsAsString();
         try {
             PrintWriter out;
@@ -248,7 +289,7 @@ public class AcToolUiService {
 
     private void streamUsersCsvToResponse(HttpServletResponse resp) {
         resp.setContentType("text/csv");
-        resp.setHeader("Content-Disposition", "inline; filename=\"users.csv\"");
+        resp.setHeader(CONTENT_DISPOSITION, "inline; filename=\"users.csv\"");
         try {
             PrintWriter out = resp.getWriter();
             out.println("Identity Type,Username,Domain,Email,First Name,Last Name,Country Code,ID,Product Configurations,Admin Roles,Product Configurations Administered,User Groups,User Groups Administered,Products Administered,Developer Access");
@@ -334,7 +375,7 @@ public class AcToolUiService {
         writer.closeTable();
     }
 
-    private void printInstallationLogsSection(HtmlWriter writer, RequestParameters reqParams, boolean isTouchUi) throws RepositoryException {
+    private void printInstallationLogsSection(HtmlWriter writer, RequestParameters reqParams, String path, boolean isTouchUi) throws RepositoryException {
 
         // generate an ordered map of all executions (key = id, value = execution)
         Map<String, AcToolExecution> acToolExecutions = acHistoryService.getAcToolExecutions().stream().collect(
@@ -359,6 +400,7 @@ public class AcToolUiService {
 
         for (AcToolExecution acToolExecution : acToolExecutions.values()) {
             String linkToLog = PAGE_NAME + "?" + PARAM_SHOW_LOG_ID + "=" + acToolExecution.getId();
+            String downloadLinkToLog = path + ".html/" + SUFFIX_DOWNLOAD_LOG + "?" + PARAM_SHOW_LOG_ID + "=" + acToolExecution.getId();
             writer.tr();
             writer.openTd();
             writer.println(getExecutionDateStr(acToolExecution));
@@ -373,7 +415,7 @@ public class AcToolUiService {
             writer.println(getExecutionStatusStr(acToolExecution));
             writer.closeTd();
             writer.openTd();
-            writer.println("[<a href='" + linkToLog + "'>short</a>] [<a href='" + linkToLog + "&showLogVerbose=true'>verbose</a>]");
+            writer.println("[<a href='" + linkToLog + "'>short</a>] [<a href='" + linkToLog + "&showLogVerbose=true'>verbose</a>] [<a href='" + downloadLinkToLog + "&showLogVerbose=true'>download verbose</a>]");
             writer.closeTd();
             writer.closeTr();
         }
