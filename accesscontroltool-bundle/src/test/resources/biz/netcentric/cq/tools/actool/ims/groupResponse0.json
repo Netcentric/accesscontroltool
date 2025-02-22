@@ -1,0 +1,64 @@
+{
+  "lastPage": true,
+  "result": "success",
+  "groups": [
+        {
+          "type": "SYSADMIN_GROUP",
+          "groupName": "Administrators",
+          "memberCount": 11
+        },
+        {
+          "type": "USER_GROUP",
+          "groupName": "Document Cloud 1",
+          "memberCount": 26,
+          "adminGroupName": "_admin_Document Cloud 1",
+          "licenseQuota": "2"
+        },
+        {
+          "type": "USER_GROUP",
+          "groupName": "Document Cloud 2",
+          "memberCount": 26,
+          "adminGroupName": "_admin_Document Cloud 1",
+          "licenseQuota": "2"
+        },
+        {
+          "type": "PRODUCT_PROFILE",
+          "groupName": "Default Support Profile",
+          "memberCount": 0,
+          "productName": "All Apps plan - 100 GB",
+          "licenseQuota": "8"
+        },
+        {
+          "type": "PRODUCT_ADMIN_GROUP",
+          "groupName": "_product_admin_Adobe Document Cloud for business",
+          "memberCount": 2,
+          "productProfileName": "Adobe Document Cloud for business"
+        },
+        {
+          "type": "PRODUCT_ADMIN_GROUP",
+          "groupName": "_product_admin_Adobe Document Cloud for business",
+          "memberCount": 2,
+          "productProfileName": "Adobe Document Cloud for business"
+        },
+        {
+            "groupId": 561043099,
+            "groupName": "_product_admin_Adobe Experience Manager as a Cloud Service (ENTERPRISE_PRODUCT,Cloud Manager,DX - E123)",
+            "type": "PRODUCT_ADMIN_GROUP",
+            "memberCount": 7,
+            "productName": "Adobe Experience Manager as a Cloud Service (ENTERPRISE_PRODUCT,Cloud Manager,DX - E123)"
+        },
+        {
+            "groupId": 743706203,
+            "groupName": "_product_admin_Adobe Experience Manager as a Cloud Service (ENTERPRISE_PRODUCT,Cloud Manager,DX - E123)",
+            "type": "PRODUCT_ADMIN_GROUP",
+            "memberCount": 1,
+            "productName": "Adobe Experience Manager as a Cloud Service (ENTERPRISE_PRODUCT,Cloud Manager,DX - E123)"
+        },
+        {
+          "type": "DEVELOPER_GROUP",
+          "groupName": "_developer_Adobe Document Cloud for business",
+          "memberCount": 5,
+          "productProfileName": "Adobe Document Cloud for business"
+        }
+    ]
+}
