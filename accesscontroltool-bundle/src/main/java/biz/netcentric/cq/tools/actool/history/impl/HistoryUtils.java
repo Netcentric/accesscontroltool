@@ -338,8 +338,8 @@ public class HistoryUtils {
 
                 sb.append(lineFeedSymbol
                         + "Execution time: "
-                        + historyNode.getProperty(PROPERTY_EXECUTION_TIME)
-                                .getLong() + " ms");
+                        + PersistableInstallationLogger.msHumanReadable(historyNode.getProperty(PROPERTY_EXECUTION_TIME)
+                                .getLong()));
                 sb.append(lineFeedSymbol
                         + "Success: "
                         + historyNode.getProperty(PROPERTY_SUCCESS)
