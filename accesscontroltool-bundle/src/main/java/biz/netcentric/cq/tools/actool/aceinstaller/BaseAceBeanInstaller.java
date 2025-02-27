@@ -34,6 +34,8 @@ import javax.jcr.security.Privilege;
 
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
+import org.apache.jackrabbit.api.security.JackrabbitAccessControlManager;
+import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,7 +78,7 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
                     .get(path); // Set which holds the AceBeans of the current path in configuration
 
             // check if the path even exists
-            final boolean pathExits = AccessControlUtils.getModifiableAcl(session.getAccessControlManager(), path) != null;
+            final boolean pathExits = getAccessControlList(getModifiableAcl(session.getAccessControlManager(), ace path) != null;
             if (!pathExits) {
                 if (!ContentHelper.createInitialContent(session, history, path, aceBeanSetFromConfig)) {
                     history.addVerboseMessage(LOG, "Skipped installing privileges/actions for non existing path: " + path);
@@ -171,11 +173,15 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
 
         final Collection<String> supportedRestrictionNames = Arrays.asList(acl.getRestrictionNames());
 
+        List<Restriction> restrictions = aceBean.getRestrictions();
+        if (aceBean.isPrincipalBased()) {
+            // special restriction for principal based ACEs (https://jackrabbit.apache.org/oak/docs/security/authorization/principalbased.html)
+            restrictions.add(new Restriction("rep:nodePath", aceBean.getJcrPath()));
+        }
         if (aceBean.getRestrictions().isEmpty()) {
             return RestrictionsHolder.empty();
         }
 
-        List<Restriction> restrictions = aceBean.getRestrictions();
         for (Restriction restriction : restrictions) {
             if (!supportedRestrictionNames.contains(restriction.getName())) {
                 throw new IllegalStateException(
@@ -208,6 +214,32 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
             }
         }
         return privileges;
+    }
+
+    protected JackrabbitAccessControlList getAccessControlList(AccessControlManager acMgr, AceBean aceBean) throws RepositoryException {
+        return getAccessControlList(acMgr, aceBean.isPrincipalBased(), aceBean.getPrincipalName(), aceBean.getJcrPathForPolicyApi());
+    }
+
+    protected JackrabbitAccessControlList getAccessControlList(AccessControlManager acMgr, boolean isPrincipalBased, String principal, String path) throws RepositoryException {
+        if (isPrincipalBased) {
+            return getPrincipalBasedAccessControlList(acMgr, new PrincipalImpl(principal));
+        } else {
+            return getResourceBasedAccessControlList(acMgr, path);
+        }
+    }
+
+    // to be overwritten in JUnit Test
+    protected JackrabbitAccessControlList getResourceBasedAccessControlList(AccessControlManager acMgr, String path) throws RepositoryException {
+        JackrabbitAccessControlList acl = AccessControlUtils.getModifiableAcl(acMgr, path);
+        return acl;
+    }
+    
+    protected JackrabbitAccessControlList getPrincipalBasedAccessControlList(AccessControlManager acMgr, Principal principal) throws RepositoryException {
+        if (acMgr instanceof JackrabbitAccessControlManager) {
+            return getPrincipalBasedAccessControlList((JackrabbitAccessControlManager) acMgr, principal);
+        } else {
+            throw new RepositoryException("AccessControlManager is not a JackrabbitAccessControlManager");
+        }
     }
 
 }

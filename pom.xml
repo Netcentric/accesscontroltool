@@ -106,13 +106,18 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Runtime dependencies should be AEM 6.4 compatible -->
+            <!-- Runtime dependencies should be AEM 6.5.2 compatible -->
             <dependency>
                 <groupId>io.wcm.maven</groupId>
                 <artifactId>io.wcm.maven.aem-dependencies</artifactId>
-                <version>6.4.0.0004</version>
+                <version>6.5.9.0000</version>  <!-- required for principal based authorization -->
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.osgi</groupId>
+                <artifactId>org.osgi.service.url</artifactId>
+                <version>1.0.1</version>
             </dependency>
             <!-- embedded 3rd party dependencies -->
             <dependency>

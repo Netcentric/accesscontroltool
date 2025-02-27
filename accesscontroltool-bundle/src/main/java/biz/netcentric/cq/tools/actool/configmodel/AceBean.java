@@ -47,11 +47,13 @@ public class AceBean implements AcDumpElement {
     private List<Restriction> restrictions = new ArrayList<Restriction>();
 
     private boolean keepOrder = false; // default is to reorder denies before allows
+    private boolean isPrincipalBased;
 
     private String initialContent;
 
     // config source (only for logging)
     private String configSource;
+
 
     public static final String RESTRICTION_NAME_GLOB = "rep:glob";
 
@@ -68,6 +70,7 @@ public class AceBean implements AcDumpElement {
         clone.setRestrictions(new ArrayList<Restriction>(restrictions));
         clone.setInitialContent(initialContent);
         clone.setKeepOrder(keepOrder);
+        clone.setIsPrincipalBased(isPrincipalBased);
         clone.setConfigSource(configSource +" (cloned)"); 
 
         return clone;
@@ -360,6 +363,14 @@ public class AceBean implements AcDumpElement {
                 && StringUtils.isBlank(permission)
                 && StringUtils.isBlank(privilegesString)
                 && StringUtils.isBlank(actionsStringFromConfig);
+    }
+
+    public boolean isPrincipalBased() {
+        return isPrincipalBased;
+    }
+
+    public void setIsPrincipalBased(boolean isPrincipalBased) {
+        this.isPrincipalBased = isPrincipalBased;
     }
 
 }

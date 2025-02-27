@@ -15,6 +15,8 @@ package biz.netcentric.cq.tools.actool.helper;
 
 import java.security.Principal;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.jcr.AccessDeniedException;
@@ -29,12 +31,14 @@ import javax.jcr.security.AccessControlPolicy;
 import javax.jcr.security.AccessControlPolicyIterator;
 import javax.jcr.security.Privilege;
 
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlManager;
+import org.apache.jackrabbit.api.security.authorization.PrincipalAccessControlList;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -205,44 +209,64 @@ public class AccessControlUtils {
         return countRemoved;
     }
 
-    /** Retrieves JackrabbitAccessControlList for path.
+    /** Retrieves (resource-based) {@link JackrabbitAccessControlList} for path.
      * 
      * @param acMgr
      * @param path
-     * @return
+     * @return JackrabbitAccessControlList or {@code null} if the path does not exist.
      * @throws RepositoryException
      * @throws AccessDeniedException */
-    public static JackrabbitAccessControlList getModifiableAcl(
-            AccessControlManager acMgr, String path) throws RepositoryException, AccessDeniedException {
-
-        if (StringUtils.isBlank(path)) {
-            path = null; // repository level permission
-        }
-
-        AccessControlPolicy[] existing = null;
+    public static JackrabbitAccessControlList getModifiableAcl(final 
+            AccessControlManager acMgr, final String path) throws RepositoryException {
+        final String normalizedPath = StringUtils.stripToNull(path);
         try {
-            existing = acMgr.getPolicies(path);
+            AccessControlPolicy[] existingPolicies = acMgr.getPolicies(normalizedPath);
+            Optional<JackrabbitAccessControlList> firstMatchingPolicyOfType = getFirstMatchingPolicyOfType(existingPolicies, JackrabbitAccessControlList.class);
+            if (!firstMatchingPolicyOfType.isPresent()) {
+                AccessControlPolicyIterator applicablePoliciesIterator = acMgr.getApplicablePolicies(normalizedPath);
+                return getFirstMatchingPolicyOfType((Iterator<AccessControlPolicy>)applicablePoliciesIterator, JackrabbitAccessControlList.class)
+                        .orElseThrow(() -> new AccessControlException("No modifiable ACL at " + normalizedPath));
+            } else {
+                return firstMatchingPolicyOfType.get();
+            }
         } catch (final PathNotFoundException e) {
-            LOG.debug("No node could be found under: {}. Application of ACL for that node cancelled!", path);
-        }
-        if (existing != null) {
-            for (final AccessControlPolicy p : existing) {
-                if (p instanceof JackrabbitAccessControlList) {
-                    return ((JackrabbitAccessControlList) p);
-                }
-            }
-
-            final AccessControlPolicyIterator it = acMgr.getApplicablePolicies(path);
-            while (it.hasNext()) {
-                final AccessControlPolicy p = it.nextAccessControlPolicy();
-                if (p instanceof JackrabbitAccessControlList) {
-                    return ((JackrabbitAccessControlList) p);
-                }
-            }
-
-            throw new AccessControlException("No modifiable ACL at " + path);
+            LOG.debug("No node could be found under: {}. Application of ACL for that node cancelled!", normalizedPath);
         }
         return null;
+    }
+
+    /** Retrieves (principal-based) {@link PrincipalAccessControlList} for principal.
+     * 
+     * @param acMgr
+     * @param principal principal for which to retrieve the ACL
+     * @return PrincipalAccessControlList (never {@code null})
+     * @throws RepositoryException
+     */
+    public static PrincipalAccessControlList getPrincipalBasedModifiableAcl(final JackrabbitAccessControlManager acMgr, final Principal principal)
+            throws RepositoryException {
+        AccessControlPolicy[] existingPolicies = acMgr.getPolicies(principal);
+        Optional<PrincipalAccessControlList> firstMatchingPolicyOfType = getFirstMatchingPolicyOfType(existingPolicies, PrincipalAccessControlList.class);
+        if (!firstMatchingPolicyOfType.isPresent()) {
+            AccessControlPolicy[] applicablePolicies = acMgr.getApplicablePolicies(principal);
+            return getFirstMatchingPolicyOfType(applicablePolicies, PrincipalAccessControlList.class)
+                    .orElseThrow(() -> new AccessControlException("No principal ACL for " + principal.getName()));
+        } else {
+            return firstMatchingPolicyOfType.get();
+        }
+    }
+
+    static <T> Optional<T> getFirstMatchingPolicyOfType(AccessControlPolicy[] policies, Class<T> policyType) {
+        return getFirstMatchingPolicyOfType(IteratorUtils.arrayIterator(policies), policyType);
+    }
+
+    static <T> Optional<T> getFirstMatchingPolicyOfType(Iterator<AccessControlPolicy> policiesIterator, Class<T> policyType) {
+        while (policiesIterator.hasNext()) {
+            AccessControlPolicy policy = policiesIterator.next();
+            if (policyType.isInstance(policy)) {
+                return Optional.of(policyType.cast(policy));
+            }
+        }
+        return Optional.empty();
     }
 
     /** Returns user manager for session disabling autoSave if applicable.

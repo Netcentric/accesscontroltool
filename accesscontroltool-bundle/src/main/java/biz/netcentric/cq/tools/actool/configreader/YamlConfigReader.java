@@ -68,6 +68,7 @@ public class YamlConfigReader implements ConfigReader {
     protected static final String ACE_CONFIG_PROPERTY_PATH = "path";
     protected static final String ACE_CONFIG_PROPERTY_KEEP_ORDER = "keepOrder";
     protected static final String ACE_CONFIG_INITIAL_CONTENT = "initialContent";
+    protected static final String ACE_CONFIG_PROPERTY_IS_PRINCIPAL_BASED = "isPrincipalBased";
 
     private static final String GROUP_CONFIG_PROPERTY_IS_MEMBER_OF = "isMemberOf";
     private static final String GROUP_CONFIG_PROPERTY_MEMBER_OF_LEGACY = "memberOf";
@@ -344,29 +345,29 @@ public class YamlConfigReader implements ConfigReader {
         return new AuthorizableConfigBean();
     }
 
-    protected void setupAceBean(final String authorizableId, final Map<String, ?> currentAceDefinition, final AceBean aclBean, String sourceFile) {
+    protected void setupAceBean(final String authorizableId, final Map<String, ?> currentAceDefinition, final AceBean aceBean, String sourceFile) {
 
-        aclBean.setAuthorizableId(authorizableId);
-        aclBean.setPrincipalName(authorizableId); // to ensure it is set, later corrected if necessary in
+        aceBean.setAuthorizableId(authorizableId);
+        aceBean.setPrincipalName(authorizableId); // to ensure it is set, later corrected if necessary in
                                                   // AcConfiguration.ensureAceBeansHaveCorrectPrincipalNameSet()
 
         String jcrPath = getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PATH).trim();
         // remove trailing slashes (but retain simple slashes)
         jcrPath = (!jcrPath.equals("/") && jcrPath.endsWith("/")) ? StringUtils.removeEnd(jcrPath, "/") : jcrPath;
-        aclBean.setJcrPath(jcrPath);
+        aceBean.setJcrPath(jcrPath);
 
-        aclBean.setPrivilegesString(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PRIVILEGES));
-        aclBean.setPermission(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PERMISSION));
+        aceBean.setPrivilegesString(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PRIVILEGES));
+        aceBean.setPermission(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_PERMISSION));
 
-        aclBean.setRestrictions(currentAceDefinition.get(ACE_CONFIG_PROPERTY_RESTRICTIONS),(String) currentAceDefinition.get(ACE_CONFIG_PROPERTY_GLOB));
-        aclBean.setActions(parseActionsString(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_ACTIONS)));
+        aceBean.setRestrictions(currentAceDefinition.get(ACE_CONFIG_PROPERTY_RESTRICTIONS),(String) currentAceDefinition.get(ACE_CONFIG_PROPERTY_GLOB));
+        aceBean.setActions(parseActionsString(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_ACTIONS)));
 
-        aclBean.setKeepOrder(Boolean.valueOf(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_KEEP_ORDER)));
+        aceBean.setKeepOrder(Boolean.valueOf(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_KEEP_ORDER)));
 
         String initialContent = getMapValueAsString(currentAceDefinition, ACE_CONFIG_INITIAL_CONTENT);
-        aclBean.setInitialContent(initialContent);
-        
-        aclBean.setConfigSource(sourceFile);
+        aceBean.setInitialContent(initialContent);
+        aceBean.setConfigSource(sourceFile);
+        aceBean.setIsPrincipalBased(Boolean.parseBoolean(getMapValueAsString(currentAceDefinition, ACE_CONFIG_PROPERTY_IS_PRINCIPAL_BASED)));
     }
 
     public static String[] parseActionsString(final String actionsStringFromConfig) {

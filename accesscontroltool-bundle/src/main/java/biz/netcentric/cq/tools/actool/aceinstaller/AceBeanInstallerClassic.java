@@ -91,7 +91,7 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
 
         final AccessControlManager acMgr = session.getAccessControlManager();
 
-        JackrabbitAccessControlList acl = AccessControlUtils.getModifiableAcl(acMgr, aceBean.getJcrPathForPolicyApi());
+        JackrabbitAccessControlList acl = getAccessControlList(acMgr, aceBean);
         if (acl == null) {
             installLog.addMessage(LOG, "Skipped installing privileges/actions for non existing path: " + aceBean.getJcrPath());
             return;
@@ -139,7 +139,7 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
         Collection<String> inheritedAllows = cqActions.getAllowedActions(
                 aceBean.getJcrPathForPolicyApi(), Collections.singleton(principal));
         // this does always install new entries
-        cqActions.installActions(aceBean.getJcrPathForPolicyApi(), principal, actionMap, inheritedAllows);
+        cqActions.installActions(aceBean.isPrincipalBased(), aceBean.getJcrPathForPolicyApi(), principal, actionMap, inheritedAllows);
 
         // since the aclist has been modified, retrieve it again
         final JackrabbitAccessControlList newAcl = AccessControlUtils.getAccessControlList(session, aceBean.getJcrPath());

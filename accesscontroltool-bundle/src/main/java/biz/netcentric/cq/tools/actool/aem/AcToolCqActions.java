@@ -118,7 +118,7 @@ public class AcToolCqActions {
         return granted;
     }
 
-    public void installActions(String nodePath, Principal principal, Map<String, Boolean> actionMap, Collection<String> inheritedAllows)
+    public void installActions(boolean isPrincipalBased, String nodePath, Principal principal, Map<String, Boolean> actionMap, Collection<String> inheritedAllows)
             throws RepositoryException {
         if (actionMap.isEmpty()) {
             return;

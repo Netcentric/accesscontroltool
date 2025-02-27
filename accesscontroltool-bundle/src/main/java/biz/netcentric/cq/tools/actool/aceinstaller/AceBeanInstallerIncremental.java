@@ -205,12 +205,6 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
         return aceBeanSetNoInitialContentOnlyNodes;
     }
 
-    // to be overwritten in JUnit Test
-    protected JackrabbitAccessControlList getAccessControlList(AccessControlManager acMgr, String path) throws RepositoryException {
-        JackrabbitAccessControlList acl = AccessControlUtils.getModifiableAcl(acMgr, path);
-        return acl;
-    }
-
     private Set<AceBean> transformActionsIntoPrivileges(Set<AceBean> aceBeanSetFromConfig, Session session,
             InstallationLogger installLog) throws RepositoryException {
 
@@ -289,7 +283,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
         Principal testActionMapperPrincipal = getTestActionMapperPrincipal();
         applyCqActions(origAceBean, session, testActionMapperPrincipal);
 
-        JackrabbitAccessControlList newAcl = getAccessControlList(session.getAccessControlManager(), origAceBean.getJcrPathForPolicyApi());
+        JackrabbitAccessControlList newAcl = getAccessControlList(session.getAccessControlManager(), origAceBean);
 
         boolean isFirst = true;
         for (AccessControlEntry newAce : newAcl.getAccessControlEntries()) {
@@ -371,7 +365,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
         Collection<String> inheritedAllows = cqActions.getAllowedActions(origAceBean.getJcrPathForPolicyApi(),
                 Collections.singleton(principal));
         // this does always install new entries
-        cqActions.installActions(origAceBean.getJcrPath(), principal, origAceBean.getActionMap(), inheritedAllows);
+        cqActions.installActions(origAceBean.isPrincipalBased(), origAceBean.getJcrPath(), principal, origAceBean.getActionMap(), inheritedAllows);
 
     }
 
