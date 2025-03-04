@@ -80,8 +80,8 @@ public class ExtendedSlingSettingsServiceImpl implements ExtendedSlingSettingsSe
         Set<String> defaultRunmodes = slingSettingsService.getRunModes();
         extendedRunmodes = new HashSet<>();
         extendedRunmodes.addAll(defaultRunmodes);
-        boolean isCloudReady = RuntimeHelper.isCloudReadyInstance();
-        if(isCloudReady) {
+        boolean isCompositeNodeStore = RuntimeHelper.isCompositeNodeStore();
+        if(isCompositeNodeStore) {
             extendedRunmodes.add(ADDITIONAL_RUNMODE_CLOUD);
         }
 
@@ -90,7 +90,7 @@ public class ExtendedSlingSettingsServiceImpl implements ExtendedSlingSettingsSe
             extendedRunmodes.addAll(additionalRunmodes);
         }
 
-        LOG.info("Default runmodes: {} Extended Runmodes: {}  isCloudReady: {}", defaultRunmodes, extendedRunmodes, isCloudReady);
+        LOG.info("Default runmodes: {} Extended Runmodes: {}  isCompositeNodeStore: {}", defaultRunmodes, extendedRunmodes, isCompositeNodeStore);
     }
 
     @Override

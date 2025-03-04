@@ -72,7 +72,7 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
         }
         alreadyRan = true;
 
-        if (RuntimeHelper.isCloudReadyInstance()) {
+        if (RuntimeHelper.isCompositeNodeStore()) {
             log("InstallHook is skipped by default in cloud (use package property 'actool.forceInstallHookInCloud = true' to force run)",
                     listener);
             return;

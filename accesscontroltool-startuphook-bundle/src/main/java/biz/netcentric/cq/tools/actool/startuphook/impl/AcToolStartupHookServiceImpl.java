@@ -62,28 +62,28 @@ public class AcToolStartupHookServiceImpl {
     }
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    private AcInstallationService acInstallationService;
+    AcInstallationService acInstallationService;
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    private SlingRepository repository;
+    SlingRepository repository;
 
-    private boolean isCompositeNodeStore;
+    private boolean isAppsReadOnly;
 
     @Activate
     public void activate(BundleContext bundleContext, Config config) {
 
-        boolean isCloudReady = RuntimeHelper.isCloudReadyInstance();
+        boolean isCompositeNodeStore = RuntimeHelper.isCompositeNodeStore();
         Config.StartupHookActivation activationMode = config.activationMode();
         boolean runAsyncForMutableConent = config.runAsyncForMutableConent();
         int currentStartLevel = RuntimeHelper.getCurrentStartLevel(bundleContext);
-        LOG.info("AcTool Startup Hook (start level: {}  isCloudReady: {}  activationMode: {}  runAsyncForMutableConent: {})",
+        LOG.info("AcTool Startup Hook (start level: {}  isCompositeNodeStore: {}  activationMode: {}  runAsyncForMutableConent: {})",
                 currentStartLevel,
-                isCloudReady,
+                isCompositeNodeStore,
                 activationMode,
                 runAsyncForMutableConent);
 
         boolean applyOnStartup = (activationMode == Config.StartupHookActivation.ALWAYS)
-                || (isCloudReady && activationMode == Config.StartupHookActivation.CLOUD_ONLY);
+                || (isCompositeNodeStore && activationMode == Config.StartupHookActivation.CLOUD_ONLY);
 
         if (applyOnStartup) {
 
@@ -91,16 +91,16 @@ public class AcToolStartupHookServiceImpl {
             LOG.info("Running AcTool with "
                     + (relevantPathsForInstallation.isEmpty() ? "all paths" : "paths " + relevantPathsForInstallation) + "...");
             
-            if (runAsyncForMutableConent && isCompositeNodeStore) {
+            if (runAsyncForMutableConent && isAppsReadOnly) {
                 LOG.info(
                         "Running AcTool asynchronously on mutable content of composite node store (config runAsyncForMutableConent=true)...");
-                runAcToolAsync(relevantPathsForInstallation, currentStartLevel, isCloudReady);
+                runAcToolAsync(relevantPathsForInstallation, currentStartLevel, isCompositeNodeStore);
             } else {
-                runAcTool(relevantPathsForInstallation, currentStartLevel, isCloudReady);
+                runAcTool(relevantPathsForInstallation, currentStartLevel, isCompositeNodeStore);
             }
 
         } else {
-            LOG.debug("Skipping AcTool Startup Hook: activationMode: {} isCloudReady: {}", activationMode, isCloudReady);
+            LOG.debug("Skipping AcTool Startup Hook: activationMode: {} isCompositeNodeStore: {}", activationMode, isCompositeNodeStore);
         }
 
     }
@@ -118,12 +118,7 @@ public class AcToolStartupHookServiceImpl {
     private void runAcToolAsync(final List<String> relevantPathsForInstallation, final int currentStartLevel, final boolean isCloudReady) {
 
         final AcToolStartupHookServiceImpl startupHook = this;
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                startupHook.runAcTool(relevantPathsForInstallation, currentStartLevel, isCloudReady);
-            }
-        }, THREAD_NAME_ASYNC).start();
+        new Thread(() -> startupHook.runAcTool(relevantPathsForInstallation, currentStartLevel, isCloudReady), THREAD_NAME_ASYNC).start();
     }
 
     private List<String> getRelevantPathsForInstallation() {
@@ -131,10 +126,10 @@ public class AcToolStartupHookServiceImpl {
         try {
             session = repository.loginService(null, null);
 
-            isCompositeNodeStore = RuntimeHelper.isCompositeNodeStore(session);
-            LOG.info("Repo is running with Composite NodeStore: {}", isCompositeNodeStore);
+            isAppsReadOnly = RuntimeHelper.isAppsReadOnly(session);
+            LOG.info("Repo is running with Composite NodeStore: {}", isAppsReadOnly);
             
-            if(!isCompositeNodeStore) {
+            if(!isAppsReadOnly) {
                 return Collections.emptyList();
             }
 
@@ -149,7 +144,7 @@ public class AcToolStartupHookServiceImpl {
                         AccessControlConstants.REP_REPO_POLICY).contains(node.getName())) {
                     continue;
                 }
-                if (isCompositeNodeStore && Arrays.asList("apps", "libs").contains(node.getName())) {
+                if (isAppsReadOnly && Arrays.asList("apps", "libs").contains(node.getName())) {
                     continue;
                 }
                 relevantPathsForInstallation.add(node.getPath());
@@ -179,7 +174,7 @@ public class AcToolStartupHookServiceImpl {
             try {
                 session = repository.loginService(null, null);
 
-                if(isCompositeNodeStore) {
+                if(isAppsReadOnly) {
                     LOG.info("Restoring history from /apps to /var");
 
                     if(session.nodeExists(HistoryUtils.AC_HISTORY_PATH_IN_APPS)) {

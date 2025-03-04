@@ -87,7 +87,7 @@
         <bouncycastle.version>1.64</bouncycastle.version>
         <!-- release sets API classpath, source and target, see  https://docs.oracle.com/javase/9/tools/javac.htm#GUID-AEEC9F07-CB49-4E96-8BC7-BCC2C7F725C9__GUID-D343F6B4-3FDD-43A8-AD24-43DD70214471  and http://openjdk.java.net/jeps/247 -->
         <maven.compiler.release>8</maven.compiler.release>
-        <mockito.version>4.8.0</mockito.version>
+        <mockito.version>5.13.0</mockito.version>
         <junit.version>5.10.0</junit.version>
         <!-- default content package file to install on AEM -->
         <contentPackageFile>${project.build.directory}/${project.build.finalName}.zip</contentPackageFile>

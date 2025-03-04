@@ -28,9 +28,9 @@ import org.slf4j.LoggerFactory;
 public class RuntimeHelper {
     public static final Logger LOG = LoggerFactory.getLogger(RuntimeHelper.class);
 
-    private static final String INSTALLER_CORE_BUNDLE_SYMBOLIC_ID = "org.apache.sling.installer.core";
+    public static final String INSTALLER_CORE_BUNDLE_SYMBOLIC_ID = "org.apache.sling.installer.core";
 
-    public static boolean isCompositeNodeStore(Session session) {
+    public static boolean isAppsReadOnly(Session session) {
         
         try {
             String pathToCheck = "/apps";
@@ -45,8 +45,8 @@ public class RuntimeHelper {
             // see https://issues.apache.org/jira/browse/OAK-6563
             boolean hasCapability = session.hasCapability("addNode", appsNode, new Object[] { "nt:folder" });
             
-            boolean isCompositeNode = hasPermission && !hasCapability;
-            return isCompositeNode;
+            boolean isAppsReadOnly = hasPermission && !hasCapability;
+            return isAppsReadOnly;
         } catch(Exception e) {
             throw new IllegalStateException("Could not check if session is connected to a composite node store: "+e, e);
         }
@@ -60,7 +60,7 @@ public class RuntimeHelper {
         return bundleContext.getBundle(Constants.SYSTEM_BUNDLE_ID).adapt(FrameworkStartLevel.class).getStartLevel();
     }
     
-    public static boolean isCloudReadyInstance() {
+    public static boolean isCompositeNodeStore() {
         
         boolean isCloudReadyInstance = true;
         Bundle[] bundles = FrameworkUtil.getBundle(RuntimeHelper.class).getBundleContext().getBundles();
