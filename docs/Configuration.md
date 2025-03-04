@@ -40,9 +40,53 @@ Examples:
 
 ## Overall structure a of an AC configuration file
 
-<img src="images/configuration-file-structure.png">
+```mermaid
+---
+title: AC Configuration Structure
+---
+classDiagram
 
-Every configuration file comprises a group section where groups and their membership to other groups get defined and a ACE section where all ACEs in the repository regarding these groups get defined. The principal name of an ACE definition in each configuration file has to match a group id which is also defined in the same file. Groups which are contained in the `isMemberOf` property within a group definition have either to be defined in another configuration file or already be installed in the system on which the installation takes place.
+    %% Unfortunately relations on members not supported yet: https://github.com/mermaid-js/mermaid/issues/1873
+    Aggregate --* "many" Group
+    Aggregate --* "many" User
+    Aggregate --* "many" ACE
+    Aggregate --* "1" Global
+    
+    class Aggregate["AC Tool Configuration"] {
+        -group_config[]
+        -user_config[]
+        -ace_config[]
+        -global_config
+    }
+    note for Group "Identified via User ID"
+    class Group["Group Configuration"] {
+        String name
+        String description
+        String[] isMemberOf
+        ...
+    }
+    note for User "Identified via Group ID"
+    class User["User Configuration"] {
+        String name
+        String description
+        String[] isMemberOf
+        ...
+    }
+    note for ACE "Identified via Principal Name (usually equal to User/Group ID)"
+    class ACE["Access Control Entry"] {
+        String path
+        String permission
+        String privileges
+        ...
+    }
+    class Global["Global Configuration"]{
+        String minRequiredVersion
+        vars
+        ...
+    }
+```
+
+Every configuration file (set) comprises a group section where groups and their membership to other groups get defined and an ACE section where all ACEs in the repository regarding these groups get defined. The principal name of an ACE definition in each configuration file has to match a group id/user id which is also defined in the same file set. Group IDs which are contained in the `isMemberOf` property within a group definition have either to be defined in another configuration file or already be installed in the system on which the installation takes place.
 
 ## Configuration of groups
 
