@@ -18,7 +18,7 @@ Due to usage of a [composite node store](http://jackrabbit.apache.org/oak/docs/n
 2. Afterwards all mutable content is discarded (authorizables in `/home` and ACEs in mutable content)
 3. During deployment the authorizables and ACEs in mutable locations of the repository are installed on the target mutable node store via the [Startup Hook](#startup-hook)
 
-Conceptually step 1 is only necessary if ACEs for immutable content (in `/apps` and `/libs`) are set - this is usually the case though due to permissions to navigation entries and other ootb product functionality. 
+Conceptually step 1 is only necessary if ACEs for immutable content (in `/apps` and `/libs`) are set - this is usually the case for permissions to navigation entries and other author product functionality. 
 
 **IMPORTANT**: Due to the fact that immutable content (step 1) is built during image build, configurations for  runmodes `dev`, `stage` and `prod` are ignored. Use only ACEs referring to generic group fragments in immutable content that then in turn can be used in an environment-specific fashion from other groups in step 3. See also [best practice to use functional fragments](BestPractices.md#use-fragment-groups-for-functional-aspects-and-content-access).
 
