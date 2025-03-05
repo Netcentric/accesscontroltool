@@ -20,7 +20,7 @@ Due to usage of a [composite node store](http://jackrabbit.apache.org/oak/docs/n
 
 Conceptually step 1 is only necessary if ACEs for immutable content (in `/apps` and `/libs`) are set - this is usually the case for permissions to navigation entries and other author product functionality. 
 
-**IMPORTANT**: Due to the fact that immutable content (step 1) is built during image build, configurations for  runmodes `dev`, `stage` and `prod` are ignored. Use only ACEs referring to generic group fragments in immutable content that then in turn can be used in an environment-specific fashion from other groups in step 3. See also [best practice to use functional fragments](BestPractices.md#use-fragment-groups-for-functional-aspects-and-content-access).
+**IMPORTANT**: Due to the fact that immutable content (step 1) is prepared during image build, configurations for  run modes `dev`, `stage` and `prod` are ignored. Use only ACEs referring to generic group fragments in immutable content that then can be used in an environment-specific fashion from other groups in step 3. See also [best practice to use functional fragments](BestPractices.md#use-fragment-groups-for-functional-aspects-and-content-access).
 
 For working the the local AEM SDK, it is useful to configure the [Installation Hook](#installation-hook) in the package containing the YAML configuration to be able to easily install the yaml files locally. The install hook is automatically skipped in AEMaaCS instances.
 
