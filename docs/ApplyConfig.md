@@ -14,8 +14,8 @@ During the installation a history containing the most important events gets crea
 
 Due to usage of a [composite node store](http://jackrabbit.apache.org/oak/docs/nodestore/compositens.html) the installation of authorizables and ACEs is slightly more complex in AEMaaCS
 
-1. During the Docker build ("Build Images") in Cloud Manager the ACLs are applied via [Startup Hook](#startup-hook)
-2. Afterwards all mutable content is discarded (authorizables in `/home` and ACEs in mutable content)
+1. During the Docker build ("Build Images") in Cloud Manager the ACLs are applied via [Startup Hook](#startup-hook) (at that point in time, the `/apps` and `/libs` nodes are not read-only)
+2. Afterwards all mutable content is discarded (authorizables in `/home` and ACEs in mutable content, i.e. everywhere outside `/apps` and `/libs`)
 3. During deployment the authorizables and ACEs in mutable locations of the repository are installed on the target mutable node store via the [Startup Hook](#startup-hook)
 
 Theoretically step 1 is only necessary if ACEs for immutable content are required. In addition you should configure the [Installation Hook](#installation-hook) in the package containing the YAML configuration to be able to also install on a local AEM SDK instance. The install hook is automatically skipped in AEMaaCS instances.
