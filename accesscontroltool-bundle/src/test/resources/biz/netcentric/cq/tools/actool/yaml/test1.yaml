@@ -1,0 +1,19 @@
+- group_config:
+    - FOR tenant IN ${whitelistedTenants}:
+        - fragment-${tenant}-everyone:
+            - name: "Fragment ${tenant} Everyone"
+              members: anonymous
+              path:  /home/groups/novonordisk/actool-fragments/${tenant}
+
+- ace_config:
+    - FOR tenant IN ${whitelistedTenants}:
+        - fragment-${tenant}-everyone:
+            - path: /conf/${tenant}/settings/wcm/templates
+              permission: allow
+              actions: read
+            - path: /conf/${tenant}/settings/wcm/template-types
+              permission: allow
+              actions: read
+            - path: /conf/${tenant}/settings/wcm/policies
+              permission: allow
+              actions: read
