@@ -1,5 +1,7 @@
 package biz.netcentric.cq.tools.actool.ims.request;
 
+import java.util.Objects;
+
 /*-
  * #%L
  * Access Control Tool Bundle
@@ -30,4 +32,26 @@ public class CreateGroupStep implements Step {
     //String name; 
     @JsonProperty
     public String description; // this may be empty
+
+    @Override
+    public String toString() {
+        return "CreateGroupStep [defaultOption=" + defaultOption + ", description=" + description + "]";
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(defaultOption, description);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        CreateGroupStep other = (CreateGroupStep) obj;
+        return Objects.equals(defaultOption, other.defaultOption) && Objects.equals(description, other.description);
+    }
 }
