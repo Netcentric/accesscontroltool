@@ -18,6 +18,8 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -33,7 +35,7 @@ public class AceServiceImplTest {
     @Test
     public void testIsRelevantPath() {
 
-        String[] restrictedToPaths = new String[] { "/content/site1", "/content/site3" };
+        Collection<String> restrictedToPaths = Arrays.asList("/content/site1", "/content/site3");
         assertTrue(aceServiceImpl.isRelevantPath("/content/site1", restrictedToPaths));
         assertFalse(aceServiceImpl.isRelevantPath("/content/site1ButNotSameRoot", restrictedToPaths));
         assertTrue(aceServiceImpl.isRelevantPath("/content/site1/page", restrictedToPaths));
@@ -51,7 +53,7 @@ public class AceServiceImplTest {
     @Test
     public void testIsRelevantPathWithRegEx() {
 
-        String[] restrictedToPaths = new String[] { "/content/site1", "^/$", "^$" };
+        Collection<String> restrictedToPaths = Arrays.asList( "/content/site1", "^/$", "^$" );
         
         // regex (for repo level restrition)
         assertTrue(aceServiceImpl.isRelevantPath("", restrictedToPaths));

@@ -63,6 +63,7 @@ import org.slf4j.LoggerFactory;
 import com.adobe.granite.keystore.KeyStoreNotInitialisedException;
 import com.adobe.granite.keystore.KeyStoreService;
 
+import biz.netcentric.cq.tools.actool.api.InstallationOptions;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableInstallerService;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
@@ -117,7 +118,7 @@ public class AuthorizableInstallerServiceImpl implements
     public void installAuthorizables(
             AcConfiguration acConfiguration,
             AuthorizablesConfig authorizablesConfigBeans,
-            final Session session, InstallationLogger installLog)
+            final Session session, InstallationLogger installLog, InstallationOptions options)
             throws RepositoryException, AuthorizableCreatorException, LoginException, IOException, GeneralSecurityException {
 
         AuthInstallerUserManager userManager = new AuthInstallerUserManagerPrefetchingImpl(AccessControlUtils.getUserManagerAutoSaveDisabled(session), session.getValueFactory(), installLog);
@@ -136,16 +137,16 @@ public class AuthorizableInstallerServiceImpl implements
         }
 
         installLog.addMessage(LOG, "Created "+installLog.getCountAuthorizablesCreated() + " authorizables (moved "+installLog.getCountAuthorizablesMoved() + " authorizables)");
-        syncWithExternalGroupManagement(groupsToSyncWithExternalUserMgmt, installLog);
+        syncWithExternalGroupManagement(groupsToSyncWithExternalUserMgmt, installLog, options);
 
     }
 
-    private void syncWithExternalGroupManagement(Collection<AuthorizableConfigBean> groupConfigBeans, InstallationLogger installLog) throws IOException {
+    private void syncWithExternalGroupManagement(Collection<AuthorizableConfigBean> groupConfigBeans, InstallationLogger installLog, InstallationOptions options) throws IOException {
         if (groupConfigBeans.isEmpty()) {
             return;
         }
         for (ExternalGroupManagement externalGroupManagement : externalGroupManagementServices) {
-            int numGroupsSynced = externalGroupManagement.updateGroups(groupConfigBeans);
+            int numGroupsSynced = externalGroupManagement.updateGroups(groupConfigBeans, options);
             installLog.addMessage(LOG, "Synchronized " + numGroupsSynced + " groups with external user management " + externalGroupManagement.getLabel());
         }
     }

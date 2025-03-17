@@ -15,12 +15,13 @@ package biz.netcentric.cq.tools.actool.ims.request;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ActionCommand {
 
-    @JsonProperty("do")
+    @JsonProperty(value = "do", required = true)
     final Collection<Step> steps;
 
     public ActionCommand() {
@@ -29,5 +30,27 @@ public class ActionCommand {
 
     public boolean addStep(Step step) {
         return steps.add(step);
+    }
+
+    @Override
+    public String toString() {
+        return "ActionCommand [steps=" + steps + "]";
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(steps);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ActionCommand other = (ActionCommand) obj;
+        return Objects.equals(steps, other.steps);
     }
 }

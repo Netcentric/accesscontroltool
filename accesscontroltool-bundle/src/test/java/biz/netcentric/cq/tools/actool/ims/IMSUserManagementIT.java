@@ -32,6 +32,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.osgi.util.converter.Converters;
 
+import biz.netcentric.cq.tools.actool.api.InstallationOptionsBuilder;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.ims.IMSUserManagement.Configuration;
 import biz.netcentric.cq.tools.actool.ims.response.IMSGroup;
@@ -64,6 +65,7 @@ class IMSUserManagementIT {
 
     @Test
     void testAddSimpleGroup() throws IOException {
+        InstallationOptionsBuilder builder= new InstallationOptionsBuilder();
         Configuration config = Converters.standardConverter().convert(properties).to(Configuration.class);
         IMSUserManagement imsUserManagement = new IMSUserManagement(config, new HttpClientBuilderFactory() {
             @Override
@@ -75,18 +77,18 @@ class IMSUserManagementIT {
         AuthorizableConfigBean group = new AuthorizableConfigBean();
         group.setAuthorizableId("testGroup");
         group.setDescription("my description");
-        assertEquals(1, imsUserManagement.updateGroups(Collections.singleton(group)));
+        assertEquals(1, imsUserManagement.updateGroups(Collections.singleton(group), builder.build()));
 
         // test without description
         AuthorizableConfigBean group2 = new AuthorizableConfigBean();
         group2.setAuthorizableId("testGroup");
-        assertEquals(1, imsUserManagement.updateGroups(Collections.singleton(group2)));
+        assertEquals(1, imsUserManagement.updateGroups(Collections.singleton(group2), builder.build()));
 
         // test with empty description
         AuthorizableConfigBean group3 = new AuthorizableConfigBean();
         group3.setAuthorizableId("testGroup");
         group3.setDescription("");
-        assertEquals(1, imsUserManagement.updateGroups(Collections.singleton(group3)));
+        assertEquals(1, imsUserManagement.updateGroups(Collections.singleton(group3), builder.build()));
     }
 
     @Test
@@ -101,7 +103,7 @@ class IMSUserManagementIT {
         });
         AuthorizableConfigBean group = new AuthorizableConfigBean();
         group.setAuthorizableId("testGroup"); // this group is already there
-        assertEquals(0, imsUserManagement.updateGroups(Collections.singleton(group)));
+        assertEquals(0, imsUserManagement.updateGroups(Collections.singleton(group), new InstallationOptionsBuilder().build()));
     }
 
     @Test
@@ -117,7 +119,7 @@ class IMSUserManagementIT {
         AuthorizableConfigBean group = new AuthorizableConfigBean();
         group.setAuthorizableId("testGroup");
         group.setDescription("my description");
-        imsUserManagement.updateGroups(Collections.singleton(group));
+        imsUserManagement.updateGroups(Collections.singleton(group), new InstallationOptionsBuilder().build());
     }
 
     @Test
@@ -133,7 +135,7 @@ class IMSUserManagementIT {
         AuthorizableConfigBean group = new AuthorizableConfigBean();
         group.setAuthorizableId("testGroup");
         group.setDescription("my description");
-        IOException t = assertThrows(IOException.class, () -> { imsUserManagement.updateGroups(Collections.singleton(group)); });
+        IOException t = assertThrows(IOException.class, () -> { imsUserManagement.updateGroups(Collections.singleton(group), new InstallationOptionsBuilder().build()); });
         assertTrue(t.getMessage().contains("error.plc.not_found"), "Exceptions message is supposed to contain 'error.plc.not_found' but was " + t.getMessage());
     }
 
@@ -150,7 +152,7 @@ class IMSUserManagementIT {
         AuthorizableConfigBean group = new AuthorizableConfigBean();
         group.setAuthorizableId("testGroup");
         group.setDescription("my description");
-        assertEquals(1, imsUserManagement.updateGroups(Collections.singleton(group)));
+        assertEquals(1, imsUserManagement.updateGroups(Collections.singleton(group), new InstallationOptionsBuilder().build()));
     }
 
     @Test
@@ -170,7 +172,7 @@ class IMSUserManagementIT {
             group.setDescription("my description" + n);
             groups.add(group);
         }
-        assertEquals(25, imsUserManagement.updateGroups(groups));
+        assertEquals(25, imsUserManagement.updateGroups(groups, new InstallationOptionsBuilder().build()));
     }
 
     @Test
