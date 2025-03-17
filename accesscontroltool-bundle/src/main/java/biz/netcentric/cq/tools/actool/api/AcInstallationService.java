@@ -21,19 +21,28 @@ public interface AcInstallationService {
     /** Applies the full configuration as stored at the path configured at PID biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl
      * to the repository.
      * 
-     * @return the installation log */
+     * @return the installation log
+     * @deprecated use {@link #apply(InstallationOptions)} instead
+     */
+    @Deprecated
     public InstallationLog apply();
 
     /** Applies the configuration as stored at the given configurationRootPath to the repository.
      * 
      * @param configurationRootPath the root path for configuration files
-     * @return the installation log */
+     * @return the installation log 
+     * @deprecated use {@link #apply(InstallationOptions)} instead
+     */
+    @Deprecated
     public InstallationLog apply(String configurationRootPath);
 
     /** Applies parts of the configuration (based on given paths)
      * 
      * @param restrictedToPaths only apply ACLs to root paths as given
-     * @return the installation log */
+     * @return the installation log  
+     * @deprecated use {@link #apply(InstallationOptions)} instead
+     */
+    @Deprecated
     public InstallationLog apply(String[] restrictedToPaths);
 
     /** Applies the configuration as stored at the given configurationRootPath to the repository, but only apply ACEs to given
@@ -41,7 +50,10 @@ public interface AcInstallationService {
      * 
      * @param restrictedToPaths only apply ACLs to root paths as given
      * @param configurationRootPath the root path for configuration files
-     * @return the installation log */
+     * @return the installation log
+     * @deprecated use {@link #apply(InstallationOptions)} instead
+     */
+    @Deprecated
     public InstallationLog apply(String configurationRootPath, String[] restrictedToPaths);
 
 
@@ -51,10 +63,20 @@ public interface AcInstallationService {
      * @param restrictedToPaths only apply ACLs to root paths as given
      * @param configurationRootPath the root path for configuration files
      * @param skipIfConfigUnchanged will check if the config is unchanged compared to last execution with same parameters
-     * @return the installation log */
+     * @return the installation log
+     * @deprecated use {@link #apply(InstallationOptions)} instead
+     */
+    @Deprecated
     public InstallationLog apply(String configurationRootPath, String[] restrictedToPaths, boolean skipIfConfigUnchanged);
 
-    
+    /** Applies the configuration
+     * 
+     * @param options the installation options which further specify the installation
+     * @return the installation log
+     * @since 3.6.0
+     */
+    public InstallationLog apply(InstallationOptions options);
+
     /** purges all acls of the node specified by path (no deletion of acls of subnodes)
      *
      * @param path the path from which to purge the ACL

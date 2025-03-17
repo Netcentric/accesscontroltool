@@ -22,6 +22,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -56,6 +58,7 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.api.AcInstallationService;
 import biz.netcentric.cq.tools.actool.api.InstallationLog;
+import biz.netcentric.cq.tools.actool.api.InstallationOptionsBuilder;
 import biz.netcentric.cq.tools.actool.api.InstallationResult;
 import biz.netcentric.cq.tools.actool.dumpservice.ConfigDumpService;
 import biz.netcentric.cq.tools.actool.helper.UncheckedRepositoryException;
@@ -75,6 +78,7 @@ public class AcToolUiService {
 
     public static final String PARAM_CONFIGURATION_ROOT_PATH = "configurationRootPath";
     public static final String PARAM_APPLY_ONLY_IF_CHANGED = "applyOnlyIfChanged";
+    private static final String PARAM_UPDATE_EXISTING_EXTERNAL_GROUPS = "updateExistingExternalGroups";
     public static final String PARAM_BASE_PATHS = "basePaths";
     public static final String PARAM_SHOW_LOG_ID = "showLogId";
     public static final String PARAM_SHOW_LOG_VERBOSE = "showLogVerbose";
@@ -166,8 +170,20 @@ public class AcToolUiService {
         RequestParameters reqParams = RequestParameters.fromRequest(req, acInstallationService);
         LOG.info("Received POST request to apply AC Tool config with configurationRootPath={} basePaths={}", reqParams.configurationRootPath, reqParams.basePaths);
 
-        InstallationLog log = acInstallationService.apply(reqParams.configurationRootPath, reqParams.getBasePathsArr(),
-                reqParams.applyOnlyIfChanged);
+        InstallationOptionsBuilder builder = new InstallationOptionsBuilder();
+        if (StringUtils.isNotBlank(reqParams.configurationRootPath)) {
+            builder.withConfigurationRootPath(reqParams.configurationRootPath);
+        }
+        if (!reqParams.getBasePathsArr().isEmpty()) {
+            builder.withRestrictedToPaths(reqParams.getBasePathsArr());
+        }
+        if (reqParams.applyOnlyIfChanged) {
+            builder.skipIfConfigUnchanged();
+        }
+        if (reqParams.updateExistingExternalGroups) {
+            builder.updateExistingExternalGroups();
+        }
+        InstallationLog log = acInstallationService.apply(builder.build());
 
         String msg = log.getMessageHistory().trim();
         msg = msg.contains("\n") ? StringUtils.substringAfterLast(msg, "\n") : msg;
@@ -496,11 +512,7 @@ public class AcToolUiService {
             writer.print(escapeHtml4(reqParams.configurationRootPath));
         }
         writer.println("' class='input' size='70'>");
-        writer.print("<input type='checkbox' name='" + PARAM_APPLY_ONLY_IF_CHANGED + "' value='true'"
-                + (reqParams.applyOnlyIfChanged ? " checked='checked'" : "") + " /> apply only if config changed");
         writer.closeTd();
-
-
         writer.closeTr();
 
         writer.tr();
@@ -515,9 +527,21 @@ public class AcToolUiService {
         }
         writer.println("' class='input' size='70'>");
         writer.closeTd();
-
         writer.closeTr();
 
+        writer.tr();
+        writer.openTd();
+        writer.println("<b>Advanced Options</b>");
+        writer.closeTd();
+        writer.openTd();
+        writer.print("<input type='checkbox' name='" + PARAM_APPLY_ONLY_IF_CHANGED + "' value='true'"
+                + (reqParams.applyOnlyIfChanged ? " checked='checked'" : "") + " /> Apply only if config changed");
+        writer.println("<br/>");
+        writer.print("<input type='checkbox' name='" + PARAM_UPDATE_EXISTING_EXTERNAL_GROUPS + "' value='true'"
+                + (reqParams.updateExistingExternalGroups ? " checked='checked'" : "") + " /> Also update existing external groups");
+        writer.closeTd();
+        writer.closeTr();
+        
         writer.tr();
         writer.openTd();
         String onClick = "var as=$('#applySpinner');as.show(); var b=$('#applyButton');b.prop('disabled', true); oldL = b.text();b.text(' Applying AC Tool Configuration... ');var f=$('#acForm');var fd=f.serialize();$.post(f.attr('action'), fd).done(function(text){alert(text)}).fail(function(xhr){alert(xhr.status===403?'Permission Denied':'Config could not be applied - check log for errors')}).always(function(text) { "
@@ -593,7 +617,8 @@ public class AcToolUiService {
                     StringUtils.isNotBlank(basePathsParam) ? Arrays.asList(basePathsParam.split(" *, *")) : null,
                     getParam(req, AcToolUiService.PARAM_SHOW_LOG_ID, null),
                     Boolean.valueOf(req.getParameter(AcToolUiService.PARAM_SHOW_LOG_VERBOSE)),
-                    Boolean.valueOf(req.getParameter(AcToolUiService.PARAM_APPLY_ONLY_IF_CHANGED)));
+                    Boolean.valueOf(req.getParameter(AcToolUiService.PARAM_APPLY_ONLY_IF_CHANGED)),
+                    Boolean.valueOf(req.getParameter(AcToolUiService.PARAM_UPDATE_EXISTING_EXTERNAL_GROUPS)));
         }
         
         final String configurationRootPath;
@@ -601,22 +626,24 @@ public class AcToolUiService {
         final String showLogId;
         final boolean showLogVerbose;
         final boolean applyOnlyIfChanged;
+        private boolean updateExistingExternalGroups;
 
         public RequestParameters(String configurationRootPath, List<String> basePaths, String showLogId, boolean showLogVerbose,
-                boolean applyOnlyIfChanged) {
+                boolean applyOnlyIfChanged, boolean updateExistingExternalGroups) {
             super();
             this.configurationRootPath = configurationRootPath;
             this.basePaths = basePaths;
             this.showLogId = showLogId;
             this.showLogVerbose = showLogVerbose;
             this.applyOnlyIfChanged = applyOnlyIfChanged;
+            this.updateExistingExternalGroups = updateExistingExternalGroups;
         }
 
-        public String[] getBasePathsArr() {
+        public Collection<String> getBasePathsArr() {
             if (basePaths == null) {
-                return null;
+                return Collections.emptyList();
             } else {
-                return basePaths.toArray(new String[basePaths.size()]);
+                return basePaths;
             }
         }
 

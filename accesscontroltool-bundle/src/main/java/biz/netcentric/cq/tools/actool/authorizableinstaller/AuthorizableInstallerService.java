@@ -21,6 +21,7 @@ import javax.jcr.Session;
 
 import org.apache.sling.api.resource.LoginException;
 
+import biz.netcentric.cq.tools.actool.api.InstallationOptions;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
@@ -30,6 +31,6 @@ public interface AuthorizableInstallerService {
     void installAuthorizables(
             AcConfiguration acConfiguration,
             AuthorizablesConfig authorizablesConfigBeans,
-            final Session session, InstallationLogger installLog)
+            final Session session, InstallationLogger installLog, InstallationOptions options)
     throws RepositoryException, AuthorizableCreatorException, LoginException, IOException, GeneralSecurityException;
 }

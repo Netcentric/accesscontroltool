@@ -30,7 +30,7 @@ public class GroupResponse {
     @JsonProperty("result")
     public String result;
     
-    @JsonProperty("groups")
+    @JsonProperty(value = "groups", required = true)
     public List<IMSGroup> groups;
     
     @JsonIgnore

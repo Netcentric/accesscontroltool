@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import com.adobe.granite.jmx.annotation.AnnotatedStandardMBean;
 
+import biz.netcentric.cq.tools.actool.api.InstallationOptionsBuilder;
 import biz.netcentric.cq.tools.actool.dumpservice.ConfigDumpService;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
 import biz.netcentric.cq.tools.actool.history.AcToolExecution;
@@ -167,7 +168,9 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
     }
     @Override
     public String purgeAllAuthorizablesFromConfiguration(String configurationRootPath) {
-        return acInstallationService.purgeAuthorizablesFromConfig(configurationRootPath);
+        InstallationOptionsBuilder builder = new InstallationOptionsBuilder();
+        builder.withConfigurationRootPath(configurationRootPath);
+        return acInstallationService.purgeAuthorizablesFromConfig(builder.build());
     }
 
     @Override

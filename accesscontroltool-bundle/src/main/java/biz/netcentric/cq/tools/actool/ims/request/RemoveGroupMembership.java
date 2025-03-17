@@ -27,11 +27,11 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * Maintains memberships of users in (admin) groups, to be used with {@link UserActionCommand}.
  * @see AddGroupMembers
  */
-@JsonTypeName("add")
+@JsonTypeName("remove")
 @JsonInclude(Include.NON_EMPTY) // neither empty strings nor null values are allowed for the fields
-public class AddGroupMembership implements Step {
+public class RemoveGroupMembership implements Step {
 
-    public AddGroupMembership(Collection<String> group) {
+    public RemoveGroupMembership(Collection<String> group) {
         this.group = new LinkedHashSet<>(group);
     }
 
@@ -40,7 +40,7 @@ public class AddGroupMembership implements Step {
 
     @Override
     public String toString() {
-        return "AddGroupMembership [group=" + group + "]";
+        return "RemoveGroupMembership [group=" + group + "]";
     }
 
     @Override
@@ -56,7 +56,7 @@ public class AddGroupMembership implements Step {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        AddGroupMembership other = (AddGroupMembership) obj;
+        RemoveGroupMembership other = (RemoveGroupMembership) obj;
         return Objects.equals(group, other.group);
     }
 }

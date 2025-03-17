@@ -63,6 +63,8 @@ import org.slf4j.LoggerFactory;
 import biz.netcentric.cq.tools.actool.aceinstaller.AceBeanInstaller;
 import biz.netcentric.cq.tools.actool.api.AcInstallationService;
 import biz.netcentric.cq.tools.actool.api.InstallationLog;
+import biz.netcentric.cq.tools.actool.api.InstallationOptions;
+import biz.netcentric.cq.tools.actool.api.InstallationOptionsBuilder;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableInstallerService;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
@@ -192,15 +194,31 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
     @Override
     public InstallationLog apply(String configurationRootPath, String[] restrictedToPaths, boolean skipIfConfigUnchanged) {
+        InstallationOptionsBuilder builder = new InstallationOptionsBuilder();
+        if (StringUtils.isNotBlank(configurationRootPath)) {
+            builder.withConfigurationRootPath(configurationRootPath);
+        }
+        if (restrictedToPaths != null && restrictedToPaths.length > 0) {
+            builder.withRestrictedToPaths(restrictedToPaths);
+        }
+        if (skipIfConfigUnchanged) {
+            builder.skipIfConfigUnchanged();
+        }
+        return apply(builder.build());
+    }
 
-        if(StringUtils.isBlank(configurationRootPath)) {
+    public InstallationLog apply(InstallationOptions options) {
+        final String configurationRootPath;
+        if(!options.getConfigurationRootPath().isPresent() || options.getConfigurationRootPath().get().isEmpty()) {
             if(CollectionUtils.isEmpty(configurationRootPaths)) {
                 throw new IllegalArgumentException("Configuration root path neither configured nor provided.");
             } else if(configurationRootPaths.size() == 1) {
                 configurationRootPath = configurationRootPaths.get(0);
             } else {
-                return applyMultipleConfigurations(restrictedToPaths, skipIfConfigUnchanged);
+                return applyMultipleConfigurations(options);
             }
+        } else {
+            configurationRootPath = options.getConfigurationRootPath().get();
         }
         PersistableInstallationLogger installLog = new PersistableInstallationLogger();
         Session session = null;
@@ -217,7 +235,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             }
 
             // install config files
-            installConfigurationFiles(installLog, configFiles, restrictedToPaths, session, skipIfConfigUnchanged);
+            installConfigurationFiles(installLog, configFiles, session, options);
         } catch (AuthorizableCreatorException e) {
             // exception was added to history in installConfigurationFiles() before it was saved
             LOG.warn("Exception during installation of authorizables (no rollback), e=" + e, e);
@@ -239,33 +257,25 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         return installLog;
     }
 
-    private InstallationLog applyMultipleConfigurations(String[] restrictedToPaths, boolean skipIfConfigUnchanged) {
+    private InstallationLog applyMultipleConfigurations(InstallationOptions options) {
         InstallationLogger overviewInstallLog = new PersistableInstallationLogger();
         overviewInstallLog.addMessage(LOG, "Applying multiple configs (this log only shows what was applied, check the individual logs for details)");
         for(String rootPath: configurationRootPaths) {
             overviewInstallLog.addMessage(LOG, "Applying config at root path "+rootPath);
-            apply(rootPath, restrictedToPaths, skipIfConfigUnchanged);
+            InstallationOptionsBuilder optionsBuilder = new InstallationOptionsBuilder(options);
+            optionsBuilder.withConfigurationRootPath(rootPath);
+            apply(optionsBuilder.build());
         }
         return overviewInstallLog;
     }
 
-
-    // called from install hook, skipIfConfigUnchanged always false
     @Override
     public void installConfigurationFiles(PersistableInstallationLogger installLog, Map<String, String> configurationFileContentsByFilename,
-            String[] restrictedToPaths, Session session)
-            throws Exception {
-        installConfigurationFiles(installLog, configurationFileContentsByFilename, restrictedToPaths, session, false);
-    }
-
-    /** Common entry point for JMX and install hook */
-    // TODO: should not be exported as using non-API class PersistableInstallationLogger / https://github.com/Netcentric/accesscontroltool/issues/394
-    public void installConfigurationFiles(PersistableInstallationLogger installLog, Map<String, String> configurationFileContentsByFilename,
-            String[] restrictedToPaths, Session session, boolean skipIfConfigUnchanged)
+            Session session, InstallationOptions options)
             throws Exception {
 
-        boolean configsIdenticalToLastExecution = acConfigChangeTracker.configIsUnchangedComparedToLastExecution(configurationFileContentsByFilename, restrictedToPaths, session);
-        if(skipIfConfigUnchanged && configsIdenticalToLastExecution) {
+        boolean configsIdenticalToLastExecution = acConfigChangeTracker.configIsUnchangedComparedToLastExecution(configurationFileContentsByFilename, session, options);
+        if(options.shouldSkipIfConfigUnchanged() && configsIdenticalToLastExecution) {
             installLog.addMessage(LOG, "Config files are identical to last execution");
             // returning outside of below try will not persist history (this is the desired behaviour for this case)
             return;
@@ -280,7 +290,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             sw.start();
 
             installLog.addMessage(LOG, "*** Applying AC Tool Configuration...");
-            installLog.addMessage(LOG, "Running with v" + getVersion() + " on instance id "+slingSettingsService.getSlingId() + (!ArrayUtils.isEmpty(restrictedToPaths) ? " with restricted paths: "+Arrays.asList(restrictedToPaths) : ""));
+            installLog.addMessage(LOG, "Running with v" + getVersion() + " on instance id "+slingSettingsService.getSlingId() + (!options.getRestrictedToPaths().isEmpty() ? " with restricted paths: "+options.getRestrictedToPaths() : ""));
 
             if (configurationFileContentsByFilename != null) {
 
@@ -289,7 +299,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 AcConfiguration acConfiguration = configurationMerger.getMergedConfigurations(configurationFileContentsByFilename, installLog,
                         configReader, session);
 
-                installMergedConfigurations(installLog, acConfiguration, restrictedToPaths, session);
+                installMergedConfigurations(installLog, acConfiguration, session, options);
 
                 ensureVirtualGroupsAreRemoved(installLog, acConfiguration, session);
                 removeObsoleteAuthorizables(installLog, acConfiguration.getObsoleteAuthorizables(), session);
@@ -321,7 +331,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
     private void installAcConfiguration(
             AcConfiguration acConfiguration, InstallationLogger installLog,
-            Map<String, Set<AceBean>> repositoryDumpAceMap, String[] restrictedToPaths, Session session) throws Exception {
+            Map<String, Set<AceBean>> repositoryDumpAceMap, Session session, InstallationOptions options) throws Exception {
 
         if (acConfiguration.getAceConfig() == null) {
             String message = "ACE config not found in YAML file! installation aborted!";
@@ -329,9 +339,9 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             throw new IllegalArgumentException(message);
         }
 
-        installAuthorizables(installLog, acConfiguration, session);
+        installAuthorizables(installLog, acConfiguration, session, options);
 
-        installAces(installLog, acConfiguration, repositoryDumpAceMap, restrictedToPaths, session);
+        installAces(installLog, acConfiguration, repositoryDumpAceMap, session, options);
     }
 
     private void removeAcesForPathsNotInConfig(InstallationLogger installLog, Session session, Set<String> principalsInConfig,
@@ -396,8 +406,8 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         return relevantPathsForCleanup;
     }
 
-    boolean isRelevantPath(String path, String[] restrictedToPaths) {
-        if (restrictedToPaths == null || restrictedToPaths.length == 0) {
+    boolean isRelevantPath(String path, Collection<String> restrictedToPaths) {
+        if (restrictedToPaths.isEmpty()) {
             return true;
         }
         boolean isRelevant = false;
@@ -455,7 +465,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     private void installAces(InstallationLogger installLog,
-            AcConfiguration acConfiguration, Map<String, Set<AceBean>> repositoryDumpAceMap, String[] restrictedToPaths, Session session)
+            AcConfiguration acConfiguration, Map<String, Set<AceBean>> repositoryDumpAceMap, Session session, InstallationOptions options)
             throws Exception {
 
         // --- installation of ACEs from configuration ---
@@ -466,7 +476,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         removeAcesForPathsNotInConfig(installLog, session, principalsToRemoveAcesFor, repositoryDumpAceMap, acConfiguration);
 
         Map<String, Set<AceBean>> filteredPathBasedAceMapFromConfig = filterForRestrictedPaths(pathBasedAceMapFromConfig,
-                restrictedToPaths, installLog);
+                options.getRestrictedToPaths(), installLog);
 
         if (!filteredPathBasedAceMapFromConfig.isEmpty()) {
             AceBeanInstaller aceBeanInstaller = acConfiguration.getGlobalConfiguration().getInstallAclsIncrementally()
@@ -496,8 +506,8 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     private Map<String, Set<AceBean>> filterForRestrictedPaths(Map<String, Set<AceBean>> pathBasedAceMapFromConfig,
-            String[] restrictedToPaths, InstallationLogger installLog) {
-        if (restrictedToPaths == null || restrictedToPaths.length == 0) {
+            Collection<String> restrictedToPaths, InstallationLogger installLog) {
+        if (restrictedToPaths == null || restrictedToPaths.isEmpty()) {
             return pathBasedAceMapFromConfig;
         }
 
@@ -512,7 +522,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         int skipped = pathBasedAceMapFromConfig.keySet().size() - filteredPathBasedAceMapFromConfig.keySet().size();
 
         installLog.addMessage(LOG, "Will install AC Config at " + filteredPathBasedAceMapFromConfig.keySet().size()
-                + " paths (skipping " + skipped + " due to paths restriction " + Arrays.toString(restrictedToPaths) + ")");
+                + " paths (skipping " + skipped + " due to paths restriction " + String.join(", ", restrictedToPaths) + ")");
 
         return filteredPathBasedAceMapFromConfig;
     }
@@ -525,7 +535,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         return count;
     }
 
-    private void installAuthorizables(InstallationLogger installLog, AcConfiguration acConfiguration, Session session)
+    private void installAuthorizables(InstallationLogger installLog, AcConfiguration acConfiguration, Session session, InstallationOptions options)
             throws RepositoryException, Exception {
         // --- installation of Authorizables from configuration ---
 
@@ -537,7 +547,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
         try {
             // only save session if no exceptions occurred
-            authorizableCreatorService.installAuthorizables(acConfiguration, authorizablesConfig, session, installLog);
+            authorizableCreatorService.installAuthorizables(acConfiguration, authorizablesConfig, session, installLog, options);
         } catch (Exception e) {
             throw new AuthorizableCreatorException(e);
         }
@@ -628,7 +638,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     private void installMergedConfigurations(InstallationLogger installLog, AcConfiguration acConfiguration, 
-            String[] restrictedToPaths, Session session) throws ValueFormatException,  RepositoryException, Exception {
+            Session session, InstallationOptions options) throws ValueFormatException,  RepositoryException, Exception {
 
         installLog.addVerboseMessage(LOG, "Starting installation of merged configurations...");
 
@@ -644,7 +654,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         installLog.addMessage(LOG, "Retrieved existing ACLs from repository in " + msHumanReadable(stopWatch.getTime()) 
             + (QueryHelper.hasQueryIndexForACLs(session) ? " using index for rep:ACL nodes": " without additional index for rep:ACL (install oakindex package for better performance!)"));
 
-        installAcConfiguration(acConfiguration, installLog, repositoryDumpAceMap, restrictedToPaths, session);
+        installAcConfiguration(acConfiguration, installLog, repositoryDumpAceMap, session, options);
 
     }
 
@@ -734,19 +744,22 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         List<String> resultMessages = new ArrayList<String>();
         for (String configRootPath : configurationRootPaths) {
             LOG.info("Purging authorizables for root path {}", configRootPath);
-            resultMessages.add(purgeAuthorizablesFromConfig(configRootPath));
+            InstallationOptionsBuilder builder = new InstallationOptionsBuilder();
+            builder.withConfigurationRootPath(configRootPath);
+            resultMessages.add(purgeAuthorizablesFromConfig(builder.build()));
         }
         return StringUtils.join(resultMessages, "\n");
     }
 
     @Override
-    public String purgeAuthorizablesFromConfig(String configRootPath) {
+    public String purgeAuthorizablesFromConfig(InstallationOptions options) {
+        String configRootPath = options.getConfigurationRootPath().get();
         Session session = null;
         try {
             session = repository.loginService(null, null);
 
             PersistableInstallationLogger installLog = new PersistableInstallationLogger();
-            installLog.addMessage(LOG, "*** Purging AC Tool configuraiton " + configRootPath + "...");
+            installLog.addMessage(LOG, "*** Purging AC Tool configuration " + configRootPath + "...");
 
             Map<String, String> newestConfigurations = configFilesRetriever.getConfigFileContentFromNode(configRootPath, session);
             AcConfiguration acConfiguration = configurationMerger.getMergedConfigurations(newestConfigurations, installLog, configReader,
@@ -760,7 +773,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             Map<String, Set<AceBean>> aceDump = dumpservice
                     .createAclDumpMap(AcHelper.PATH_BASED_ORDER, AcHelper.ACE_ORDER_NONE, Collections.<String> emptyList(), true, session)
                     .getAceDump();
-            installAces(installLog, acConfiguration, aceDump, null, session);
+            installAces(installLog, acConfiguration, aceDump, session, options);
             installLog.addMessage(LOG, "Purged ACLs for " + acConfiguration.getAuthorizablesConfig().size() + " authorizables in "
                     + msHumanReadable(System.currentTimeMillis() - startAclPurge));
 

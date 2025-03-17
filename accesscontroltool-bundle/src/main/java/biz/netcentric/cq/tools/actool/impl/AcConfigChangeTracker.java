@@ -25,6 +25,7 @@ import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.api.InstallationOptions;
 import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
 import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
 
@@ -35,10 +36,10 @@ import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
 public class AcConfigChangeTracker {
     private static final Logger LOG = LoggerFactory.getLogger(AcConfigChangeTracker.class);
 
-    public boolean configIsUnchangedComparedToLastExecution(Map<String, String> configFiles, String[] restrictedToPaths, Session session) {
+    public boolean configIsUnchangedComparedToLastExecution(Map<String, String> configFiles, Session session, InstallationOptions options) {
         
 
-        String executionKey = createExecutionKey(configFiles, restrictedToPaths, session);
+        String executionKey = createExecutionKey(configFiles, session, options);
 
         try {
             String hashOfConfigFilesThisExecution = createHashOverConfigFiles(configFiles);
@@ -65,9 +66,9 @@ public class AcConfigChangeTracker {
         return false;
     }
 
-    private String createExecutionKey(Map<String, String> configFiles, String[] restrictedToPaths, Session session) {
+    private String createExecutionKey(Map<String, String> configFiles, Session session, InstallationOptions options) {
         boolean isCompositeNodeStore= RuntimeHelper.isCompositeNodeStore(session);
-        String restrictedToPathsKey = restrictedToPaths==null || restrictedToPaths.length==0 ? "ALL_PATHS" : StringUtils.join(restrictedToPaths, "+").replace("$", "").replace("^", "");
+        String restrictedToPathsKey = options.getRestrictedToPaths().isEmpty() ? "ALL_PATHS" : String.join("+", options.getRestrictedToPaths()).replace("$", "").replace("^", "");
         String effectiveRootPathOfConfigs = getEffectiveConfigRootPath(configFiles);
         String executionKey = "hash("+StringUtils.removeEnd(effectiveRootPathOfConfigs, "/").replace('/', '\\') + "," + restrictedToPathsKey.replace('/', '\\').replace(':', '_')+","+(isCompositeNodeStore?"compNodeStore":"stdRepo")+")";
         return executionKey;

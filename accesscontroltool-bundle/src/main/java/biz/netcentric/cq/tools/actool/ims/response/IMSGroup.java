@@ -67,6 +67,4 @@ public class IMSGroup {
     public String getUserGroupName() {
         return userGroupName;
     }
-    
-    
 }

@@ -26,11 +26,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -73,6 +76,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import biz.netcentric.cq.tools.actool.api.InstallationOptions;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.externalusermanagement.ExternalGroupManagement;
 import biz.netcentric.cq.tools.actool.ims.IMSUserManagement.Configuration;
@@ -80,6 +84,8 @@ import biz.netcentric.cq.tools.actool.ims.request.ActionCommand;
 import biz.netcentric.cq.tools.actool.ims.request.AddGroupMembers;
 import biz.netcentric.cq.tools.actool.ims.request.AddGroupMembership;
 import biz.netcentric.cq.tools.actool.ims.request.CreateGroupStep;
+import biz.netcentric.cq.tools.actool.ims.request.RemoveGroupMembership;
+import biz.netcentric.cq.tools.actool.ims.request.Step;
 import biz.netcentric.cq.tools.actool.ims.request.UserActionCommand;
 import biz.netcentric.cq.tools.actool.ims.request.UserGroupActionCommand;
 import biz.netcentric.cq.tools.actool.ims.response.AccessToken;
@@ -172,7 +178,7 @@ public class IMSUserManagement implements ExternalGroupManagement {
                 // always add some jitter between 0 and default delay in seconds
                 long jitter= random.nextInt(defaultRetryDelayInSeconds) * 1000l;
                 retryDelayInMilliseconds += jitter;
-                LOG.info("Schedule retry no {} of {} in {} milliseconds (with jitter of {} ms) due to 429 response", executionCount, maxRetryCount, retryDelayInMilliseconds, jitter);
+                LOG.info("Schedule retry {} of {} in {} ms (with jitter of {} ms) due to 429 response", executionCount, maxRetryCount, retryDelayInMilliseconds, jitter);
             }
             return shouldRetry;
         }
@@ -231,18 +237,128 @@ public class IMSUserManagement implements ExternalGroupManagement {
         }
     }
 
+    private static final class UserMembershipChanges {
+        private final String userName;
+        private final Set<String> groupsToRemove;
+        private final Set<String> groupsToAdd;
+
+        public UserMembershipChanges(String userName) {
+            this.userName = userName;
+            this.groupsToRemove = new LinkedHashSet<>();
+            this.groupsToAdd = new LinkedHashSet<>();
+        }
+
+        public boolean removeGroup(String group) {
+            return groupsToRemove.add(group);
+        }
+
+        public boolean addGroup(String group) {
+            return groupsToAdd.add(group);
+        }
+
+        public boolean addGroups(Collection<String> groups) {
+            return groupsToAdd.addAll(groups);
+        }
+    }
+
+    /**
+     * 
+     * @param token the api token
+     * @param groups the groups whose administrators should be updated
+     * @param isAddOnly whether only new group administrators should be added or also existing ones bound to managed groups but no longer configured as admins should be removed
+     * @return the list of action commands to be executed to perform the changes
+     * @throws IOException
+     */
+    List<ActionCommand> updateGroupAdminsCommands(String token, Collection<String> groups, boolean isAddOnly) throws IOException {
+        List<ActionCommand> actionCommands = new LinkedList<>();
+        // optionally make users group administrators
+        if (config.groupAdmins() != null && config.groupAdmins().length > 0) {
+            Set<String> groupAdmins = new LinkedHashSet<>(Arrays.asList(config.groupAdmins()));
+            Map<String, UserMembershipChanges> usersMembershipChanges  = new HashMap<>();
+            // for all admin groups collect users to remove and to add
+            Set<String> adminGroupNames = groups.stream().map(n -> "_admin_" + n).collect(Collectors.toSet());
+            if (!isAddOnly) {
+                // check which membership changes are necessary per user
+                for (String adminGroupName : adminGroupNames) {
+                    Map<String, IMSUser> usersInAdminGroup = getUsersInGroup(token, adminGroupName);
+                    // diff against configured admins and remove/add memberhip accordingly
+                    Set<String> usersToRemove = new LinkedHashSet<>(usersInAdminGroup.keySet());
+                    usersToRemove.removeAll(groupAdmins);
+                    for (String userToRemove : usersToRemove) {
+                        UserMembershipChanges changes = usersMembershipChanges.computeIfAbsent(userToRemove, UserMembershipChanges::new);
+                        changes.removeGroup(adminGroupName);
+                    }
+                    Set<String> usersToAdd = new LinkedHashSet<>(groupAdmins);
+                    usersToAdd.removeAll(usersInAdminGroup.keySet());
+                    for (String userToAdd : usersToAdd) {
+                        UserMembershipChanges changes = usersMembershipChanges.computeIfAbsent(userToAdd, UserMembershipChanges::new);
+                        changes.addGroup(adminGroupName);
+                    }
+                } 
+            } else {
+                // just add all adminGroupNames to all admin users
+                for (String admin : config.groupAdmins()) {
+                    UserMembershipChanges userMembershipChanges = new UserMembershipChanges(admin);
+                    userMembershipChanges.addGroups(adminGroupNames);
+                    usersMembershipChanges.put(admin, userMembershipChanges);
+                } 
+            }
+
+            // iterate over all usersMembershipChanges and create user action commands per affected user
+            for (UserMembershipChanges changes : usersMembershipChanges.values()) {
+                int actionCommandsIndex = actionCommands.size();
+                addMembershipSteps(changes.userName, actionCommands.listIterator(actionCommandsIndex), false, changes.groupsToRemove);
+                addMembershipSteps(changes.userName, actionCommands.listIterator(actionCommandsIndex), true, changes.groupsToAdd);
+            }
+            
+        }
+        return actionCommands;
+    }
+
+    /**
+     * Adds the necessary user memberships steps to the next action command from the given iterator. If there is no next action command, a new one is created and added to the list.
+     * It makes sure that per action command there are at most {@link #MAX_NUM_GROUPS_PER_ADD_STEP} groups added or removed.
+     * @param userName used when new ActionCommand is created
+     * @param actionCommandsIterator the ListIterator which is potentially extended with new action commands
+     * @param isAdd {@code} true if the group membership should be added, {@code false} if it should be removed
+     * @param groupNames the group names to add/remove for the user
+     */
+    private void addMembershipSteps(String userName, ListIterator<ActionCommand> actionCommandsIterator, boolean isAdd, Collection<String> groupNames) {
+        AtomicInteger groupCounter = new AtomicInteger();
+        Collection<List<String>> groupNamesBatches = groupNames.stream().collect(Collectors.groupingBy
+                    (it->groupCounter.getAndIncrement() / MAX_NUM_GROUPS_PER_ADD_STEP)).values();
+        for (List<String> groupNamesBatch : groupNamesBatches) {
+            ActionCommand actionCommand;
+            if (actionCommandsIterator.hasNext()) {
+                actionCommand = actionCommandsIterator.next();
+            } else {
+                actionCommand = new UserActionCommand(userName);
+                actionCommandsIterator.add(actionCommand);
+            }
+            final Step step;
+            if (isAdd) {
+                step = new AddGroupMembership(groupNamesBatch);
+            } else {
+                step = new RemoveGroupMembership(groupNamesBatch);
+            }
+            actionCommand.addStep(step);
+        }
+    }
+
     @Override
-    public int updateGroups(Collection<AuthorizableConfigBean> groupConfigs) throws IOException {
+    public int updateGroups(Collection<AuthorizableConfigBean> groupConfigs, InstallationOptions options) throws IOException {
         String token = getOAuthServer2ServerToken();
         Map<String, IMSGroup> existingImsGroups = Collections.emptyMap();
-        if (config.isDifferentialUpdates()) {
+        boolean isDiffMode = config.isDifferentialUpdates() && !options.shouldUpdateExistingExternalGroups();
+        if (isDiffMode) {
+            LOG.info("Executing IMS group update in differential update mode");
             existingImsGroups = getGroups(token);
         }
         long startEpoch = System.currentTimeMillis();
         List<ActionCommand> actionCommands = new LinkedList<>();
         List<String> updatedGroupNames = new LinkedList<>();
         for (AuthorizableConfigBean groupConfig : groupConfigs) {
-            if (config.isDifferentialUpdates() && !requireGroupUpdate(existingImsGroups, groupConfig)) {
+            if (isDiffMode && !requireGroupUpdate(existingImsGroups, groupConfig)) {
                 LOG.info("Skip updating IMS group {} as considered up to date", groupConfig.getAuthorizableId());
                 continue;
             }
@@ -252,6 +368,7 @@ public class IMSUserManagement implements ExternalGroupManagement {
             actionCommand.addStep(createGroupStep);
             // optionally maintain product profile memberships in the group as well
             if (config.productProfiles() != null && config.productProfiles().length > 0) {
+                // TODO: currently no cleanup of product profiles as not supported by UMAPI (https://github.com/Netcentric/accesscontroltool/issues/800)
                 AddGroupMembers addMembers = new AddGroupMembers();
                 addMembers.productProfileIds =  new HashSet<>(Arrays.asList(config.productProfiles()));
                 actionCommand.addStep(addMembers);
@@ -259,24 +376,10 @@ public class IMSUserManagement implements ExternalGroupManagement {
             updatedGroupNames.add(groupConfig.getAuthorizableId());
             actionCommands.add(actionCommand);
         }
-        // optionally make users group administrators
-        if (config.groupAdmins() != null && config.groupAdmins().length > 0) {
-            // at most 10 groups per add command
-            AtomicInteger groupCounter = new AtomicInteger();
-            Collection<List<String>> adminGroupNameBatches = updatedGroupNames.stream()
-                    .map(id -> "_admin_" + id) // https://adobe-apiplatform.github.io/umapi-documentation/en/api/ActionsCmds.html#addRemoveAttr
-                    .collect(Collectors.groupingBy
-                    (it->groupCounter.getAndIncrement() / MAX_NUM_GROUPS_PER_ADD_STEP)).values();
-            for (List<String> adminGroupNames : adminGroupNameBatches) {
-                for (String groupAdmin : config.groupAdmins()) {
-                    ActionCommand actionCommand = new UserActionCommand(groupAdmin);
-                    AddGroupMembership addGroupMembership = new AddGroupMembership(adminGroupNames);
-                    actionCommand.addStep(addGroupMembership);
-                    actionCommands.add(actionCommand);
-                }
-            }
-        }
-        // update in batches of 10 commands
+
+        actionCommands.addAll(updateGroupAdminsCommands(token, updatedGroupNames, !options.shouldUpdateExistingExternalGroups()));
+
+        // update in batches of 10 commands per request
         AtomicInteger counter = new AtomicInteger();
         final Collection<List<ActionCommand>> actionCommandsBatches = actionCommands.stream().collect(Collectors.groupingBy
                 (it->counter.getAndIncrement() / MAX_NUM_COMMANDS_PER_REQUEST))
@@ -370,7 +473,6 @@ public class IMSUserManagement implements ExternalGroupManagement {
                 if (entity == null) {
                     throw new ClientProtocolException("Response contains no content for request " + getRequestInfo(httpGet));
                 }
-                //System.out.println(EntityUtils.toString(entity));
                 GroupResponse groupResponse = objectMapper.readValue(entity.getContent(), GroupResponse.class);
                 groupResponse.associatedRequest = httpGet;
                 return groupResponse;
@@ -387,7 +489,7 @@ public class IMSUserManagement implements ExternalGroupManagement {
      * @param token the access token
      * @param name the group name
      * @throws IOException 
-     * @return a map with group names as keys and {@link IMSGroup}s as values
+     * @return a map with user names as keys and {@link IMSUser}s as values, empty map if group does not exist
      */
     Map<String, IMSUser> getUsersInGroup(String token, String name) throws IOException {
         int page = 0;
@@ -395,13 +497,17 @@ public class IMSUserManagement implements ExternalGroupManagement {
         Map<String, IMSUser> users = new HashMap<>();
         while (!isLastPage) {
             UsersInGroupResponse response = getUsersInGroup(token, name, page++);
+            if (response == null) {
+                // group does not exist
+                break;
+            }
             isLastPage = response.isLastPage;
             users.putAll(response.users.stream().collect(Collectors.toMap(IMSUser::getUsername, Function.identity())));
         }
         return users;
     }
 
-    private UsersInGroupResponse getUsersInGroup(String token, String name, int page) throws IOException {
+    UsersInGroupResponse getUsersInGroup(String token, String name, int page) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         HttpGet httpGet;
         try {
@@ -416,6 +522,11 @@ public class IMSUserManagement implements ExternalGroupManagement {
                     final HttpResponse response) throws IOException {
                 StatusLine statusLine = response.getStatusLine();
                 HttpEntity entity = response.getEntity();
+                if (statusLine.getStatusCode() == 404) {
+                    LOG.debug("Group {} does not exist", name);
+                    // group does not exist
+                    return null;
+                }
                 if (statusLine.getStatusCode() >= 300) {
                     throw new HttpResponseException(
                             statusLine.getStatusCode(),

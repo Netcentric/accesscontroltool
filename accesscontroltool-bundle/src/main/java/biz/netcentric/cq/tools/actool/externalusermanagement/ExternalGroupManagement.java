@@ -16,6 +16,7 @@ package biz.netcentric.cq.tools.actool.externalusermanagement;
 import java.io.IOException;
 import java.util.Collection;
 
+import biz.netcentric.cq.tools.actool.api.InstallationOptions;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 
 /**
@@ -25,10 +26,11 @@ public interface ExternalGroupManagement {
     /**
      * Updates the groups in the external directory.
      * @param groupConfigs the groups to be updated
+     * @param options the installation options
      * @return the effective number of groups updated (may be less than the number of groups in {@code groupConfigs}) if some are considered up to date
      * @throws IOException
      */
-    int updateGroups(Collection<AuthorizableConfigBean> groupConfigs) throws IOException;
+    int updateGroups(Collection<AuthorizableConfigBean> groupConfigs, InstallationOptions options) throws IOException;
 
     /**
      * 

@@ -27,6 +27,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 
+import biz.netcentric.cq.tools.actool.api.InstallationOptionsBuilder;
 import biz.netcentric.cq.tools.actool.configreader.ConfigFilesRetriever;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 import biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger;
@@ -64,8 +65,8 @@ public class AcToolInstallHookServiceImpl implements AcToolInstallHookService {
                 : new PersistableInstallationLogger();
         Map<String, String> configs = configFilesRetriever.getConfigFileContentFromPackage(archive, configPathPatterns);
         history.setCrxPackageName(getArchiveName(archive));
-        String[] restrictedToPaths = null; // never use path restriction for hook usage for now
-        acInstallationService.installConfigurationFiles(history, configs, restrictedToPaths, session);
+        InstallationOptionsBuilder builder = new InstallationOptionsBuilder();
+        acInstallationService.installConfigurationFiles(history, configs, session, builder.build());
 
         return history;
     }
