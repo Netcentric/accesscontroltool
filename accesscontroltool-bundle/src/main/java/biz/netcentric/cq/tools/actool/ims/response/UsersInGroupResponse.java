@@ -33,7 +33,7 @@ public class UsersInGroupResponse {
     @JsonProperty("groupName")
     public String groupName;
     
-    @JsonProperty(value = "users", required = true)
+    @JsonProperty("users")
     public List<IMSUser> users;
     
     @JsonIgnore

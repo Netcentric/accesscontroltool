@@ -1,7 +1,5 @@
 package biz.netcentric.cq.tools.actool.ims.request;
 
-import java.util.Objects;
-
 /*-
  * #%L
  * Access Control Tool Bundle
@@ -25,30 +23,4 @@ public class UserActionCommand extends ActionCommand {
 
     @JsonProperty("user")
     String user;
-
-    @Override
-    public String toString() {
-        return "UserActionCommand [user=" + user + ", steps=" + steps + "]";
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + Objects.hash(user);
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        UserActionCommand other = (UserActionCommand) obj;
-        return Objects.equals(user, other.user);
-    }
-
 }

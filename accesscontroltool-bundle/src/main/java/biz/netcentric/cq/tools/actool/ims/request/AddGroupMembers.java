@@ -1,7 +1,5 @@
 package biz.netcentric.cq.tools.actool.ims.request;
 
-import java.util.Objects;
-
 /*-
  * #%L
  * Access Control Tool Bundle
@@ -34,26 +32,4 @@ public class AddGroupMembers implements Step {
     
     @JsonProperty("productConfiguration")
     public Set<String> productProfileIds;
-
-    @Override
-    public String toString() {
-        return "AddGroupMembers [userIds=" + userIds + ", productProfileIds=" + productProfileIds + "]";
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(productProfileIds, userIds);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        AddGroupMembers other = (AddGroupMembers) obj;
-        return Objects.equals(productProfileIds, other.productProfileIds) && Objects.equals(userIds, other.userIds);
-    }
 }
