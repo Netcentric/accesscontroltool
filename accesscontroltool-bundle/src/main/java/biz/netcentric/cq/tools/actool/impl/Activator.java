@@ -40,8 +40,7 @@ public class Activator implements BundleActivator {
             properties.put(Constants.SERVICE_RANKING, Integer.valueOf(1000));
             context.registerService(PrivateKeyDecryptor.class, privateKeyDecryptor, properties);
         } catch (Throwable t) {
-            LOG.info("Can not load Bouncycastle, probably not installed!");
-            LOG.debug("Exception while loading Bouncy Castle", t);
+            LOG.debug("Can not load Bouncy Castle, probably not installed!", t);
         }
     }
 
