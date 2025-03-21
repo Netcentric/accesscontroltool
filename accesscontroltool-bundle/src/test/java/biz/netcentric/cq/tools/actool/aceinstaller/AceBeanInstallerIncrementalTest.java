@@ -401,11 +401,11 @@ public class AceBeanInstallerIncrementalTest {
                 }
                 return values.toArray(new Value[values.size()]);
             }
-
+/*
             @Override
             public PrivilegeCollection getPrivilegeCollection() throws RepositoryException {
                 throw new UnsupportedOperationException();
-            }
+            }*/
 
 
         };

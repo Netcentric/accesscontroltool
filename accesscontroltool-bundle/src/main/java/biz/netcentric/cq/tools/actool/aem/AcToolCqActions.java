@@ -13,7 +13,6 @@ package biz.netcentric.cq.tools.actool.aem;
  * #L%
  */
 
-import java.security.AccessControlException;
 import java.security.Principal;
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,6 +28,7 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.nodetype.NodeDefinition;
 import javax.jcr.nodetype.NodeType;
+import javax.jcr.security.AccessControlException;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.Privilege;
 
@@ -38,7 +38,6 @@ import org.apache.jackrabbit.api.security.JackrabbitAccessControlManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.day.cq.replication.Replicator;
 
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
@@ -62,6 +61,7 @@ public class AcToolCqActions {
     }
 
     private static final String CONTENT_RESTRICTION = "*/jcr:content*";
+    private static final String REPLICATE_PRIVILEGE = "rep:replicate";
 
     private final Session session;
     private final Map<String, Set<Privilege>> map = new HashMap<>();
@@ -84,7 +84,7 @@ public class AcToolCqActions {
         map.put(CqActions.acl_edit.name(), getPrivilegeSet(Privilege.JCR_MODIFY_ACCESS_CONTROL, acMgr));
 
         try {
-            map.put(CqActions.replicate.name(), getPrivilegeSet(Replicator.REPLICATE_PRIVILEGE, acMgr));
+            map.put(CqActions.replicate.name(), getPrivilegeSet(REPLICATE_PRIVILEGE, acMgr));
         } catch (AccessControlException e) {
             LOG.warn("Replicate privilege not registered");
         }

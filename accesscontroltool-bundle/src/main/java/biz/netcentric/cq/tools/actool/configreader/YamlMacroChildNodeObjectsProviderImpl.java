@@ -29,14 +29,13 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFormatException;
 
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.day.cq.commons.jcr.JcrConstants;
 
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
@@ -78,8 +77,8 @@ public class YamlMacroChildNodeObjectsProviderImpl implements YamlMacroChildNode
                 if (childNode.hasNode(JcrConstants.JCR_CONTENT)) {
                     Node jcrContentNode = childNode.getNode(JcrConstants.JCR_CONTENT);
 
-                    if (jcrContentNode.hasProperty(JcrConstants.JCR_TITLE)) {
-                        childNodeObjectForEl.put("title", jcrContentNode.getProperty(JcrConstants.JCR_TITLE).getString());
+                    if (jcrContentNode.hasProperty(Property.JCR_TITLE)) {
+                        childNodeObjectForEl.put("title", jcrContentNode.getProperty(Property.JCR_TITLE).getString());
                     }
 
                     Map<String, Object> jcrContentSubNode = getValuesForNode(jcrContentNode, includeContent);
