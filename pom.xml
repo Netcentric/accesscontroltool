@@ -91,6 +91,8 @@
         <junit.version>5.10.0</junit.version>
         <!-- default content package file to install on AEM -->
         <contentPackageFile>${project.build.directory}/${project.build.finalName}.zip</contentPackageFile>
+        <oak.version>1.8.2</oak.version>
+        <jackrabbit.version>2.16.0</jackrabbit.version>
     </properties>
 
     <modules>
@@ -113,6 +115,53 @@
                 <version>6.4.0.0004</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <!-- the following are not managed in io.wcm.maven.aem-dependencies but still shipped in AEM -->
+            <dependency>
+                <groupId>org.apache.jackrabbit</groupId>
+                <artifactId>jackrabbit-api</artifactId>
+                <version>${jackrabbit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.jackrabbit</groupId>
+                <artifactId>jackrabbit-jcr-commons</artifactId>
+                <version>${jackrabbit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.jackrabbit</groupId>
+                <artifactId>oak-security-spi</artifactId>
+                <version>${oak.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.jackrabbit</groupId>
+                <artifactId>oak-auth-external</artifactId>
+                <version>${oak.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.commons.scheduler</artifactId>
+                <version>2.7.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.hc.api</artifactId>
+                <version>1.0.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient-osgi</artifactId>
+                <version>4.5.4</version>
+            </dependency>
+            <dependency>
+                <groupId>com.adobe.granite</groupId>
+                <artifactId>com.adobe.granite.jmx</artifactId>
+                <version>0.2.14</version><!-- 6.4 ships with 0.3.4, newest available in Maven Central is 0.2.14 though-->
+            </dependency>
+            <dependency>
+                <groupId>com.adobe.granite</groupId>
+                <artifactId>com.adobe.granite.crypto</artifactId>
+                <version>3.0.2</version><!-- 6.4 ships with 3.4.12, newest available in Maven Central is 3.0.2 though-->
+                <scope>provided</scope>
             </dependency>
             <!-- embedded 3rd party dependencies -->
             <dependency>

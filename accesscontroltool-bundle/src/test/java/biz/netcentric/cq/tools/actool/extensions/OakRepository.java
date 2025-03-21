@@ -219,6 +219,7 @@ public class OakRepository implements BeforeAllCallback, BeforeEachCallback, Aft
     }
 
     public static SecurityProvider createSecurityProvider() {
+        // requires Oak 1.9+ (https://issues.apache.org/jira/browse/OAK-7340)
         SecurityProvider securityProvider = SecurityProviderBuilder.newBuilder()
                 .with(getSecurityConfigurationParameters())
                 .withRootProvider(new RootProviderService())

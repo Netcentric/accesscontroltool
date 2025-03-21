@@ -40,10 +40,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.apache.jackrabbit.commons.JcrUtils;
+import org.apache.jackrabbit.util.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.day.text.Text;
 
 import biz.netcentric.cq.tools.actool.api.InstallationResult;
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;

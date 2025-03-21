@@ -1,5 +1,7 @@
 package biz.netcentric.cq.tools.actool.configmodel.pkcs;
 
+import java.util.Base64;
+
 /*-
  * #%L
  * Access Control Tool Bundle
@@ -16,7 +18,6 @@ package biz.netcentric.cq.tools.actool.configmodel.pkcs;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.codec.binary.Base64;
 
 public enum DerType {
 
@@ -42,6 +43,7 @@ public enum DerType {
         if (!matcher.find()) {
             return null;
         }
-        return Base64.decodeBase64(matcher.group(1));
+        String base64 = matcher.group(1).replaceAll("\\s","");
+        return Base64.getDecoder().decode(base64);
     }
 }

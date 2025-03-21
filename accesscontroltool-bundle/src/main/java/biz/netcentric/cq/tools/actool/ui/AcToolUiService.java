@@ -40,7 +40,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.webconsole.WebConsoleConstants;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.oak.spi.security.principal.EveryonePrincipal;
@@ -87,6 +86,8 @@ public class AcToolUiService {
     static final String SUFFIX_DOWNLOAD_LOG = "download.log";
 
     private static final int MAX_LINE_WIDTH = 180; // max line width for log output in characters
+
+    private static final String WEBCONSOLE_ATTR_APP_ROOT = "felix.webconsole.appRoot"; // from https://github.com/apache/felix-dev/blob/e9dbc04d1ffbd1cdcc40759b63046e6808c5571d/webconsole/src/main/java/org/apache/felix/webconsole/WebConsoleConstants.java#L149
 
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
@@ -211,7 +212,7 @@ public class AcToolUiService {
     }
 
     public String getWebConsoleRoot(HttpServletRequest req) {
-        return (String) req.getAttribute(WebConsoleConstants.ATTR_APP_ROOT);
+        return (String) req.getAttribute(WEBCONSOLE_ATTR_APP_ROOT);
     }
 
     private void renderUi(HttpServletRequest req, HttpServletResponse resp, String path, boolean isTouchUi) throws ServletException, IOException {
