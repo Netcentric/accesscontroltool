@@ -1,10 +1,14 @@
 name: Java CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
 
 jobs:
   build:
-    name: ${{ matrix.isMainBuildEnv && 'Primary Build' || 'Secondary Build' }}
+    name: ${{ matrix.namePrefix }} Maven build (${{ matrix.os }}, JDK ${{ matrix.jdk }})
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
@@ -14,6 +18,7 @@ jobs:
           - os: ubuntu-latest
             jdk: 17
             isMainBuildEnv: true
+            namePrefix: 'Main '
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
