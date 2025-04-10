@@ -17,6 +17,11 @@ package biz.netcentric.cq.tools.actool.history;
 import org.osgi.annotation.versioning.ConsumerType;
 
 @ConsumerType
+/** Listener interface for installation events.
+ * 
+ * @deprecated Unused. Will be removed in a future release.
+ */
+@Deprecated()
 public interface InstallationListener {
 	
 	void onWarning(String message);

@@ -44,19 +44,24 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 public class AcToolWebconsolePlugin extends HttpServlet {
 
     public static final String TITLE = "AC Tool";
-    public static final String LABEL = AcToolUiService.PAGE_NAME;
+    public static final String LABEL = "actool";
     public static final String CATEGORY = "Main";
+
+    private static final String WEBCONSOLE_ATTR_APP_ROOT = "felix.webconsole.appRoot"; // from https://github.com/apache/felix-dev/blob/e9dbc04d1ffbd1cdcc40759b63046e6808c5571d/webconsole/src/main/java/org/apache/felix/webconsole/WebConsoleConstants.java#L149
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private AcToolUiService acToolUiService;
 
     @Override
     protected void doGet(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
-        acToolUiService.doGet(req, resp, req.getRequestURI(), false);
+        acToolUiService.doGet(req, resp, getWebConsoleRoot(req) + "/" + LABEL, false);
     }
 
     protected void doPost(final HttpServletRequest req, final HttpServletResponse resp) throws IOException, ServletException {
         acToolUiService.doPost(req, resp);
     }
 
+    public String getWebConsoleRoot(HttpServletRequest req) {
+        return (String) req.getAttribute(WEBCONSOLE_ATTR_APP_ROOT);
+    }
 }

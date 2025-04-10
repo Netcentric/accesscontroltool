@@ -144,6 +144,11 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.event</artifactId>
+                <version>4.2.10</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.sling</groupId>
                 <artifactId>org.apache.sling.hc.api</artifactId>
                 <version>1.0.2</version>
             </dependency>

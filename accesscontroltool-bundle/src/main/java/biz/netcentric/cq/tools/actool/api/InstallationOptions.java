@@ -14,6 +14,7 @@ package biz.netcentric.cq.tools.actool.api;
  */
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.osgi.annotation.versioning.ProviderType;
@@ -51,5 +52,15 @@ public interface InstallationOptions {
      * @return {@code true} if the installation should also update existing external groups. By default only new ones are created but existing ones not touched.
      */
     public boolean shouldUpdateExistingExternalGroups();
+
+    /** 
+     * For asynchronous installations the options need to be persisted in the repository.
+     * As regular Java serialization cannot be used with Sling Jobs (<a href="https://issues.apache.org/jira/browse/SLING-12745">SLING-12745</a>)
+     * one has to rely on types compliant with default JCR.
+     * 
+     * @return a new map with properties of types which are natively supported by the JCR resource provider
+     * @see InstallationOptionsBuilder
+     */
+    public Map<String, Object> getPersistableProperties();
 
 }

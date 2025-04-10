@@ -16,8 +16,12 @@ package biz.netcentric.cq.tools.actool.ui;
 import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
@@ -30,6 +34,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -57,9 +63,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.api.AcInstallationService;
-import biz.netcentric.cq.tools.actool.api.InstallationLog;
+import biz.netcentric.cq.tools.actool.api.InstallationLogLevel;
 import biz.netcentric.cq.tools.actool.api.InstallationOptionsBuilder;
-import biz.netcentric.cq.tools.actool.api.InstallationResult;
 import biz.netcentric.cq.tools.actool.dumpservice.ConfigDumpService;
 import biz.netcentric.cq.tools.actool.helper.UncheckedRepositoryException;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
@@ -68,6 +73,11 @@ import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl;
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceInternal;
 import biz.netcentric.cq.tools.actool.user.UserProcessor;
 
+/** 
+ * Service that allows to apply AC Tool configuration and gather status of users/groups and permissions from a Web UI (either Touch UI or
+ * Web Console Plugin).
+ * Leverages either Coral UI 3 (for Touch UI) or JQuery UI (for Web Console Plugin) for rendering widgets.
+ */
 @Component(service = { AcToolUiService.class })
 @Designate(ocd=biz.netcentric.cq.tools.actool.ui.AcToolUiService.Configuration.class)
 public class AcToolUiService {
@@ -88,11 +98,9 @@ public class AcToolUiService {
     static final String SUFFIX_DUMP_YAML = "dump.yaml";
     static final String SUFFIX_USERS_CSV = "users.csv";
     static final String SUFFIX_DOWNLOAD_LOG = "download.log";
+    static final String SUFFIX_STREAM_LOG = "streamlog";
 
     private static final int MAX_LINE_WIDTH = 180; // max line width for log output in characters
-
-    private static final String WEBCONSOLE_ATTR_APP_ROOT = "felix.webconsole.appRoot"; // from https://github.com/apache/felix-dev/blob/e9dbc04d1ffbd1cdcc40759b63046e6808c5571d/webconsole/src/main/java/org/apache/felix/webconsole/WebConsoleConstants.java#L149
-
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ConfigDumpService dumpService;
@@ -131,21 +139,117 @@ public class AcToolUiService {
         }
     }
 
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp, String path, boolean isTouchUi)
+    /**
+     * 
+     * @param req the request
+     * @param resp the response
+     * @param basePath the basePath of the underlying servlet. Every URL starting with this prefix is served through the same servlet. This is either the path to the webconsole plugin (without extension) or a content path including extension having the necessary resource type (for Touch UI)
+     * @param isTouchUi {@code true} if the request is from a Touch UI, {@code false} if it is from a Web Console Plugin
+     * @throws ServletException
+     * @throws IOException
+     */
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp, String basePath, boolean isTouchUi)
             throws ServletException, IOException {
 
-        if (req.getRequestURI().endsWith(SUFFIX_DUMP_YAML)) {
-            callWhenReadAccessGranted(req, resp, this::streamDumpToResponse);
-        } else if (req.getRequestURI().endsWith(SUFFIX_USERS_CSV)) {
-            callWhenReadAccessGranted(req, resp, this::streamUsersCsvToResponse);
-        } else if (req.getRequestURI().endsWith(SUFFIX_DOWNLOAD_LOG)) {
-            streamLogToResponse(req, resp);
-        } else {
-            // everyone is allows to see the UI in general
-            renderUi(req, resp, path, isTouchUi);
+        if (req.getRequestURI().startsWith(basePath)) {
+            if (req.getRequestURI().endsWith(SUFFIX_DUMP_YAML)) {
+                callWhenReadAccessGranted(req, resp, this::streamDumpToResponse);
+                return;
+            } else if (req.getRequestURI().endsWith(SUFFIX_USERS_CSV)) {
+                callWhenReadAccessGranted(req, resp, this::streamUsersCsvToResponse);
+                return;
+            } else if (req.getRequestURI().endsWith(SUFFIX_DOWNLOAD_LOG)) {
+                downloadLog(req, resp);
+                return;
+            } else if (req.getRequestURI().endsWith(SUFFIX_STREAM_LOG)) {
+                streamLog(req, resp);
+                return;
+            } else {
+                // either spool resource
+                String resourcePath = req.getRequestURI().substring(basePath.length());
+                if (resourcePath.startsWith("/res/")) {
+                    // check for a resource, fail if none
+                    if (!spoolResource(req, resourcePath, resp)) {
+                        resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+                    }
+                    return;
+                }
+            }
         }
+        // or render UI
+        renderUi(req, resp, basePath, isTouchUi);
     }
 
+    // The following method is copied and slightly adjusted from from https://github.com/apache/felix-dev/blob/5d878f37b89ceef59920644d5e427f493b904030/webconsole/src/main/java/org/apache/felix/webconsole/servlet/AbstractServlet.java#L71
+
+   /**
+     * If the request addresses a resource , this method serves it
+     * and returns <code>true</code>. Otherwise <code>false</code> is returned.
+     * <p>
+     * If <code>true</code> is returned, the request is considered complete and
+     * request processing terminates. Otherwise request processing continues
+     * with normal plugin rendering.
+     *
+     * @param request The request object
+     * @param resourcePath The path to the resource to be served
+     * @param response The response object
+     *
+     * @throws IOException If an error occurs accessing or spooling the resource.
+     */
+    protected final boolean spoolResource(final HttpServletRequest request, String resourcePath, final HttpServletResponse response) throws IOException {
+        // check for a resource, fail if none
+        final URL url = getClass().getResource(resourcePath);
+        if ( url == null ) {
+            return false;
+        }
+
+        // open the connection and the stream (we use the stream to be able
+        // to at least hint to close the connection because there is no
+        // method to explicitly close the conneciton, unfortunately)
+        final URLConnection connection = url.openConnection();
+        try ( final InputStream ins = connection.getInputStream()) {
+            // FELIX-2017 Equinox may return an URL for a non-existing
+            // resource but then (instead of throwing) return null on
+            // getInputStream. We should account for this situation and
+            // just assume a non-existing resource in this case.
+            if (ins == null) {
+                return false;
+            }
+
+            // check whether we may return 304/UNMODIFIED
+            long lastModified = connection.getLastModified();
+            if ( lastModified > 0 ) {
+                long ifModifiedSince = request.getDateHeader( "If-Modified-Since" );
+                if ( ifModifiedSince >= ( lastModified / 1000 * 1000 ) ) {
+                    // Round down to the nearest second for a proper compare
+                    // A ifModifiedSince of -1 will always be less
+                    response.setStatus( HttpServletResponse.SC_NOT_MODIFIED );
+
+                    return true;
+                }
+
+                // have to send, so set the last modified header now
+                response.setDateHeader( "Last-Modified", lastModified );
+            }
+
+            // describe the contents
+            response.setContentType(request.getServletContext().getMimeType( request.getPathInfo() ) );
+            if (connection.getContentLength() != -1) {
+                response.setContentLength( connection.getContentLength() );
+            }
+            response.setStatus( HttpServletResponse.SC_OK);
+
+            // spool the actual contents
+            final OutputStream out = response.getOutputStream();
+            final byte[] buf = new byte[2048];
+            int rd;
+            while ( ( rd = ins.read( buf ) ) >= 0 ) {
+                out.write( buf, 0, rd );
+            }
+        }
+        return true;
+    }
+        
     private void callWhenReadAccessGranted(HttpServletRequest req, HttpServletResponse resp, Consumer<HttpServletResponse> responseConsumer) throws IOException, ServletException {
         if (!isOneOfPrincipalNamesBound(req, config.readAccessPrincipalNames())) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not have sufficent permissions to export users/groups/permissions");
@@ -183,20 +287,18 @@ public class AcToolUiService {
         if (reqParams.updateExistingExternalGroups) {
             builder.updateExistingExternalGroups();
         }
-        InstallationLog log = acInstallationService.apply(builder.build());
-
-        String msg = log.getMessageHistory().trim();
-        msg = msg.contains("\n") ? StringUtils.substringAfterLast(msg, "\n") : msg;
-
-        PrintWriter pw = resp.getWriter();
-        resp.setContentType("text/plain");
-        if (((InstallationResult) log).isSuccess()) {
-            resp.setStatus(HttpServletResponse.SC_OK);
-            pw.println("Applied AC Tool config from " + reqParams.configurationRootPath + ":\n" + msg);
-        } else {
-            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            pw.println("Error while applying AC Tool config from " + reqParams.configurationRootPath);
+        try {
+            String jobId = acInstallationService.applyAsynchronously(builder.build());
+            // return full URL to the server-sent event stream for this installation
+            resp.setContentType("text/plain");
+            String streamLogUrl = req.getRequestURI() + "/" + SUFFIX_STREAM_LOG + "?jobId=" + URLEncoder.encode(jobId, StandardCharsets.UTF_8.toString()) + "&" + PARAM_SHOW_LOG_VERBOSE + "=" + reqParams.showLogVerbose;
+            resp.getWriter().print(streamLogUrl);
+        } catch (IllegalStateException e) {
+            LOG.warn("Could not apply configuration: {}", e.getMessage());
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+            return;
         }
+
     }
 
     /**
@@ -227,35 +329,32 @@ public class AcToolUiService {
         return boundPrincipals.containsOneOf(Arrays.asList(principalNames));
     }
 
-    public String getWebConsoleRoot(HttpServletRequest req) {
-        return (String) req.getAttribute(WEBCONSOLE_ATTR_APP_ROOT);
-    }
-
-    private void renderUi(HttpServletRequest req, HttpServletResponse resp, String path, boolean isTouchUi) throws ServletException, IOException {
+    private void renderUi(HttpServletRequest req, HttpServletResponse resp, String basePath, boolean isTouchUi) throws ServletException, IOException {
         RequestParameters reqParams = RequestParameters.fromRequest(req, acInstallationService);
 
         final PrintWriter out = resp.getWriter();
         final HtmlWriter writer = new HtmlWriter(out, isTouchUi);
         
         printCss(isTouchUi, writer);
+        printJs(basePath, writer);
         printVersion(writer);
-        printImportSection(writer, reqParams, path, isTouchUi, getWebConsoleRoot(req), isOneOfPrincipalNamesBound(req, config.writeAccessPrincipalNames()));
-        printExportSection(writer, reqParams, path, isTouchUi, getWebConsoleRoot(req), isOneOfPrincipalNamesBound(req, config.readAccessPrincipalNames()));
+        printImportSection(writer, reqParams, basePath, isTouchUi, isOneOfPrincipalNamesBound(req, config.writeAccessPrincipalNames()));
+        printExportSection(writer, reqParams, basePath, isTouchUi, isOneOfPrincipalNamesBound(req, config.readAccessPrincipalNames()));
 
         try {
-            printInstallationLogsSection(writer, reqParams, path, isTouchUi);
+            printInstallationLogsSection(writer, reqParams, basePath, req.getRequestURI(), isTouchUi);
         } catch (RepositoryException e) {
             throw new ServletException("Could not read log from repository", e);
         }
 
         if(!isTouchUi) {
-            String jmxUrl = getWebConsoleRoot(req) + "/jmx/"
+            String jmxUrl = basePath + "/../jmx/"
                     + URLEncoder.encode("biz.netcentric.cq.tools:type=ACTool", StandardCharsets.UTF_8.toString());
             out.println("More operations are available at <a href='" + jmxUrl + "' "+forceValidLink(isTouchUi)+">AC Tool JMX Bean</a><br/>\n<br/>\n");
         }
     }
 
-    void streamLogToResponse(HttpServletRequest req, final HttpServletResponse resp) {
+    void downloadLog(HttpServletRequest req, final HttpServletResponse resp) throws IOException {
         RequestParameters reqParams = RequestParameters.fromRequest(req, acInstallationService);
         try {
             if (StringUtils.isBlank(reqParams.showLogId)) {
@@ -285,8 +384,63 @@ public class AcToolUiService {
             resp.getWriter().print(logPlain);
         } catch (RepositoryException e) {
             throw new IllegalStateException("Could not read log from repository", e);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        }
+    }
+
+    /** Server-sent events emitted for an asynchronous execution log
+     * @throws IOException 
+     * 
+     * @see <a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events">Server-sent events</a>
+     */
+    private void streamLog(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        // set charset explicitly to utf-8, otherwise jetty is appending the default ISO charset which is not accepted by Chrome for event-stream
+        resp.setContentType("text/event-stream;charset=utf-8");
+        String jobId = req.getParameter("jobId");
+        if (StringUtils.isBlank(jobId)) {
+            LOG.warn("No jobId provided as request parameter");
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+        final boolean isVerbose = Boolean.parseBoolean(req.getParameter(AcToolUiService.PARAM_SHOW_LOG_VERBOSE));
+        BlockingQueue<String> messages = new LinkedBlockingQueue<>();
+        boolean isActive = acInstallationService.attachLogListener(jobId, (level, message) -> {
+            try {
+                if (!isVerbose && level == InstallationLogLevel.TRACE) {
+                    return;
+                }
+                messages.put(level + ": " + message);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }, success -> {
+            try {
+                messages.put("FINISHED: " + success);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        if (!isActive) {
+            LOG.debug("Haven't found job with id {}, probably already finished processing it", jobId);
+            resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
+            return;
+        }
+        try {
+            while (isActive) {
+                String message = messages.poll(30, java.util.concurrent.TimeUnit.SECONDS);
+                if (message == null) {
+                    // just sent keep-alives
+                    message = ".";
+                }
+                if (message.startsWith("FINISHED: ")) {
+                    isActive = false;
+                } else {
+                    resp.getWriter().println("data: " + message);
+                    resp.getWriter().println();
+                    resp.getWriter().flush();
+                }
+            }
+        } catch(InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -374,7 +528,7 @@ public class AcToolUiService {
                 try {
                     return t.getString();
                 } catch (RepositoryException e) {
-                    throw new UncheckedRepositoryException(new RepositoryException("Could not convert property \"" + propertyName + "\" of user \"" + user + " to string", e));
+                    throw new UncheckedRepositoryException(new RepositoryException("Could not convert property \"" + propertyName + "\" of user \"" + user + "\" to string", e));
                 }
             }).collect(Collectors.joining(", "));
         } catch (UncheckedRepositoryException e) {
@@ -392,7 +546,7 @@ public class AcToolUiService {
         writer.closeTable();
     }
 
-    private void printInstallationLogsSection(HtmlWriter writer, RequestParameters reqParams, String path, boolean isTouchUi) throws RepositoryException {
+    private void printInstallationLogsSection(HtmlWriter writer, RequestParameters reqParams, String basePath, String currentPath, boolean isTouchUi) throws RepositoryException {
 
         // generate an ordered map of all executions (key = id, value = execution)
         Map<String, AcToolExecution> acToolExecutions = acHistoryService.getAcToolExecutions().stream().collect(
@@ -416,8 +570,8 @@ public class AcToolUiService {
         }
 
         for (AcToolExecution acToolExecution : acToolExecutions.values()) {
-            String linkToLog = PAGE_NAME + "?" + PARAM_SHOW_LOG_ID + "=" + acToolExecution.getId();
-            String downloadLinkToLog = path + ".html/" + SUFFIX_DOWNLOAD_LOG + "?" + PARAM_SHOW_LOG_ID + "=" + acToolExecution.getId();
+            String linkToLog =  currentPath + "?" + PARAM_SHOW_LOG_ID + "=" + acToolExecution.getId();
+            String downloadLinkToLog = basePath + "/" + SUFFIX_DOWNLOAD_LOG + "?" + PARAM_SHOW_LOG_ID + "=" + acToolExecution.getId();
             writer.tr();
             writer.openTd();
             writer.println(getExecutionDateStr(acToolExecution));
@@ -490,9 +644,9 @@ public class AcToolUiService {
         return acToolExecution.isSuccess() ? "SUCCESS" : "<span style='color:red;font-weight: bold;'>FAILED</span>";
     }
 
-    private void printImportSection(final HtmlWriter writer, RequestParameters reqParams, String path, boolean isTouchUI, String webConsoleRoot, boolean hasWritePermission) throws IOException {
+    private void printImportSection(final HtmlWriter writer, RequestParameters reqParams, String basePath, boolean isTouchUI, boolean hasWritePermission) throws IOException {
 
-        writer.print("<form id='acForm' action='" + path + "'>");
+        writer.print("<form id='acForm' action='" + basePath + "'>");
         writer.openTable("acFormTable");
         writer.tableHeader("Import", 2);
 
@@ -501,8 +655,8 @@ public class AcToolUiService {
         writer.print("<b>Configuration Root Path</b>");
         
         if(!isTouchUI) {
-            writer.print("<br/> (default from <a href='" + webConsoleRoot
-            + "/configMgr/biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl' "+forceValidLink(isTouchUI)+">OSGi config</a>)");
+            writer.print("<br/> (default from <a href='" + basePath
+            + "/../configMgr/biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl' "+forceValidLink(isTouchUI)+">OSGi config</a>)");
         }
         
         writer.closeTd();
@@ -539,14 +693,17 @@ public class AcToolUiService {
         writer.println("<br/>");
         writer.print("<input type='checkbox' name='" + PARAM_UPDATE_EXISTING_EXTERNAL_GROUPS + "' value='true'"
                 + (reqParams.updateExistingExternalGroups ? " checked='checked'" : "") + " /> Also update existing external groups");
+        writer.println("<br/>");
+        writer.print("<input type='checkbox' name='" + PARAM_SHOW_LOG_VERBOSE + "' value='true'"
+                + (reqParams.showLogVerbose ? " checked='checked'" : "") + " /> Show verbose log");
         writer.closeTd();
         writer.closeTr();
         
         writer.tr();
         writer.openTd();
-        String onClick = "var as=$('#applySpinner');as.show(); var b=$('#applyButton');b.prop('disabled', true); oldL = b.text();b.text(' Applying AC Tool Configuration... ');var f=$('#acForm');var fd=f.serialize();$.post(f.attr('action'), fd).done(function(text){alert(text)}).fail(function(xhr){alert(xhr.status===403?'Permission Denied':'Config could not be applied - check log for errors')}).always(function(text) { "
-                + "as.hide();b.text(oldL);b.prop('disabled', false);location.href='" + PAGE_NAME + "?'+fd; });return false";
-        writer.println("<button " + getCoralButtonAtts(isTouchUI) + (!hasWritePermission ? " disabled" : "") + " id='applyButton' onclick=\"" + onClick + "\"> Apply AC Tool Configuration </button>");
+        // use Server-sent events to update the UI
+        String onClick = "applyAcToolConfig("+!isTouchUI+", $('#acForm')); return false;";
+        writer.println("<button " + getCoralButtonAtts(isTouchUI) + (!hasWritePermission ? " disabled" : "") + " onclick=\"" + onClick + "\"> Apply AC Tool Configuration </button>");
         writer.closeTd();
         writer.openTd();
         writer.println("<div id='applySpinner' style='display:none' class='spinner'><div></div><div></div><div></div></div>");
@@ -560,7 +717,7 @@ public class AcToolUiService {
     }
 
 
-    private void printExportSection(final HtmlWriter writer, RequestParameters reqParams, String path, boolean isTouchUI, String webConsoleRoot, boolean hasReadPermission) throws IOException {
+    private void printExportSection(final HtmlWriter writer, RequestParameters reqParams, String basePath, boolean isTouchUI, boolean hasReadPermission) throws IOException {
         writer.openTable("acExportTable");
         writer.tableHeader("Export", 2);
         writer.tr();
@@ -568,7 +725,7 @@ public class AcToolUiService {
         writer.print("Export in AC Tool YAML format. This includes groups and permissions (in form of ACEs).");
         writer.closeTd();
         writer.openTd();
-        writer.println("<button " + getCoralButtonAtts(isTouchUI) + (!hasReadPermission ? " disabled" : "") + " id='downloadDumpButton' onclick=\"window.open('" + path + ".html/"
+        writer.println("<button " + getCoralButtonAtts(isTouchUI) + (!hasReadPermission ? " disabled" : "") + " id='downloadDumpButton' onclick=\"window.open('" + basePath + "/"
                 + SUFFIX_DUMP_YAML + "', '_blank');return false;\"> Download YAML </button>");
         writer.closeTd();
         writer.closeTr();
@@ -577,12 +734,20 @@ public class AcToolUiService {
         writer.print("Export Users in Admin Console CSV format. This includes non-system users, their profiles and their direct group memberships.");
         writer.closeTd();
         writer.openTd();
-        writer.println("<button " + getCoralButtonAtts(isTouchUI) + (!hasReadPermission ? " disabled" : "") + " id='downloadCsvButton' onclick=\"window.open('" + path + ".html/"
+        writer.println("<button " + getCoralButtonAtts(isTouchUI) + (!hasReadPermission ? " disabled" : "") + " id='downloadCsvButton' onclick=\"window.open('" + basePath + "/"
                 + SUFFIX_USERS_CSV + "', '_blank');return false;\"> Download CSV </button>");
         writer.closeTd();
         writer.closeTr();
 
         writer.closeTable();
+    }
+
+    private void printJs(String resourceUrlPrefix, final HtmlWriter writer) {
+        String url = resourceUrlPrefix + "/res/actooluiservice.js";
+        // externally referenced JS
+        writer.print("<script type=\"text/javascript\" src=\"");
+        writer.print(url);
+        writer.println("\"></script>");
     }
 
     private void printCss(boolean isTouchUI, final HtmlWriter writer) {
