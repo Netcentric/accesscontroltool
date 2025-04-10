@@ -1,5 +1,8 @@
 package biz.netcentric.cq.tools.actool.api;
 
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
 /*-
  * #%L
  * Access Control Tool Bundle
@@ -17,6 +20,29 @@ import org.osgi.annotation.versioning.ProviderType;
 
 @ProviderType
 public interface AcInstallationService {
+
+    /**
+     * Applies the configuration asynchronously.
+     * Almost immediately returns a string with the ID of the started job.
+     * Only one execution at a time is allowed.
+     * @param options
+     * @throws IllegalStateException if another asynchronous installation is currently running
+     * @return the job id
+     * @since 3.6.0
+     * @see #attachLogListener(String, InstallationLogListener)
+     */
+    public String applyAsynchronously(InstallationOptions options);
+
+    /** Attaches the log listener callback to an installation triggered previously via {@link #applyAsynchronously(InstallationOptions)}.
+     * 
+     * @param jobId the job id returned by {@link #applyAsynchronously(InstallationOptions)}
+     * @param listener the listener to attach, receives the level and the message per each log line
+     * @param finishListener the listener to attach, receives a boolean status indicating success or failure once the installation was finished
+     * @return {@code true} if the listeners were attached successfully (i.e. an installation with the given executionId was triggered before and is still ongoing), {@code false} otherwise
+     * @since 3.6.0 
+     * @see #applyAsynchronously(InstallationOptions)
+     */
+    public boolean attachLogListener(String jobId, BiConsumer<InstallationLogLevel, String> listener, Consumer<Boolean> finishListener);
 
     /** Applies the full configuration as stored at the path configured at PID biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl
      * to the repository.
@@ -69,7 +95,7 @@ public interface AcInstallationService {
     @Deprecated
     public InstallationLog apply(String configurationRootPath, String[] restrictedToPaths, boolean skipIfConfigUnchanged);
 
-    /** Applies the configuration
+    /** Applies the configuration.
      * 
      * @param options the installation options which further specify the installation
      * @return the installation log

@@ -1,8 +1,4 @@
-
 package biz.netcentric.cq.tools.actool.history.impl;
-
-import java.io.PrintWriter;
-import java.io.StringWriter;
 
 /*-
  * #%L
@@ -17,36 +13,45 @@ import java.io.StringWriter;
  * #L%
  */
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 
 import biz.netcentric.cq.tools.actool.api.HistoryEntry;
 import biz.netcentric.cq.tools.actool.api.InstallationLog;
+import biz.netcentric.cq.tools.actool.api.InstallationLogLevel;
 import biz.netcentric.cq.tools.actool.api.InstallationResult;
 import biz.netcentric.cq.tools.actool.comparators.HistoryEntryComparator;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
-public class PersistableInstallationLogger implements InstallationLogger, InstallationLog, InstallationResult {
+public class PersistableInstallationLogger implements InstallationLogger, InstallationLog, InstallationResult, Closeable {
 
     static final String EOL = "\n";
     protected static final String MSG_IDENTIFIER_ERROR = "ERROR: ";
     protected static final String MSG_IDENTIFIER_WARNING = "WARNING: ";
 
-    private Set<HistoryEntry> warnings = new HashSet<HistoryEntry>();
-    private Set<HistoryEntry> messages = new HashSet<HistoryEntry>();
-    private Set<HistoryEntry> errors = new HashSet<HistoryEntry>();
+    private Set<HistoryEntry> warnings = new HashSet<>();
+    private Set<HistoryEntry> messages = new HashSet<>();
+    private Set<HistoryEntry> errors = new HashSet<>();
 
-    private Set<HistoryEntry> verboseMessages = new HashSet<HistoryEntry>();
+    private Set<HistoryEntry> verboseMessages = new HashSet<>();
 
     private boolean success = true;
     private final Date installationDate;
@@ -73,8 +78,13 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
     private int missingParentPathsForInitialContent = 0;
 
     private DateFormat timestampFormat = new SimpleDateFormat("HH:mm:ss.SSS");
+    
+    private final Collection<BiConsumer<InstallationLogLevel, String>> listeners;
+    private final Collection<Consumer<Boolean>> finishListeners;
 
     public PersistableInstallationLogger() {
+        listeners = new CopyOnWriteArrayList<>();
+        finishListeners = new CopyOnWriteArrayList<>();
         installationDate = new Date();
     }
 
@@ -132,6 +142,7 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
     protected void addWarning(String warning) {
         warnings.add(new HistoryEntry(msgIndex, new Timestamp(
                 new Date().getTime()), MSG_IDENTIFIER_WARNING + warning));
+        listeners.forEach(l -> l.accept(InstallationLogLevel.WARNING, warning));
         msgIndex++;
     }
 
@@ -144,6 +155,7 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
     protected void addMessage(String message) {
         messages.add(new HistoryEntry(msgIndex, new Timestamp(new Date()
                 .getTime()), " " + message));
+        listeners.forEach(l -> l.accept(InstallationLogLevel.INFO, message));
         msgIndex++;
     }
 
@@ -164,6 +176,7 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
         }
         errors.add(new HistoryEntry(msgIndex, new Timestamp(
                 new Date().getTime()), MSG_IDENTIFIER_ERROR + fullErrorValue));
+        listeners.forEach(l -> l.accept(InstallationLogLevel.ERROR, error));
         success = false;
         msgIndex++;
         if (e != null) {
@@ -183,6 +196,7 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
     protected void addVerboseMessage(String message) {
         verboseMessages.add(new HistoryEntry(msgIndex, new Timestamp(
                 new Date().getTime()), " " + message));
+        listeners.forEach(l -> l.accept(InstallationLogLevel.TRACE, message));
         msgIndex++;
     }
 
@@ -368,6 +382,19 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
 
     public int getCountAuthorizablesMoved() {
         return countAuthorizablesMoved;
+    }
+
+    @Override
+    public void close() throws IOException {
+        finishListeners.forEach(l -> l.accept(success));
+    }
+
+    public void attachMessageListener(BiConsumer<InstallationLogLevel, String> messageListener) {
+        listeners.add(messageListener);
+    }
+
+    public void attachFinishListener(Consumer<Boolean> finishListener) {
+        finishListeners.add(finishListener);
     }
 
 }

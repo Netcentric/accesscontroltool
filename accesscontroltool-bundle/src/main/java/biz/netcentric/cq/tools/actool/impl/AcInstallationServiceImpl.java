@@ -16,6 +16,8 @@ package biz.netcentric.cq.tools.actool.impl;
 import static biz.netcentric.cq.tools.actool.helper.Constants.PRINCIPAL_EVERYONE;
 import static biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger.msHumanReadable;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,6 +30,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.RepositoryException;
@@ -46,6 +52,9 @@ import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.UserManager;
 import org.apache.sling.commons.osgi.PropertiesUtil;
+import org.apache.sling.event.jobs.Job;
+import org.apache.sling.event.jobs.JobManager;
+import org.apache.sling.event.jobs.consumer.JobConsumer;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -63,6 +72,7 @@ import org.slf4j.LoggerFactory;
 import biz.netcentric.cq.tools.actool.aceinstaller.AceBeanInstaller;
 import biz.netcentric.cq.tools.actool.api.AcInstallationService;
 import biz.netcentric.cq.tools.actool.api.InstallationLog;
+import biz.netcentric.cq.tools.actool.api.InstallationLogLevel;
 import biz.netcentric.cq.tools.actool.api.InstallationOptions;
 import biz.netcentric.cq.tools.actool.api.InstallationOptionsBuilder;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
@@ -88,14 +98,17 @@ import biz.netcentric.cq.tools.actool.history.impl.PersistableInstallationLogger
 import biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl.Configuration;
 import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService;
 
-@Component
+@Component(property = JobConsumer.PROPERTY_TOPICS + "=" + AcInstallationServiceImpl.JOB_TOPIC)
 @Designate(ocd=Configuration.class)
-public class AcInstallationServiceImpl implements AcInstallationService, AcInstallationServiceInternal {
+public class AcInstallationServiceImpl implements AcInstallationService, AcInstallationServiceInternal, JobConsumer {
     private static final Logger LOG = LoggerFactory.getLogger(AcInstallationServiceImpl.class);
 
     private static final String CONFIG_PID = "biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl";
     private static final String LEGACY_CONFIG_PID = "biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl";
     private static final String LEGACY_PROPERTY_CONFIGURATION_PATH = "AceService.configurationPath";
+    protected static final String JOB_TOPIC = "biz/netcentric/cq/tools/actool/installation";
+
+    private static final String JOB_PROPERTY_INSTALLATION_OPTIONS = "installationOptions";
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     AuthorizableInstallerService authorizableCreatorService;
@@ -129,10 +142,15 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private AcConfigChangeTracker acConfigChangeTracker;
-    
+
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ExtendedSlingSettingsService slingSettingsService;
-    
+
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    private JobManager jobManager;
+
+    private PersistableInstallationLogger asyncInstallLog;
+
     private List<String> configurationRootPaths;
 
     @ObjectClassDefinition(name = "AC Tool Installation Service", 
@@ -173,8 +191,59 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     @Override
+    public String applyAsynchronously(InstallationOptions options) {
+        Job oldJob = jobManager.getJob(AcInstallationServiceImpl.JOB_TOPIC, null);
+        if (oldJob != null) {
+            throw new IllegalStateException("Another asynchronous installation is currently running");
+        }
+        asyncInstallLog = new PersistableInstallationLogger();
+        Job job = jobManager.createJob(JOB_TOPIC)
+                .properties(options.getPersistableProperties())
+                .add();
+        if (job == null) {
+            throw new IllegalStateException("Could not schedule asynchronous installation, check the log for details!");
+        }
+        return job.getId();
+    }
+
+    @Override
+    public JobResult process(Job job) {
+        // cannot use deserialization due to https://issues.apache.org/jira/browse/SLING-12745
+        Map<String, Object> jobProperties = job.getPropertyNames().stream().collect(Collectors.toMap(Function.identity(), job::getProperty));
+        InstallationOptionsBuilder optionsBuilder = new InstallationOptionsBuilder(jobProperties);
+        InstallationOptions options = optionsBuilder.build();
+        apply(options, asyncInstallLog);
+        try {
+            asyncInstallLog.close();
+        } catch (IOException e) {
+            throw new UncheckedIOException("Could not close installation log", e);
+        }
+        return asyncInstallLog.getErrors().isEmpty() ? JobResult.OK : JobResult.CANCEL;
+    }
+
+    
+    @Override
+    public boolean attachLogListener(String jobId, BiConsumer<InstallationLogLevel, String> messageListener, Consumer<Boolean> finishListener) {
+        Job job = jobManager.getJobById(jobId);
+        if (job == null) {
+            // finished job or unknown job not to distinguish, as only failed jobs are kept in the history
+            LOG.debug("No job found with id {}", jobId);
+            return false;
+        }
+        if (asyncInstallLog == null) {
+            // no async install log, most probably job is running on another instance
+            messageListener.accept(InstallationLogLevel.INFO, "No async install log available, but job found with id " + jobId + ". Job running on another instance with id \"" + job.getTargetInstance() + "\".");
+            messageListener.accept(InstallationLogLevel.INFO, "Please check the logs of the other instance for details.");
+        } else {
+            asyncInstallLog.attachMessageListener(messageListener);
+            asyncInstallLog.attachFinishListener(finishListener);
+        }
+        return true;
+    }
+
+    @Override
     public InstallationLog apply() {
-        return apply(null, null);
+        return apply((String)null);
     }
     
     @Override
@@ -208,6 +277,12 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     public InstallationLog apply(InstallationOptions options) {
+        PersistableInstallationLogger installLog = new PersistableInstallationLogger();
+        apply(options, installLog);
+        return installLog;
+    }
+    
+    private void apply(InstallationOptions options, PersistableInstallationLogger installLog) {
         final String configurationRootPath;
         if(!options.getConfigurationRootPath().isPresent() || options.getConfigurationRootPath().get().isEmpty()) {
             if(CollectionUtils.isEmpty(configurationRootPaths)) {
@@ -215,12 +290,13 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             } else if(configurationRootPaths.size() == 1) {
                 configurationRootPath = configurationRootPaths.get(0);
             } else {
-                return applyMultipleConfigurations(options);
+                applyMultipleConfigurations(options, installLog);
+                return;
             }
         } else {
             configurationRootPath = options.getConfigurationRootPath().get();
         }
-        PersistableInstallationLogger installLog = new PersistableInstallationLogger();
+        
         Session session = null;
         try {
             session = repository.loginService(null, null);
@@ -231,7 +307,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 configFiles = configFilesRetriever.getConfigFileContentFromNode(configurationRootPath, session);
             } catch (Exception e) {
                 installLog.addError("Could not retrieve configuration from path "+configurationRootPath+": "+e.getMessage(), e);
-                return installLog;
+                return;
             }
 
             // install config files
@@ -254,19 +330,18 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 session.logout();
             }
         }
-        return installLog;
+        return;
     }
 
-    private InstallationLog applyMultipleConfigurations(InstallationOptions options) {
-        InstallationLogger overviewInstallLog = new PersistableInstallationLogger();
-        overviewInstallLog.addMessage(LOG, "Applying multiple configs (this log only shows what was applied, check the individual logs for details)");
+    private InstallationLog applyMultipleConfigurations(InstallationOptions options, PersistableInstallationLogger installLog) {
+        installLog.addMessage(LOG, "Applying multiple configs (this log only shows what was applied, check the individual logs for details)");
         for(String rootPath: configurationRootPaths) {
-            overviewInstallLog.addMessage(LOG, "Applying config at root path "+rootPath);
+            installLog.addMessage(LOG, "Applying config at root path "+rootPath);
             InstallationOptionsBuilder optionsBuilder = new InstallationOptionsBuilder(options);
             optionsBuilder.withConfigurationRootPath(rootPath);
             apply(optionsBuilder.build());
         }
-        return overviewInstallLog;
+        return installLog;
     }
 
     @Override

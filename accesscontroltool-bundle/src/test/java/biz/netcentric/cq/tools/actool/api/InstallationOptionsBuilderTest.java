@@ -17,8 +17,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -56,5 +58,16 @@ class InstallationOptionsBuilderTest {
         assertEquals(restrictedToPaths, options2.getRestrictedToPaths());
         assertTrue(options2.shouldSkipIfConfigUnchanged());
         assertTrue(options2.shouldUpdateExistingExternalGroups());
+    }
+    
+    @Test
+    void testConstructWithProperties() {
+        InstallationOptionsBuilder builder = new InstallationOptionsBuilder();
+        builder.withConfigurationRootPath("/apps/actool/config");
+        builder.skipIfConfigUnchanged();
+        InstallationOptions options = builder.build();
+        Map<String, Object> properties = options.getPersistableProperties();
+        InstallationOptionsBuilder builder2 = new InstallationOptionsBuilder(properties);
+        assertEquals(options, builder2.build());
     }
 }

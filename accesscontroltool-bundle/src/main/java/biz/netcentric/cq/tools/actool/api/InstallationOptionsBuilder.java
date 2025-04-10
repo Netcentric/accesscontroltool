@@ -1,5 +1,7 @@
 package biz.netcentric.cq.tools.actool.api;
 
+import java.io.Serializable;
+
 /*-
  * #%L
  * Access Control Tool Bundle
@@ -17,6 +19,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -25,20 +28,35 @@ import java.util.Optional;
  * @since 3.6.0 */
 public final class InstallationOptionsBuilder {
 
-    private Optional<String> configurationRootPath;
+    private String configurationRootPath;
     private List<String> restrictedToPaths;
     private boolean skipIfConfigUnchanged;
     private boolean updateExistingExternalGroups;
 
+    /**
+     * Creates a new builder with the given properties previously returned by {@link InstallationOptions#getPersistableProperties()}.
+     */
+    public InstallationOptionsBuilder(Map<String, Object> properties) {
+        this.configurationRootPath = (String)properties.get("configurationRootPath");
+        String[] restrictedToPathsArray = (String[])properties.get("restrictedToPaths");
+        if (restrictedToPathsArray != null) {
+            this.restrictedToPaths = new LinkedList<>(Arrays.asList(restrictedToPathsArray));
+        } else {
+            this.restrictedToPaths = new LinkedList<>();
+        }
+        this.skipIfConfigUnchanged = (Boolean)properties.getOrDefault("skipIfConfigUnchanged", Boolean.FALSE);
+        this.updateExistingExternalGroups = (Boolean)properties.getOrDefault("updateExistingExternalGroups", Boolean.FALSE);
+    }
+    
     public InstallationOptionsBuilder() {
-        this.configurationRootPath = Optional.empty();
+        this.configurationRootPath = null;
         this.restrictedToPaths = new LinkedList<>();
         this.skipIfConfigUnchanged = false;
         this.updateExistingExternalGroups = false;
     }
 
     public InstallationOptionsBuilder(InstallationOptions options) {
-        this.configurationRootPath = options.getConfigurationRootPath();
+        this.configurationRootPath = options.getConfigurationRootPath().orElse(null);
         this.restrictedToPaths = new LinkedList<>();
         this.restrictedToPaths.addAll(options.getRestrictedToPaths());
         this.skipIfConfigUnchanged = options.shouldSkipIfConfigUnchanged();
@@ -46,7 +64,7 @@ public final class InstallationOptionsBuilder {
     }
 
     public InstallationOptionsBuilder withConfigurationRootPath(String configurationRootPath) {
-        this.configurationRootPath = Optional.of(configurationRootPath);
+        this.configurationRootPath = configurationRootPath;
         return this;
     }
 
@@ -75,12 +93,12 @@ public final class InstallationOptionsBuilder {
     }
 
     private static final class InstallationOptionsImpl implements InstallationOptions {
-        private final Optional<String> configurationRootPath;
+        private final String configurationRootPath;
         private final List<String> restrictedToPaths;
         private final boolean skipIfConfigUnchanged;
         private final boolean updateExistingExternalGroups;
 
-        public InstallationOptionsImpl(InstallationOptionsBuilder builder) {
+       InstallationOptionsImpl(InstallationOptionsBuilder builder) {
             this.configurationRootPath = builder.configurationRootPath;
             this.restrictedToPaths = builder.restrictedToPaths;
             this.skipIfConfigUnchanged = builder.skipIfConfigUnchanged;
@@ -89,7 +107,7 @@ public final class InstallationOptionsBuilder {
 
         @Override
         public Optional<String> getConfigurationRootPath() {
-            return configurationRootPath;
+            return Optional.ofNullable(configurationRootPath);
         }
 
         @Override
@@ -131,6 +149,16 @@ public final class InstallationOptionsBuilder {
             return "InstallationOptionsImpl [configurationRootPath=" + configurationRootPath + ", restrictedToPaths=" + restrictedToPaths
                     + ", skipIfConfigUnchanged=" + skipIfConfigUnchanged + ", updateExistingExternalGroups=" + updateExistingExternalGroups
                     + "]";
+        }
+
+        @Override
+        public Map<String, Object> getPersistableProperties() {
+            Map<String, Object> properties = new java.util.HashMap<>();
+            properties.put("configurationRootPath", configurationRootPath);
+            properties.put("restrictedToPaths", restrictedToPaths.toArray(new String[0]));
+            properties.put("skipIfConfigUnchanged", skipIfConfigUnchanged);
+            properties.put("updateExistingExternalGroups", updateExistingExternalGroups);
+            return properties;
         }
     }
 }

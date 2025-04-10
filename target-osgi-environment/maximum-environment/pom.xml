@@ -83,6 +83,12 @@
         </dependency>
         <dependency>
             <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.eventadmin</artifactId>
+            <version>1.4.10</version><!-- TODO: fix version-->
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.http.servlet-api</artifactId>
             <version>1.1.2</version>
             <scope>provided</scope>
@@ -175,6 +181,12 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.event</artifactId>
+            <version>4.2.10</version><!-- TODO: increase version -->
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>javax.jcr</groupId>
             <artifactId>jcr</artifactId>
             <version>2.0</version>
@@ -238,6 +250,12 @@
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.commons.metrics</artifactId>
             <version>1.2.6</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.event</artifactId>
+            <version>4.2.10</version>
             <scope>provided</scope>
         </dependency>
         <!-- close to com.adobe.granite.dropwizard.metrics -->
