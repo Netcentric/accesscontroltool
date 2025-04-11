@@ -372,7 +372,7 @@
                     <configuration>
                         <excludes>
                             <!-- Exclude multi-version snakeyaml for Jacoco due to https://github.com/jacoco/jacoco/issues/407 -->
-                            <exclude>snakeyaml-2.2.jar</exclude>
+                            <exclude>snakeyaml-*.jar</exclude>
                             <exclude>tomcat-*.jar</exclude>
                         </excludes>
                     </configuration>
