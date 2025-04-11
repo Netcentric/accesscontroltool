@@ -16,7 +16,7 @@ org.apache.http.*;resolution:=optional,\
 org.bouncycastle.*;resolution:=optional,\
 org.apache.sling.commons.scheduler.*;resolution:=optional,\
 org.apache.jackrabbit.oak.spi.security.principal;version="[1.5.0,3)",\
-!jakarta.servlet*,\
+!javax.servlet.jsp.el,\
 *
 
 # snakeyaml 2.0 uses multi version jars which are not supported: https://github.com/bndtools/bnd/issues/3514
