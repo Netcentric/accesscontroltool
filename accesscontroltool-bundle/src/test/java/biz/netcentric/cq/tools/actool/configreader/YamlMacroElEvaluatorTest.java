@@ -22,7 +22,7 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import jakarta.el.ELException;
+import javax.el.ELException;
 
 class YamlMacroElEvaluatorTest {
     private YamlMacroElEvaluator elEvaluator;
