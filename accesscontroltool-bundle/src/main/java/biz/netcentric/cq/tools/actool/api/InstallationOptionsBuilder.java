@@ -1,7 +1,5 @@
 package biz.netcentric.cq.tools.actool.api;
 
-import java.io.Serializable;
-
 /*-
  * #%L
  * Access Control Tool Bundle
@@ -35,6 +33,7 @@ public final class InstallationOptionsBuilder {
 
     /**
      * Creates a new builder with the given properties previously returned by {@link InstallationOptions#getPersistableProperties()}.
+     * @param properties the properties returned by {@link InstallationOptions#getPersistableProperties()}
      */
     public InstallationOptionsBuilder(Map<String, Object> properties) {
         this.configurationRootPath = (String)properties.get("configurationRootPath");

@@ -25,11 +25,11 @@ public interface AcInstallationService {
      * Applies the configuration asynchronously.
      * Almost immediately returns a string with the ID of the started job.
      * Only one execution at a time is allowed.
-     * @param options
+     * @param options the installation options which further specify the installation
      * @throws IllegalStateException if another asynchronous installation is currently running
      * @return the job id
      * @since 3.6.0
-     * @see #attachLogListener(String, InstallationLogListener)
+     * @see #attachLogListener(String, BiConsumer, Consumer)
      */
     public String applyAsynchronously(InstallationOptions options);
 
