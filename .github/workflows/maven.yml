@@ -40,7 +40,7 @@ jobs:
 
       - name: Build with Maven
         if: '!matrix.isMainBuildEnv'
-        run: mvn -e -B -V -Pintegration-tests clean verify
+        run: mvn -e -B -V clean verify -Pintegration-tests -Pjavadoc
       - name: Build and Analyse with Maven
         if: github.ref != 'refs/heads/develop' && matrix.isMainBuildEnv
         env: 
@@ -56,7 +56,7 @@ jobs:
           ACTOOL_IMS_IT_CLIENTSECRET: ${{ secrets.ACTOOL_IMS_IT_CLIENTSECRET }}
           ACTOOL_IMS_IT_PRODUCTPROFILE: ${{ vars.ACTOOL_IMS_IT_PRODUCTPROFILE }}
           ACTOOL_IMS_IT_USERID: ${{ vars.ACTOOL_IMS_IT_USERID }}
-        run: mvn -e -B -V clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Netcentric_accesscontroltool -Dsonar.organization=netcentric -Dsonar.host.url=https://sonarcloud.io -DnvdApiKeyEnvironmentVariable=NVD_API_KEY -Pdependency-check,coverage-report,integration-tests
+        run: mvn -e -B -V clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Netcentric_accesscontroltool -Dsonar.organization=netcentric -Dsonar.host.url=https://sonarcloud.io -DnvdApiKeyEnvironmentVariable=NVD_API_KEY -Pdependency-check -Pcoverage-report -Pintegration-tests -Pjavadoc
 
       - name: Build, Analyse and Deploy with Maven
         if: github.ref == 'refs/heads/develop' && matrix.isMainBuildEnv
@@ -75,4 +75,4 @@ jobs:
           ACTOOL_IMS_IT_CLIENTSECRET: ${{ secrets.ACTOOL_IMS_IT_CLIENTSECRET }}
           ACTOOL_IMS_IT_PRODUCTPROFILE: ${{ vars.ACTOOL_IMS_IT_PRODUCTPROFILE }}
           ACTOOL_IMS_IT_USERID: ${{ vars.ACTOOL_IMS_IT_USERID }}
-        run: mvn -e -B -V clean deploy org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Netcentric_accesscontroltool -Dsonar.organization=netcentric -Dsonar.host.url=https://sonarcloud.io -DnvdApiKeyEnvironmentVariable=NVD_API_KEY -Pdependency-check,coverage-report,integration-tests
+        run: mvn -e -B -V clean deploy org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Netcentric_accesscontroltool -Dsonar.organization=netcentric -Dsonar.host.url=https://sonarcloud.io -DnvdApiKeyEnvironmentVariable=NVD_API_KEY -Pdependency-check -Pcoverage-report -Pintegration-tests -Pjavadoc

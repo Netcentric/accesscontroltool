@@ -38,22 +38,12 @@
                     <filterSource>src/main/META-INF/vault/filter.xml</filterSource>
                     <allowIndexDefinitions>true</allowIndexDefinitions>
                     <packageType>content</packageType><!-- regular mutable content for AEM Classic -->
+                    <validatorsSettings>
+                        <netcentric-aem-cloud>
+                            <isDisabled>true</isDisabled>
+                        </netcentric-aem-cloud>
+                    </validatorsSettings>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>default-validate-package</id>
-                        <goals>
-                            <goal>validate-package</goal>
-                        </goals>
-                        <configuration>
-                            <validatorsSettings>
-                                <netcentric-aem-cloud>
-                                    <isDisabled>true</isDisabled>
-                                </netcentric-aem-cloud>
-                            </validatorsSettings>
-                        </configuration>
-                    </execution>
-                </executions>
            </plugin>
 
             <plugin>
