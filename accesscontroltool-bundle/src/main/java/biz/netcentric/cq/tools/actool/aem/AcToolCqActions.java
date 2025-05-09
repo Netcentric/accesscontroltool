@@ -61,7 +61,7 @@ public class AcToolCqActions {
     }
 
     private static final String CONTENT_RESTRICTION = "*/jcr:content*";
-    private static final String REPLICATE_PRIVILEGE = "rep:replicate";
+    private static final String REPLICATE_PRIVILEGE = "{http://www.day.com/crx/1.0}replicate";
 
     private final Session session;
     private final Map<String, Set<Privilege>> map = new HashMap<>();
