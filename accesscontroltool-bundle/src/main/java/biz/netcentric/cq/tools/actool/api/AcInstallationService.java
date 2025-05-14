@@ -44,6 +44,15 @@ public interface AcInstallationService {
      */
     public boolean attachLogListener(String jobId, BiConsumer<InstallationLogLevel, String> listener, Consumer<Boolean> finishListener);
 
+    /**
+     * Checks if the asynchronous installation job with the given ID is running.
+     * @param jobId
+     * @return {@code true} if the job with the given ID is running, {@code false} otherwise
+     * @since 3.6.1
+     */
+    public boolean isRunning(String jobId);
+
+    
     /** Applies the full configuration as stored at the path configured at PID biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl
      * to the repository.
      * 

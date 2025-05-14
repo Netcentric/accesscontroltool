@@ -225,7 +225,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     @Override
     public boolean attachLogListener(String jobId, BiConsumer<InstallationLogLevel, String> messageListener, Consumer<Boolean> finishListener) {
         Job job = jobManager.getJobById(jobId);
-        if (job == null) {
+        if (!isRunning(jobId)) {
             // finished job or unknown job not to distinguish, as only failed jobs are kept in the history
             LOG.debug("No job found with id {}", jobId);
             return false;
@@ -239,6 +239,13 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             asyncInstallLog.attachFinishListener(finishListener);
         }
         return true;
+    }
+
+    
+    @Override
+    public boolean isRunning(String jobId) {
+        Job job = jobManager.getJobById(jobId);
+        return job != null;
     }
 
     @Override
