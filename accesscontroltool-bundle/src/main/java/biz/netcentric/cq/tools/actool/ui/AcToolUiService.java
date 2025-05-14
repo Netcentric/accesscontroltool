@@ -123,11 +123,19 @@ public class AcToolUiService {
         
         @AttributeDefinition(name="Write access", description="Principal names allowed to modify users/groups and permissions in the system via ACTool configuration files. Only leveraged for Touch UI but not for Web Console Plugin.")
         String[] writeAccessPrincipalNames() default { "administrators", "admin" };
+
+        @AttributeDefinition(name="Log stream request maximum runtime", description="Maximum time in milliseconds until the log stream request should be answered. Must be less than the timeout of the CDN (60 seconds for Fastly used by AEMaaCS).")
+        long maxLogStreamRequestRuntimeInMs() default 30 * 1000; // 30 seconds
     }
 
     private final Map<String, String> countryCodePerName;
 
     private final Configuration config;
+
+    /**
+     * Singleton message queue for the currently running asynchronous installation.
+     */
+    private BlockingQueue<String> messages;
 
     @Activate
     public AcToolUiService(Configuration config) {
@@ -289,6 +297,23 @@ public class AcToolUiService {
         }
         try {
             String jobId = acInstallationService.applyAsynchronously(builder.build());
+            messages = new LinkedBlockingQueue<>();
+            acInstallationService.attachLogListener(jobId, (level, message) -> {
+                try {
+                    if (!reqParams.showLogVerbose && level == InstallationLogLevel.TRACE) {
+                        return;
+                    }
+                    messages.put(level + ": " + message);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }, success -> {
+                try {
+                    messages.put("FINISHED: " + success);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            });
             // return full URL to the server-sent event stream for this installation
             resp.setContentType("text/plain");
             String streamLogUrl = req.getRequestURI() + "/" + SUFFIX_STREAM_LOG + "?jobId=" + URLEncoder.encode(jobId, StandardCharsets.UTF_8.toString()) + "&" + PARAM_SHOW_LOG_VERBOSE + "=" + reqParams.showLogVerbose;
@@ -299,6 +324,7 @@ public class AcToolUiService {
             return;
         }
 
+        
     }
 
     /**
@@ -387,7 +413,9 @@ public class AcToolUiService {
         }
     }
 
-    /** Server-sent events emitted for an asynchronous execution log
+    /** 
+     * Server-sent events emitted for an asynchronous execution log. As the Fastly CDN used with AEM as a Cloud Service does not have <a href="https://docs.fastly.com/en/guides/streaming-miss">streaming</a>
+     * enabled, this is delivering the events in chunks.
      * @throws IOException 
      * 
      * @see <a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events">Server-sent events</a>
@@ -401,35 +429,20 @@ public class AcToolUiService {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
-        final boolean isVerbose = Boolean.parseBoolean(req.getParameter(AcToolUiService.PARAM_SHOW_LOG_VERBOSE));
-        BlockingQueue<String> messages = new LinkedBlockingQueue<>();
-        boolean isActive = acInstallationService.attachLogListener(jobId, (level, message) -> {
-            try {
-                if (!isVerbose && level == InstallationLogLevel.TRACE) {
-                    return;
-                }
-                messages.put(level + ": " + message);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }, success -> {
-            try {
-                messages.put("FINISHED: " + success);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        });
-        if (!isActive) {
-            LOG.debug("Haven't found job with id {}, probably already finished processing it", jobId);
+        // is it fully consumed and no longer running?
+        if (!acInstallationService.isRunning(jobId) && (messages == null || messages.isEmpty())) {
+            LOG.debug("Asynchronous installation with id {} is not running anymore and no messages are available", jobId);
             resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
             return;
         }
+        long startTime = System.currentTimeMillis();
         try {
+            boolean isActive = true;
             while (isActive) {
                 String message = messages.poll(30, java.util.concurrent.TimeUnit.SECONDS);
                 if (message == null) {
-                    // just sent keep-alives
-                    message = ".";
+                    message = "...";
+                    isActive = false;
                 }
                 if (message.startsWith("FINISHED: ")) {
                     isActive = false;
@@ -437,6 +450,11 @@ public class AcToolUiService {
                     resp.getWriter().println("data: " + message);
                     resp.getWriter().println();
                     resp.getWriter().flush();
+                }
+                // overall runtime above threshold
+                if (System.currentTimeMillis() - startTime > config.maxLogStreamRequestRuntimeInMs()) {
+                    LOG.debug("Reached maximum runtime of {} ms for log stream request, finishing response", config.maxLogStreamRequestRuntimeInMs());
+                    isActive = false;
                 }
             }
         } catch(InterruptedException e) {
