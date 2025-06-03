@@ -1,5 +1,7 @@
 package biz.netcentric.cq.tools.actool.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /*-
  * #%L
  * Access Control Tool Bundle
@@ -17,23 +19,31 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.jcr.RepositoryException;
 
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.User;
+import org.apache.sling.event.jobs.Job;
+import org.apache.sling.event.jobs.JobBuilder;
+import org.apache.sling.event.jobs.JobManager;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
+import biz.netcentric.cq.tools.actool.api.InstallationOptionsBuilder;
+
 @ExtendWith(MockitoExtension.class)
-public class AcInstallationServiceImplTest {
+class AcInstallationServiceImplTest {
 
     AcInstallationServiceImpl acInstallationServiceImpl = new AcInstallationServiceImpl();
 
@@ -65,7 +75,7 @@ public class AcInstallationServiceImplTest {
     User user2;
 
     @Test
-    public void testSortAuthorizablesForDeletion() throws RepositoryException {
+    void testSortAuthorizablesForDeletion() throws RepositoryException {
 
         when(group1.getID()).thenReturn("group1");
         when(group2.getID()).thenReturn("group2");
@@ -128,5 +138,40 @@ public class AcInstallationServiceImplTest {
 
             return groups.iterator();
         }
+    }
+    
+    @Test
+    void testAsynchronousInstallationInDistributedSetups() {
+        JobManager jobManager = Mockito.mock(JobManager.class);
+        Job job = Mockito.mock(Job.class);
+        JobBuilder jobBuilder = Mockito.mock(JobBuilder.class);
+        Map<String, Object> jobProps = new HashMap<String, Object>();
+
+        when(jobManager.createJob(Mockito.anyString())).thenReturn(jobBuilder);
+        when(jobBuilder.add()).thenReturn(job);
+        when(job.getId()).thenReturn("id");
+        when(jobBuilder.properties(Mockito.any())).thenAnswer(new Answer<JobBuilder>() {
+            @Override
+            public JobBuilder answer(InvocationOnMock invocation) throws Throwable {
+                Map<String, String> props = invocation.getArgument(0);
+                jobProps.putAll(props);
+                return jobBuilder;
+            }
+        });
+        when(jobManager.createJob(Mockito.anyString())).thenReturn(jobBuilder);
+        when(job.getPropertyNames()).thenReturn(jobProps.keySet());
+        when(job.getProperty(Mockito.anyString())).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                return jobProps.get(invocation.getArgument(0));
+            }
+        });
+
+        acInstallationServiceImpl.jobManager = jobManager;
+        // schedule in one server
+        assertEquals("id", acInstallationServiceImpl.applyAsynchronously(new InstallationOptionsBuilder().withConfigurationRootPath("/apps").build()));
+        // and process in another server (with another instance of the service)
+        AcInstallationServiceImpl acInstallationServiceImpl2 = new AcInstallationServiceImpl();
+        acInstallationServiceImpl2.process(job);
     }
 }
