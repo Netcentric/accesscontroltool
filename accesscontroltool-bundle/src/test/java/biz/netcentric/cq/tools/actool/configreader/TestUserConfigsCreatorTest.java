@@ -88,7 +88,7 @@ public class TestUserConfigsCreatorTest {
         groupAuthConfigBean.setAuthorizableId(TEST_GROUP_ID);
         groupAuthConfigBean.setName(name);
         groupAuthConfigBean.setPath(TEST_GROUP_PATH);
-        Map<String, Object> vars = new HashMap<>(testUserConfigsCreator.getVarsForAuthConfigBean(groupAuthConfigBean));
+        Map<String, Object> vars = new HashMap<>(groupAuthConfigBean.getVariablesForInterpolation());
         vars.putAll(testUserConfigsCreator.getVarsForCapturedGroups(matcher));
         return vars;
     }

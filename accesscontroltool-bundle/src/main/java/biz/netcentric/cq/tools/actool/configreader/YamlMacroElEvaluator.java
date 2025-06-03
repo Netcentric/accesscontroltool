@@ -39,6 +39,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.el.ExpressionFactoryImpl;
 
+
 /** Evaluates expressions that may contain variables from for loops.
  * 
  * Not an OSGi Service as it carries state and is not multi-threading safe.
@@ -99,6 +100,19 @@ public class YamlMacroElEvaluator {
                 }
             }
         };
+    }
+
+    /**
+     * Similar to {@link #evaluateEl(String, Class, Map)} but evaluates expressions that use the percent syntax <code>%{...}</code> instead of <code>${...}</code>.
+     * @param <T>
+     * @param value
+     * @param expectedResultType
+     * @param variables
+     * @return the interpolated value
+     */
+    public <T> T evaluateElWithPercentSyntax(String value, Class<T> expectedResultType, Map<? extends Object, ? extends Object> variables) {
+        String elWithDollarExpressions = value.replaceAll("%\\{([^\\}]+)\\}", "\\${$1}");
+        return evaluateEl(elWithDollarExpressions, expectedResultType, variables);
     }
 
     public <T> T evaluateEl(String el, Class<T> expectedResultType, Map<? extends Object, ? extends Object> variables) {

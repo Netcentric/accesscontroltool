@@ -76,7 +76,7 @@ public class TestUserConfigsCreator {
             Matcher matcher = pattern.matcher(groupId);
             if (matcher.matches()) {
                 
-                Map<String, Object> vars = getVarsForAuthConfigBean(groupAuthConfigBean);
+                Map<String, Object> vars = groupAuthConfigBean.getVariablesForInterpolation();
                 // also add all captured groups from the matcher as variables
                 vars.putAll(getVarsForCapturedGroups(matcher));
 
@@ -133,27 +133,11 @@ public class TestUserConfigsCreator {
         return vars;
     }
 
-    Map<String, Object> getVarsForAuthConfigBean(AuthorizableConfigBean groupAuthConfigBean) {
-        Map<String,Object> vars = new HashMap<>();
-        Map<String,String> groupVar = new HashMap<>();
-        String groupId = groupAuthConfigBean.getAuthorizableId();
-        groupVar.put("id", groupId);
-        groupVar.put("name", StringUtils.defaultIfEmpty(groupAuthConfigBean.getName(), groupId));
-        groupVar.put("path", groupAuthConfigBean.getPath());
-        vars.put("group", groupVar);
-        return vars;
-    }
-
     String processValue(String value, Map<? extends Object, ? extends Object> variables) {
-
-        String elWithDollarExpressions = value.replaceAll("%\\{([^\\}]+)\\}", "\\${$1}");
         if(elEvaluator==null) {
             elEvaluator = new YamlMacroElEvaluator();
         }
-        
-        String interpolatedValue = elEvaluator.evaluateEl(elWithDollarExpressions, String.class, variables);
-        
-        return interpolatedValue;
+        return elEvaluator.evaluateElWithPercentSyntax(value, String.class, variables);
     }
 
 
