@@ -123,7 +123,7 @@ public class IMSUserManagement implements ExternalGroupManagement {
         @AttributeDefinition(name = "Connect Timeout", description = "The maximum time to establish the connection with the remote host in milliseconds.")
         int connectTimeout() default 2000;
         @AttributeDefinition(name = "Socket Timeout", description = "The time waiting for data – after establishing the connection; maximum time of inactivity between two data packets. Given in milliseconds.")
-        int socketTimeout() default 10000;
+        int socketTimeout() default 120000;
         @AttributeDefinition(name = "Overall Timeout", description = "The maximum time updating groups in IMS should take. If expired the operation fails with an exception. Negative values mean no timeout. Given in milliseconds.")
         long overallTimeout() default -1;
         @AttributeDefinition(name = "AEM Product Profiles", description = "The given product profile names are automatically added to each synchronized IMS group. The given product profile names must exist for an AEM product!")
