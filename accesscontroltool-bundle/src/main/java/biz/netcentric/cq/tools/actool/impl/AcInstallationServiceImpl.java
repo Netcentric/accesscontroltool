@@ -147,7 +147,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     private ExtendedSlingSettingsService slingSettingsService;
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    private JobManager jobManager;
+    JobManager jobManager;
 
     private PersistableInstallationLogger asyncInstallLog;
 
@@ -210,6 +210,10 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     public JobResult process(Job job) {
         // cannot use deserialization due to https://issues.apache.org/jira/browse/SLING-12745
         Map<String, Object> jobProperties = job.getPropertyNames().stream().collect(Collectors.toMap(Function.identity(), job::getProperty));
+        if (asyncInstallLog == null) {
+            LOG.warn("Job {} was scheduled on another instance, no async install log available. Creating a new one.", job.getId());
+            asyncInstallLog = new PersistableInstallationLogger();
+        }
         InstallationOptionsBuilder optionsBuilder = new InstallationOptionsBuilder(jobProperties);
         InstallationOptions options = optionsBuilder.build();
         apply(options, asyncInstallLog);
