@@ -15,6 +15,7 @@ package biz.netcentric.cq.tools.actool.configmodel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -359,6 +360,17 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     public void setExternalSync(boolean externalSync) {
         this.externalSync = externalSync;
+    }
+
+    public Map<String, Object> getVariablesForInterpolation() {
+        Map<String,Object> vars = new HashMap<>();
+        Map<String,String> groupVar = new HashMap<>();
+        String groupId = getAuthorizableId();
+        groupVar.put("id", groupId);
+        groupVar.put("name", StringUtils.defaultIfEmpty(getName(), groupId));
+        groupVar.put("path", getPath());
+        vars.put("group", groupVar);
+        return vars;
     }
 
 }

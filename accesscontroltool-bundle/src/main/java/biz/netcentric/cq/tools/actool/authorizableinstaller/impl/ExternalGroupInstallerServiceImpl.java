@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configreader.YamlMacroElEvaluator;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
@@ -59,17 +60,23 @@ public class ExternalGroupInstallerServiceImpl {
             throws AuthorizableExistsException, RepositoryException,
             AuthorizableCreatorException {
 
-        if (StringUtils.isBlank(authorizableConfigBean.getExternalId())) {
-            throw new IllegalStateException("externalId must not be empty for " + authorizableConfigBean);
-        }
-
-        ExternalGroup externalGroup = new PrecreatedExternalGroup(authorizableConfigBean);
+        String externalId = getExternalId(authorizableConfigBean);
+        ExternalGroup externalGroup = new PrecreatedExternalGroup(authorizableConfigBean.getAuthorizableId(), externalId, authorizableConfigBean.getPath());
 
         ExternalGroupPrecreatorSyncContext externalGroupPrecreatorSyncContext = new ExternalGroupPrecreatorSyncContext(userManager,
                 session.getValueFactory());
         Group group = externalGroupPrecreatorSyncContext.createExternalGroup(externalGroup);
 
         return group;
+    }
+
+    static String getExternalId(final AuthorizableConfigBean authorizableConfigBean) {
+        YamlMacroElEvaluator elEvaluator = new YamlMacroElEvaluator();
+        String externalId = elEvaluator.evaluateElWithPercentSyntax(authorizableConfigBean.getExternalId(), String.class, authorizableConfigBean.getVariablesForInterpolation());
+        if (StringUtils.isBlank(externalId)) {
+            throw new IllegalStateException("externalId must not be empty for " + authorizableConfigBean);
+        }
+        return externalId;
     }
 
     // simple workaround to make protected method available here
@@ -87,33 +94,36 @@ public class ExternalGroupInstallerServiceImpl {
 
     // mapping AuthorizableConfigBean -> ExternalGroup
     private final class PrecreatedExternalGroup implements ExternalGroup {
-        private final AuthorizableConfigBean authorizableConfigBean;
+        private final String id;
+        private final String externalId;
+        private final String path;
 
-        private PrecreatedExternalGroup(AuthorizableConfigBean authorizableConfigBean) {
-            this.authorizableConfigBean = authorizableConfigBean;
+        private PrecreatedExternalGroup(String id, String externalId, String path) {
+            this.id = id;
+            this.externalId = externalId;
+            this.path = path;
         }
 
         @Override
         public String getId() {
-            return authorizableConfigBean.getAuthorizableId();
+            return id;
         }
 
         @Override
         public String getPrincipalName() {
-            String principalName = ExternalIdentityRef.fromString(authorizableConfigBean.getExternalId()).getId();
-            return principalName;
+            return getExternalId().getId();
         }
 
         @Override
         public String getIntermediatePath() {
-            String rawIntermediatePath = authorizableConfigBean.getPath();
+            String rawIntermediatePath = path;
             String intermediatePath = StringUtils.removeStart(rawIntermediatePath, Constants.GROUPS_ROOT + "/");
             return intermediatePath;
         }
 
         @Override
         public ExternalIdentityRef getExternalId() {
-            return ExternalIdentityRef.fromString(authorizableConfigBean.getExternalId());
+            return ExternalIdentityRef.fromString(externalId);
         }
 
         @Override

@@ -288,17 +288,13 @@ property | comment | required
 --- | --- | ---
 `createForGroupNamesRegEx` | A regex (matched against authorizableId of groups) to select the groups, test users should be created for. The regular expression may contain [capturing groups](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html#cg). | required
 `prefix` | The prefix for the authorizable id, for instance if prefix "tu-" is given, a user "tu-myproject-editors" will be created for group "myproject-editors" | required
-`name` | The name as configured in user's profile, allows for interpolation with EL *) | optional, defaults to "Test User %{group.name}"
+`name` | The name as configured in user's profile, allows for interpolation with EL[^1] | optional, defaults to "Test User %{group.name}"
 `description` | The description as configured in user's profile, allows for interpolation with EL *) | optional, not set by default
-`email` | The email as configured in user's profile, allows for interpolation with EL *). | optional, not set by default
+`email` | The email as configured in user's profile, allows for interpolation with EL[^1]. | optional, not set by default
 `path` | The location where the test users shall be created | required
 `password` | The password for all test users to be created. Can be encrypted using CryptoSupport. Defaults simply to the authorizable id of the test user. Allows for interpolation with EL *) | optional
 `skipForRunmodes` | The configuration is placed in a regular config file, hence it is possible to add one to an author configuration (located in e.g. in a folder "config.author" and one to a publish configuration (e.g. folder "config.publish"). To avoid creating special runmodes folders just for this configuration that list all runmodes except production, skipForRunmodes can be a comma-separated list of runmodes, where the users are not created.  Defaults to prod,production | optional
 `impersonationAllowedFor` | List of users that can impersonate auto-created test users | optional
-
-*) Interpolation of group properties can be used with EL, however as `$` is evaluated at an earlier stage, `%{}` is used here. Available is `%{group.id}`, `%{group.name}`, `%{group.path}` or expressions like `%{split(group.path,'/')[2]}`.
-
-The special variables `%{cg<capturingGroupIndex>}` may be used to reference a capturing group from the regular expression given in `createForGroupNamesRegEx` matched against the group id. The variable `%{cg0}` stands for the complete group id (since version 3.2.0).
 
 Example:
 
@@ -482,3 +478,4 @@ This example gives the group `myproj-editor` edit rights for all content in fold
 
 
 [felix-interpolation-plugin]: https://github.com/apache/felix-dev/blob/master/configadmin-plugins/interpolation/README.md
+[^1]: Interpolation of group properties can be used with EL, however as `$` is evaluated at an earlier stage, `%{}` is used here. Available is `%{group.id}`, `%{group.name}`, `%{group.path}` or expressions like `%{split(group.path,'/')[2]}`. The special variables `%{cg<capturingGroupIndex>}` may be used to reference a capturing group from the regular expression given in `createForGroupNamesRegEx` matched against the group id. The variable `%{cg0}` stands for the complete group id (since version 3.2.0).
