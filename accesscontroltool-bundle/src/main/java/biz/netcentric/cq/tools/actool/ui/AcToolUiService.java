@@ -423,6 +423,7 @@ public class AcToolUiService {
     private void streamLog(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         // set charset explicitly to utf-8, otherwise jetty is appending the default ISO charset which is not accepted by Chrome for event-stream
         resp.setContentType("text/event-stream;charset=utf-8");
+        resp.setHeader("Cache-Control", "private"); // try to enable streaming behaviour even through CDN to reduce delay of events
         String jobId = req.getParameter("jobId");
         if (StringUtils.isBlank(jobId)) {
             LOG.warn("No jobId provided as request parameter");
