@@ -59,12 +59,12 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <id>sonatype-central-portal</id>
+            <url>https://central.sonatype.com/repository/maven-snapshots</url>
         </snapshotRepository>
         <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+            <id>sonatype-central-portal</id>
+            <url>https://repo.maven.apache.org/maven2</url>
         </repository>
     </distributionManagement>
 
@@ -93,6 +93,7 @@
         <contentPackageFile>${project.build.directory}/${project.build.finalName}.zip</contentPackageFile>
         <oak.version>1.8.2</oak.version>
         <jackrabbit.version>2.16.0</jackrabbit.version>
+        <njord.version>0.7.4</njord.version>
     </properties>
 
     <modules>
@@ -217,6 +218,14 @@
     </dependencyManagement>
 
     <build>
+        <extensions>
+            <!-- Njord extension for Maven, responsible for injecting the right repository -->
+            <extension>
+                <groupId>eu.maveniverse.maven.njord</groupId>
+                <artifactId>extension</artifactId>
+                <version>${njord.version}</version>
+            </extension>
+        </extensions>
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -341,9 +350,9 @@
                     <version>3.5.0</version>
                 </plugin>
                 <plugin>
-                    <groupId>org.sonatype.plugins</groupId>
-                    <artifactId>nexus-staging-maven-plugin</artifactId>
-                    <version>1.7.0</version>
+                    <groupId>eu.maveniverse.maven.plugins</groupId>
+                    <artifactId>njord</artifactId>
+                    <version>${njord.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.sling</groupId>
