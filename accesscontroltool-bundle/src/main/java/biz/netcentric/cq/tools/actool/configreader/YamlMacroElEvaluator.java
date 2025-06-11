@@ -34,6 +34,7 @@ import javax.el.MapELResolver;
 import javax.el.ValueExpression;
 import javax.el.VariableMapper;
 
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -159,7 +160,8 @@ public class YamlMacroElEvaluator {
                         YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("containsAnyItem", new Class<?>[] { List.class, List.class }),
                         YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("keys", new Class<?>[] { Map.class }),
                         YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("values", new Class<?>[] { Map.class }),
-                        YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("escapeXml", new Class<?>[] { String.class })
+                        YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("escapeXml", new Class<?>[] { String.class }),
+                        YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("union", new Class<?>[] { List.class, List.class })
                 };
                 for (Method method : exportedMethods) {
                     functionMap.put(method.getName(), method);
@@ -200,6 +202,10 @@ public class YamlMacroElEvaluator {
         public static String escapeXml(String input) {
             // DocView is XML 1.0
             return StringEscapeUtils.escapeXml10(input);
+        }
+
+        public static List<Object> union(List<String> list1, List<String> list2){
+            return  ListUtils.union(list1, list2);
         }
     }
 

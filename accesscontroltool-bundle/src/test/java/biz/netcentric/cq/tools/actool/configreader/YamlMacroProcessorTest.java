@@ -476,6 +476,16 @@ public class YamlMacroProcessorTest {
     }
 
     @Test
+    public void testUnionFunction() throws Exception {
+        List<Map> yamlList = getYamlList("test-array-union-function.yaml");
+
+        yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
+
+        AuthorizablesConfig groups = readGroupConfigs(yamlList);
+        assertEquals(9, groups.size(), "Number of ACEs expected to be 9");
+    }
+
+    @Test
     public void testLoopOverRunmodes() throws Exception {
 
         List<Map> yamlList = getYamlList("test-loop-over-runmodes.yaml");
