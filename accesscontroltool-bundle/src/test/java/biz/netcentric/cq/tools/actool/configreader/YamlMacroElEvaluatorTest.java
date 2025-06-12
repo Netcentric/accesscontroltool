@@ -15,6 +15,7 @@ package biz.netcentric.cq.tools.actool.configreader;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,8 +48,8 @@ class YamlMacroElEvaluatorTest {
         assertEquals("bar", evaluateSimpleExpression("defaultIfBlank(\"bar\",\"foo\")"));
 
         Map<String,Object> lists= ImmutableMap.of("list1",Arrays.asList("foo","bar"), "list2",Arrays.asList("fizz","buzz"));
-        assertEquals(Arrays.asList("foo","bar","fizz","buzz"), evaluateSimpleExpression("union(list1,list2)",lists));
-        assertEquals(Arrays.asList("item1"), evaluateSimpleExpression("keys(list)",Collections.singletonMap("list", ImmutableMap.of("item1","value"))));
+        assertIterableEquals(Arrays.asList("foo","bar","fizz","buzz"), (Iterable)evaluateSimpleExpression("union(list1,list2)",lists));
+        assertIterableEquals(Arrays.asList("item1"),(Iterable) evaluateSimpleExpression("keys(list)",Collections.singletonMap("list", ImmutableMap.of("item1","value"))));
 
     }
 
