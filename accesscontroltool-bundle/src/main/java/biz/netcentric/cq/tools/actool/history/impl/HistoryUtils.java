@@ -17,6 +17,7 @@ import java.io.BufferedReader;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -36,7 +37,6 @@ import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.version.VersionException;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.apache.jackrabbit.commons.JcrUtils;
@@ -332,7 +332,9 @@ public class HistoryUtils {
                         logFileNode = historyNode.getNode(LOG_FILE_NAME);
                     }
                     sb.append(PersistableInstallationLogger.EOL);
-                    sb.append(IOUtils.toString(JcrUtils.readFile(logFileNode), StandardCharsets.UTF_8));
+                    try (InputStream logFileStream = JcrUtils.readFile(logFileNode)) {
+                        sb.append(new String(logFileStream.readAllBytes(), StandardCharsets.UTF_8));
+                    }
                 }
 
                 sb.append(lineFeedSymbol
