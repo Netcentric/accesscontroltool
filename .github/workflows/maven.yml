@@ -33,7 +33,7 @@ jobs:
           distribution: 'temurin'
           java-version: ${{ matrix.jdk }}
           # generate settings.xml with the correct values
-          server-id: ossrh # Value of the distributionManagement/repository/id field of the pom.xml
+          server-id: sonatype-central-portal # Value of the distributionManagement/repository/id field of the pom.xml
           server-username: MAVEN_USERNAME # env variable for username in deploy
           server-password: MAVEN_PASSWORD # env variable for token in deploy
           cache: 'maven'
@@ -63,8 +63,8 @@ jobs:
         env: 
           # NVD API key used by dependency-check
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-          MAVEN_USERNAME: ${{ secrets.OSSRH_TOKEN_USER }}
-          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN_PASSWORD }}
+          MAVEN_USERNAME: ${{ secrets.SONATYPE_CENTRAL_TOKEN_USER }}
+          MAVEN_PASSWORD: ${{ secrets.SONATYPE_CENTRAL_TOKEN_PASSWORD }}
           # SonarCloud access token should be generated from https://sonarcloud.io/account/security/
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           # Needed to get some information about the pull request, if any
