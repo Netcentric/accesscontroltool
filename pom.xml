@@ -50,11 +50,12 @@
         </license>
     </licenses>
 
-    <scm>
+    <!-- using adjusted inheritance rules: https://issues.apache.org/jira/browse/MNG-6059 -->
+    <scm child.scm.connection.inherit.append.path="false" child.scm.developerConnection.inherit.append.path="false" child.scm.url.inherit.append.path="false">
         <connection>scm:git:ssh://git@github.com/Netcentric/accesscontroltool.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/Netcentric/accesscontroltool.git</developerConnection>
-        <url>https://github.com/Netcentric/accesscontroltool.git</url>
-        <tag>3.5.0</tag>
+        <url>https://github.com/Netcentric/accesscontroltool/tree/${project.scm.tag}</url>
+        <tag>master</tag>
     </scm>
 
     <distributionManagement>
