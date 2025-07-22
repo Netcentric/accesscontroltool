@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- (C) Copyright 2015 Netcentric AG. All rights reserved. This program
     and the accompanying materials are made available under the terms of the
-    Eclipse Public License v1.0 which accompanies this distribution, and is available
+    Eclipse Public License v1.0 which accompanies this distribution, and is
+available
     at http://www.eclipse.org/legal/epl-v10.html -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd ">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd
+                        ">
     <modelVersion>4.0.0</modelVersion>
     <!-- ====================================================================== -->
     <!-- P A R E N T P R O J E C T D E S C R I P T I O N -->
@@ -11,7 +15,7 @@
     <parent>
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
         <artifactId>accesscontroltool</artifactId>
-        <version>3.6.3-SNAPSHOT</version>
+        <version>4.0.0-SNAPSHOT</version>
     </parent>
 
     <!-- ====================================================================== -->
@@ -21,7 +25,8 @@
     <artifactId>accesscontroltool-startuphook-bundle</artifactId>
     <packaging>jar</packaging>
     <name>Access Control Tool Startup Hook Bundle</name>
-    <description>Runs the AC Tool on startup at start level the bundle is defined.</description>
+    <description>Runs the AC Tool on startup at start level the bundle is
+        defined.</description>
 
     <dependencies>
         <dependency>
@@ -61,12 +66,14 @@
             <artifactId>javax.servlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- use the uber-jar always as last dependency because a lot of classes are provided also by other artifacts
-            It is only used here as replacement for com.adobe.granite:com.adobe.granite.crypto:3.0.0 whose pom.xml is not publicly available -->
+        <!-- use the uber-jar always as last dependency because a lot of classes
+        are provided also by other artifacts
+            It is only used here as replacement for
+        com.adobe.granite:com.adobe.granite.crypto:3.0.0 whose pom.xml is not
+        publicly available -->
         <dependency>
             <groupId>com.adobe.aem</groupId>
             <artifactId>uber-jar</artifactId>
-            <classifier>apis</classifier>
             <scope>provided</scope>
         </dependency>
 
@@ -77,7 +84,8 @@
     <!-- ====================================================================== -->
     <build>
         <plugins>
-            <!-- see https://github.com/apache/felix/tree/trunk/tools/osgicheck-maven-plugin -->
+            <!-- see
+            https://github.com/apache/felix/tree/trunk/tools/osgicheck-maven-plugin -->
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>osgicheck-maven-plugin</artifactId>
@@ -92,7 +100,8 @@
                 <configuration>
                     <!-- use manifest generated from bnd-maven-plugin -->
                     <archive>
-                        <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+                        <manifestFile>
+                            ${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
                     </archive>
                 </configuration>
             </plugin>

@@ -11,7 +11,7 @@
 
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
     <artifactId>accesscontroltool</artifactId>
-    <version>3.6.3-SNAPSHOT</version>
+    <version>4.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Access Control Tool</name>
@@ -86,13 +86,13 @@
         <bnd.version>6.4.0</bnd.version>
         <bouncycastle.version>1.64</bouncycastle.version>
         <!-- release sets API classpath, source and target, see  https://docs.oracle.com/javase/9/tools/javac.htm#GUID-AEEC9F07-CB49-4E96-8BC7-BCC2C7F725C9__GUID-D343F6B4-3FDD-43A8-AD24-43DD70214471  and http://openjdk.java.net/jeps/247 -->
-        <maven.compiler.release>8</maven.compiler.release>
+        <maven.compiler.release>11</maven.compiler.release>
         <mockito.version>4.8.0</mockito.version>
         <junit.version>5.10.0</junit.version>
         <!-- default content package file to install on AEM -->
         <contentPackageFile>${project.build.directory}/${project.build.finalName}.zip</contentPackageFile>
-        <oak.version>1.8.2</oak.version>
-        <jackrabbit.version>2.16.0</jackrabbit.version>
+        <jackrabbit.version>2.20.10</jackrabbit.version><!-- keep those in sync with the ones from io.wcm.maven.aem-dependencies -->
+        <oak.version>1.22.16</oak.version>
         <njord.version>0.7.4</njord.version>
     </properties>
 
@@ -109,25 +109,33 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Runtime dependencies should be AEM 6.4 compatible -->
+            <!-- Runtime dependencies should be AEM 6.5.18+ compatible -->
             <dependency>
                 <groupId>io.wcm.maven</groupId>
                 <artifactId>io.wcm.maven.aem-dependencies</artifactId>
-                <version>6.4.0.0004</version>
+                <version>6.5.18.0000</version><!-- lowest version based on Oak 1.22.x -->
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <!-- the following are not managed in io.wcm.maven.aem-dependencies but still shipped in AEM -->
+            <!-- https://github.com/wcm-io/io.wcm.maven.aem-dependencies/issues/24 -->
             <dependency>
-                <groupId>org.apache.jackrabbit</groupId>
-                <artifactId>jackrabbit-api</artifactId>
-                <version>${jackrabbit.version}</version>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.commons.scheduler</artifactId>
+                <version>2.7.2</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.jackrabbit</groupId>
-                <artifactId>jackrabbit-jcr-commons</artifactId>
-                <version>${jackrabbit.version}</version>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.event</artifactId>
+                <version>4.2.12</version>
             </dependency>
+            <!-- https://github.com/wcm-io/io.wcm.maven.aem-dependencies/issues/25 -->
+            <dependency>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.hc.api</artifactId>
+                <version>1.0.2</version>
+            </dependency>
+            
             <dependency>
                 <groupId>org.apache.jackrabbit</groupId>
                 <artifactId>oak-security-spi</artifactId>
@@ -137,26 +145,6 @@
                 <groupId>org.apache.jackrabbit</groupId>
                 <artifactId>oak-auth-external</artifactId>
                 <version>${oak.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.sling</groupId>
-                <artifactId>org.apache.sling.commons.scheduler</artifactId>
-                <version>2.7.2</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.sling</groupId>
-                <artifactId>org.apache.sling.event</artifactId>
-                <version>4.2.10</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.sling</groupId>
-                <artifactId>org.apache.sling.hc.api</artifactId>
-                <version>1.0.2</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpclient-osgi</artifactId>
-                <version>4.5.4</version>
             </dependency>
             <dependency>
                 <groupId>com.adobe.granite</groupId>
@@ -438,6 +426,7 @@
                         </dependency>
                     </dependencies>
                 </plugin>
+                <!-- not compatibly with Java11+ bytecode, https://issues.apache.org/jira/browse/FELIX-6660 
                 <plugin>
                     <groupId>org.apache.felix</groupId>
                     <artifactId>osgicheck-maven-plugin</artifactId>
@@ -450,7 +439,7 @@
                             </goals>
                         </execution>
                     </executions>
-                </plugin>
+                </plugin>-->
                 <!-- for deploying to AEM -->
                 <plugin>
                     <groupId>com.day.jcr.vault</groupId>

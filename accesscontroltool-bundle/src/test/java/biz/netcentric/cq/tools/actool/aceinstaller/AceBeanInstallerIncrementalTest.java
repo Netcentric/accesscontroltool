@@ -51,7 +51,6 @@ import javax.jcr.security.Privilege;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlManager;
-import org.apache.jackrabbit.api.security.authorization.PrivilegeCollection;
 import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.junit.jupiter.api.BeforeEach;

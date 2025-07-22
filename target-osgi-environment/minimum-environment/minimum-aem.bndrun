@@ -16,14 +16,7 @@
 -standalone: ${fileuri;${.}/target/index.xml}
 
 -runfw: org.apache.felix.framework
--runee: JavaSE-1.8
+-runee: JavaSE-11
 
-# disable capability matching as not provided by AEM 6.1.1
+# disable capability matching as too many headers are missing
 # -resolve.effective: active
-
-# workaround for https://issues.apache.org/jira/browse/SLING-7608 and https://issues.apache.org/jira/browse/SLING-7604
--runsystemcapabilities: osgi.service;objectClass=org.apache.sling.commons.classloader.DynamicClassLoaderManager,\
-osgi.service;objectClass=com.adobe.granite.crypto.CryptoSupport,\
-osgi.service;objectClass=org.apache.http.osgi.services.HttpClientBuilderFactory,\
-osgi.service;objectClass=org.apache.sling.api.resource.ResourceResolverFactory,\
-osgi.service;objectClass:List<String>="javax.jcr.Repository,org.apache.sling.jcr.api.SlingRepository"
