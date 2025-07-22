@@ -33,14 +33,14 @@ jobs:
           distribution: 'temurin'
           java-version: ${{ matrix.jdk }}
           # generate settings.xml with the correct values
-          server-id: ossrh # Value of the distributionManagement/repository/id field of the pom.xml
+          server-id: sonatype-central-portal # Value of the distributionManagement/repository/id field of the pom.xml
           server-username: MAVEN_USERNAME # env variable for username in deploy
           server-password: MAVEN_PASSWORD # env variable for token in deploy
           cache: 'maven'
 
       - name: Build with Maven
         if: '!matrix.isMainBuildEnv'
-        run: mvn -e -B -V clean verify -Pintegration-tests -Pjavadoc
+        run: ./mvnw -e -B -V clean verify -Pintegration-tests -Pjavadoc
       - name: Build and Analyse with Maven
         if: github.ref != 'refs/heads/develop' && matrix.isMainBuildEnv
         env: 
@@ -56,15 +56,15 @@ jobs:
           ACTOOL_IMS_IT_CLIENTSECRET: ${{ secrets.ACTOOL_IMS_IT_CLIENTSECRET }}
           ACTOOL_IMS_IT_PRODUCTPROFILE: ${{ vars.ACTOOL_IMS_IT_PRODUCTPROFILE }}
           ACTOOL_IMS_IT_USERID: ${{ vars.ACTOOL_IMS_IT_USERID }}
-        run: mvn -e -B -V clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Netcentric_accesscontroltool -Dsonar.organization=netcentric -Dsonar.host.url=https://sonarcloud.io -DnvdApiKeyEnvironmentVariable=NVD_API_KEY -Pdependency-check -Pcoverage-report -Pintegration-tests -Pjavadoc
+        run: ./mvnw -e -B -V clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Netcentric_accesscontroltool -Dsonar.organization=netcentric -Dsonar.host.url=https://sonarcloud.io -DnvdApiKeyEnvironmentVariable=NVD_API_KEY -Pdependency-check -Pcoverage-report -Pintegration-tests -Pjavadoc
 
       - name: Build, Analyse and Deploy with Maven
         if: github.ref == 'refs/heads/develop' && matrix.isMainBuildEnv
         env: 
           # NVD API key used by dependency-check
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-          MAVEN_USERNAME: ${{ secrets.OSSRH_TOKEN_USER }}
-          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN_PASSWORD }}
+          MAVEN_USERNAME: ${{ secrets.SONATYPE_CENTRAL_TOKEN_USER }}
+          MAVEN_PASSWORD: ${{ secrets.SONATYPE_CENTRAL_TOKEN_PASSWORD }}
           # SonarCloud access token should be generated from https://sonarcloud.io/account/security/
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           # Needed to get some information about the pull request, if any
@@ -75,4 +75,4 @@ jobs:
           ACTOOL_IMS_IT_CLIENTSECRET: ${{ secrets.ACTOOL_IMS_IT_CLIENTSECRET }}
           ACTOOL_IMS_IT_PRODUCTPROFILE: ${{ vars.ACTOOL_IMS_IT_PRODUCTPROFILE }}
           ACTOOL_IMS_IT_USERID: ${{ vars.ACTOOL_IMS_IT_USERID }}
-        run: mvn -e -B -V clean deploy org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Netcentric_accesscontroltool -Dsonar.organization=netcentric -Dsonar.host.url=https://sonarcloud.io -DnvdApiKeyEnvironmentVariable=NVD_API_KEY -Pdependency-check -Pcoverage-report -Pintegration-tests -Pjavadoc
+        run: ./mvnw -e -B -V clean deploy org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Netcentric_accesscontroltool -Dsonar.organization=netcentric -Dsonar.host.url=https://sonarcloud.io -DnvdApiKeyEnvironmentVariable=NVD_API_KEY -Pdependency-check -Pcoverage-report -Pintegration-tests -Pjavadoc
