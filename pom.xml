@@ -525,7 +525,8 @@
                         <configuration>
                             <rules>
                                 <requireMavenVersion>
-                                    <version>3.6.1</version>
+                                    <!-- Njord requires Maven 3.9 or newer -->
+                                    <version>3.9.0</version>
                                 </requireMavenVersion>
                                 <requireJavaVersion>
                                     <version>11</version>
