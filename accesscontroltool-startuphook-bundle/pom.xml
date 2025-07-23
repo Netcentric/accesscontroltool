@@ -84,12 +84,6 @@ available
     <!-- ====================================================================== -->
     <build>
         <plugins>
-            <!-- see
-            https://github.com/apache/felix/tree/trunk/tools/osgicheck-maven-plugin -->
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>osgicheck-maven-plugin</artifactId>
-            </plugin>
             <plugin>
                 <groupId>biz.aQute.bnd</groupId>
                 <artifactId>bnd-maven-plugin</artifactId>
