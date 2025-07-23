@@ -47,7 +47,6 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.api.InstallationResult;
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
-import biz.netcentric.cq.tools.actool.configuploadlistener.impl.UploadListenerServiceImpl.AcToolConfigUpdateListener;
 import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
 import biz.netcentric.cq.tools.actool.history.AcToolExecution;
 import biz.netcentric.cq.tools.actool.jmx.AceServiceMBeanImpl;
@@ -120,8 +119,6 @@ public class HistoryUtils {
             trigger = "jmx";
         } else if(isInStrackTracke(stackTrace, AC_TOOL_TOUCH_UI_SERVLET_CLASS)) {
             trigger = "aem_admin_ui";
-        } else if(isInStrackTracke(stackTrace, AcToolConfigUpdateListener.class)) {
-            trigger = "changelistener";
         } else if(isInStrackTracke(stackTrace, AcToolWebconsolePlugin.class)) {
             trigger = "webconsole";
         } else if(isInStrackTracke(stackTrace, AC_TOOL_STARTUPHOOK_CLASS)) {

@@ -127,17 +127,6 @@ This mechanism should be combined with the [Installation Hook](#installation-hoo
 
 Use [Touch UI](ApplyConfig.md#touch-ui) to validate your results.
 
-### Upload Listener Service
-
-The Upload Listener Service allows to automatically apply the configuration upon changes in the yaml files in CRX. It registers a JCR listener per configured path in `AC Tool Installation Service` and applies the corresponding changes with a configured delay (to aggregate multiple change events into installation). By default it is disabled.
-
-NOTE: Usually it is better to rely on the install hook and manual executions via the user interface when needed.
-
-<img src="images/upload-listener.png">
-
-The upload listener service requires the `AC Tool Installation Service` (PID `biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl`) to be configured correctly, i.e. its configuration path must point to the nodes containing the `YAML` files.
-<img src="images/installation-service.png">
-
 ### Ad hoc installation of small fragments
 
 Generally it is best practice to keep the yaml files in source control and only use one of the above methods to trigger the installation of those files. 
