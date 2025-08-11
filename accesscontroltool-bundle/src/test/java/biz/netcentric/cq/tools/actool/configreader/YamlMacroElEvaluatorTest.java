@@ -15,18 +15,19 @@ package biz.netcentric.cq.tools.actool.configreader;
  */
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.el.ELException;
+import com.google.common.collect.ImmutableMap;
+
+import jakarta.el.ELException;
 
 class YamlMacroElEvaluatorTest {
     private YamlMacroElEvaluator elEvaluator;

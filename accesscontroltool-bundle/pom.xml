@@ -24,7 +24,7 @@
     <description>The OSGi bundle containing all classes of the Access Control Tool.</description>
     
     <properties>
-        <tomcat.el.version>9.0.107</tomcat.el.version>
+        <tomcat.el.version>10.1.44</tomcat.el.version>
         <oak.testing.version>1.48.0</oak.testing.version><!-- ITs require a newer version of Oak otherwise it won't work with Java 11 and certain classes for running the IT are not available -->
         
     </properties>
