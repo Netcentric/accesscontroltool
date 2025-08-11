@@ -22,25 +22,25 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 import java.util.stream.Collectors;
-
-import javax.el.ArrayELResolver;
-import javax.el.BeanELResolver;
-import javax.el.CompositeELResolver;
-import javax.el.ELContext;
-import javax.el.ELResolver;
-import javax.el.ExpressionFactory;
-import javax.el.FunctionMapper;
-import javax.el.ListELResolver;
-import javax.el.MapELResolver;
-import javax.el.ValueExpression;
-import javax.el.VariableMapper;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.el.ExpressionFactoryImpl;
+
+import jakarta.el.ArrayELResolver;
+import jakarta.el.BeanELResolver;
+import jakarta.el.CompositeELResolver;
+import jakarta.el.ELContext;
+import jakarta.el.ELResolver;
+import jakarta.el.ExpressionFactory;
+import jakarta.el.FunctionMapper;
+import jakarta.el.ListELResolver;
+import jakarta.el.MapELResolver;
+import jakarta.el.ValueExpression;
+import jakarta.el.VariableMapper;
 
 
 /** Evaluates expressions that may contain variables from for loops.
@@ -53,7 +53,7 @@ public class YamlMacroElEvaluator {
     private ExpressionFactory expressionFactory;
     private ELContext context;
 
-    private Map<? extends Object, ? extends Object> vars = new HashMap<Object, Object>();
+    private Map<? extends Object, ? extends Object> vars = new HashMap<>();
 
     public YamlMacroElEvaluator() {
 
@@ -85,18 +85,18 @@ public class YamlMacroElEvaluator {
             }
 
             @Override
-            public Object convertToType(Object obj, Class<?> type) {
+            public <T> T convertToType(Object obj, Class<T> type) {
                 if(obj == null) {
                     return null;
                 }
                 if(type == null) {
-                    return obj;
+                    return (T) obj;
                 }
                 if(type.equals(String.class)) {
-                    return String.valueOf(obj);
+                    return (T) String.valueOf(obj);
                 }
                 if(type.isAssignableFrom(obj.getClass())) {
-                    return obj;
+                    return (T) obj;
                 } else {
                     // no special conversions supported
                     throw new IllegalStateException("Cannot convert "+obj.getClass() +" to " + type + " (object: "+obj+")");
@@ -119,9 +119,7 @@ public class YamlMacroElEvaluator {
     }
 
     public <T> T evaluateEl(String el, Class<T> expectedResultType, Map<? extends Object, ? extends Object> variables) {
-        
         vars = variables;
-        
         ValueExpression expression = expressionFactory.createValueExpression(context, el, expectedResultType);
         T value = (T) expression.getValue(context);
         return value;
