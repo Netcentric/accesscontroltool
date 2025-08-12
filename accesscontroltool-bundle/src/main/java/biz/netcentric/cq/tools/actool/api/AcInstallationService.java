@@ -1,5 +1,7 @@
 package biz.netcentric.cq.tools.actool.api;
 
+import java.time.Duration;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -30,20 +32,53 @@ public interface AcInstallationService {
      * @throws IllegalStateException if another asynchronous installation is currently running
      * @return the job id
      * @since 3.6.0
-     * @see #attachLogListener(String, BiConsumer, Consumer)
+     * @see #pollLog(String, int, BiConsumer, Duration, Duration)
+     * @deprecated use {@link #applyAsynchronously(InstallationOptions, boolean)} instead, this method is just a shortcut 
+     * to {@link #applyAsynchronously(InstallationOptions, boolean)} with last argument set to {@code false}.
      */
-    public String applyAsynchronously(InstallationOptions options);
+    @Deprecated(since = "4.0.0", forRemoval = true)
+    public default String applyAsynchronously(InstallationOptions options) {
+        return applyAsynchronously(options, false);
+    }
+
+    /**
+     * Applies the configuration asynchronously.
+     * Almost immediately returns a string with the ID of the started job.
+     * Only one execution at a time is allowed.
+     * @param options the installation options which further specify the installation
+     * @param isVerboseLoggingEnabled if {@code true}, the log will contain more details, otherwise it will be more concise
+     * @throws IllegalStateException if another asynchronous installation is currently running
+     * @return the job id
+     * @since 4.0.0
+     * @see #pollLog(String, int, BiConsumer, Duration, Duration)
+     */
+    public String applyAsynchronously(InstallationOptions options, boolean isVerboseLoggingEnabled);
 
     /** Attaches the log listener callback to an installation triggered previously via {@link #applyAsynchronously(InstallationOptions)}.
      * 
      * @param jobId the job id returned by {@link #applyAsynchronously(InstallationOptions)}
-     * @param listener the listener to attach, receives the level and the message per each log line
+     * @param listener the listener to attach, receives the level and the message per each log message
      * @param finishListener the listener to attach, receives a boolean status indicating success or failure once the installation was finished
      * @return {@code true} if the listeners were attached successfully (i.e. an installation with the given executionId was triggered before and is still ongoing), {@code false} otherwise
      * @since 3.6.0 
      * @see #applyAsynchronously(InstallationOptions)
+     * @deprecated use {@link #pollLog(String, int, BiConsumer, Duration, Duration)} instead, this one is no longer functional.
      */
+     @Deprecated(since = "4.0.0", forRemoval = true)
     public boolean attachLogListener(String jobId, BiConsumer<InstallationLogLevel, String> listener, Consumer<Boolean> finishListener);
+
+     /**
+      * Polls the log of an asynchronous installation job with the given ID until the job finishes or the timeout is reached.
+      * This method is blocking. It may be called multiple times in case a previous execution returned {@code false} due to a timeout or temporary error.
+      * In that case make sure to set the {@code offset} parameter to the last known offset of the log messages.
+      * @param jobId the job id returned by {@link #applyAsynchronously(InstallationOptions)}
+      * @param offset the offset of the last log message received, or {@code 0} to start from the beginning
+      * @param logConsumer is called for each log message (may contain new lines), the first parameter is the optional offset of the log message (for deduplication), the second parameter is the log message itself
+      * @param timeOut the maximum time to wait for the job to finish, if the job does not finish within this time, the method returns {@code false}
+      * @param pollInterval the interval between polls of the log, if the job is still running, the method will wait for this duration before polling again
+      * @return {@code true} if the logs were either polled successfully or the given job id is no longer running or invalid, {@code false} if the job ran into a timeout or a temporary error
+      */
+    public boolean pollLog(String jobId, int offset, BiConsumer<Optional<Integer>, String> logConsumer, Duration timeOut, Duration pollInterval);
 
     /**
      * Checks if the asynchronous installation job with the given ID is running.

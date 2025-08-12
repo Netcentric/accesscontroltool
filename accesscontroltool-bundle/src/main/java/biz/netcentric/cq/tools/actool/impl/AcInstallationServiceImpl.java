@@ -19,16 +19,19 @@ import static biz.netcentric.cq.tools.actool.history.impl.PersistableInstallatio
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.BiConsumer;
@@ -56,6 +59,9 @@ import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
 import org.apache.sling.event.jobs.consumer.JobConsumer;
+import org.apache.sling.event.jobs.consumer.JobExecutionContext;
+import org.apache.sling.event.jobs.consumer.JobExecutionResult;
+import org.apache.sling.event.jobs.consumer.JobExecutor;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -72,6 +78,7 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.aceinstaller.AceBeanInstaller;
 import biz.netcentric.cq.tools.actool.api.AcInstallationService;
+import biz.netcentric.cq.tools.actool.api.HistoryEntry;
 import biz.netcentric.cq.tools.actool.api.InstallationLog;
 import biz.netcentric.cq.tools.actool.api.InstallationLogLevel;
 import biz.netcentric.cq.tools.actool.api.InstallationOptions;
@@ -101,15 +108,23 @@ import biz.netcentric.cq.tools.actool.slingsettings.ExtendedSlingSettingsService
 
 @Component(property = JobConsumer.PROPERTY_TOPICS + "=" + AcInstallationServiceImpl.JOB_TOPIC)
 @Designate(ocd=Configuration.class)
-public class AcInstallationServiceImpl implements AcInstallationService, AcInstallationServiceInternal, JobConsumer {
+public class AcInstallationServiceImpl implements AcInstallationService, AcInstallationServiceInternal, JobExecutor {
     private static final Logger LOG = LoggerFactory.getLogger(AcInstallationServiceImpl.class);
 
     private static final String CONFIG_PID = "biz.netcentric.cq.tools.actool.impl.AcInstallationServiceImpl";
     private static final String LEGACY_CONFIG_PID = "biz.netcentric.cq.tools.actool.aceservice.impl.AceServiceImpl";
     private static final String LEGACY_PROPERTY_CONFIGURATION_PATH = "AceService.configurationPath";
     protected static final String JOB_TOPIC = "biz/netcentric/cq/tools/actool/installation";
+    protected static final String JOB_PROPERTY_IS_LOG_VERBOSE = "isLogVerbose";
 
-    private static final String JOB_PROPERTY_INSTALLATION_OPTIONS = "installationOptions";
+    /** 
+     * Retrieving the job relies on a query under the hood but the query index is updated asynchronously
+     * so we need to poll for the job until it is found or the timeout is reached.
+     * AEM uses an <a href="https://jackrabbit.apache.org/oak/docs/query/indexing.html#nrt-indexing">{@code npr} index</a> which should be updated after some seconds.
+     * Polling with an interval of 400ms for a maximum of 3 seconds should be sufficient.
+     */
+    private static final long GET_JOB_TIMEOUT_MS = 3000;
+    private static final long GET_JOB_POLLING_INTERVAL_MS = 400;
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     AuthorizableInstallerService authorizableCreatorService;
@@ -149,8 +164,6 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     JobManager jobManager;
-
-    private PersistableInstallationLogger asyncInstallLog;
 
     private List<String> configurationRootPaths;
 
@@ -192,14 +205,16 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     @Override
-    public String applyAsynchronously(InstallationOptions options) {
+    public String applyAsynchronously(InstallationOptions options, boolean isLogVerbose) {
         Job oldJob = jobManager.getJob(AcInstallationServiceImpl.JOB_TOPIC, null);
         if (oldJob != null) {
             throw new IllegalStateException("Another asynchronous installation is currently running");
         }
-        asyncInstallLog = new PersistableInstallationLogger();
+        Map<String, Object> jobProperties = new HashMap<>();
+        jobProperties.put(JOB_PROPERTY_IS_LOG_VERBOSE, isLogVerbose);
+        jobProperties.putAll(options.getPersistableProperties());
         Job job = jobManager.createJob(JOB_TOPIC)
-                .properties(options.getPersistableProperties())
+                .properties(jobProperties)
                 .add();
         if (job == null) {
             throw new IllegalStateException("Could not schedule asynchronous installation, check the log for details!");
@@ -208,13 +223,20 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     }
 
     @Override
-    public JobResult process(Job job) {
+    public JobExecutionResult process(Job job, JobExecutionContext context) {
         // cannot use deserialization due to https://issues.apache.org/jira/browse/SLING-12745
         Map<String, Object> jobProperties = job.getPropertyNames().stream().collect(Collectors.toMap(Function.identity(), job::getProperty));
-        if (asyncInstallLog == null) {
-            LOG.warn("Job {} was scheduled on another instance, no async install log available. Creating a new one.", job.getId());
-            asyncInstallLog = new PersistableInstallationLogger();
-        }
+        PersistableInstallationLogger asyncInstallLog = new PersistableInstallationLogger();
+        boolean isLogVerbose = Boolean.parseBoolean(jobProperties.getOrDefault(JOB_PROPERTY_IS_LOG_VERBOSE, "false").toString());
+        asyncInstallLog.attachMessageListener((logLevel, message) -> {
+            if (isLogVerbose || logLevel != InstallationLogLevel.TRACE) {
+                context.log(logLevel.toString() + ": " + message);
+            }
+        });
+        asyncInstallLog.attachFinishListener(isSuccess -> 
+            context.log("Installation finished with status: " + (isSuccess.equals(Boolean.TRUE) ? "SUCCESS" : "FAILURE"))
+        );
+        
         InstallationOptionsBuilder optionsBuilder = new InstallationOptionsBuilder(jobProperties);
         InstallationOptions options = optionsBuilder.build();
         apply(options, asyncInstallLog);
@@ -223,34 +245,99 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         } catch (IOException e) {
             throw new UncheckedIOException("Could not close installation log", e);
         }
-        return asyncInstallLog.getErrors().isEmpty() ? JobResult.OK : JobResult.CANCEL;
+        final JobExecutionResult result;
+        if (asyncInstallLog.getErrors().isEmpty()) {
+            result = context.result().succeeded();
+        } else {
+            result = context.result().message("Asynchronous installation completed with errors: " + asyncInstallLog.getErrors().stream()
+                    .map(HistoryEntry::getMessage).collect(Collectors.joining(","))).cancelled();
+        }
+        return result;
     }
 
-    
     @Override
     public boolean attachLogListener(String jobId, BiConsumer<InstallationLogLevel, String> messageListener, Consumer<Boolean> finishListener) {
-        Job job = jobManager.getJobById(jobId);
-        if (!isRunning(jobId)) {
-            // finished job or unknown job not to distinguish, as only failed jobs are kept in the history
-            LOG.debug("No job found with id {}", jobId);
-            return false;
-        }
-        if (asyncInstallLog == null) {
-            // no async install log, most probably job is running on another instance
-            messageListener.accept(InstallationLogLevel.INFO, "No async install log available, but job found with id " + jobId + ". Job running on another instance with id \"" + job.getTargetInstance() + "\".");
-            messageListener.accept(InstallationLogLevel.INFO, "Please check the logs of the other instance for details.");
-        } else {
-            asyncInstallLog.attachMessageListener(messageListener);
-            asyncInstallLog.attachFinishListener(finishListener);
-        }
-        return true;
+        return false;
     }
 
-    
+    @Override
+    public boolean pollLog(String jobId,  int offset, BiConsumer<Optional<Integer>, String> logConsumer, Duration timeOut, Duration pollInterval) {
+        if (offset < 0) {
+            offset = 0;
+        }
+        long startTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() < startTime + timeOut.toMillis()) {
+            Job job = getJob(jobId).orElse(null);
+            if (job == null) {
+                if (offset == 0) {
+                    logConsumer.accept(Optional.empty(), "Job " + jobId + " not found anymore, it is completed already and history is no longer available, check the persisted log");
+                }
+                LOG.debug("Job {} not found, it is probably completed already and history is no longer available, check the persisted log", jobId);
+                return true;
+            }
+            offset = pollLog(job, offset, logConsumer);
+            if (job.getJobState() != Job.JobState.ACTIVE && job.getJobState() != Job.JobState.QUEUED) {
+                // consume remaining log lines
+                offset = pollLog(job, offset, logConsumer);
+                if (offset == 0) {
+                    logConsumer.accept(Optional.empty(), "Job " + jobId + " is not active, current state: " + job.getJobState());
+                }
+                LOG.debug("Job {} is not active or queued, current state: {}", jobId, job.getJobState());
+                return true;
+            }
+            try {
+                Thread.sleep(pollInterval.toMillis());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logConsumer.accept(Optional.empty(), "Polling for job's " + jobId + " log was interrupted");
+                return false;
+            }
+        }
+        LOG.debug("Polling for job's {} log timed out after {} seconds", jobId, timeOut.getSeconds());
+        return false;
+    }
+
+    /** As retrieving the job relies on a query under the hood but the query index is updated asynchronously
+     *  we need to poll for the job until it is found or the timeout is reached.
+     * @param jobId
+     * @return the job if it is found within the timeout, otherwise an empty Optional
+     */
+    private Optional<Job> getJob(String jobId) {
+        // now poll for the job, as it might be that the search index has not been updated yet to contain the job in its new location
+        long startTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() < startTime + GET_JOB_TIMEOUT_MS) {
+            Job job = jobManager.getJobById(jobId);
+            if (job != null) {
+                return Optional.of(job);
+            } else {
+                try {
+                    Thread.sleep(GET_JOB_POLLING_INTERVAL_MS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    LOG.warn("Polling for job's {} log was interrupted", jobId, e);
+                    return Optional.empty();
+                }
+            }
+        }
+        LOG.warn("Job with id {} not found", jobId);
+        return Optional.empty();
+    }
+
+    private int pollLog(Job job, int offset, BiConsumer<Optional<Integer>,String> logLineConsumer) {
+        String[] logs = job.getProgressLog();
+        if (logs != null && logs.length > offset) {
+            for (;offset < logs.length; offset++) {
+                logLineConsumer.accept(Optional.of(offset), logs[offset]);
+            }
+        }
+        return offset;
+    }
+
     @Override
     public boolean isRunning(String jobId) {
-        Job job = jobManager.getJobById(jobId);
-        return job != null;
+        // checks if an active or queued job with the given id exists
+        Job job = getJob(jobId).orElse(null);
+        return job != null && (job.getJobState() == Job.JobState.ACTIVE || job.getJobState() == Job.JobState.QUEUED);
     }
 
     @Override

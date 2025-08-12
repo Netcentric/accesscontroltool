@@ -38,7 +38,13 @@ function populateViaEventSource(url) {
         withCredentials: true,
     });
     evtSource.onmessage = (event) => {
-        printMessage(event.data);
+        if (event.data === 'END') {
+            document.dispatchEvent(new Event(EVENT_NAME_INSTALLATION_DONE));
+            evtSource.close();
+            return;
+        } else {
+            printMessage(event.data);
+        }
     };
     evtSource.onerror = () => {
         // no reasonable status exposed here, just assume this was a 404 -> regular status code when installation finished

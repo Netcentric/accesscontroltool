@@ -30,9 +30,11 @@ import javax.jcr.RepositoryException;
 import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.User;
+import org.apache.sling.event.impl.jobs.queues.ResultBuilderImpl;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobBuilder;
 import org.apache.sling.event.jobs.JobManager;
+import org.apache.sling.event.jobs.consumer.JobExecutionContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -140,7 +142,7 @@ class AcInstallationServiceImplTest {
             return groups.iterator();
         }
     }
-    
+
     @Test
     void testAsynchronousInstallationInDistributedSetups() {
         JobManager jobManager = Mockito.mock(JobManager.class);
@@ -169,10 +171,13 @@ class AcInstallationServiceImplTest {
         });
 
         acInstallationServiceImpl.jobManager = jobManager;
+        JobExecutionContext jobContext = Mockito.mock(JobExecutionContext.class);
+        when(jobContext.result()).thenReturn(new ResultBuilderImpl());
+
         // schedule in one server
         assertEquals("id", acInstallationServiceImpl.applyAsynchronously(new InstallationOptionsBuilder().withConfigurationRootPath("/apps").build()));
         // and process in another server (with another instance of the service)
         AcInstallationServiceImpl acInstallationServiceImpl2 = new AcInstallationServiceImpl();
-        acInstallationServiceImpl2.process(job);
+        acInstallationServiceImpl2.process(job, jobContext);
     }
 }
