@@ -11,7 +11,7 @@
     <parent>
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
         <artifactId>accesscontroltool</artifactId>
-        <version>3.6.3-SNAPSHOT</version>
+        <version>4.0.0-SNAPSHOT</version>
     </parent>
 
     <!-- ====================================================================== -->
@@ -24,8 +24,9 @@
     <description>The OSGi bundle containing all classes of the Access Control Tool.</description>
     
     <properties>
-        <tomcat.el.version>9.0.104</tomcat.el.version>
+        <tomcat.el.version>9.0.107</tomcat.el.version>
         <oak.testing.version>1.48.0</oak.testing.version><!-- ITs require a newer version of Oak otherwise it won't work with Java 11 and certain classes for running the IT are not available -->
+        
     </properties>
 
     <dependencies>
@@ -113,13 +114,8 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>org.apache.jackrabbit</groupId>
-            <artifactId>jackrabbit-api</artifactId>
+            <artifactId>oak-jackrabbit-api</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -177,6 +173,7 @@
             <artifactId>org.apache.sling.hc.api</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- mainly constants and some principal impls -->
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>oak-security-spi</artifactId>
@@ -294,7 +291,6 @@
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.util.converter</artifactId>
-            <version>1.0.9</version>
             <scope>test</scope>
         </dependency>
         <!-- IT dependencies -->
@@ -348,7 +344,12 @@
             <version>2.16.0</version>
             <scope>test</scope>
         </dependency>
-        
+        <!-- transitive dependency of oak-security-spi-->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <scope>test</scope>
+        </dependency>
         <!-- END: Test Dependencies -->
     </dependencies>
 
@@ -407,11 +408,6 @@
             </plugins>
         </pluginManagement>
         <plugins>
-            <!-- see https://github.com/apache/felix/tree/trunk/tools/osgicheck-maven-plugin -->
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>osgicheck-maven-plugin</artifactId>
-            </plugin>
             <plugin>
                 <groupId>biz.aQute.bnd</groupId>
                 <artifactId>bnd-maven-plugin</artifactId>
@@ -445,19 +441,7 @@
                             </bndruns>
                         </configuration>
                     </execution>
-                    <execution>
-                        <id>resolve-against-maximum</id>
-                        <goals>
-                            <goal>resolve</goal>
-                        </goals>
-                        <phase>verify</phase>
-                        <configuration>
-                            <useMavenDependencies>false</useMavenDependencies>
-                            <bndruns>
-                                <include>maximum-aem.bndrun</include>
-                            </bndruns>
-                        </configuration>
-                    </execution>
+                    <!-- resolving against the maximum, i.e. AEMaaCS version happens separately in the aemanalyser-maven-plugin -->
                 </executions>
                 <configuration>
                     <useMavenDependencies>true</useMavenDependencies>

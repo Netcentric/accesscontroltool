@@ -17,11 +17,14 @@ package biz.netcentric.cq.tools.actool.configreader;
 import java.beans.FeatureDescriptor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import javax.el.ArrayELResolver;
 import javax.el.BeanELResolver;
@@ -160,7 +163,8 @@ public class YamlMacroElEvaluator {
                         YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("containsAnyItem", new Class<?>[] { List.class, List.class }),
                         YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("keys", new Class<?>[] { Map.class }),
                         YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("values", new Class<?>[] { Map.class }),
-                        YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("escapeXml", new Class<?>[] { String.class })
+                        YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("escapeXml", new Class<?>[] { String.class }),
+                        YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("union", new Class<?>[] { Collection.class, Collection.class })
                 };
                 for (Method method : exportedMethods) {
                     functionMap.put(method.getName(), method);
@@ -201,6 +205,10 @@ public class YamlMacroElEvaluator {
         public static String escapeXml(String input) {
             // DocView is XML 1.0
             return StringEscapeUtils.escapeXml10(input);
+        }
+
+        public static List<Object> union(Collection<String> collection1, Collection<String> collection2){
+            return Stream.concat(collection1.stream(),collection2.stream()).collect(Collectors.toList());
         }
     }
 

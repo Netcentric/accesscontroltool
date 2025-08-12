@@ -16,10 +16,13 @@ package biz.netcentric.cq.tools.actool.configreader;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -44,6 +47,11 @@ class YamlMacroElEvaluatorTest {
         assertEquals("item1,item2", evaluateSimpleExpression("join(var1, \",\")", Collections.singletonMap("var1", new Object[] {"item1", "item2"})));
         assertEquals("foo", evaluateSimpleExpression("defaultIfBlank(\"    \",\"foo\")"));
         assertEquals("bar", evaluateSimpleExpression("defaultIfBlank(\"bar\",\"foo\")"));
+
+        Map<String,Object> lists= ImmutableMap.of("list1",Arrays.asList("foo","bar"), "list2",Arrays.asList("fizz","buzz"));
+        assertIterableEquals(Arrays.asList("foo","bar","fizz","buzz"), (Iterable)evaluateSimpleExpression("union(list1,list2)",lists));
+        assertIterableEquals(Arrays.asList("item1"),(Iterable) evaluateSimpleExpression("keys(list)",Collections.singletonMap("list", ImmutableMap.of("item1","value"))));
+
     }
 
     @Test

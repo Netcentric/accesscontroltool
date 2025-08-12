@@ -65,7 +65,7 @@ public class QueryHelper {
     private static final String KEY_COST_PER_EXECUTION = "perExecution";
 
     /** every query cost below that threshold means a dedicated index exists, above that threshold means: fallback to traversal */
-    private static final double COST_THRESHOLD_FOR_QUERY_INDEX = 100d;
+    private static final double COST_THRESHOLD_FOR_QUERY_INDEX = 100 + 100;// 100 = max per property index + 100 = count per index store strategy;
 
     /** Method that returns a set containing all rep:policy nodes from repository excluding those contained in paths which are excluded from
      * search
@@ -163,7 +163,7 @@ public class QueryHelper {
         // https://github.com/apache/jackrabbit-oak/blob/cc8adb42d89bc4625138a62ab074e7794a4d39ab/oak-core/src/main/java/org/apache/jackrabbit/oak/query/index/TraversingIndex.java#L75
 
         // for traversing cost = estimation of node count
-        // for property index = between 2 and 100
+        // for property index = between 2 and 100 (https://github.com/apache/jackrabbit-oak/blob/5da34e80f0c5dc2cffe189e71d39ebd2fb726e6b/oak-core/src/main/java/org/apache/jackrabbit/oak/plugins/index/property/PropertyIndexLookup.java#L76) + 
         LOG.debug("Cost for rep:ACL query is estimated with {}", cost);
         return cost <= COST_THRESHOLD_FOR_QUERY_INDEX;
     }

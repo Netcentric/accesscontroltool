@@ -16,6 +16,7 @@ package biz.netcentric.cq.tools.actool.configreader;
 
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -28,7 +29,6 @@ import javax.jcr.Node;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.commons.JcrUtils;
 import org.apache.jackrabbit.vault.fs.io.Archive;
@@ -190,9 +190,7 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
         @Override
         public String getContentAsString() throws Exception {
             try (InputStream configInputStream = JcrUtils.readFile(node)) {
-                StringWriter writer = new StringWriter();
-                IOUtils.copy(configInputStream, writer, "UTF-8");
-                String configData = writer.toString();
+                String configData = new String(configInputStream.readAllBytes(), StandardCharsets.UTF_8);
                 LOG.debug("Found configuration data of node: {} with {} chars", node.getPath(), configData.length());
                 return configData;
             }
@@ -244,9 +242,7 @@ public class ConfigFilesRetrieverImpl implements ConfigFilesRetriever {
                 if (input == null) {
                     throw new IllegalStateException("Could not get input stream from entry " + getPath());
                 }
-                StringWriter writer = new StringWriter();
-                IOUtils.copy(input, writer, "UTF-8");
-                return writer.toString();
+                return new String(input.readAllBytes(), StandardCharsets.UTF_8);
             }
         }
     }

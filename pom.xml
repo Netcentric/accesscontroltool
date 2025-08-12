@@ -11,7 +11,7 @@
 
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
     <artifactId>accesscontroltool</artifactId>
-    <version>3.6.3-SNAPSHOT</version>
+    <version>4.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Access Control Tool</name>
@@ -50,21 +50,22 @@
         </license>
     </licenses>
 
-    <scm>
+    <!-- using adjusted inheritance rules: https://issues.apache.org/jira/browse/MNG-6059 -->
+    <scm child.scm.connection.inherit.append.path="false" child.scm.developerConnection.inherit.append.path="false" child.scm.url.inherit.append.path="false">
         <connection>scm:git:ssh://git@github.com/Netcentric/accesscontroltool.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/Netcentric/accesscontroltool.git</developerConnection>
-        <url>https://github.com/Netcentric/accesscontroltool.git</url>
-        <tag>3.5.0</tag>
+        <url>https://github.com/Netcentric/accesscontroltool/tree/${project.scm.tag}</url>
+        <tag>master</tag>
     </scm>
 
     <distributionManagement>
         <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <id>sonatype-central-portal</id>
+            <url>https://central.sonatype.com/repository/maven-snapshots</url>
         </snapshotRepository>
         <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+            <id>sonatype-central-portal</id>
+            <url>https://repo.maven.apache.org/maven2</url>
         </repository>
     </distributionManagement>
 
@@ -86,13 +87,14 @@
         <bnd.version>6.4.0</bnd.version>
         <bouncycastle.version>1.64</bouncycastle.version>
         <!-- release sets API classpath, source and target, see  https://docs.oracle.com/javase/9/tools/javac.htm#GUID-AEEC9F07-CB49-4E96-8BC7-BCC2C7F725C9__GUID-D343F6B4-3FDD-43A8-AD24-43DD70214471  and http://openjdk.java.net/jeps/247 -->
-        <maven.compiler.release>8</maven.compiler.release>
+        <maven.compiler.release>11</maven.compiler.release>
         <mockito.version>4.8.0</mockito.version>
         <junit.version>5.10.0</junit.version>
         <!-- default content package file to install on AEM -->
         <contentPackageFile>${project.build.directory}/${project.build.finalName}.zip</contentPackageFile>
-        <oak.version>1.8.2</oak.version>
-        <jackrabbit.version>2.16.0</jackrabbit.version>
+        <jackrabbit.version>2.20.10</jackrabbit.version><!-- keep those in sync with the ones from io.wcm.maven.aem-dependencies -->
+        <oak.version>1.22.16</oak.version>
+        <njord.version>0.8.2</njord.version>
     </properties>
 
     <modules>
@@ -108,25 +110,33 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Runtime dependencies should be AEM 6.4 compatible -->
+            <!-- Runtime dependencies should be AEM 6.5.18+ compatible -->
             <dependency>
                 <groupId>io.wcm.maven</groupId>
                 <artifactId>io.wcm.maven.aem-dependencies</artifactId>
-                <version>6.4.0.0004</version>
+                <version>6.5.18.0000</version><!-- lowest version based on Oak 1.22.x -->
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <!-- the following are not managed in io.wcm.maven.aem-dependencies but still shipped in AEM -->
+            <!-- https://github.com/wcm-io/io.wcm.maven.aem-dependencies/issues/24 -->
             <dependency>
-                <groupId>org.apache.jackrabbit</groupId>
-                <artifactId>jackrabbit-api</artifactId>
-                <version>${jackrabbit.version}</version>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.commons.scheduler</artifactId>
+                <version>2.7.2</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.jackrabbit</groupId>
-                <artifactId>jackrabbit-jcr-commons</artifactId>
-                <version>${jackrabbit.version}</version>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.event</artifactId>
+                <version>4.2.12</version>
             </dependency>
+            <!-- https://github.com/wcm-io/io.wcm.maven.aem-dependencies/issues/25 -->
+            <dependency>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.hc.api</artifactId>
+                <version>1.0.2</version>
+            </dependency>
+            
             <dependency>
                 <groupId>org.apache.jackrabbit</groupId>
                 <artifactId>oak-security-spi</artifactId>
@@ -136,26 +146,6 @@
                 <groupId>org.apache.jackrabbit</groupId>
                 <artifactId>oak-auth-external</artifactId>
                 <version>${oak.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.sling</groupId>
-                <artifactId>org.apache.sling.commons.scheduler</artifactId>
-                <version>2.7.2</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.sling</groupId>
-                <artifactId>org.apache.sling.event</artifactId>
-                <version>4.2.10</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.sling</groupId>
-                <artifactId>org.apache.sling.hc.api</artifactId>
-                <version>1.0.2</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpclient-osgi</artifactId>
-                <version>4.5.4</version>
             </dependency>
             <dependency>
                 <groupId>com.adobe.granite</groupId>
@@ -217,6 +207,14 @@
     </dependencyManagement>
 
     <build>
+        <extensions>
+            <!-- Njord extension for Maven, responsible for injecting the right repository -->
+            <extension>
+                <groupId>eu.maveniverse.maven.njord</groupId>
+                <artifactId>extension3</artifactId>
+                <version>${njord.version}</version>
+            </extension>
+        </extensions>
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -280,6 +278,9 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
                     <version>3.1.2</version>
+                    <configuration>
+                        <deployAtEnd>true</deployAtEnd>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -341,9 +342,9 @@
                     <version>3.5.0</version>
                 </plugin>
                 <plugin>
-                    <groupId>org.sonatype.plugins</groupId>
-                    <artifactId>nexus-staging-maven-plugin</artifactId>
-                    <version>1.7.0</version>
+                    <groupId>eu.maveniverse.maven.plugins</groupId>
+                    <artifactId>njord</artifactId>
+                    <version>${njord.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.sling</groupId>
@@ -426,6 +427,7 @@
                         </dependency>
                     </dependencies>
                 </plugin>
+                <!-- not compatibly with Java11+ bytecode, https://issues.apache.org/jira/browse/FELIX-6660 
                 <plugin>
                     <groupId>org.apache.felix</groupId>
                     <artifactId>osgicheck-maven-plugin</artifactId>
@@ -438,7 +440,7 @@
                             </goals>
                         </execution>
                     </executions>
-                </plugin>
+                </plugin>-->
                 <!-- for deploying to AEM -->
                 <plugin>
                     <groupId>com.day.jcr.vault</groupId>
@@ -523,7 +525,8 @@
                         <configuration>
                             <rules>
                                 <requireMavenVersion>
-                                    <version>3.6.1</version>
+                                    <!-- Njord requires Maven 3.9 or newer -->
+                                    <version>3.9.0</version>
                                 </requireMavenVersion>
                                 <requireJavaVersion>
                                     <version>11</version>
@@ -550,19 +553,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-            <!-- https://github.com/sonatype/nexus-maven-plugins/tree/master/staging/maven-plugin -->
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <extensions>true</extensions>
-                <configuration>
-                    <serverId>ossrh</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                    <stagingProgressTimeoutMinutes>20</stagingProgressTimeoutMinutes>
-                    <keepStagingRepositoryOnCloseRuleFailure>true</keepStagingRepositoryOnCloseRuleFailure>
-                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                </configuration>
             </plugin>
         </plugins>
     </build>

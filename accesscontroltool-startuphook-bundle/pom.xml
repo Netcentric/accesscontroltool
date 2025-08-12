@@ -11,7 +11,7 @@
     <parent>
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
         <artifactId>accesscontroltool</artifactId>
-        <version>3.6.3-SNAPSHOT</version>
+        <version>4.0.0-SNAPSHOT</version>
     </parent>
 
     <!-- ====================================================================== -->
@@ -21,7 +21,8 @@
     <artifactId>accesscontroltool-startuphook-bundle</artifactId>
     <packaging>jar</packaging>
     <name>Access Control Tool Startup Hook Bundle</name>
-    <description>Runs the AC Tool on startup at start level the bundle is defined.</description>
+    <description>Runs the AC Tool on startup at start level the bundle is
+        defined.</description>
 
     <dependencies>
         <dependency>
@@ -61,12 +62,14 @@
             <artifactId>javax.servlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- use the uber-jar always as last dependency because a lot of classes are provided also by other artifacts
-            It is only used here as replacement for com.adobe.granite:com.adobe.granite.crypto:3.0.0 whose pom.xml is not publicly available -->
+        <!-- use the uber-jar always as last dependency because a lot of classes
+        are provided also by other artifacts
+            It is only used here as replacement for
+        com.adobe.granite:com.adobe.granite.crypto:3.0.0 whose pom.xml is not
+        publicly available -->
         <dependency>
             <groupId>com.adobe.aem</groupId>
             <artifactId>uber-jar</artifactId>
-            <classifier>apis</classifier>
             <scope>provided</scope>
         </dependency>
 
@@ -77,11 +80,6 @@
     <!-- ====================================================================== -->
     <build>
         <plugins>
-            <!-- see https://github.com/apache/felix/tree/trunk/tools/osgicheck-maven-plugin -->
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>osgicheck-maven-plugin</artifactId>
-            </plugin>
             <plugin>
                 <groupId>biz.aQute.bnd</groupId>
                 <artifactId>bnd-maven-plugin</artifactId>
@@ -92,7 +90,8 @@
                 <configuration>
                     <!-- use manifest generated from bnd-maven-plugin -->
                     <archive>
-                        <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+                        <manifestFile>
+                            ${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
                     </archive>
                 </configuration>
             </plugin>
