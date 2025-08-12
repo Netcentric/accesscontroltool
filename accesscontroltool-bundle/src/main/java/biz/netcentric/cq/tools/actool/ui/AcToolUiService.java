@@ -16,10 +16,12 @@ package biz.netcentric.cq.tools.actool.ui;
 
 import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -35,8 +37,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -64,7 +65,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.api.AcInstallationService;
-import biz.netcentric.cq.tools.actool.api.InstallationLogLevel;
 import biz.netcentric.cq.tools.actool.api.InstallationOptionsBuilder;
 import biz.netcentric.cq.tools.actool.dumpservice.ConfigDumpService;
 import biz.netcentric.cq.tools.actool.helper.UncheckedRepositoryException;
@@ -132,11 +132,6 @@ public class AcToolUiService {
     private final Map<String, String> countryCodePerName;
 
     private final Configuration config;
-
-    /**
-     * Singleton message queue for the currently running asynchronous installation.
-     */
-    private BlockingQueue<String> messages;
 
     @Activate
     public AcToolUiService(Configuration config) {
@@ -297,35 +292,15 @@ public class AcToolUiService {
             builder.updateExistingExternalGroups();
         }
         try {
-            String jobId = acInstallationService.applyAsynchronously(builder.build());
-            messages = new LinkedBlockingQueue<>();
-            acInstallationService.attachLogListener(jobId, (level, message) -> {
-                try {
-                    if (!reqParams.showLogVerbose && level == InstallationLogLevel.TRACE) {
-                        return;
-                    }
-                    messages.put(level + ": " + message);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }, success -> {
-                try {
-                    messages.put("FINISHED: " + success);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            });
+            String jobId = acInstallationService.applyAsynchronously(builder.build(), reqParams.showLogVerbose);
             // return full URL to the server-sent event stream for this installation
             resp.setContentType("text/plain");
-            String streamLogUrl = req.getRequestURI() + "/" + SUFFIX_STREAM_LOG + "?jobId=" + URLEncoder.encode(jobId, StandardCharsets.UTF_8.toString()) + "&" + PARAM_SHOW_LOG_VERBOSE + "=" + reqParams.showLogVerbose;
+            String streamLogUrl = req.getRequestURI() + "/" + SUFFIX_STREAM_LOG + "?jobId=" + URLEncoder.encode(jobId, StandardCharsets.UTF_8.toString());
             resp.getWriter().print(streamLogUrl);
         } catch (IllegalStateException e) {
             LOG.warn("Could not apply configuration: {}", e.getMessage());
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
-            return;
         }
-
-        
     }
 
     /**
@@ -431,36 +406,48 @@ public class AcToolUiService {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
-        // is it fully consumed and no longer running?
-        if (!acInstallationService.isRunning(jobId) && (messages == null || messages.isEmpty())) {
-            LOG.debug("Asynchronous installation with id {} is not running anymore and no messages are available", jobId);
-            resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
+        if (jobId.chars().anyMatch(Character::isISOControl)) {
+            LOG.warn("Invalid jobId containing control characters provided");
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
-        long startTime = System.currentTimeMillis();
-        try {
-            boolean isActive = true;
-            while (isActive) {
-                String message = messages.poll(30, java.util.concurrent.TimeUnit.SECONDS);
-                if (message == null) {
-                    message = "...";
-                    isActive = false;
-                }
-                if (message.startsWith("FINISHED: ")) {
-                    isActive = false;
-                } else {
-                    resp.getWriter().println("data: " + message);
-                    resp.getWriter().println();
-                    resp.getWriter().flush();
-                }
-                // overall runtime above threshold
-                if (System.currentTimeMillis() - startTime > config.maxLogStreamRequestRuntimeInMs()) {
-                    LOG.debug("Reached maximum runtime of {} ms for log stream request, finishing response", config.maxLogStreamRequestRuntimeInMs());
-                    isActive = false;
-                }
+        int offset = 0;
+        String lastEventId = req.getHeader("Last-Event-ID");
+        if (lastEventId != null) {
+            // this is the last event id sent by the client, we can use it to skip already sent log messages
+            try {
+                offset = Integer.parseInt(lastEventId) + 1; // +1 because the last event id is the last sent message, we want to start with the next one
+                LOG.debug("Resuming log stream for job {} at offset {}", jobId, offset);
+            } catch (NumberFormatException e) {
+                LOG.warn("Invalid Last-Event-ID header: {}", lastEventId, e);
             }
-        } catch(InterruptedException e) {
-            Thread.currentThread().interrupt();
+        }
+        AtomicBoolean isEmpty = new AtomicBoolean(true);
+        if (acInstallationService.pollLog(jobId, offset, (optionalOffset, message) -> {
+            isEmpty.set(false);
+            // this is called for each log message, which may contain multiple lines
+            try (BufferedReader reader = new BufferedReader(new StringReader(message))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    // write each line as a separate event
+                    resp.getWriter().println("data: " + line);
+                }
+                if (optionalOffset.isPresent()) {
+                    // if the offset is present, we can use it as the event id
+                    resp.getWriter().println("id: " + optionalOffset.get());
+                }
+                resp.getWriter().println();
+                resp.getWriter().flush();
+            } catch (IOException e) {
+                LOG.error("Error writing log message to response", e);
+            }
+        }, java.time.Duration.ofSeconds(30), java.time.Duration.ofMillis(500))) {
+            // make sure to also emit a special message to indicate the end of the stream
+            resp.getWriter().println("data: END");
+            resp.getWriter().println();
+            if (isEmpty.get()) {
+                resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
+            }
         }
     }
 
