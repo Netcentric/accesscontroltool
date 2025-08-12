@@ -486,7 +486,7 @@
                     <artifactId>dependency-check-maven</artifactId>
                     <version>12.1.3</version>
                     <configuration>
-                        <failBuildOnCVSS>11</failBuildOnCVSS>
+                        <failBuildOnCVSS>4</failBuildOnCVSS>
                         <skipProvidedScope>true</skipProvidedScope>
                         <skipSystemScope>true</skipSystemScope>
                         <retireJsAnalyzerEnabled>false</retireJsAnalyzerEnabled>
