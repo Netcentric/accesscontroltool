@@ -136,7 +136,6 @@
                 <artifactId>org.apache.sling.hc.api</artifactId>
                 <version>1.0.2</version>
             </dependency>
-            
             <dependency>
                 <groupId>org.apache.jackrabbit</groupId>
                 <artifactId>oak-security-spi</artifactId>
@@ -164,7 +163,7 @@
                 <artifactId>snakeyaml</artifactId>
                 <version>2.4</version>
             </dependency>
-            <!-- due to https://bugs.openjdk.java.net/browse/JDK-8231581 OOTB JRE is not sufficient -->
+            <!-- due to https://bugs.openjdk.java.net/browse/JDK-8231581 OOTB JRE is not sufficient, fixed with https://bugs.openjdk.org/browse/JDK-8298420 in Java 25 -->
             <dependency>
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcpkix-jdk15on</artifactId>
@@ -391,8 +390,8 @@
                             </netcentric-aem-classification>
                             <netcentric-aem-cloud>
                                 <options>
-                                    <allowVarNodeOutsideContainer>false
-                                    </allowVarNodeOutsideContainer><!-- default value is true, as it is allowed to have /var nodes inside author-only container -->
+                                    <!-- default value is true, as it is allowed to have /var nodes inside author-only container -->
+                                    <allowVarNodeOutsideContainer>false</allowVarNodeOutsideContainer>
                                 </options>
                             </netcentric-aem-cloud>
                         </validatorsSettings>
