@@ -19,11 +19,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
 import javax.jcr.RepositoryException;
 
@@ -179,5 +181,17 @@ class AcInstallationServiceImplTest {
         // and process in another server (with another instance of the service)
         AcInstallationServiceImpl acInstallationServiceImpl2 = new AcInstallationServiceImpl();
         acInstallationServiceImpl2.process(job, jobContext);
+    }
+
+    @Test
+    void testQuoteForMessageFormat() {
+        assertQuotedTextForMessageFormat("dev=d 19:41:29.927: Global DEF Statement: ENV_KEY_MAPPING={dev=d, stage=s, int=i, prod=p} 19:41:29.928: ", AcInstallationServiceImpl::quoteForMessageFormat);
+        assertQuotedTextForMessageFormat("This is a test' with apostrophe and {0} braces", AcInstallationServiceImpl::quoteForMessageFormat);
+    }
+
+    static void assertQuotedTextForMessageFormat(String text, UnaryOperator<String> quoteFunction) {
+        String quotedText = quoteFunction.apply(text);
+        String output = MessageFormat.format(quotedText, new Object[0]);
+        assertEquals(text, output);
     }
 }
