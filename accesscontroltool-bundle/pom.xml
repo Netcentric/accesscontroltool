@@ -25,7 +25,7 @@
     
     <properties>
         <tomcat.el.version>10.1.44</tomcat.el.version>
-        <oak.testing.version>1.48.0</oak.testing.version><!-- ITs require a newer version of Oak otherwise it won't work with Java 11 and certain classes for running the IT are not available -->
+        <oak.testing.version>1.74.0</oak.testing.version><!-- ITs require a newer version of Oak otherwise it won't work with Java 23+ (https://issues.apache.org/jira/browse/OAK-11199) and certain classes for running the IT are not available -->
         
     </properties>
 
@@ -168,18 +168,7 @@
             <artifactId>org.apache.sling.hc.api</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- mainly constants and some principal impls -->
-        <dependency>
-            <groupId>org.apache.jackrabbit</groupId>
-            <artifactId>oak-security-spi</artifactId>
-            <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+        <!-- API for creating external groups (those which are connected to LDAP/IDP) -->
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>oak-auth-external</artifactId>

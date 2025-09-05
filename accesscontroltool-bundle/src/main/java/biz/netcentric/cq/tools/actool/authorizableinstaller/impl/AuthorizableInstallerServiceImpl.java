@@ -18,6 +18,7 @@ import static biz.netcentric.cq.tools.actool.helper.Constants.PRINCIPAL_EVERYONE
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.security.Principal;
 import java.security.cert.Certificate;
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,7 +46,6 @@ import org.apache.jackrabbit.api.security.user.Authorizable;
 import org.apache.jackrabbit.api.security.user.AuthorizableExistsException;
 import org.apache.jackrabbit.api.security.user.Group;
 import org.apache.jackrabbit.api.security.user.User;
-import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.apache.sling.api.SlingIOException;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.PersistenceException;
@@ -79,6 +79,7 @@ import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.ContentHelper;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
+import biz.netcentric.cq.tools.actool.impl.SimpleNamePrincipal;
 
 @org.osgi.service.component.annotations.Component()
 public class AuthorizableInstallerServiceImpl implements
@@ -705,7 +706,7 @@ public class AuthorizableInstallerServiceImpl implements
                 LOG.info("Successfully created new external group: {}", groupID);
             } else {
 
-                PrincipalImpl principalForNewGroup = new PrincipalImpl(groupID);
+                Principal principalForNewGroup = new SimpleNamePrincipal(groupID);
                 if (StringUtils.isNotBlank(intermediatePath)) {
                     newGroup = userManager.createGroup(principalForNewGroup, intermediatePath);
                 } else {
@@ -841,7 +842,7 @@ public class AuthorizableInstallerServiceImpl implements
             }
             newUser = userManager.createSystemUser(authorizableId, intermediatePath);
         } else {
-            newUser = userManager.createUser(authorizableId, password, new PrincipalImpl(authorizableId), intermediatePath);
+            newUser = userManager.createUser(authorizableId, password, new SimpleNamePrincipal(authorizableId), intermediatePath);
         }
         setAuthorizableProperties(newUser, principalConfigBean, authorizablesConfig, session, installLog);
 

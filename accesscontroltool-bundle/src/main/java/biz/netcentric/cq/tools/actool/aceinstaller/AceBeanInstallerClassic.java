@@ -35,7 +35,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
-import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +44,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.RestrictionsHolder;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
+import biz.netcentric.cq.tools.actool.impl.SimpleNamePrincipal;
 
 /** The way ACEs were installed in version one is still available and can be configured in "global_config" section by setting
  * "installAclsIncrementally=false". */
@@ -71,7 +71,7 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
 
             LOG.debug("Writing bean to repository {}", bean);
 
-            Principal currentPrincipal = new PrincipalImpl(bean.getPrincipalName());
+            Principal currentPrincipal = new SimpleNamePrincipal(bean.getPrincipalName());
             installAce(bean, session, currentPrincipal, installLog);
 
         }

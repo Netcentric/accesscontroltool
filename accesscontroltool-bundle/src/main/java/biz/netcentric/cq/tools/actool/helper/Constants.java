@@ -38,7 +38,14 @@ public class Constants {
             ACE_CONFIGURATION_KEY,
             OBSOLETE_AUTHORIZABLES_KEY));
 
+    /**
+     * Default user ID for the anonymous user in Oak/JR2.
+     * Defined for Oak in {@code org.apache.jackrabbit.oak.spi.security.user.UserConstants.DEFAULT_ANONYMOUS_ID}.
+     */
     public static final String USER_ANONYMOUS = "anonymous";
+    /**
+     * Principal name for the everyone principal in Oak/JR2.
+     */
     public static final String PRINCIPAL_EVERYONE = "everyone";
     
     public static final String GROUPS_ROOT = "/home/groups";

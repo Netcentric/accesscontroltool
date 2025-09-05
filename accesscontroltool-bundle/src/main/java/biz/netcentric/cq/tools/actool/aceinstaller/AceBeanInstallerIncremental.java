@@ -40,7 +40,6 @@ import javax.jcr.security.Privilege;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
-import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -54,6 +53,7 @@ import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
+import biz.netcentric.cq.tools.actool.impl.SimpleNamePrincipal;
 
 @Component
 public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements AceBeanInstaller {
@@ -146,7 +146,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
         for (int i = currentPositionConfig; i < configuredAceEntries.size(); i++) {
             AceBean aceBeanToAppend = configuredAceEntries.get(i);
 
-            installPrivileges(aceBeanToAppend, new PrincipalImpl(aceBeanToAppend.getPrincipalName()), acl, session, acMgr);
+            installPrivileges(aceBeanToAppend, new SimpleNamePrincipal(aceBeanToAppend.getPrincipalName()), acl, session, acMgr);
             diffLog.append("    APPENDED (from Config)  " + toAceCompareString(aceBeanToAppend, acMgr) + "\n");
 
             countAdded++;
@@ -358,7 +358,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
 
     Principal getTestActionMapperPrincipal() {
         String groupPrincipalId = "actool-tester-action-mapper"; // does not have to exist since the ACEs for it are not saved
-        Principal principal = new PrincipalImpl(groupPrincipalId);
+        Principal principal = new SimpleNamePrincipal(groupPrincipalId);
         return principal;
     }
 
