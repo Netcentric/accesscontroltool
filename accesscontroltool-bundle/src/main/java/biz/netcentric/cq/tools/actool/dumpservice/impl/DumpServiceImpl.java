@@ -54,8 +54,6 @@ import org.apache.jackrabbit.api.security.user.QueryBuilder;
 import org.apache.jackrabbit.api.security.user.QueryBuilder.Direction;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
-import org.apache.jackrabbit.oak.spi.security.principal.EveryonePrincipal;
-import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.apache.jackrabbit.util.Text;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.annotations.Activate;
@@ -87,6 +85,7 @@ import biz.netcentric.cq.tools.actool.helper.AclBean;
 import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.QueryHelper;
 import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
+import biz.netcentric.cq.tools.actool.impl.SimpleNamePrincipal;
 
 @Component
 @Designate(ocd=Configuration.class)
@@ -308,7 +307,7 @@ public class DumpServiceImpl implements ConfigDumpService {
             userIds = aclDumpMap.keySet();
 
             for (String id : userIds) {
-                Authorizable authorizable = um.getAuthorizable(new PrincipalImpl(id));
+                Authorizable authorizable = um.getAuthorizable(new SimpleNamePrincipal(id));
                 if (!authorizable.isGroup()) {
                     User user = (User) authorizable;
                     usersFromACEs.add(user);
@@ -322,7 +321,7 @@ public class DumpServiceImpl implements ConfigDumpService {
 
                 for (AceBean aceBean : aceBeanSet) {
                     String principalId = aceBean.getPrincipalName();
-                    Authorizable authorizable = um.getAuthorizable(new PrincipalImpl(principalId));
+                    Authorizable authorizable = um.getAuthorizable(new SimpleNamePrincipal(principalId));
                     if (!authorizable.isGroup()) {
                         User user = (User) authorizable;
                         usersFromACEs.add(user);
@@ -438,7 +437,7 @@ public class DumpServiceImpl implements ConfigDumpService {
                     }
                 }
 
-                Authorizable authorizable = um.getAuthorizable(new PrincipalImpl(tmpAceBean.getPrincipalName()));
+                Authorizable authorizable = um.getAuthorizable(new SimpleNamePrincipal(tmpAceBean.getPrincipalName()));
 
                 // if this group exists under home
                 if (authorizable != null) {
@@ -593,7 +592,7 @@ public class DumpServiceImpl implements ConfigDumpService {
 
         while (it.hasNext()) {
             String groupId = it.next().getID();
-            if (StringUtils.equals(groupId, EveryonePrincipal.NAME)) {
+            if (StringUtils.equals(groupId, Constants.PRINCIPAL_EVERYONE)) {
                 continue;
             }
             memberOfList.add(groupId);

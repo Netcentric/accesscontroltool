@@ -35,7 +35,6 @@ import org.apache.jackrabbit.api.security.user.Query;
 import org.apache.jackrabbit.api.security.user.QueryBuilder;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.jackrabbit.api.security.user.UserManager;
-import org.apache.jackrabbit.oak.spi.security.user.UserConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,6 +67,18 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
 
     private static final Logger LOG = LoggerFactory.getLogger(AuthInstallerUserManagerPrefetchingImpl.class);
 
+    /**
+     * Node type used for system users in Oak/JR2.
+     * Defined for Oak in {@code org.apache.jackrabbit.oak.spi.security.user.UserConstants.NT_REP_SYSTEM_USER}.
+     */
+    private static final String NT_REP_SYSTEM_USER = "rep:SystemUser";
+
+    /**
+     * Node type used for groups in Oak/JR2.
+     * Defined for Oak in {@code org.apache.jackrabbit.oak.spi.security.user.UserConstants.NT_REP_GROUP}.
+     */
+    private static final String NT_REP_GROUP = "rep:Group";
+
     private final UserManager delegate;
 
     private final Map<String, Set<String>> nonRegularUserMembersByAuthorizableId = new CaseInsensitiveMap<>();
@@ -83,8 +94,8 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
             public <T> void build(QueryBuilder<T> builder) {
                 builder.setCondition(
                     builder.or(
-                        builder.eq("@" + JcrConstants.JCR_PRIMARYTYPE, valueFactory.createValue(UserConstants.NT_REP_SYSTEM_USER)),
-                        builder.eq("@" + JcrConstants.JCR_PRIMARYTYPE, valueFactory.createValue(UserConstants.NT_REP_GROUP))
+                        builder.eq("@" + JcrConstants.JCR_PRIMARYTYPE, valueFactory.createValue(NT_REP_SYSTEM_USER)),
+                        builder.eq("@" + JcrConstants.JCR_PRIMARYTYPE, valueFactory.createValue(NT_REP_GROUP))
                     )
                 );
             }
@@ -100,7 +111,7 @@ class AuthInstallerUserManagerPrefetchingImpl implements AuthInstallerUserManage
             authorizableIdsAndPaths.put(auth.getID(), auth.getPath());
         }
 
-        Authorizable anonymous = delegate.getAuthorizable(UserConstants.DEFAULT_ANONYMOUS_ID);
+        Authorizable anonymous = delegate.getAuthorizable(Constants.USER_ANONYMOUS);
         if (anonymous != null) {
             membershipCount += prefetchAuthorizable(anonymous);
             authorizableIdsAndPaths.put(anonymous.getID(), anonymous.getPath());

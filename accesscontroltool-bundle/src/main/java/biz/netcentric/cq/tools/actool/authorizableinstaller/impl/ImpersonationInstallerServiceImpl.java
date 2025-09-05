@@ -25,7 +25,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.security.principal.PrincipalIterator;
 import org.apache.jackrabbit.api.security.user.Impersonation;
 import org.apache.jackrabbit.api.security.user.User;
-import org.apache.jackrabbit.oak.spi.security.principal.PrincipalImpl;
 import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
 import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
+import biz.netcentric.cq.tools.actool.impl.SimpleNamePrincipal;
 
 /** Installs impersonators to users. */
 @Component(service = ImpersonationInstallerServiceImpl.class)
@@ -61,7 +61,7 @@ public class ImpersonationInstallerServiceImpl {
         Iterator<String> impersonatorsToAddIt = impersonatorsToAdd.iterator();
         while (impersonatorsToAddIt.hasNext()) {
             String impersonatorToAdd = impersonatorsToAddIt.next();
-            boolean success = impersonation.grantImpersonation(new PrincipalImpl(impersonatorToAdd));
+            boolean success = impersonation.grantImpersonation(new SimpleNamePrincipal(impersonatorToAdd));
             if (!success) {
                 impersonatorsToAddIt.remove();
                 installationLog.addWarning(LOG, "Impersonator '" + impersonatorToAdd + "' can not be added to user " + user);
@@ -74,7 +74,7 @@ public class ImpersonationInstallerServiceImpl {
         Iterator<String> impersonatorsToRemoveIt = impersonatorsToRemove.iterator();
         while (impersonatorsToRemoveIt.hasNext()) {
             String impersonatorToRemove = impersonatorsToRemoveIt.next();
-            boolean success = impersonation.revokeImpersonation(new PrincipalImpl(impersonatorToRemove));
+            boolean success = impersonation.revokeImpersonation(new SimpleNamePrincipal(impersonatorToRemove));
             if (!success) {
                 impersonatorsToRemoveIt.remove();
                 installationLog.addWarning(LOG, "Impersonator '" + impersonatorToRemove + "' can not be removed from user " + user);

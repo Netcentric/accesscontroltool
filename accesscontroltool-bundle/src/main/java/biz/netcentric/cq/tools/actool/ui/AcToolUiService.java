@@ -52,7 +52,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.User;
-import org.apache.jackrabbit.oak.spi.security.principal.EveryonePrincipal;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -67,6 +66,7 @@ import org.slf4j.LoggerFactory;
 import biz.netcentric.cq.tools.actool.api.AcInstallationService;
 import biz.netcentric.cq.tools.actool.api.InstallationOptionsBuilder;
 import biz.netcentric.cq.tools.actool.dumpservice.ConfigDumpService;
+import biz.netcentric.cq.tools.actool.helper.Constants;
 import biz.netcentric.cq.tools.actool.helper.UncheckedRepositoryException;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
 import biz.netcentric.cq.tools.actool.history.AcToolExecution;
@@ -512,7 +512,7 @@ public class AcToolUiService {
         try {
             user.declaredMemberOf().forEachRemaining(g -> {
                 try {
-                    if (!EveryonePrincipal.NAME.equals(g.getID())) {
+                    if (!Constants.PRINCIPAL_EVERYONE.equals(g.getID())) {
                         groupNames.add(g.getID());
                     }
                 } catch (RepositoryException e) {
