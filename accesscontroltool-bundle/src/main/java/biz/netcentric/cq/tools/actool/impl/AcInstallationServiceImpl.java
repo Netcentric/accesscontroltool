@@ -230,7 +230,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         boolean isLogVerbose = Boolean.parseBoolean(jobProperties.getOrDefault(JOB_PROPERTY_IS_LOG_VERBOSE, "false").toString());
         asyncInstallLog.attachMessageListener((logLevel, message) -> {
             if (isLogVerbose || logLevel != InstallationLogLevel.TRACE) {
-                context.log(logLevel.toString() + ": " + message);
+                context.log(quoteForMessageFormat(logLevel.toString() + ": " + message));
             }
         });
         asyncInstallLog.attachFinishListener(isSuccess -> 
@@ -255,6 +255,14 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         return result;
     }
 
+    /**
+     * Quotes the given string so that it can be safely used as literal argument to {@link java.text.MessageFormat} without being interpreted
+     * @return the quoted string
+     */
+    static String quoteForMessageFormat(String text) {
+        return "'" + text.replace("'", "''") + "'";
+    }
+ 
     @Override
     public boolean attachLogListener(String jobId, BiConsumer<InstallationLogLevel, String> messageListener, Consumer<Boolean> finishListener) {
         return false;
