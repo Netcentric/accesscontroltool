@@ -14,24 +14,17 @@ package biz.netcentric.cq.tools.actool.validators.impl;
  * #L%
  */
 
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import javax.jcr.AccessDeniedException;
-import javax.jcr.RepositoryException;
 import javax.jcr.security.AccessControlManager;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.aem.AcToolCqActions;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
-import biz.netcentric.cq.tools.actool.configmodel.Restriction;
-import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.validators.AceBeanValidator;
 import biz.netcentric.cq.tools.actool.validators.Validators;
 import biz.netcentric.cq.tools.actool.validators.exceptions.AcConfigBeanValidationException;
@@ -42,8 +35,6 @@ import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidGroupNameExce
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidJcrPrivilegeException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidPathException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidPermissionException;
-import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidRepGlobException;
-import biz.netcentric.cq.tools.actool.validators.exceptions.InvalidRestrictionsException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.NoActionOrPrivilegeDefinedException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.NoGroupDefinedException;
 import biz.netcentric.cq.tools.actool.validators.exceptions.TooManyActionsException;
@@ -103,8 +94,6 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
             throw new NoActionOrPrivilegeDefinedException(errorMessage);
         }
 
-        validateRestrictions(this.aceBean, aclManager);
-
         return true;
     }
 
@@ -115,60 +104,6 @@ public class AceBeanValidatorImpl implements AceBeanValidator {
             this.currentBeanCounter = 1;
         }
         previousAuthorizableId = aceBean.getAuthorizableId();
-    }
-
-    private boolean validateRestrictions(final AceBean tmpAceBean, final AccessControlManager aclManager)
-            throws InvalidRepGlobException, InvalidRestrictionsException {
-        boolean valid = true;
-
-        final List<Restriction> restrictions = tmpAceBean.getRestrictions();
-        if (restrictions.isEmpty()) {
-            return true;
-        }
-
-        final Set<String> restrictionNamesFromAceBean = new HashSet<String>();
-        for (Restriction restriction : restrictions) {
-            restrictionNamesFromAceBean.add(restriction.getName());
-        }
-
-        final Set<String> allowedRestrictionNames = getSupportedRestrictions(aclManager);
-
-        if (!allowedRestrictionNames.containsAll(restrictionNamesFromAceBean)) {
-            restrictionNamesFromAceBean.removeAll(allowedRestrictionNames);
-            valid = false;
-            final String errorMessage = getBeanDescription(this.currentBeanCounter,
-                    tmpAceBean.getAuthorizableId())
-                    + ",  this repository doesn't support following restriction(s): "
-                    + restrictionNamesFromAceBean;
-            throw new InvalidRestrictionsException(errorMessage);
-        }
-
-        return valid;
-    }
-
-    private Set<String> getSupportedRestrictions(final AccessControlManager aclManager)
-            throws InvalidRepGlobException {
-        Set<String> allowedRestrictions = new HashSet<>();
-        try {
-            final JackrabbitAccessControlList jacl = getJackrabbitAccessControlList(aclManager);
-            allowedRestrictions = new HashSet<>(Arrays.asList(jacl.getRestrictionNames()));
-        } catch (final RepositoryException e) {
-            throw new InvalidRepGlobException("Could not get restriction names from ACL of path: " + this.aceBean.getJcrPath());
-        }
-        return allowedRestrictions;
-    }
-
-    private JackrabbitAccessControlList getJackrabbitAccessControlList(final AccessControlManager aclManager) throws RepositoryException, AccessDeniedException {
-        JackrabbitAccessControlList jacl = null;
-        // don't check paths containing wildcards
-        if(!this.aceBean.getJcrPath().contains("*")){
-            jacl = AccessControlUtils.getModifiableAcl(aclManager, this.aceBean.getJcrPath());
-        }
-        if(jacl == null){
-            // root as fallback
-            jacl = AccessControlUtils.getModifiableAcl(aclManager, "/");
-        }
-        return jacl;
     }
 
     private boolean validatePermission(final AceBean tmpAclBean) throws InvalidPermissionException {

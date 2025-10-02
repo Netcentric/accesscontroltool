@@ -18,10 +18,8 @@ import static biz.netcentric.cq.tools.actool.history.impl.PersistableInstallatio
 
 import java.security.Principal;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -41,7 +39,6 @@ import org.slf4j.LoggerFactory;
 import biz.netcentric.cq.tools.actool.comparators.AcePermissionComparator;
 import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
-import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.ContentHelper;
 import biz.netcentric.cq.tools.actool.helper.RestrictionsHolder;
@@ -168,25 +165,15 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
      * @throws UnsupportedRepositoryOperationException
      * @throws RepositoryException */
     protected RestrictionsHolder getRestrictions(AceBean aceBean, Session session, JackrabbitAccessControlList acl)
-            throws ValueFormatException, UnsupportedRepositoryOperationException, RepositoryException {
-
-        final Collection<String> supportedRestrictionNames = Arrays.asList(acl.getRestrictionNames());
+            throws RepositoryException {
 
         if (aceBean.getRestrictions().isEmpty()) {
             return RestrictionsHolder.empty();
         }
-
-        List<Restriction> restrictions = aceBean.getRestrictions();
-        for (Restriction restriction : restrictions) {
-            if (!supportedRestrictionNames.contains(restriction.getName())) {
-                throw new IllegalStateException(
-                        "The AccessControlList at " + acl.getPath() + " does not support setting " + restriction.getName()
-                                + " restrictions!");
-            }
-        }
-
-        RestrictionsHolder restrictionsHolder = new RestrictionsHolder(restrictions, session.getValueFactory(), acl);
-        return restrictionsHolder;
+        // no need to check if restrictions are supported, Oak is lenient nowadays and does the proper checks internally
+        // see https://github.com/apache/jackrabbit-oak/blob/17281282fe82d0f0c4e86d0a42ecfb20bfe404e3/oak-core/src/main/java/org/apache/jackrabbit/oak/security/authorization/accesscontrol/ACL.java#L213
+        // also it supports non-mandatory restrictions like the ones from com.adobe.cq.dam.assetmetadatarestrictionprovider.impl.AssetMetadataRestrictionProvider
+        return new RestrictionsHolder(aceBean.getRestrictions(), session.getValueFactory(), acl);
     }
 
     /** Converts the given privilege names into a set of privilege objects.
