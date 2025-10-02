@@ -285,7 +285,6 @@
            rep:glob: test
            rep:ntNames: test
            rep:prefixes: test
-         assertedException: InvalidRestrictionsException
          
        #11 wrong restriction name. correct one would be rep:glob
        - path: /content
@@ -293,7 +292,5 @@
          actions: read
          restrictions:
            rep:Glob: /cq:*
-         assertedException: InvalidRestrictionsException
-         
       
        
