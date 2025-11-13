@@ -44,7 +44,7 @@ In addition an OSGi configuration for the leveraged [UMAPI](https://adobe-apipla
 Only the 
 - group id (called name in IMS context), 
 - the description
-- the admins (set via OSGi configuration)
-- and product profiles (set via OSGi configuration)
+- the [admins](https://helpx.adobe.com/enterprise/using/user-groups.html#AddAdminstogroups) (set via OSGi configuration)
+- and [product profiles](https://helpx.adobe.com/enterprise/using/user-groups.html#assign-product-profiles-to-groups) (set via OSGi configuration)
 
-are set for synchronized groups in IMS. Memberships are not modified and external groups are never deleted. However you can update admin users of the managed groups (this involves both adding and removing users) with the additional flag `Also update existing external groups`. This is only available for manually triggered installations from the Web Console Plugin or the Touch UI Web UI. There is right now [no way to remove product profiles](https://github.com/Netcentric/accesscontroltool/issues/800) on already existing groups.
+are set for synchronized groups in IMS. Memberships are not modified and groups are never deleted. However you can update admin users of the managed groups (this involves both adding and removing users) with the additional flag `Also update existing external groups`. This is only available for manually triggered installations from the Web Console Plugin or the Touch UI Web UI. There is right now [no way to remove product profiles](https://github.com/Netcentric/accesscontroltool/issues/800) on already existing groups.
