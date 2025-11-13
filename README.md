@@ -21,6 +21,7 @@ Features:
 * stores history of changes
 * ensured order of ACLs
 * built-in expression language to reduce rule duplication
+* creation/update of [external IMS groups](docs/ExternalGroupSyncIms.md)
 
 See also our talk at [adaptTo() 2016](https://adapt.to/2016/en/schedule/ac-tool.html)
 
