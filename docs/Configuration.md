@@ -104,7 +104,7 @@ members | List of groups that are member of this group. May be provided as yaml 
 migrateFrom | A group name assigned member users are taken over from. This is not supported for external user management. | optional
 virtual | If true, the group is *not* created in repository but only its permissions and isMemberOf relationships are made effective to other groups using the virtual group in isMemberOf. Flattens the effective group tree of users at runtime, but enlarges ACLs as set on path (instead of the virtual group, all referencing groups are listed in a particular path's ACL used by the virtual group). Useful for functionality fragments. False by default. Since v2.1.0 | optional
 unmanaged* Properties | Only use sparsely and with care, see [Advanced Features](AdvancedFeatures.md)   | optional
-externalSync | Boolean flag determining whether the group should also be created or updated in a configured external user management system. For further details refer to [Update Groups in External User Management Systems](AdvancedFeatures.md#update-groups-in-external-user-management-systems). Since v3.1.0. | optional
+externalSync | Boolean flag determining whether the group should also be created or updated in a configured external user management system. For further details refer to [External Group Sync via IMS](ExternalGroupSyncIms.md). Since v3.1.0. | optional
 
 Example:
 
