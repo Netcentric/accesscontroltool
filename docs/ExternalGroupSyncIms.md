@@ -1,6 +1,6 @@
 # External Group Sync (with IMS)
 
-Since AC Tool 3.1.0 there is support for creating/updating groups in [Adobe IMS](https://www.adobe.com/content/dam/cc/en/trust-center/ungated/whitepapers/corporate/adobe-identity-management-services-security-overview.pdf). Those are the groups which are exposed in the Adobe Admin Console and automatically used for [AEMaaCS](https://experienceleague.adobe.com/en/docs/experience-manager-cloud-service/content/security/ims-support) and also [AEM 6.5 hosted by AMS](https://experienceleague.adobe.com/en/docs/experience-manager-learn/foundation/authentication/adobe-ims-authentication-technical-video-understand).
+Since AC Tool 3.1.0 there is support for creating/updating groups in [Adobe IMS](https://www.adobe.com/content/dam/cc/en/trust-center/ungated/whitepapers/corporate/adobe-identity-management-services-security-overview.pdf). Those are the groups which are exposed in the Adobe Admin Console and automatically used for [AEMaaCS](https://experienceleague.adobe.com/en/docs/experience-manager-cloud-service/content/security/ims-support) and also [AEM 6.5 hosted by AMS](https://experienceleague.adobe.com/en/docs/experience-manager-learn/foundation/authentication/adobe-ims-authentication-technical-video-understand) Author login.
 
 
 ## Architecture
