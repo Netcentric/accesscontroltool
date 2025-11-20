@@ -101,6 +101,7 @@
         <njord.waitForStates>true</njord.waitForStates>
         <njord.publisher>sonatype-cp</njord.publisher>
         <njord.releaseUrl>njord:template:release-sca</njord.releaseUrl>
+        <njord.snapshotUrl>njord:template:snapshot</njord.snapshotUrl>
     </properties>
 
     <modules>
@@ -247,6 +248,8 @@
                             <!-- ignore Bundle-Version header for baseline, i.e. no enforcement of specific bundle versions -->
                             <diffignore>Bundle-Version</diffignore>
                         </diffignores>
+                        <!-- https://github.com/bndtools/bnd/issues/6945 -->
+                        <includeDistributionManagement>false</includeDistributionManagement>
                     </configuration>
                 </plugin>
                 <plugin>
