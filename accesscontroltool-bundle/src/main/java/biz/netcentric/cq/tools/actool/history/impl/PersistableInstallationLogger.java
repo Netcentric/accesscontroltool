@@ -22,6 +22,7 @@ import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -141,8 +142,7 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
     }
 
     protected void addWarning(String warning) {
-        warnings.add(new HistoryEntry(msgIndex, new Timestamp(
-                new Date().getTime()), MSG_IDENTIFIER_WARNING + warning));
+        warnings.add(new HistoryEntry(msgIndex, ZonedDateTime.now(), MSG_IDENTIFIER_WARNING + warning));
         listeners.forEach(l -> l.accept(InstallationLogLevel.WARNING, warning));
         msgIndex++;
     }
@@ -154,8 +154,7 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
     }
 
     protected void addMessage(String message) {
-        messages.add(new HistoryEntry(msgIndex, new Timestamp(new Date()
-                .getTime()), " " + message));
+        messages.add(new HistoryEntry(msgIndex, ZonedDateTime.now(), " " + message));
         listeners.forEach(l -> l.accept(InstallationLogLevel.INFO, message));
         msgIndex++;
     }
@@ -175,8 +174,7 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
         if (e != null) {
             fullErrorValue += " / e=" + e;
         }
-        errors.add(new HistoryEntry(msgIndex, new Timestamp(
-                new Date().getTime()), MSG_IDENTIFIER_ERROR + fullErrorValue));
+        errors.add(new HistoryEntry(msgIndex, ZonedDateTime.now(), MSG_IDENTIFIER_ERROR + fullErrorValue));
         listeners.forEach(l -> l.accept(InstallationLogLevel.ERROR, error));
         success = false;
         msgIndex++;
@@ -195,8 +193,7 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
     }
 
     protected void addVerboseMessage(String message) {
-        verboseMessages.add(new HistoryEntry(msgIndex, new Timestamp(
-                new Date().getTime()), " " + message));
+        verboseMessages.add(new HistoryEntry(msgIndex, ZonedDateTime.now(), " " + message));
         listeners.forEach(l -> l.accept(InstallationLogLevel.TRACE, message));
         msgIndex++;
     }
@@ -268,7 +265,7 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
         StringBuilder sb = new StringBuilder();
         if (!messageHistorySet.isEmpty()) {
             for (HistoryEntry entry : messageHistorySet) {
-                sb.append(EOL + timestampFormat.format(entry.getTimestamp()) + ": "
+                sb.append(EOL + timestampFormat.format(entry.getDate()) + ": "
                         + entry.getMessage());
             }
         }
