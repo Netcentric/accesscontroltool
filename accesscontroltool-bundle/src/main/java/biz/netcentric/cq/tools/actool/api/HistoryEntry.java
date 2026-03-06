@@ -15,6 +15,7 @@ package biz.netcentric.cq.tools.actool.api;
  */
 
 import java.sql.Timestamp;
+import java.time.ZonedDateTime;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -24,23 +25,45 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public final class HistoryEntry {
 
-    private Timestamp timestamp;
+    private ZonedDateTime date;
     private String message;
     private long index;
 
+    /**
+     * Creates a new history entry. Calls {@link #HistoryEntry(long, ZonedDateTime, String)} internally with a converted timestamp using the current time zone.
+     * @param index
+     * @param timestamp
+     * @param message
+     * @deprecated Use {@link #HistoryEntry(long, ZonedDateTime, String)} instead.
+     */
+    @Deprecated
     public HistoryEntry(long index, Timestamp timestamp, String message) {
+        this(index, timestamp.toInstant().atZone(ZonedDateTime.now().getZone()), message);
+    }
+
+    public HistoryEntry(long index, ZonedDateTime date, String message) {
         super();
         this.index = index;
-        this.timestamp = timestamp;
+        this.date = date;
         this.message = message;
     }
 
+    @Deprecated
     public Timestamp getTimestamp() {
-        return timestamp;
+        return Timestamp.from(date.toInstant());
     }
 
+    @Deprecated
     public void setTimestamp(Timestamp timestamp) {
-        this.timestamp = timestamp;
+        setDate(timestamp.toInstant().atZone(ZonedDateTime.now().getZone()));
+    }
+
+    public ZonedDateTime getDate() {
+        return date;
+    }
+
+    public void setDate(ZonedDateTime date) {
+        this.date = date;
     }
 
     public String getMessage() {
@@ -61,7 +84,7 @@ public final class HistoryEntry {
 
 	@Override
 	public String toString() {
-		return "HistoryEntry [timestamp=" + timestamp + ", message=" + message
+		return "HistoryEntry [date=" + date + ", message=" + message
 				+ ", index=" + index + "]";
 	}
 
