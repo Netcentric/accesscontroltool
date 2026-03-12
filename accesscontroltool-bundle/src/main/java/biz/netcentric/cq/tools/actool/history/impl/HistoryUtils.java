@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
 import biz.netcentric.cq.tools.actool.api.InstallationResult;
 import biz.netcentric.cq.tools.actool.comparators.TimestampPropertyComparator;
 import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
+import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper.ServerType;
 import biz.netcentric.cq.tools.actool.history.AcToolExecution;
 import biz.netcentric.cq.tools.actool.jmx.AceServiceMBeanImpl;
 import biz.netcentric.cq.tools.actool.ui.AcToolWebconsolePlugin;
@@ -102,10 +103,11 @@ public class HistoryUtils {
      * @param nrOfHistoriesToSave
      *            number of newest histories which should be kept in CRX. older
      *            histories get automatically deleted
+     * @param serverType 
      * @return the node being created
      */
     public static Node persistHistory(final Session session,
-            PersistableInstallationLogger installLog, final int nrOfHistoriesToSave)
+            PersistableInstallationLogger installLog, final int nrOfHistoriesToSave, ServerType serverType)
             throws RepositoryException {
 
         Node acHistoryRootNode = getAcHistoryRootNode(session);
@@ -126,7 +128,7 @@ public class HistoryUtils {
                 trigger = "startup_hook_pckmgr)";
             } else {
                 // if the history is not yet copied to apps, it's the image build
-                boolean isImageBuild = RuntimeHelper.isCloudReadyInstance() && !session.itemExists(AC_HISTORY_PATH_IN_APPS);
+                boolean isImageBuild = serverType == ServerType.AEM_CLOUD_IMAGE_BUILD && !session.itemExists(AC_HISTORY_PATH_IN_APPS);
                 if(isImageBuild) {
                     trigger = "startup_hook_image_build";
                 } else {
