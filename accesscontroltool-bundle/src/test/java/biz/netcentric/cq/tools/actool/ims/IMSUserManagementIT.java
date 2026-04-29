@@ -54,12 +54,17 @@ class IMSUserManagementIT {
 
     @BeforeEach
     void setUp() {
+        // this is a regular variable (even available to PRs raised from forks)
         String orgId = System.getenv("ACTOOL_IMS_IT_ORGANIZATIONID");
         Assumptions.assumeTrue(orgId != null, "Skipping IMS ITs because environment variable 'ACTOOL_IMS_IT_ORGANIZATIONID' is not set!");
+        String clientSecret = System.getenv("ACTOOL_IMS_IT_CLIENTSECRET");
+        Assumptions.assumeTrue(orgId != null, "Skipping IMS ITs because (secret) environment variable 'ACTOOL_IMS_IT_CLIENTSECRET' is not set!");
+        String clientId = System.getenv("ACTOOL_IMS_IT_CLIENTID");
+        Assumptions.assumeTrue(orgId != null, "Skipping IMS ITs because environment variable 'ACTOOL_IMS_IT_CLIENTID' is not set!");
         properties = new HashMap<>();
-        properties.put("organizationId", getMandatoryEnvironmentVariable("ACTOOL_IMS_IT_ORGANIZATIONID"));
-        properties.put("clientId", getMandatoryEnvironmentVariable("ACTOOL_IMS_IT_CLIENTID"));
-        properties.put("clientSecret", getMandatoryEnvironmentVariable("ACTOOL_IMS_IT_CLIENTSECRET"));
+        properties.put("organizationId", orgId);
+        properties.put("clientId", clientId);
+        properties.put("clientSecret", clientSecret);
         properties.put("isTestOnly", Boolean.TRUE);
         properties.put("socketTimeout", "60000");
     }
