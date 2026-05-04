@@ -163,7 +163,7 @@
             <dependency>
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
-                <version>2.4</version>
+                <version>2.6</version>
             </dependency>
             <!-- due to https://bugs.openjdk.java.net/browse/JDK-8231581 OOTB JRE is not sufficient, fixed with https://bugs.openjdk.org/browse/JDK-8298420 in Java 25 -->
             <dependency>
