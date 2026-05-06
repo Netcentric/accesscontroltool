@@ -425,6 +425,21 @@
                         </configuration>
                     </execution>
                     <!-- resolving against the maximum, i.e. AEMaaCS version happens separately in the aemanalyser-maven-plugin -->
+                    <!-- resolve against minimal AEM used during Cloud Manager image build -->
+                    <execution>
+                        <id>resolve-against-minimal-aem-in-imagebuild</id>
+                        <goals>
+                            <goal>resolve</goal>
+                        </goals>
+                        <phase>verify</phase>
+                        <configuration>
+                            <useMavenDependencies>false</useMavenDependencies>
+                            <bndruns>
+                                <include>minimal-aem.bndrun</include>
+                            </bndruns>
+                            <outputBndrunDir>${project.build.directory}/bndruns-minimal-aem</outputBndrunDir>
+                        </configuration>
+                    </execution>
                 </executions>
                 <configuration>
                     <useMavenDependencies>true</useMavenDependencies>
