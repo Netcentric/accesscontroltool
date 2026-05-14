@@ -379,11 +379,23 @@
                                 <artifactId>oak-jackrabbit-api</artifactId>
                                 <version>${oak.testing.version}</version>
                             </additionalClasspathDependency>
+                            <additionalClasspathDependency>
+                                <groupId>org.apache.jackrabbit</groupId>
+                                <artifactId>oak-api</artifactId>
+                                <version>${oak.testing.version}</version>
+                            </additionalClasspathDependency>
+                            <additionalClasspathDependency>
+                                <groupId>org.apache.jackrabbit</groupId>
+                                <artifactId>oak-core-spi</artifactId>
+                                <version>${oak.testing.version}</version>
+                            </additionalClasspathDependency>
                         </additionalClasspathDependencies>
                         <classpathDependencyExcludes>
                             <classpathDependencyExclude>org.apache.jackrabbit:oak-security-spi</classpathDependencyExclude>
                             <classpathDependencyExclude>org.apache.jackrabbit:oak-auth-external</classpathDependencyExclude>
                             <classpathDependencyExclude>org.apache.jackrabbit:jackrabbit-api</classpathDependencyExclude>
+                            <classpathDependencyExclude>org.apache.jackrabbit:oak-api</classpathDependencyExclude>
+                            <classpathDependencyExclude>org.apache.jackrabbit:oak-core-spi</classpathDependencyExclude>
                         </classpathDependencyExcludes>
                     </configuration>
                 </plugin>
