@@ -215,7 +215,7 @@ public class AuthorizableInstallerServiceImpl implements
         }
     }
 
-    private void installKeys(boolean appendToKeyStore, User user, Map<String, Key> keys, String userId, String keyStorePassword, Session session, InstallationLogger installLog) throws LoginException, SlingIOException, SecurityException, IOException, GeneralSecurityException, RepositoryException {
+    private void installKeys(boolean appendToKeyStore, User user, Map<String, Key> keys, String userId, String keyStorePassword, Session session, InstallationLogger installLog) throws LoginException, SlingIOException, SecurityException, IOException, RepositoryException {
         Map<String, Object> authInfo = new HashMap<>();
         authInfo.put(JcrResourceConstants.AUTHENTICATION_INFO_SESSION, session);
         ResourceResolver resolver = resourceResolverFactory.getResourceResolver(authInfo);
