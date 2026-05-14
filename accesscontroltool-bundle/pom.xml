@@ -117,6 +117,17 @@
             <artifactId>oak-jackrabbit-api</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- for org.apache.jackrabbit.oak.commons.jmx -->
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-core-spi</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.apache.jackrabbit.vault</groupId>
             <artifactId>org.apache.jackrabbit.vault</artifactId>
@@ -199,12 +210,6 @@
             <artifactId>httpclient-osgi</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- JMX annotations -->
-        <dependency>
-            <groupId>com.adobe.granite</groupId>
-            <artifactId>com.adobe.granite.jmx</artifactId>
-            <scope>provided</scope>
-        </dependency>
         <!-- Crypto Support -->
         <dependency>
             <groupId>com.adobe.granite</groupId>
@@ -277,12 +282,6 @@
             <scope>test</scope>
         </dependency>
         <!-- IT dependencies -->
-        <dependency>
-            <groupId>org.apache.jackrabbit</groupId>
-            <artifactId>oak-api</artifactId>
-            <version>${oak.testing.version}</version>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>oak-core</artifactId>

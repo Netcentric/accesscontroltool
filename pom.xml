@@ -149,9 +149,14 @@
                 <version>${oak.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.adobe.granite</groupId>
-                <artifactId>com.adobe.granite.jmx</artifactId>
-                <version>0.2.14</version><!-- 6.4 ships with 0.3.4, newest available in Maven Central is 0.2.14 though-->
+                <groupId>org.apache.jackrabbit</groupId>
+                <artifactId>oak-api</artifactId>
+                <version>${oak.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.jackrabbit</groupId>
+                <artifactId>oak-core-spi</artifactId>
+                <version>${oak.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.adobe.granite</groupId>

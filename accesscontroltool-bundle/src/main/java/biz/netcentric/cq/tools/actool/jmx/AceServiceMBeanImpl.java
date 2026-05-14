@@ -22,14 +22,13 @@ import javax.management.NotCompliantMBeanException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
+import org.apache.jackrabbit.oak.commons.jmx.AnnotatedStandardMBean;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.adobe.granite.jmx.annotation.AnnotatedStandardMBean;
 
 import biz.netcentric.cq.tools.actool.api.InstallationOptionsBuilder;
 import biz.netcentric.cq.tools.actool.dumpservice.ConfigDumpService;
@@ -167,6 +166,7 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
     public String purgeAllAuthorizablesFromConfiguration() {
         return acInstallationService.purgeAuthorizablesFromConfig();
     }
+
     @Override
     public String purgeAllAuthorizablesFromConfiguration(String configurationRootPath) {
         InstallationOptionsBuilder builder = new InstallationOptionsBuilder();
@@ -191,8 +191,5 @@ public class AceServiceMBeanImpl extends AnnotatedStandardMBean implements AceSe
     public String getVersion() {
         return acInstallationService.getVersion();
     }
-
-
-
 
 }
