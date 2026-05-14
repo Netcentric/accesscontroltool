@@ -62,7 +62,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.adobe.granite.keystore.KeyStoreNotInitialisedException;
-import com.adobe.granite.keystore.KeyStoreService;
 
 import biz.netcentric.cq.tools.actool.api.InstallationOptions;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
@@ -73,6 +72,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.pkcs.Key;
 import biz.netcentric.cq.tools.actool.configmodel.pkcs.RandomPassword;
 import biz.netcentric.cq.tools.actool.crypto.DecryptionService;
+import biz.netcentric.cq.tools.actool.crypto.UserKeyStoreService;
 import biz.netcentric.cq.tools.actool.externalusermanagement.ExternalGroupManagement;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
@@ -105,7 +105,7 @@ public class AuthorizableInstallerServiceImpl implements
     DecryptionService decryptionService;
     
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
-    volatile KeyStoreService keyStoreService;
+    volatile UserKeyStoreService keyStoreService;
     
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     ResourceResolverFactory resourceResolverFactory;
