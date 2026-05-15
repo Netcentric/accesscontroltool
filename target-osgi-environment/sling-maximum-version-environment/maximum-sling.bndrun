@@ -16,7 +16,7 @@
 -standalone: ${fileuri;${.}/target/index.xml}
 
 -runfw: org.apache.felix.framework
--runee: JavaSE-11
+-runee: JavaSE-21
 
 # disable capability matching as too many headers are missing (https://github.com/bndtools/bnd/issues/7232)
 # -resolve.effective: active

@@ -31,5 +31,6 @@
     <modules>
         <module>aem-minimum-version-environment</module>
         <module>sling-minimum-version-environment</module>
+        <module>sling-maximum-version-environment</module>
     </modules>
 </project>

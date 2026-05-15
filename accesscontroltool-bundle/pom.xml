@@ -436,7 +436,7 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>resolve-against-minimal-sling</id>
+                        <id>resolve-against-minimum-sling</id>
                         <goals>
                             <goal>resolve</goal>
                         </goals>
@@ -445,6 +445,19 @@
                             <useMavenDependencies>false</useMavenDependencies>
                             <bndruns>
                                 <include>minimum-sling.bndrun</include>
+                            </bndruns>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>resolve-against-maximum-sling</id>
+                        <goals>
+                            <goal>resolve</goal>
+                        </goals>
+                        <phase>verify</phase>
+                        <configuration>
+                            <useMavenDependencies>false</useMavenDependencies>
+                            <bndruns>
+                                <include>maximum-sling.bndrun</include>
                             </bndruns>
                         </configuration>
                     </execution>

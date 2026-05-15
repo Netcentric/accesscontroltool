@@ -13,10 +13,5 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
--standalone: ${fileuri;${.}/target/index.xml}
+-include ../target-osgi-environment/sling-maximum-version-environment/maximum-sling.bndrun
 
--runfw: org.apache.felix.framework
--runee: JavaSE-11
-
-# disable capability matching as too many headers are missing (https://github.com/bndtools/bnd/issues/7232)
-# -resolve.effective: active
