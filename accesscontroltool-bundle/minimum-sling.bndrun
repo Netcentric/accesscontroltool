@@ -13,5 +13,5 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
--include ../target-osgi-environment/aem-minimum-version-environment/minimum-aem.bndrun
+-include ../target-osgi-environment/sling-minimum-version-environment/minimum-sling.bndrun
 

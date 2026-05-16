@@ -26,8 +26,11 @@
     <artifactId>target-osgi-environment</artifactId>
     <packaging>pom</packaging>
     <name>Target OSGi Environments</name>
+    <description>Defines the target OSGi environments for the Access Control Tool. Used with bnd-resolver-maven-plugin to check if ACTool bundles are resolvable in supported OSGi runtimes.</description>
 
     <modules>
-        <module>minimum-environment</module>
+        <module>aem-minimum-version-environment</module>
+        <module>sling-minimum-version-environment</module>
+        <module>sling-maximum-version-environment</module>
     </modules>
 </project>

@@ -29,7 +29,7 @@ See also our talk at [adaptTo() 2016](https://adapt.to/2016/en/schedule/ac-tool.
 
 The AC Tool requires **Java 11 and AEM 6.5.18** or above (use v3.x for older AEM versions which runs on Java 8 and AEM 6.4 or above) for on-premise installations. Since v2.5.0 **[AEM as a Cloud Service](https://www.adobe.com/marketing/experience-manager/cloud-service.html)** is supported, see [Startup Hook](https://github.com/Netcentric/accesscontroltool/blob/develop/docs/ApplyConfig.md#startup-hook) for details.
 
-It is also possible to run the AC Tool on **Apache Sling 12** or above (ensure system user `actool-service` has `jcr:all` permissions on root). When using the AC Tool with Sling, actions in ACE definitions and encrypted passwords cannot be used. To use the `externalId` attribute, ensure bundle `oak-auth-external` installed (not part of default Sling distribution).
+It is also possible to run the AC Tool on **Apache Sling 12** or above (ensure system user `actool-service` has `jcr:all` permissions on root). When using the AC Tool with Sling, actions in ACE definitions, encrypted passwords and user's key stores cannot be used. To use the `externalId` attribute, ensure bundle `oak-auth-external` installed (not part of default Sling Starter distribution).
 
 # Installation
 

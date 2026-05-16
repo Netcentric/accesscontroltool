@@ -13,5 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
--include ../target-osgi-environment/aem-minimum-version-environment/minimum-aem.bndrun
+-standalone: ${fileuri;${.}/target/index.xml}
 
+-runfw: org.apache.felix.framework
+-runee: JavaSE-11
+
+# disable capability matching as too many headers are missing (https://github.com/bndtools/bnd/issues/7232)
+# -resolve.effective: active

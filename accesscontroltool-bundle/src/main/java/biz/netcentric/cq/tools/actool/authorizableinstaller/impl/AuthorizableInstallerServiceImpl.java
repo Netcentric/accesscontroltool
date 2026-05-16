@@ -36,7 +36,6 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
-import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFactory;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -61,9 +60,6 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.adobe.granite.keystore.KeyStoreNotInitialisedException;
-import com.adobe.granite.keystore.KeyStoreService;
-
 import biz.netcentric.cq.tools.actool.api.InstallationOptions;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableCreatorException;
 import biz.netcentric.cq.tools.actool.authorizableinstaller.AuthorizableInstallerService;
@@ -73,6 +69,7 @@ import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
 import biz.netcentric.cq.tools.actool.configmodel.pkcs.Key;
 import biz.netcentric.cq.tools.actool.configmodel.pkcs.RandomPassword;
 import biz.netcentric.cq.tools.actool.crypto.DecryptionService;
+import biz.netcentric.cq.tools.actool.crypto.UserKeyStoreService;
 import biz.netcentric.cq.tools.actool.externalusermanagement.ExternalGroupManagement;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
@@ -105,7 +102,7 @@ public class AuthorizableInstallerServiceImpl implements
     DecryptionService decryptionService;
     
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy=ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
-    volatile KeyStoreService keyStoreService;
+    volatile UserKeyStoreService keyStoreService;
     
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     ResourceResolverFactory resourceResolverFactory;
@@ -218,7 +215,7 @@ public class AuthorizableInstallerServiceImpl implements
         }
     }
 
-    private void installKeys(boolean appendToKeyStore, User user, Map<String, Key> keys, String userId, String keyStorePassword, Session session, InstallationLogger installLog) throws LoginException, SlingIOException, SecurityException, KeyStoreNotInitialisedException, IOException, GeneralSecurityException, UnsupportedRepositoryOperationException, RepositoryException {
+    private void installKeys(boolean appendToKeyStore, User user, Map<String, Key> keys, String userId, String keyStorePassword, Session session, InstallationLogger installLog) throws LoginException, SlingIOException, SecurityException, IOException, RepositoryException {
         Map<String, Object> authInfo = new HashMap<>();
         authInfo.put(JcrResourceConstants.AUTHENTICATION_INFO_SESSION, session);
         ResourceResolver resolver = resourceResolverFactory.getResourceResolver(authInfo);
@@ -234,7 +231,7 @@ public class AuthorizableInstallerServiceImpl implements
         }
     }
 
-    private void removeKeyStore(ResourceResolver resolver, User user, InstallationLogger installLog) throws UnsupportedRepositoryOperationException, RepositoryException, PersistenceException {
+    private void removeKeyStore(ResourceResolver resolver, User user, InstallationLogger installLog) throws RepositoryException, PersistenceException {
         String keyStorePath = user.getPath() + "/" + USER_KEYSTORE_FOLDER;
         Resource keyStoreResource = resolver.getResource(keyStorePath);
         if (keyStoreResource != null) {
@@ -245,7 +242,7 @@ public class AuthorizableInstallerServiceImpl implements
         }
     }
 
-    private void installKeys(Map<String, Key> keys, String userId, String keyStorePassword, ResourceResolver resourceResolver, InstallationLogger installLog) throws SlingIOException, SecurityException, KeyStoreNotInitialisedException, IOException, GeneralSecurityException {
+    private void installKeys(Map<String, Key> keys, String userId, String keyStorePassword, ResourceResolver resourceResolver, InstallationLogger installLog) throws SlingIOException, SecurityException {
         if (keyStoreService == null) {
             throw new IllegalStateException(
                     "Keys are used on the authorizable which require the AEM KeyStore Service which is missing.");

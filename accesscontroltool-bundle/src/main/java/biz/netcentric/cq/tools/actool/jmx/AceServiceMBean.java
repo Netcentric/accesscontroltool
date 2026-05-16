@@ -16,8 +16,9 @@ package biz.netcentric.cq.tools.actool.jmx;
 
 import javax.jcr.RepositoryException;
 
-import com.adobe.granite.jmx.annotation.Description;
-import com.adobe.granite.jmx.annotation.Name;
+import org.apache.jackrabbit.oak.api.jmx.Description;
+import org.apache.jackrabbit.oak.api.jmx.Name;
+
 
 /**
  * exposes functionalities of the Netcentric AC-Tool

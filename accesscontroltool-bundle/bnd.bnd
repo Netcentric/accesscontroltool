@@ -7,6 +7,7 @@ Bundle-SymbolicName: biz.netcentric.cq.tools.accesscontroltool.bundle
 
 # allow to run in Sling without AEM bundles
 # allow to run without bouncycastle which is only necessary for some edge cases when managing keys
+# broader version range for JMX annotation as 2.0.0 was introduced in https://github.com/apache/jackrabbit-oak/commit/42b0a70d305372e9c228697012f12c59d643fe27#diff-776354a994a5afefbc8da17a75d83569e198589f2abe3be6890bb621f9a1a708 but is still compatible with our use cases
 Import-Package: \
 com.adobe.granite.crypto;resolution:=optional,\
 com.adobe.granite.keystore;resolution:=optional,\
@@ -15,6 +16,7 @@ com.fasterxml.jackson.databind;resolution:=optional,\
 org.apache.http.*;resolution:=optional,\
 org.bouncycastle.*;resolution:=optional,\
 org.apache.jackrabbit.oak.spi.security.authentication.external.*;resolution:=optional,\
+org.apache.jackrabbit.oak.commons.jmx;version="[1.1.0,3.0.0)",\
 !jakarta.servlet.jsp.el,\
 *
 
