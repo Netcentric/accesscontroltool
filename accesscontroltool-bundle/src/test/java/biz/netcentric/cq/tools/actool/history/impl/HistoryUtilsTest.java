@@ -16,7 +16,13 @@ package biz.netcentric.cq.tools.actool.history.impl;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Date;
+import java.util.Set;
+import java.util.TreeSet;
+
 import org.junit.jupiter.api.Test;
+
+import biz.netcentric.cq.tools.actool.history.AcToolExecution;
 
 class HistoryUtilsTest {
 
@@ -30,5 +36,17 @@ class HistoryUtilsTest {
     void testGetPathFromId() {
         assertEquals("/base/history_test", HistoryUtils.getPathFromId("test", "/base"));
         assertEquals("/deeply/nested/base/history_test", HistoryUtils.getPathFromId("test", "/deeply/nested/base"));
+    }
+
+    @Test
+    void testExecutionsWithSameTimestampAreBothRetained() {
+        Date sameTimestamp = new Date();
+        Set<AcToolExecution> executions = new TreeSet<>();
+        executions.add(new AcToolExecutionImpl("100_via_jmx",
+                "/var/statistics/achistory/history_100_via_jmx", sameTimestamp, true, "/apps/test", 0, 0));
+        executions.add(new AcToolExecutionImpl("101_via_jmx",
+                "/var/statistics/achistory/history_101_via_jmx", sameTimestamp, true, "/apps/test", 0, 0));
+
+        assertEquals(2, executions.size());
     }
 }

@@ -85,7 +85,11 @@ public class AcToolExecutionImpl implements AcToolExecution, Comparable<AcToolEx
 
     @Override
     public int compareTo(AcToolExecution otherExecution) {
-        return -getInstallationDate().compareTo(otherExecution.getInstallationDate());
+        int compareByDate = -getInstallationDate().compareTo(otherExecution.getInstallationDate());
+        if (compareByDate != 0) {
+            return compareByDate;
+        }
+        return getId().compareTo(otherExecution.getId());
     }
 
 }
