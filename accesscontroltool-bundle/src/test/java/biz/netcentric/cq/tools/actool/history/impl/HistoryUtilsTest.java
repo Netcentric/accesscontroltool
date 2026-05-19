@@ -48,5 +48,6 @@ class HistoryUtilsTest {
                 "/var/statistics/achistory/history_101_via_jmx", sameTimestamp, true, "/apps/test", 0, 0));
 
         assertEquals(2, executions.size());
+        assertEquals("100_via_jmx", executions.iterator().next().getId());
     }
 }
