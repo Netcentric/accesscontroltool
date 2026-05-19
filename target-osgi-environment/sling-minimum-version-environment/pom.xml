@@ -21,7 +21,7 @@
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
         <artifactId>target-osgi-environment</artifactId>
         <relativePath>../pom.xml</relativePath>
-        <version>4.1.2-SNAPSHOT</version>
+        <version>4.2.0</version>
     </parent>
 
     <artifactId>sling-minimum-version-environment</artifactId>
