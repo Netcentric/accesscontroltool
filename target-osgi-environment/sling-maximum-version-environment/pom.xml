@@ -26,7 +26,7 @@
 
     <artifactId>sling-maximum-version-environment</artifactId>
     <packaging>pom</packaging>
-    <name>Maximum Sling Target OSGi Environment for Access Control Tool</name>
+    <name>Maximum Sling Target OSGi Environment</name>
     <description>The bndrun files and the used bundles for resolving all bundles in the maximum supported version of Sling (Sling Starter 14)</description>
 
     <properties>

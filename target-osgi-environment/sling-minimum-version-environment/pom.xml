@@ -26,7 +26,7 @@
 
     <artifactId>sling-minimum-version-environment</artifactId>
     <packaging>pom</packaging>
-    <name>Minimum Sling Target OSGi Environment for Access Control Tool</name>
+    <name>Minimum Sling Target OSGi Environment</name>
     <description>The bndrun files and the used bundles for resolving all bundles in the minimum supported version of Sling (Sling Starter 12)</description>
 
     <properties>
