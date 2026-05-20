@@ -604,7 +604,7 @@ public class AcToolUiService {
 
             AcToolExecution acToolExecution = acToolExecutions.get(reqParams.showLogId);
             if (acToolExecution == null) {
-                writer.println("No log found for id " + reqParams.showLogId);
+                writer.println("No log found for id " + escapeHtml4(reqParams.showLogId));
                 return;
             } else {
                 String logLabel = "Execution Log " + reqParams.showLogId + ": " + getExecutionLabel(acToolExecution);
