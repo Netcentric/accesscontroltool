@@ -50,4 +50,24 @@ class HistoryUtilsTest {
         assertEquals(2, executions.size());
         assertEquals("100_via_jmx", executions.iterator().next().getId());
     }
+
+    @Test
+    void testShouldExposeExecutionForManualNoChangeRun() {
+        assertTrue(HistoryUtils.shouldExposeExecution("jmx", 0, 0));
+        assertTrue(HistoryUtils.shouldExposeExecution("aem_admin_ui", 0, 0));
+        assertTrue(HistoryUtils.shouldExposeExecution("webconsole", 0, 0));
+    }
+
+    @Test
+    void testShouldNotExposeExecutionForAutomaticNoChangeRun() {
+        assertFalse(HistoryUtils.shouldExposeExecution("installhook", 0, 0));
+        assertFalse(HistoryUtils.shouldExposeExecution("startup_hook", 0, 0));
+        assertFalse(HistoryUtils.shouldExposeExecution("startup_hook_image_build", 0, 0));
+    }
+
+    @Test
+    void testShouldExposeExecutionWhenChangesExist() {
+        assertTrue(HistoryUtils.shouldExposeExecution("installhook", 1, 0));
+        assertTrue(HistoryUtils.shouldExposeExecution("startup_hook", 0, 1));
+    }
 }

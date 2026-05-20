@@ -79,6 +79,8 @@ public class HistoryUtils {
     public static final String PROPERTY_CONFIG_ROOT_PATH = "configurationRootPath";
     public static final String PROPERTY_ACL_CHANGES = "aclsChanges";
     public static final String PROPERTY_AUTHORIZABLES_CHANGES = "authorizableChanges";
+    static final String TRIGGER_INSTALL_HOOK = "installhook";
+    static final String TRIGGER_STARTUP_HOOK_PREFIX = "startup_hook";
 
     private static final String AC_TOOL_STARTUPHOOK_CLASS = "biz.netcentric.cq.tools.actool.startuphook.impl.AcToolStartupHookServiceImpl";
     private static final String BUNDLE_START_TASK_CLASS = "org.apache.sling.installer.core.impl.tasks.BundleStartTask";
@@ -114,7 +116,7 @@ public class HistoryUtils {
         
         String trigger;
         if (StringUtils.isNotBlank(installLog.getCrxPackageName())) {
-            trigger = "installhook";
+            trigger = TRIGGER_INSTALL_HOOK;
         } else if(isInStrackTracke(stackTrace, AceServiceMBeanImpl.class)) {
             trigger = "jmx";
         } else if(isInStrackTracke(stackTrace, AC_TOOL_TOUCH_UI_SERVLET_CLASS)) {
@@ -273,6 +275,11 @@ public class HistoryUtils {
                 String configRoot = node.hasProperty(PROPERTY_CONFIG_ROOT_PATH)? node.getProperty(PROPERTY_CONFIG_ROOT_PATH).getString() : null;
                 int authorizableChanges = node.hasProperty(PROPERTY_AUTHORIZABLES_CHANGES) ? (int) node.getProperty(PROPERTY_AUTHORIZABLES_CHANGES).getLong() : -1;
                 int aclChanges = node.hasProperty(PROPERTY_ACL_CHANGES) ? (int) node.getProperty(PROPERTY_ACL_CHANGES).getLong() : -1;
+                String trigger = node.hasProperty(PROPERTY_TRIGGER) ? node.getProperty(PROPERTY_TRIGGER).getString() : null;
+
+                if (!shouldExposeExecution(trigger, authorizableChanges, aclChanges)) {
+                    continue;
+                }
 
                 historyInfos.add(new AcToolExecutionImpl(getIdFromPath(node.getPath()),
                         node.getPath(), 
@@ -283,6 +290,13 @@ public class HistoryUtils {
 
         }
         return new ArrayList<>(historyInfos);
+    }
+
+    static boolean shouldExposeExecution(String trigger, int authorizableChanges, int aclChanges) {
+        boolean hasNoChanges = authorizableChanges == 0 && aclChanges == 0;
+        boolean isAutomaticExecution = StringUtils.equals(trigger, TRIGGER_INSTALL_HOOK)
+                || StringUtils.startsWith(trigger, TRIGGER_STARTUP_HOOK_PREFIX);
+        return !hasNoChanges || !isAutomaticExecution;
     }
 
     static String getIdFromPath(String path) {
