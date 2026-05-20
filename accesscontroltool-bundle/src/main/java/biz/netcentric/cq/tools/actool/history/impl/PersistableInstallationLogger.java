@@ -18,11 +18,9 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.sql.Timestamp;
-import java.text.DateFormat;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -79,7 +77,7 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
 
     private int missingParentPathsForInitialContent = 0;
 
-    private DateFormat timestampFormat = new SimpleDateFormat("HH:mm:ss.SSS");
+    private DateTimeFormatter timestampFormat = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
     
     private final Collection<BiConsumer<InstallationLogLevel, String>> listeners;
     private final Collection<Consumer<Boolean>> finishListeners;
@@ -265,8 +263,7 @@ public class PersistableInstallationLogger implements InstallationLogger, Instal
         StringBuilder sb = new StringBuilder();
         if (!messageHistorySet.isEmpty()) {
             for (HistoryEntry entry : messageHistorySet) {
-                sb.append(EOL + timestampFormat.format(entry.getDate()) + ": "
-                        + entry.getMessage());
+                sb.append(EOL).append((entry.getDate().format(timestampFormat))).append(": ").append(entry.getMessage());
             }
         }
         return sb.toString();
