@@ -576,8 +576,9 @@ public class AcToolUiService {
             return;
         }
 
+        String sanitizedCurrentPath = escapeHtml4(currentPath);
         for (AcToolExecution acToolExecution : acToolExecutions.values()) {
-            String linkToLog =  currentPath + "?" + PARAM_SHOW_LOG_ID + "=" + acToolExecution.getId();
+            String linkToLog =  sanitizedCurrentPath + "?" + PARAM_SHOW_LOG_ID + "=" + acToolExecution.getId();
             String downloadLinkToLog = basePath + "/" + SUFFIX_DOWNLOAD_LOG + "?" + PARAM_SHOW_LOG_ID + "=" + acToolExecution.getId();
             writer.tr();
             writer.openTd();
@@ -610,7 +611,7 @@ public class AcToolUiService {
                 String logHtml = acHistoryService.getLogFromHistory(reqParams.showLogId, true, reqParams.showLogVerbose, MAX_LINE_WIDTH);
 
                 writer.openTable("logTable");
-                writer.tableHeader(logLabel, 1, false);
+                writer.tableHeader(logLabel, 1);
                 writer.tr();
                 writer.openTd();
                 writer.println(logHtml);

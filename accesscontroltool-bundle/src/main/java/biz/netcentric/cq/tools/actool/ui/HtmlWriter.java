@@ -37,14 +37,6 @@ class HtmlWriter {
         pw.println("</table>");
     }
 
-    void tableHeader(String title, int colspan, boolean escape) {
-        tr();
-        pw.print("<th " + (isTouchUi ? "  is='coral-table-headercell'" : " class='content container'") + " colspan='" + colspan + "'>");
-        pw.print(escape ? escapeHtml4(title) : title);
-        pw.println("</th>");
-        closeTr();
-    }
-
     void print(String s) {
         pw.print(s);
     }
@@ -88,7 +80,11 @@ class HtmlWriter {
     }
 
     void tableHeader(String title, int colspan) {
-        tableHeader(title, colspan, true);
+        tr();
+        pw.print("<th " + (isTouchUi ? "  is='coral-table-headercell'" : " class='content container'") + " colspan='" + colspan + "'>");
+        pw.print(escapeHtml4(title));
+        pw.println("</th>");
+        closeTr();
     }
 
 }
