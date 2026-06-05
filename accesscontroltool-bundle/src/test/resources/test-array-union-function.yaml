@@ -16,13 +16,18 @@
     - US
     - Mexico
 
+- DEF countriesAPAC=:
+      - Japan
+      - China
+      - South Korea
+
 - group_config: 
 
    - FOR country IN ${countriesEU}:
        - group-${country}-europe:
            - path: /home/groups/netcentric
 
-   - FOR country IN ${union(countriesEU,countriesNA)}:
+   - FOR country IN ${union(countriesEU,countriesNA,countriesAPAC)}:
        - group-${country}-global:
            - path: /home/groups/netcentric
 

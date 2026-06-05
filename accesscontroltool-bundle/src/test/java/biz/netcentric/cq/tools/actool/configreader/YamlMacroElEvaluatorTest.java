@@ -49,8 +49,9 @@ class YamlMacroElEvaluatorTest {
         assertEquals("foo", evaluateSimpleExpression("defaultIfBlank(\"    \",\"foo\")"));
         assertEquals("bar", evaluateSimpleExpression("defaultIfBlank(\"bar\",\"foo\")"));
 
-        Map<String,Object> lists= ImmutableMap.of("list1",Arrays.asList("foo","bar"), "list2",Arrays.asList("fizz","buzz"));
+        Map<String,Object> lists= ImmutableMap.of("list1",Arrays.asList("foo","bar"), "list2",Arrays.asList("fizz","buzz"), "list3",Arrays.asList("ping","pong"));
         assertIterableEquals(Arrays.asList("foo","bar","fizz","buzz"), (Iterable)evaluateSimpleExpression("union(list1,list2)",lists));
+        assertIterableEquals(Arrays.asList("foo","bar","fizz","buzz","ping","pong"), (Iterable)evaluateSimpleExpression("union(list1,list2,list3)",lists));
         assertIterableEquals(Arrays.asList("item1"),(Iterable) evaluateSimpleExpression("keys(list)",Collections.singletonMap("list", ImmutableMap.of("item1","value"))));
 
     }

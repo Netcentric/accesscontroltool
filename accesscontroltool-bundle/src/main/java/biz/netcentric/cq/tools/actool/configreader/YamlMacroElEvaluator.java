@@ -17,6 +17,7 @@ package biz.netcentric.cq.tools.actool.configreader;
 import java.beans.FeatureDescriptor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,7 +25,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -162,7 +162,7 @@ public class YamlMacroElEvaluator {
                         YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("keys", new Class<?>[] { Map.class }),
                         YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("values", new Class<?>[] { Map.class }),
                         YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("escapeXml", new Class<?>[] { String.class }),
-                        YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("union", new Class<?>[] { Collection.class, Collection.class })
+                        YamlMacroElEvaluator.ElFunctionMapper.class.getMethod("union", new Class<?>[] { Collection[].class })
                 };
                 for (Method method : exportedMethods) {
                     functionMap.put(method.getName(), method);
@@ -205,8 +205,9 @@ public class YamlMacroElEvaluator {
             return StringEscapeUtils.escapeXml10(input);
         }
 
-        public static List<Object> union(Collection<String> collection1, Collection<String> collection2){
-            return Stream.concat(collection1.stream(),collection2.stream()).collect(Collectors.toList());
+        @SafeVarargs
+        public static List<Object> union(Collection<String>... collections){
+            return Arrays.stream(collections).flatMap(Collection::stream).collect(Collectors.toList());
         }
     }
 

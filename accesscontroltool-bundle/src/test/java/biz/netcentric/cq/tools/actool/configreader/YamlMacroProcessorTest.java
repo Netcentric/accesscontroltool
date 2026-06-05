@@ -483,7 +483,7 @@ public class YamlMacroProcessorTest {
         yamlList = yamlMacroProcessor.processMacros(yamlList, globalVariables, installLog, session);
 
         AuthorizablesConfig groups = readGroupConfigs(yamlList);
-        assertEquals(9, groups.size(), "Number of ACEs expected to be 9");
+        assertEquals(12, groups.size(), "Number of ACEs expected to be 12");
     }
 
     @Test
