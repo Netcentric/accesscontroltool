@@ -277,7 +277,7 @@ Further details and the full syntax (incl. default values and type support) is d
 
 Both secret and environment variables can be easily set for AEMaaCS environments via [Cloud Manager API](https://www.adobe.io/apis/experiencecloud/cloud-manager/api-reference.html#/Variables/patchEnvironmentVariables) or with some client like [Adobe IO CLI together with the Cloud Manager Plugin](https://github.com/adobe/aio-cli-plugin-cloudmanager#aio-cloudmanagerenvironmentset-variables-environmentid).
 
-Although AC Tool comes with native support for environment variables already (via the global variable `env.`) the syntax supported by the Felix Configadmin Interpolation Plugin is more powerful and usage of Secrets and Properties is not possible without this feature at all.
+Although AC Tool comes with native support for environment variables already (via the [global variable `env.`](#predefined-variables)) the syntax supported by the Felix Configadmin Interpolation Plugin is more powerful and usage of Secrets and Properties is not possible without this feature at all.
 
 *This feature is only available in AEMaaCS and since ACTool 2.7.0*
 
