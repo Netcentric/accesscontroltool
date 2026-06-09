@@ -130,7 +130,7 @@ Some variables are provided by default.
 variable name | description
 --- | --- 
 `RUNMODES` | List of active run modes. Uses `SlingSettingsService#getRunModes` underneath. Consider using [run mode specific yaml files](Configuration.md#run-modes) as alternative.
-`env.<envVariableName>` | Environment variable with name `<envVariableName>` as provided by the operating system. Uses [System.getenv()](https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#getenv--). To provide a default use `defaultIfEmpty()` as linked in from StringUtils class: `${defaultIfEmpty(env.my_env_variable, 'default-val')}`. **NOTE: Use this feature sparingly, for most cases the configuration should be self-contained. One use case for this is production passwords (as needed for non-system users like replication receiver)**.
+`env.<envVariableName>` | Environment variable with name `<envVariableName>` as provided by the operating system. Uses [System.getenv()](https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#getenv--). To provide a default use `defaultIfEmpty()` as linked in from StringUtils class: `${defaultIfEmpty(env.my_env_variable, 'default-val')}`. **NOTE: Use this feature sparingly, for most cases the configuration should be self-contained. One use case for this is production passwords (as needed for non-system users like replication receiver). On AEMaaCS use [Variable Interpolations](#interpolate-values) instead!**.
 
 
 ## Loops
