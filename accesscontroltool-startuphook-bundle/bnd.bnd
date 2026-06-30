@@ -1,3 +1,5 @@
 Bundle-SymbolicName: biz.netcentric.cq.tools.accesscontroltool.startuphook.bundle
 Bundle-Activator: biz.netcentric.cq.tools.actool.startuphook.impl.StartupBundleActivator
 Conditional-Package: biz.netcentric.cq.tools.actool.helper.runtime
+# don't generate java.* package imports to work with Felix 6.0.2 (AEM 6.5.x) not exporting those by mistake (https://issues.apache.org/jira/browse/FELIX-5843)
+-noimportjava: true
