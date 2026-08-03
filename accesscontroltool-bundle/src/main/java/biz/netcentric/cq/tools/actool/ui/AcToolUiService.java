@@ -103,6 +103,9 @@ public class AcToolUiService {
 
     private static final int MAX_LINE_WIDTH = 180; // max line width for log output in characters
 
+    private static final java.util.Set<String> ALLOWED_RESOURCES = java.util.Collections.unmodifiableSet(
+            new java.util.HashSet<>(java.util.Arrays.asList("actooluiservice.js")));
+
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private ConfigDumpService dumpService;
 
@@ -172,6 +175,11 @@ public class AcToolUiService {
                 // either spool resource
                 String resourcePath = req.getRequestURI().substring(basePath.length());
                 if (resourcePath.startsWith("/res/")) {
+                    String resourceName = resourcePath.substring(resourcePath.lastIndexOf('/') + 1);
+                    if (!ALLOWED_RESOURCES.contains(resourceName)) {
+                        resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+                        return;
+                    }
                     // check for a resource, fail if none
                     if (!spoolResource(req, resourcePath, resp)) {
                         resp.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -244,12 +252,7 @@ public class AcToolUiService {
             response.setStatus( HttpServletResponse.SC_OK);
 
             // spool the actual contents
-            final OutputStream out = response.getOutputStream();
-            final byte[] buf = new byte[2048];
-            int rd;
-            while ( ( rd = ins.read( buf ) ) >= 0 ) {
-                out.write( buf, 0, rd );
-            }
+            ins.transferTo(response.getOutputStream());
         }
         return true;
     }
