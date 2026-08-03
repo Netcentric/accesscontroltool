@@ -16,7 +16,7 @@ jobs:
         include:
           # lengthy build steps should only be performed on linux with Java 17 (Sonarcloud analysis, deployment)
           - os: ubuntu-latest
-            jdk: 17
+            jdk: 21
             isMainBuildEnv: true
             namePrefix: 'Main '
       fail-fast: false
@@ -75,4 +75,4 @@ jobs:
           ACTOOL_IMS_IT_CLIENTSECRET: ${{ secrets.ACTOOL_IMS_IT_CLIENTSECRET }}
           ACTOOL_IMS_IT_PRODUCTPROFILE: ${{ vars.ACTOOL_IMS_IT_PRODUCTPROFILE }}
           ACTOOL_IMS_IT_USERID: ${{ vars.ACTOOL_IMS_IT_USERID }}
-        run: ./mvnw -e -B -V clean deploy org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Netcentric_accesscontroltool -Dsonar.organization=netcentric -Dsonar.host.url=https://sonarcloud.io -DnvdApiKeyEnvironmentVariable=NVD_API_KEY -Pdependency-check -Pcoverage-report -Pintegration-tests -Pjavadoc
+        run: ./mvnw -e -B -V clean deploy org.sonarsource.scanner.maven:sonar-maven-plugin:5.7.0.6970:sonar -Dsonar.projectKey=Netcentric_accesscontroltool -Dsonar.organization=netcentric -Dsonar.scanner.skipJreProvisioning=true -Dsonar.host.url=https://sonarcloud.io -DnvdApiKeyEnvironmentVariable=NVD_API_KEY -Pdependency-check -Pcoverage-report -Pintegration-tests -Pjavadoc
