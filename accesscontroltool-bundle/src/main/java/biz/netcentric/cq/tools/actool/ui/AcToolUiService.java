@@ -19,7 +19,6 @@ import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
@@ -152,6 +151,8 @@ public class AcToolUiService {
      * @throws ServletException
      * @throws IOException
      */
+    @SuppressWarnings(/* SonarCloud false positive */ {
+            "javasecurity:S2083" /* resource path is not a filesystem path, https://community.sonarsource.com/t/false-positive-with-javasecurity-s2083-when-used-with-user-controlled-classloader-resource-names/187051 */})
     protected void doGet(HttpServletRequest req, HttpServletResponse resp, String basePath, boolean isTouchUi)
             throws ServletException, IOException {
 
@@ -186,7 +187,7 @@ public class AcToolUiService {
 
     // The following method is copied and slightly adjusted from from https://github.com/apache/felix-dev/blob/5d878f37b89ceef59920644d5e427f493b904030/webconsole/src/main/java/org/apache/felix/webconsole/servlet/AbstractServlet.java#L71
 
-   /**
+    /**
      * If the request addresses a resource , this method serves it
      * and returns <code>true</code>. Otherwise <code>false</code> is returned.
      * <p>
@@ -242,14 +243,7 @@ public class AcToolUiService {
                 response.setContentLength( connection.getContentLength() );
             }
             response.setStatus( HttpServletResponse.SC_OK);
-
-            // spool the actual contents
-            final OutputStream out = response.getOutputStream();
-            final byte[] buf = new byte[2048];
-            int rd;
-            while ( ( rd = ins.read( buf ) ) >= 0 ) {
-                out.write( buf, 0, rd );
-            }
+            ins.transferTo(response.getOutputStream());
         }
         return true;
     }
