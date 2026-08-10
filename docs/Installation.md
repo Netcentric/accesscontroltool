@@ -94,19 +94,24 @@ To retrieve all ACLs in the system, an Apache Oak index for node type `rep:ACL` 
 * required for versions < 2.4.0 (otherwise the performance degrades significantly)
 * beneficial for large installations for versions >= 2.4.0 (see [#386](https://github.com/Netcentric/accesscontroltool/issues/386), most installations will be fine without index)
 
-You can get the content package containing the [index definition](http://jackrabbit.apache.org/oak/docs/query/indexing.html#index-defnitions) via [Maven Central](https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-oakindex-package/) with the coordinates  
+You can get the content package containing the [index definition for AEM 6.5 (LTS)](http://jackrabbit.apache.org/oak/docs/query/indexing.html#index-definitions) via [Maven Central](https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-oakindex-package/) with the coordinates  
 
 ```
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
     <artifactId>accesscontroltool-oakindex-package</artifactId>
 ```
-(for AEM Classic/On Premise) or
+
+To deploy it make sure to either embed it in your container package or install it manually.
+
+**AEMaaCS ships with a suitable index since 2026.7.27293 (see [#894](https://github.com/Netcentric/accesscontroltool/issues/894#issuecomment-5239713446)), therefore it is no longer necessary to install an additional index package for AEMaaCS.**
+
+For older AEMaaCS versions you can still download an explicit index definition package with the coordinates
 
 ```
     <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
     <artifactId>accesscontroltool-oakindex-package</artifactId>
     <classifier>cloud</classifier>
 ```
-(for AEM as a Cloud Service)
 
-Install it afterwards e.g. via AEM's package manager or embed it in your container package.
+However, it is recommended to rather update to a newer AEMaaCS and remove the explicit index from your container package.
+
