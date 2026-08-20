@@ -91,7 +91,7 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
             Set<String> principalsToRemoveAcesForAtThisPath = acConfiguration.getAuthorizablesConfig()
                     .removeUnmanagedPrincipalNamesAtPath(path, principalsToRemoveAcesFor,
                             acConfiguration.getGlobalConfiguration().getDefaultUnmanagedAcePathsRegex());
-            installAcl(orderedAceBeanSetFromConfig, path, principalsToRemoveAcesForAtThisPath, session, history);
+            installAcl(orderedAceBeanSetFromConfig, path, principalsToRemoveAcesForAtThisPath, session, history, acConfiguration);
 
         }
 
@@ -131,27 +131,52 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
      * 
      * @throws RepositoryException */
     protected abstract void installAcl(Set<AceBean> aceBeanSetFromConfig, String path, Set<String> authorizablesToRemoveAcesFor,
-            Session session, InstallationLogger history) throws RepositoryException;
+            Session session, InstallationLogger history, AcConfiguration acConfiguration) throws RepositoryException;
     
 
     protected boolean installPrivileges(AceBean aceBean, Principal principal, JackrabbitAccessControlList acl, Session session,
-            AccessControlManager acMgr)
+            AccessControlManager acMgr, AcConfiguration acConfiguration)
             throws RepositoryException {
 
         final Set<Privilege> privileges = getPrivilegeSet(aceBean.getPrivileges(), acMgr);
         if (!privileges.isEmpty()) {
             final RestrictionsHolder restrictions = getRestrictions(aceBean, session, acl);
-            if (!restrictions.isEmpty()) {
-                acl.addEntry(principal, privileges
-                        .toArray(new Privilege[privileges.size()]), aceBean.isAllow(),
-                        restrictions.getSingleValuedRestrictionsMap(), restrictions.getMultiValuedRestrictionsMap());
-            } else {
-                acl.addEntry(principal, privileges
-                        .toArray(new Privilege[privileges.size()]), aceBean.isAllow());
+            
+            boolean ignoreMissingPrincipals = acConfiguration.getGlobalConfiguration().getIgnoreMissingPrincipals() != null 
+                    && acConfiguration.getGlobalConfiguration().getIgnoreMissingPrincipals().booleanValue();
+            
+            try {
+                if (!restrictions.isEmpty()) {
+                    acl.addEntry(principal, privileges
+                            .toArray(new Privilege[privileges.size()]), aceBean.isAllow(),
+                            restrictions.getSingleValuedRestrictionsMap(), restrictions.getMultiValuedRestrictionsMap());
+                } else {
+                    acl.addEntry(principal, privileges
+                            .toArray(new Privilege[privileges.size()]), aceBean.isAllow());
+                }
+                return true;
+            } catch (Exception e) {
+                if (ignoreMissingPrincipals && isPrincipalNotFoundException(e)) {
+                    LOG.warn("Ignoring missing principal '{}' for path '{}' due to ignoreMissingPrincipals=true", 
+                            principal.getName(), aceBean.getJcrPath());
+                    return false;
+                } else {
+                    throw e;
+                }
             }
-            return true;
         }
         return false;
+    }
+    
+    private boolean isPrincipalNotFoundException(Exception e) {
+        // Check for various forms of principal not found exceptions
+        String message = e.getMessage();
+        return message != null && (
+                message.toLowerCase().contains("principal") && 
+                (message.toLowerCase().contains("not found") || 
+                 message.toLowerCase().contains("does not exist") ||
+                 message.toLowerCase().contains("unknown"))
+        );
     }
 
     /** Creates a RestrictionHolder object containing 2 restriction maps being used in

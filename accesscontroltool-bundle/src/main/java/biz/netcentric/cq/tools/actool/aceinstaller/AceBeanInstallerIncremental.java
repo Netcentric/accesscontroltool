@@ -48,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.aem.AcToolCqActions;
+import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
@@ -69,7 +70,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
      * 
      * @throws RepositoryException */
     protected void installAcl(Set<AceBean> aceBeanSetFromConfig, String path, Set<String> principalsInConfiguration, Session session,
-            InstallationLogger installLog) throws RepositoryException {
+            InstallationLogger installLog, AcConfiguration acConfiguration) throws RepositoryException {
 
         boolean hadPendingChanges = session.hasPendingChanges();
 
@@ -146,7 +147,7 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
         for (int i = currentPositionConfig; i < configuredAceEntries.size(); i++) {
             AceBean aceBeanToAppend = configuredAceEntries.get(i);
 
-            installPrivileges(aceBeanToAppend, new SimpleNamePrincipal(aceBeanToAppend.getPrincipalName()), acl, session, acMgr);
+            installPrivileges(aceBeanToAppend, new SimpleNamePrincipal(aceBeanToAppend.getPrincipalName()), acl, session, acMgr, acConfiguration);
             diffLog.append("    APPENDED (from Config)  " + toAceCompareString(aceBeanToAppend, acMgr) + "\n");
 
             countAdded++;
