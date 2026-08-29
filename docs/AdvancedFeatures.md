@@ -80,6 +80,27 @@ There is also a multi-line variant of the DEF statement that allows to define co
        - group-${loopVar}:   
           - name: "Group ${loopVar}"
 
+# map (functions keys() or values() can be used to loop over map)
+- DEF simpleMap=:
+     key1: mapval1
+     key2: mapval2
+     key3: mapval3
+- FOR loopVar IN ${keys(simpleMap)}:
+   - group-${loopVar}:
+      - name: "Value ${simpleMap[loopVar]}"
+
+# map of lists
+- DEF languages=:
+		canada: 
+			- en
+			- fr
+		switzerland:
+			- de
+			- fr
+			- it
+    germany:
+      - de
+
 # list of objects
 - DEF listOfMaps=:
      - key1: obj1val1
@@ -92,14 +113,7 @@ There is also a multi-line variant of the DEF statement that allows to define co
     - group-${loopVar.key1}: 
        - name: "Group ${loopVar.key2} ${loopVar.key3}"
 
-# map (functions keys() or values() can be used to loop over map)
-- DEF simpleMap=:
-     key1: mapval1
-     key2: mapval2
-     key3: mapval3
-- FOR loopVar IN ${keys(simpleMap)}:
-   - group-${loopVar}:
-      - name: "Value ${simpleMap[loopVar]}"
+
 ```
 
 ### Global variables 
