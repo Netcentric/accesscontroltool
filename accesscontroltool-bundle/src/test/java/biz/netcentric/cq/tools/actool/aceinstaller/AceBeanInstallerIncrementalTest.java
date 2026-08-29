@@ -69,6 +69,7 @@ import org.mockito.stubbing.Answer;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.configreader.YamlConfigReader;
+import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper.ServerType;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 @ExtendWith(MockitoExtension.class)
@@ -94,7 +95,7 @@ public class AceBeanInstallerIncrementalTest {
 
     @Spy
     @InjectMocks
-    AceBeanInstallerIncremental aceBeanInstallerIncremental;
+    AceBeanInstallerIncremental aceBeanInstallerIncremental = new AceBeanInstallerIncremental(ServerType.AEM_CLASSIC);
 
     @Spy
     InstallationLogger installLog;
@@ -113,7 +114,6 @@ public class AceBeanInstallerIncrementalTest {
 
     @BeforeEach
     public void setup() throws RepositoryException {
-
         doReturn(accessControlManager).when(session).getAccessControlManager();
 
         // empty by default

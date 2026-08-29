@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -42,11 +43,19 @@ import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.ContentHelper;
 import biz.netcentric.cq.tools.actool.helper.RestrictionsHolder;
-import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
+import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper.ServerType;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 /** Base Class */
 public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
+    
+    protected final ServerType serverType;
+    
+    private static final String[] IMMUTABLE_PATH_PREFIXES = new String[] { "/apps", "/libs" };
+
+    protected BaseAceBeanInstaller(ServerType serverType) {
+        this.serverType = serverType;
+    }
 
     private static final Logger LOG = LoggerFactory.getLogger(BaseAceBeanInstaller.class);
 
@@ -65,7 +74,7 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
         history.addVerboseMessage(LOG, "Found " + paths.size() + "  paths in config");
         LOG.trace("Paths with ACEs: {}", paths);
         
-        paths = filterReadOnlyPaths(paths, history, session);
+        paths = filterForRelevantPaths(paths, history, session);
 
         // loop through all nodes from config
         for (final String path : paths) {
@@ -107,24 +116,60 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
                 + msHumanReadable(stopWatch.getTime()));
     }
 
-    private Set<String> filterReadOnlyPaths(Set<String> paths, InstallationLogger history, Session session) {
-
-        boolean isCompositeNodeStore = RuntimeHelper.isCompositeNodeStore(session);
-        if (isCompositeNodeStore) {
-            Set<String> pathsToKeep = new TreeSet<String>();
-            Set<String> readOnlyPaths = new TreeSet<String>();
-            for (final String path : paths) {
-                if (path != null && (path.startsWith("/apps") || path.startsWith("/libs"))) {
-                    readOnlyPaths.add(path);
-                } else {
-                    pathsToKeep.add(path);
-                }
-            }
-            history.addMessage(LOG, "Ignoring " + readOnlyPaths.size() + " ACLs in /apps and /libs because they are ready-only (Composite NodeStore)");
+    private Set<String> filterForRelevantPaths(Set<String> paths, InstallationLogger history, Session session) {
+        if (serverType == ServerType.AEM_CLOUD_RUN) {
+            Set<String> pathsToKeep = removePathsWithPrefixes(paths, IMMUTABLE_PATH_PREFIXES);
+            history.addMessage(LOG, "Ignoring " + (paths.size() - pathsToKeep.size()) + " ACLs inside " + String.join(", ", IMMUTABLE_PATH_PREFIXES) + " because they are ready-only (Composite NodeStore)");
+            return pathsToKeep;
+        } else if (serverType == ServerType.AEM_CLOUD_IMAGE_BUILD) {
+            Set<String> pathsToKeep = removePathsWithoutPrefixes(paths, IMMUTABLE_PATH_PREFIXES);
+            history.addMessage(LOG, "Ignoring " + (paths.size() - pathsToKeep.size()) + " ACLs outside " + String.join(", ", IMMUTABLE_PATH_PREFIXES) + " during image build, as they are overlaid");
             return pathsToKeep;
         } else {
             return paths;
         }
+    }
+
+    static final class PrefixesFilter implements java.util.function.Predicate<String> {
+        private final String[] prefixes;
+
+        public PrefixesFilter(String... prefixes) {
+            // the prefixes should be normalized (e.g. no trailing slash) to avoid issues with matching, but we do not want to enforce this on the caller, so we do it here
+            Arrays.stream(prefixes).forEach(prefix -> {
+                if (prefix != null && prefix.endsWith("/") && prefix.length() > 1) {
+                    throw new IllegalArgumentException("Prefixes must not end with a slash, but given prefix \"" + prefix + "\" ends with a slash");
+                }
+            });
+            this.prefixes = prefixes;
+        }
+
+        @Override
+        public boolean test(String path) {
+            for (String prefix : prefixes) {
+                if (path != null && (path.equals(prefix) || path.startsWith(prefix + "/"))) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    static Set<String> removePathsWithPrefixes(Set<String> paths, String... prefixes) {
+        return removePathWithPredicate(paths, new PrefixesFilter(prefixes));
+    }
+
+    static Set<String> removePathsWithoutPrefixes(Set<String> paths, String... prefixes) {
+        return removePathWithPredicate(paths, Predicate.not(new PrefixesFilter(prefixes)));
+    }
+
+    static Set<String> removePathWithPredicate(Set<String> paths, Predicate<String> pathPredicate) {
+        Set<String> filteredPaths = new TreeSet<>();
+        for (String path : paths) {
+            if (!pathPredicate.test(path)) {
+                filteredPaths.add(path);
+            }
+        }
+        return filteredPaths;
     }
 
     /** Installs a full set of ACE beans that form an ACL for the path
