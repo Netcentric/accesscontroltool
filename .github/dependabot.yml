@@ -1,0 +1,10 @@
+version: 2
+updates:
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    allow:
+    # just update the embedded dependencies
+      - dependency-name: "org.apache.tomcat:*"
+      - dependency-name: "org.yaml:snakeyaml"
