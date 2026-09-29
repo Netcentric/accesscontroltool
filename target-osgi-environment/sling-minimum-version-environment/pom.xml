@@ -31,7 +31,7 @@
 
     <properties>
         <oak.version>1.42.0</oak.version>
-        <jackrabbit.version>2.20.4</jackrabbit.version>
+        <jackrabbit.version>2.22.2</jackrabbit.version>
         <jackson.version>2.13.1</jackson.version>
     </properties>
     <!-- ====================================================================== -->
