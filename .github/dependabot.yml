@@ -8,3 +8,6 @@ updates:
     # just update the embedded dependencies
       - dependency-name: "org.apache.tomcat:*"
       - dependency-name: "org.yaml:snakeyaml"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
