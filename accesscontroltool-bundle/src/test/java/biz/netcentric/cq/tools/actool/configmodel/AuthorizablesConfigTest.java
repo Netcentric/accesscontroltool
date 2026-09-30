@@ -79,6 +79,17 @@ public class AuthorizablesConfigTest {
     }
 
     @Test
+    public void testEveryoneIsUnmanagedByDefault() {
+        AuthorizablesConfig config = new AuthorizablesConfig();
+        AuthorizableConfigBean everyone = getBean("everyone", null);
+        config.add(everyone);
+
+        assertEquals(".*", everyone.getUnmanagedAcePathsRegex());
+        assertEquals(Collections.emptySet(),
+                config.removeUnmanagedPrincipalNamesAtPath("/content", principalSet("everyone"), null));
+    }
+
+    @Test
     public void testRemoveUnmanagedPrincipalNamesAtPathUsingGlobalConfig() {
 
         Set<String> principalSet = principalSet(beanTestGroupAllManaged.getPrincipalName(), testgroupPartlyManaged.getPrincipalName(),
