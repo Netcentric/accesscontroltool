@@ -23,6 +23,8 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
+import biz.netcentric.cq.tools.actool.helper.Constants;
+
 /** User and group part of the AC Tool configuration (natural ordered set of AuthorizableConfigBeans). */
 public class AuthorizablesConfig extends LinkedHashSet<AuthorizableConfigBean> {
     private static final long serialVersionUID = -253685832563496002L;
@@ -31,6 +33,10 @@ public class AuthorizablesConfig extends LinkedHashSet<AuthorizableConfigBean> {
     
     @Override
     public boolean add(AuthorizableConfigBean configBean) {
+        if (StringUtils.equals(configBean.getPrincipalName(), Constants.PRINCIPAL_EVERYONE)
+                && StringUtils.isEmpty(configBean.getUnmanagedAcePathsRegex())) {
+            configBean.setUnmanagedAcePathsRegex(".*");
+        }
         AuthorizableConfigBean previous = configBeansByPrincipalId.put(configBean.getPrincipalName(), configBean);
         assert previous == null;
         return super.add(configBean);
