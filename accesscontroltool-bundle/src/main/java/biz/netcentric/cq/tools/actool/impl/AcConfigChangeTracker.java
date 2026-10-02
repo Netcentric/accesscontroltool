@@ -22,12 +22,16 @@ import javax.jcr.Node;
 import javax.jcr.Session;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.sling.settings.SlingSettingsService;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.api.InstallationOptions;
 import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
+import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper.ServerType;
 import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
 
 /**
@@ -36,6 +40,13 @@ import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
 @Component(service=AcConfigChangeTracker.class)
 public class AcConfigChangeTracker {
     private static final Logger LOG = LoggerFactory.getLogger(AcConfigChangeTracker.class);
+    
+    private final ServerType serverType;
+    
+    @Activate
+    public AcConfigChangeTracker(@Reference SlingSettingsService slingSettingsService) {
+        this.serverType = RuntimeHelper.getServerType(slingSettingsService.getRunModes());
+    }
 
     public boolean configIsUnchangedComparedToLastExecution(Map<String, String> configFiles, Session session, InstallationOptions options) {
         
@@ -68,7 +79,7 @@ public class AcConfigChangeTracker {
     }
 
     private String createExecutionKey(Map<String, String> configFiles, Session session, InstallationOptions options) {
-        boolean isCompositeNodeStore= RuntimeHelper.isCompositeNodeStore(session);
+        boolean isCompositeNodeStore = serverType == ServerType.AEM_CLOUD_RUN;
         String restrictedToPathsKey = options.getRestrictedToPaths().isEmpty() ? "ALL_PATHS" : String.join("+", options.getRestrictedToPaths()).replace("$", "").replace("^", "");
         String effectiveRootPathOfConfigs = getEffectiveConfigRootPath(configFiles);
         String executionKey = "hash("+StringUtils.removeEnd(effectiveRootPathOfConfigs, "/").replace('/', '\\') + "," + restrictedToPathsKey.replace('/', '\\').replace(':', '_')+","+(isCompositeNodeStore?"compNodeStore":"stdRepo")+")";

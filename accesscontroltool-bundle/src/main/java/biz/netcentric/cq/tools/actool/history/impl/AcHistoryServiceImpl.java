@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.commons.JcrUtils;
 import org.apache.sling.jcr.api.SlingRepository;
+import org.apache.sling.settings.SlingSettingsService;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -38,6 +39,7 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
 import biz.netcentric.cq.tools.actool.history.AcHistoryService;
 import biz.netcentric.cq.tools.actool.history.AcToolExecution;
 import biz.netcentric.cq.tools.actool.history.impl.AcHistoryServiceImpl.Configuration;
@@ -56,6 +58,9 @@ public class AcHistoryServiceImpl implements AcHistoryService {
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
+
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    private SlingSettingsService slingSettingsService;
 
     @ObjectClassDefinition(name = "AC Tool History Service", 
             description="Service that writes & fetches Ac installation histories.",
@@ -83,7 +88,7 @@ public class AcHistoryServiceImpl implements AcHistoryService {
         try {
 
             session = repository.loginService(null, null);
-            Node historyNode = HistoryUtils.persistHistory(session, installLog, nrOfSavedHistories);
+            Node historyNode = HistoryUtils.persistHistory(session, installLog, nrOfSavedHistories, RuntimeHelper.getServerType(slingSettingsService.getRunModes()));
 
             String mergedAndProcessedConfig = installLog.getMergedAndProcessedConfig();
             if (StringUtils.isNotBlank(mergedAndProcessedConfig)) {

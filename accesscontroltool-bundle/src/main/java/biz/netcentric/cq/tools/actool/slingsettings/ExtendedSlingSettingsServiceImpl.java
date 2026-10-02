@@ -1,11 +1,3 @@
-/*
- * (C) Copyright 2020 Netcentric, A Cognizant Digital Business.
- *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v2.0
- * which accompanies this distribution, and is available at
- * https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.html
- */
 package biz.netcentric.cq.tools.actool.slingsettings;
 
 /*-
@@ -81,8 +73,8 @@ public class ExtendedSlingSettingsServiceImpl implements ExtendedSlingSettingsSe
         Set<String> defaultRunmodes = slingSettingsService.getRunModes();
         extendedRunmodes = new HashSet<>();
         extendedRunmodes.addAll(defaultRunmodes);
-        boolean isCloudReady = RuntimeHelper.isCloudReadyInstance();
-        if(isCloudReady) {
+        boolean isInCloud = RuntimeHelper.getServerType(defaultRunmodes).isInCloud();
+        if (isInCloud) {
             extendedRunmodes.add(ADDITIONAL_RUNMODE_CLOUD);
         }
 
@@ -91,7 +83,7 @@ public class ExtendedSlingSettingsServiceImpl implements ExtendedSlingSettingsSe
             extendedRunmodes.addAll(additionalRunmodes);
         }
 
-        LOG.info("Default runmodes: {} Extended Runmodes: {}  isCloudReady: {}", defaultRunmodes, extendedRunmodes, isCloudReady);
+        LOG.info("Default runmodes: {}; Extended Runmodes: {}; isInCloud: {}", defaultRunmodes, extendedRunmodes, isInCloud);
     }
 
     @Override

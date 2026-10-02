@@ -391,7 +391,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
     
     private void apply(InstallationOptions options, PersistableInstallationLogger installLog) {
         final String configurationRootPath;
-        if(!options.getConfigurationRootPath().isPresent() || options.getConfigurationRootPath().get().isEmpty()) {
+        if(!options.getConfigurationRootPath().isPresent() || options.getConfigurationRootPath().orElse("").isEmpty()) {
             if(CollectionUtils.isEmpty(configurationRootPaths)) {
                 throw new IllegalArgumentException("Configuration root path neither configured nor provided.");
             } else if(configurationRootPaths.size() == 1) {
