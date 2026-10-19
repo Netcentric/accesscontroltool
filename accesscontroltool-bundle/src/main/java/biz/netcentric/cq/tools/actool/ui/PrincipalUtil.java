@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Encapsulates all principals bound to a given session.
- * Natively exposed from Oak 1.40 onwards (see OAK-8611).
+ * Natively exposed from Oak 1.40 onwards (see <a href="https://issues.apache.org/jira/browse/OAK-9415">OAK-9415</a>).
  */
 class BoundPrincipals {
 
