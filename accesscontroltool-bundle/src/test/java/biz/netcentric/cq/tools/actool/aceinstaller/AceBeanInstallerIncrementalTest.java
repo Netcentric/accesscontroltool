@@ -66,7 +66,9 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.mockito.stubbing.Answer;
 
+import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
+import biz.netcentric.cq.tools.actool.configmodel.GlobalConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.configreader.YamlConfigReader;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
@@ -111,6 +113,12 @@ public class AceBeanInstallerIncrementalTest {
     @Mock
     SlingRepository slingRepository;
 
+    @Mock
+    AcConfiguration acConfiguration;
+    
+    @Mock
+    GlobalConfiguration globalConfiguration;
+
     @BeforeEach
     public void setup() throws RepositoryException {
 
@@ -123,7 +131,7 @@ public class AceBeanInstallerIncrementalTest {
         doReturn(jackrabbitAccessControlList).when(aceBeanInstallerIncremental).getAccessControlList(eq(accessControlManager), anyString());
 
         doReturn(true).when(aceBeanInstallerIncremental).installPrivileges(any(AceBean.class), any(Principal.class),
-                eq(jackrabbitAccessControlList), eq(session), eq(accessControlManager));
+                eq(jackrabbitAccessControlList), eq(session), eq(accessControlManager), any(AcConfiguration.class));
 
         // default privilege is a simple privilege with the given string name
         doAnswer(new Answer<Privilege>() {
@@ -145,6 +153,10 @@ public class AceBeanInstallerIncrementalTest {
 
         doReturn(new PrincipalImpl(FAKE_PRINCIPAL_ID)).when(aceBeanInstallerIncremental).getTestActionMapperPrincipal();
         doNothing().when(aceBeanInstallerIncremental).applyCqActions(any(AceBean.class), any(Session.class), any(Principal.class));
+        
+        // Mock configuration behavior
+        doReturn(globalConfiguration).when(acConfiguration).getGlobalConfiguration();
+        doReturn(null).when(globalConfiguration).getIgnoreMissingPrincipals(); // default: ignore missing principals is off
     }
 
     @Test
@@ -178,16 +190,16 @@ public class AceBeanInstallerIncrementalTest {
 
         aceBeanInstallerIncremental.installAcl(
                 asSet(bean1, bean2, bean3), testPath,
-                asSet(testPrincipal1, testPrincipal2, testPrincipal3), session, installLog);
+                asSet(testPrincipal1, testPrincipal2, testPrincipal3), session, installLog, acConfiguration);
 
         verify(jackrabbitAccessControlList, never()).removeAccessControlEntry(any(JackrabbitAccessControlEntry.class));
 
         verify(aceBeanInstallerIncremental).installPrivileges(eq(bean1), eq(new PrincipalImpl(testPrincipal1)),
-                eq(jackrabbitAccessControlList), eq(session), eq(accessControlManager));
+                eq(jackrabbitAccessControlList), eq(session), eq(accessControlManager), eq(acConfiguration));
         verify(aceBeanInstallerIncremental).installPrivileges(eq(bean2), eq(new PrincipalImpl(testPrincipal2)),
-                eq(jackrabbitAccessControlList), eq(session), eq(accessControlManager));
+                eq(jackrabbitAccessControlList), eq(session), eq(accessControlManager), eq(acConfiguration));
         verify(aceBeanInstallerIncremental).installPrivileges(eq(bean3), eq(new PrincipalImpl(testPrincipal3)),
-                eq(jackrabbitAccessControlList), eq(session), eq(accessControlManager));
+                eq(jackrabbitAccessControlList), eq(session), eq(accessControlManager), eq(acConfiguration));
 
     }
 
@@ -201,12 +213,12 @@ public class AceBeanInstallerIncrementalTest {
 
         aceBeanInstallerIncremental.installAcl(
                 asSet(bean1, bean2, bean3), testPath,
-                asSet(testPrincipal1, testPrincipal2, testPrincipal3), session, installLog);
+                asSet(testPrincipal1, testPrincipal2, testPrincipal3), session, installLog, acConfiguration);
 
         verify(jackrabbitAccessControlList, never()).removeAccessControlEntry(any(JackrabbitAccessControlEntry.class));
 
         verify(aceBeanInstallerIncremental, never()).installPrivileges(any(AceBean.class), any(Principal.class),
-                any(JackrabbitAccessControlList.class), any(Session.class), any(AccessControlManager.class));
+                any(JackrabbitAccessControlList.class), any(Session.class), any(AccessControlManager.class), any(AcConfiguration.class));
 
     }
 
@@ -221,14 +233,14 @@ public class AceBeanInstallerIncrementalTest {
 
         aceBeanInstallerIncremental.installAcl(
                 Collections.<AceBean>emptySet(), testPath,
-                asSet(testPrincipal1, testPrincipal2, testPrincipal3), session, installLog);
+                asSet(testPrincipal1, testPrincipal2, testPrincipal3), session, installLog, acConfiguration);
 
         verify(jackrabbitAccessControlList).removeAccessControlEntry(ace1);
         verify(jackrabbitAccessControlList).removeAccessControlEntry(ace2);
         verify(jackrabbitAccessControlList).removeAccessControlEntry(ace3);
 
         verify(aceBeanInstallerIncremental, never()).installPrivileges(any(AceBean.class), any(Principal.class),
-                any(JackrabbitAccessControlList.class), any(Session.class), any(AccessControlManager.class));
+                any(JackrabbitAccessControlList.class), any(Session.class), any(AccessControlManager.class), any(AcConfiguration.class));
 
     }
 
@@ -243,16 +255,16 @@ public class AceBeanInstallerIncrementalTest {
 
         aceBeanInstallerIncremental.installAcl(
                 asSet(beanWithAction1, beanWithAction2), testPath,
-                asSet(testPrincipal1, testPrincipal2), session, installLog);
+                asSet(testPrincipal1, testPrincipal2), session, installLog, acConfiguration);
 
         verify(jackrabbitAccessControlList, never()).removeAccessControlEntry(any(JackrabbitAccessControlEntry.class));
 
         verify(aceBeanInstallerIncremental).installPrivileges(eq(bean1), eq(new PrincipalImpl(testPrincipal1)),
-                eq(jackrabbitAccessControlList), eq(session), eq(accessControlManager));
+                eq(jackrabbitAccessControlList), eq(session), eq(accessControlManager), eq(acConfiguration));
         verify(aceBeanInstallerIncremental).installPrivileges(eq(bean2), eq(new PrincipalImpl(testPrincipal2)),
-                eq(jackrabbitAccessControlList), eq(session), eq(accessControlManager));
+                eq(jackrabbitAccessControlList), eq(session), eq(accessControlManager), eq(acConfiguration));
         verify(aceBeanInstallerIncremental).installPrivileges(eq(bean2Content), eq(new PrincipalImpl(testPrincipal2)),
-                eq(jackrabbitAccessControlList), eq(session), eq(accessControlManager));
+                eq(jackrabbitAccessControlList), eq(session), eq(accessControlManager), eq(acConfiguration));
 
     }
 
