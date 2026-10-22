@@ -41,6 +41,8 @@ import javax.jcr.security.Privilege;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
 import org.apache.sling.jcr.api.SlingRepository;
+import org.apache.sling.settings.SlingSettingsService;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
@@ -52,6 +54,8 @@ import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.configmodel.Restriction;
 import biz.netcentric.cq.tools.actool.helper.AcHelper;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
+import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
+import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper.ServerType;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 import biz.netcentric.cq.tools.actool.impl.SimpleNamePrincipal;
 
@@ -64,6 +68,15 @@ public class AceBeanInstallerIncremental extends BaseAceBeanInstaller implements
     private static final Logger LOG = LoggerFactory.getLogger(AceBeanInstallerIncremental.class);
 
     private Map<String, Set<AceBean>> actionsToPrivilegesMapping = new ConcurrentHashMap<String, Set<AceBean>>();
+
+    @Activate
+    public AceBeanInstallerIncremental(@Reference SlingSettingsService slingSettingsService) {
+        this(RuntimeHelper.getServerType(slingSettingsService.getRunModes()));
+    }
+
+    protected AceBeanInstallerIncremental(ServerType serverType) {
+        super(serverType);
+    }
 
     /** Installs a full set of ACE beans that form an ACL for the path
      * 
