@@ -131,20 +131,26 @@ class AcInstallationServiceImplTest {
     }
 
     @Test
-    void testWarningForDefaultEveryoneUnmanagedAcePathsRegex() {
+    void testDefaultEveryoneUnmanagedAcePathsRegexIsAppliedOnlyWhenInstallingAces() {
         AuthorizablesConfig authorizablesConfig = new AuthorizablesConfig();
         AuthorizableConfigBean everyone = new AuthorizableConfigBean();
         everyone.setPrincipalName("everyone");
         authorizablesConfig.add(everyone);
 
         InstallationLogger installLog = Mockito.mock(InstallationLogger.class);
-        AcInstallationServiceImpl.warnIfEveryoneAcePathsAreUnmanaged(authorizablesConfig, installLog);
+        AcInstallationServiceImpl.applyDefaultEveryoneUnmanagedAcePathsRegex(authorizablesConfig, installLog);
 
         Mockito.verify(installLog).addWarning(Mockito.any(org.slf4j.Logger.class), Mockito.contains("unmanagedAcePathsRegex '.*'"));
+        assertEquals(".*", everyone.getUnmanagedAcePathsRegex());
+
+        everyone.setUnmanagedAcePathsRegex(".*");
+        InstallationLogger explicitlyConfiguredLog = Mockito.mock(InstallationLogger.class);
+        AcInstallationServiceImpl.applyDefaultEveryoneUnmanagedAcePathsRegex(authorizablesConfig, explicitlyConfiguredLog);
+        verifyNoInteractions(explicitlyConfiguredLog);
 
         everyone.setUnmanagedAcePathsRegex("^/content.*");
         InstallationLogger narrowedRegexLog = Mockito.mock(InstallationLogger.class);
-        AcInstallationServiceImpl.warnIfEveryoneAcePathsAreUnmanaged(authorizablesConfig, narrowedRegexLog);
+        AcInstallationServiceImpl.applyDefaultEveryoneUnmanagedAcePathsRegex(authorizablesConfig, narrowedRegexLog);
         verifyNoInteractions(narrowedRegexLog);
     }
 

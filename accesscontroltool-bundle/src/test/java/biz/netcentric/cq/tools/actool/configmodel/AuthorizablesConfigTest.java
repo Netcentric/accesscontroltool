@@ -15,6 +15,7 @@ package biz.netcentric.cq.tools.actool.configmodel;
  */
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -79,14 +80,12 @@ public class AuthorizablesConfigTest {
     }
 
     @Test
-    public void testEveryoneIsUnmanagedByDefault() {
+    public void testEveryoneRegexIsNotSetWhenAdded() {
         AuthorizablesConfig config = new AuthorizablesConfig();
         AuthorizableConfigBean everyone = getBean("everyone", null);
         config.add(everyone);
 
-        assertEquals(".*", everyone.getUnmanagedAcePathsRegex());
-        assertEquals(Collections.emptySet(),
-                config.removeUnmanagedPrincipalNamesAtPath("/content", principalSet("everyone"), null));
+        assertNull(everyone.getUnmanagedAcePathsRegex());
     }
 
     @Test
