@@ -14,8 +14,6 @@ package biz.netcentric.cq.tools.actool.ui;
  * #L%
  */
 
-import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,6 +50,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitSession;
 import org.apache.jackrabbit.api.security.user.User;
 import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.xss.XSSAPI;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -114,6 +113,9 @@ public class AcToolUiService {
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private AcHistoryService acHistoryService;
 
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    private XSSAPI xssApi;
+    
     @ObjectClassDefinition(name = "AC Tool UI Service", 
             description="Service that allows to apply AC Tool configuration and gather status of users/groups and permissions from a Web UI (either Touch UI or Web Console Plugin).")
     protected static @interface Configuration {
@@ -570,7 +572,7 @@ public class AcToolUiService {
             return;
         }
 
-        String sanitizedCurrentPath = escapeHtml4(currentPath);
+        String sanitizedCurrentPath = xssApi.encodeForHTMLAttr(currentPath);
         for (AcToolExecution acToolExecution : acToolExecutions.values()) {
             String linkToLog =  sanitizedCurrentPath + "?" + PARAM_SHOW_LOG_ID + "=" + acToolExecution.getId();
             String downloadLinkToLog = basePath + "/" + SUFFIX_DOWNLOAD_LOG + "?" + PARAM_SHOW_LOG_ID + "=" + acToolExecution.getId();
@@ -598,7 +600,7 @@ public class AcToolUiService {
 
             AcToolExecution acToolExecution = acToolExecutions.get(reqParams.showLogId);
             if (acToolExecution == null) {
-                writer.println("No log found for id " + escapeHtml4(reqParams.showLogId));
+                writer.println("No log found for id " + xssApi.encodeForHTML(reqParams.showLogId));
                 return;
             } else {
                 String logLabel = "Execution Log " + reqParams.showLogId + ": " + getExecutionLabel(acToolExecution);
@@ -665,7 +667,7 @@ public class AcToolUiService {
         writer.openTd();
         writer.print("<input type='text' name='" + PARAM_CONFIGURATION_ROOT_PATH + "' value='");
         if (reqParams.configurationRootPath != null) {
-            writer.print(escapeHtml4(reqParams.configurationRootPath));
+            writer.print(xssApi.encodeForHTMLAttr((reqParams.configurationRootPath)));
         }
         writer.println("' class='input' size='70'>");
         writer.closeTd();
@@ -679,7 +681,7 @@ public class AcToolUiService {
         writer.openTd();
         writer.print("<input type='text' name='" + PARAM_BASE_PATHS + "' value='");
         if (reqParams.basePaths != null) {
-            writer.print(escapeHtml4(StringUtils.join(reqParams.basePaths, ",")));
+            writer.print(xssApi.encodeForHTMLAttr(StringUtils.join(reqParams.basePaths, ",")));
         }
         writer.println("' class='input' size='70'>");
         writer.closeTd();

@@ -116,6 +116,23 @@ public class AuthorizablesConfigTest {
 
     }
 
+    @Test
+    public void testRemoveUnmanagedPrincipalNamesAtRepositoryLevel() {
+        Set<String> principals = principalSet(beanTestGroupAllManaged.getPrincipalName(), testgroupPartlyManaged.getPrincipalName(),
+                beanEveryone.getPrincipalName());
+        beanTestGroupAllManaged.setUnmanagedAcePathsRegex("^/etc/.*");
+        testgroupPartlyManaged.setUnmanagedAcePathsRegex("^$");
+        beanEveryone.setUnmanagedAcePathsRegex("^/etc/.*");
+
+        assertEquals(principalSet("testgroupAllManaged", "everyone"),
+                authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("", principals, "^$"));
+
+        beanTestGroupAllManaged.setUnmanagedAcePathsRegex(null);
+        testgroupPartlyManaged.setUnmanagedAcePathsRegex(null);
+        beanEveryone.setUnmanagedAcePathsRegex(null);
+        assertEquals(Collections.emptySet(), authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("", principals, "^$"));
+    }
+
     private AuthorizableConfigBean getBean(String name, String unmanagedAcePathRegex) {
         AuthorizableConfigBean beanEveryone = new AuthorizableConfigBean();
         beanEveryone.setPrincipalName(name);

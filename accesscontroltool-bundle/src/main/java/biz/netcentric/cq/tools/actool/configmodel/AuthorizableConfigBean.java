@@ -341,9 +341,8 @@ public class AuthorizableConfigBean implements AcDumpElement {
 
     public boolean managesPath(String path, String defaultUnmanagedAcePathsRegex) {
         String effectiveUnmanagedAcePathsRegex = StringUtils.defaultIfEmpty(unmanagedAcePathsRegex, defaultUnmanagedAcePathsRegex);
-        if (StringUtils.isNotBlank(effectiveUnmanagedAcePathsRegex)
-                && StringUtils.isNotBlank(path) /* not supporting repository permissions here */) {
-            boolean pathIsManaged = !path.matches(effectiveUnmanagedAcePathsRegex);
+        if (StringUtils.isNotBlank(effectiveUnmanagedAcePathsRegex)) {
+            boolean pathIsManaged = !StringUtils.defaultString(path).matches(effectiveUnmanagedAcePathsRegex);
             return pathIsManaged;
         } else {
             return true; // default

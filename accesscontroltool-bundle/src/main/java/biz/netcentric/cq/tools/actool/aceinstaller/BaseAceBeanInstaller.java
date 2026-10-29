@@ -86,7 +86,15 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
             // order entries (denies in front of allows)
             final Set<AceBean> orderedAceBeanSetFromConfig = new TreeSet<AceBean>(
                     new AcePermissionComparator());
-            orderedAceBeanSetFromConfig.addAll(aceBeanSetFromConfig);
+            for (AceBean aceBean : aceBeanSetFromConfig) {
+                if (acConfiguration.getAuthorizablesConfig().managesPathForPrincipal(path, aceBean.getPrincipalName(),
+                        acConfiguration.getGlobalConfiguration().getDefaultUnmanagedAcePathsRegex())) {
+                    orderedAceBeanSetFromConfig.add(aceBean);
+                } else {
+                    history.addWarning(LOG, "Skipped ACE for path " + path + " and principal " + aceBean.getPrincipalName()
+                            + " as the path matches unmanagedAcePathsRegex");
+                }
+            }
 
             Set<String> principalsToRemoveAcesForAtThisPath = acConfiguration.getAuthorizablesConfig()
                     .removeUnmanagedPrincipalNamesAtPath(path, principalsToRemoveAcesFor,

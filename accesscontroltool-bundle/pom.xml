@@ -11,7 +11,7 @@
     <parent>
         <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
         <artifactId>accesscontroltool</artifactId>
-        <version>4.2.4-SNAPSHOT</version>
+        <version>4.2.5-SNAPSHOT</version>
     </parent>
 
     <!-- ====================================================================== -->
@@ -24,7 +24,7 @@
     <description>The OSGi bundle containing all classes of the Access Control Tool.</description>
     
     <properties>
-        <tomcat.el.version>10.1.57</tomcat.el.version>
+        <tomcat.el.version>10.1.60</tomcat.el.version>
         <oak.testing.version>1.74.0</oak.testing.version><!-- ITs require a newer version of Oak otherwise it won't work with Java 23+ (https://issues.apache.org/jira/browse/OAK-11199) and certain classes for running the IT are not available -->
     </properties>
 
@@ -166,6 +166,11 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.settings</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.xss</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
