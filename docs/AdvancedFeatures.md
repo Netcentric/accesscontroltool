@@ -355,7 +355,7 @@ Additionally, it is also possible to set `unmanagedExternalIsMemberOfRegex` and 
 
 ### Limiting where the AC Tool creates and removes ACEs
 
-The property `unmanagedAcePathsRegex` for authorizable configurations (users or groups) can be used to ensure certain paths are not managed by the AC Tool. This property must contain a regular expression which is matched against all ACE paths bound to the authorizable found in the system. All ACEs with matching paths are not touched. By setting the global config `defaultUnmanagedAcePathsRegex` it is possible to exclude certain areas of the JCR totally from removing and creating at all.
+The property `unmanagedAcePathsRegex` for authorizable configurations (users or groups) can be used to ensure certain paths are not managed by the AC Tool. This property must contain a regular expression which is matched against all ACE paths bound to the authorizable found in the system. All ACEs with matching paths are not touched. Repository-level ACEs are matched against an empty path, so the expression `^$` can be used to exclude them (supported since version 4.3.0). By setting the global config `defaultUnmanagedAcePathsRegex` it is possible to exclude certain areas of the JCR totally from removing and creating at all, including repository-level ACEs.
 
 #### Examples
 
