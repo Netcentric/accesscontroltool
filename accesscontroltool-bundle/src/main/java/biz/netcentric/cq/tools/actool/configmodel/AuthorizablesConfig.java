@@ -86,4 +86,9 @@ public class AuthorizablesConfig extends LinkedHashSet<AuthorizableConfigBean> {
         return filteredPrincipals;
     }
 
+    public boolean managesPathForPrincipal(String path, String principal, String defaultUnmanagedAcePathsRegex) {
+        AuthorizableConfigBean authorizableConfig = configBeansByPrincipalId.get(principal);
+        return authorizableConfig == null || authorizableConfig.managesPath(path, defaultUnmanagedAcePathsRegex);
+    }
+
 }
