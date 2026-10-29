@@ -91,7 +91,7 @@ public abstract class BaseAceBeanInstaller implements AceBeanInstaller {
                         acConfiguration.getGlobalConfiguration().getDefaultUnmanagedAcePathsRegex())) {
                     orderedAceBeanSetFromConfig.add(aceBean);
                 } else {
-                    history.addMessage(LOG, "Skipped ACE for path " + path + " and principal " + aceBean.getPrincipalName()
+                    history.addWarning(LOG, "Skipped ACE for path " + path + " and principal " + aceBean.getPrincipalName()
                             + " as the path matches unmanagedAcePathsRegex");
                 }
             }
