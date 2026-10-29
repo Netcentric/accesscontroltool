@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.text.MessageFormat;
 import java.util.Arrays;
@@ -46,6 +47,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
 import biz.netcentric.cq.tools.actool.api.InstallationOptionsBuilder;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
+import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 @ExtendWith(MockitoExtension.class)
 class AcInstallationServiceImplTest {
@@ -124,6 +128,24 @@ class AcInstallationServiceImplTest {
 
         assertTrue(authsToDelete.indexOf(group2) < authsToDelete.indexOf(group3));
 
+    }
+
+    @Test
+    void testWarningForDefaultEveryoneUnmanagedAcePathsRegex() {
+        AuthorizablesConfig authorizablesConfig = new AuthorizablesConfig();
+        AuthorizableConfigBean everyone = new AuthorizableConfigBean();
+        everyone.setPrincipalName("everyone");
+        authorizablesConfig.add(everyone);
+
+        InstallationLogger installLog = Mockito.mock(InstallationLogger.class);
+        AcInstallationServiceImpl.warnIfEveryoneAcePathsAreUnmanaged(authorizablesConfig, installLog);
+
+        Mockito.verify(installLog).addWarning(Mockito.any(org.slf4j.Logger.class), Mockito.contains("unmanagedAcePathsRegex '.*'"));
+
+        everyone.setUnmanagedAcePathsRegex("^/content.*");
+        InstallationLogger narrowedRegexLog = Mockito.mock(InstallationLogger.class);
+        AcInstallationServiceImpl.warnIfEveryoneAcePathsAreUnmanaged(authorizablesConfig, narrowedRegexLog);
+        verifyNoInteractions(narrowedRegexLog);
     }
 
     private static class GroupIteratorAnswer implements Answer<Iterator<Group>> {

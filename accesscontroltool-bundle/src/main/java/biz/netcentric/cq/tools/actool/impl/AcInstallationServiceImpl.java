@@ -725,6 +725,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
         stopWatch.start();
 
         AuthorizablesConfig authorizablesConfig = acConfiguration.getAuthorizablesConfig();
+        warnIfEveryoneAcePathsAreUnmanaged(authorizablesConfig, installLog);
         installLog.addMessage(LOG, "*** Starting installation of " + authorizablesConfig.size() + " authorizables from configuration...");
 
         try {
@@ -736,6 +737,17 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
         installLog.addMessage(LOG, "Finished installation of authorizables without errors in "
                 + msHumanReadable(stopWatch.getTime()));
+    }
+
+    static void warnIfEveryoneAcePathsAreUnmanaged(AuthorizablesConfig authorizablesConfig, InstallationLogger installLog) {
+        for (AuthorizableConfigBean authorizableConfigBean : authorizablesConfig) {
+            if (PRINCIPAL_EVERYONE.equals(authorizableConfigBean.getPrincipalName())
+                    && ".*".equals(authorizableConfigBean.getUnmanagedAcePathsRegex())) {
+                installLog.addWarning(LOG,
+                        "The default unmanagedAcePathsRegex '.*' is applied to principal everyone; its ACLs will not be managed unless a narrower regex is configured.");
+                return;
+            }
+        }
     }
 
     private Set<String> removeNonExistingAuthorizables(Set<String> authorizablesToCheck, Session session)
