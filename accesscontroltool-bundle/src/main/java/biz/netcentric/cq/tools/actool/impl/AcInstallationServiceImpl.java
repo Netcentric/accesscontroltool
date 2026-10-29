@@ -650,13 +650,13 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
             AcConfiguration acConfiguration, Map<String, Set<AceBean>> repositoryDumpAceMap, Session session, InstallationOptions options)
             throws Exception {
 
-        applyDefaultEveryoneUnmanagedAcePathsRegex(acConfiguration.getAuthorizablesConfig(), installLog);
-
         // --- installation of ACEs from configuration ---
         Map<String, Set<AceBean>> pathBasedAceMapFromConfig = AcHelper
                 .getPathBasedAceMap(acConfiguration.getAceConfig(), AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE);
 
         Set<String> principalsToRemoveAcesFor = getPrincipalNamesToRemoveAcesFor(acConfiguration.getAuthorizablesConfig());
+        skipEveryoneAcesFromRemovalWhenRegexIsNotConfigured(acConfiguration.getAuthorizablesConfig(),
+                principalsToRemoveAcesFor, installLog);
         removeAcesForPathsNotInConfig(installLog, session, principalsToRemoveAcesFor, repositoryDumpAceMap, acConfiguration);
 
         Map<String, Set<AceBean>> filteredPathBasedAceMapFromConfig = filterForRestrictedPaths(pathBasedAceMapFromConfig,
@@ -740,13 +740,14 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 + msHumanReadable(stopWatch.getTime()));
     }
 
-    static void applyDefaultEveryoneUnmanagedAcePathsRegex(AuthorizablesConfig authorizablesConfig, InstallationLogger installLog) {
+    static void skipEveryoneAcesFromRemovalWhenRegexIsNotConfigured(AuthorizablesConfig authorizablesConfig,
+            Set<String> principalsToRemoveAcesFor, InstallationLogger installLog) {
         for (AuthorizableConfigBean authorizableConfigBean : authorizablesConfig) {
             if (PRINCIPAL_EVERYONE.equals(authorizableConfigBean.getPrincipalName())
-                    && StringUtils.isEmpty(authorizableConfigBean.getUnmanagedAcePathsRegex())) {
-                installLog.addWarning(LOG,
-                        "The default unmanagedAcePathsRegex '.*' is applied to principal everyone; its ACLs will not be managed unless a narrower regex is configured.");
-                authorizableConfigBean.setUnmanagedAcePathsRegex(".*");
+                    && StringUtils.isEmpty(authorizableConfigBean.getUnmanagedAcePathsRegex())
+                    && principalsToRemoveAcesFor.remove(PRINCIPAL_EVERYONE)) {
+                installLog.addMessage(LOG,
+                        "Not removing existing ACEs for principal everyone because unmanagedAcePathsRegex is not configured");
                 return;
             }
         }

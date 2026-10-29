@@ -1,6 +1,7 @@
 package biz.netcentric.cq.tools.actool.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /*-
  * #%L
@@ -18,14 +19,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.UnaryOperator;
 
 import javax.jcr.RepositoryException;
@@ -131,27 +133,31 @@ class AcInstallationServiceImplTest {
     }
 
     @Test
-    void testDefaultEveryoneUnmanagedAcePathsRegexIsAppliedOnlyWhenInstallingAces() {
+    void testEveryoneAcesAreNotRemovedWithoutUnmanagedPathsRegex() {
         AuthorizablesConfig authorizablesConfig = new AuthorizablesConfig();
         AuthorizableConfigBean everyone = new AuthorizableConfigBean();
         everyone.setPrincipalName("everyone");
         authorizablesConfig.add(everyone);
 
+        Set<String> principalsToRemoveAcesFor = new HashSet<>(Arrays.asList("everyone", "someGroup"));
         InstallationLogger installLog = Mockito.mock(InstallationLogger.class);
-        AcInstallationServiceImpl.applyDefaultEveryoneUnmanagedAcePathsRegex(authorizablesConfig, installLog);
+        AcInstallationServiceImpl.skipEveryoneAcesFromRemovalWhenRegexIsNotConfigured(authorizablesConfig,
+                principalsToRemoveAcesFor, installLog);
 
-        Mockito.verify(installLog).addWarning(Mockito.any(org.slf4j.Logger.class), Mockito.contains("unmanagedAcePathsRegex '.*'"));
-        assertEquals(".*", everyone.getUnmanagedAcePathsRegex());
-
-        everyone.setUnmanagedAcePathsRegex(".*");
-        InstallationLogger explicitlyConfiguredLog = Mockito.mock(InstallationLogger.class);
-        AcInstallationServiceImpl.applyDefaultEveryoneUnmanagedAcePathsRegex(authorizablesConfig, explicitlyConfiguredLog);
-        verifyNoInteractions(explicitlyConfiguredLog);
+        assertEquals(new HashSet<>(Arrays.asList("someGroup")), principalsToRemoveAcesFor);
+        assertNull(everyone.getUnmanagedAcePathsRegex());
+        assertTrue(authorizablesConfig.managesPathForPrincipal("/content", "everyone", null));
+        Mockito.verify(installLog).addMessage(Mockito.any(org.slf4j.Logger.class),
+                Mockito.contains("Not removing existing ACEs for principal everyone"));
 
         everyone.setUnmanagedAcePathsRegex("^/content.*");
-        InstallationLogger narrowedRegexLog = Mockito.mock(InstallationLogger.class);
-        AcInstallationServiceImpl.applyDefaultEveryoneUnmanagedAcePathsRegex(authorizablesConfig, narrowedRegexLog);
-        verifyNoInteractions(narrowedRegexLog);
+        principalsToRemoveAcesFor.add("everyone");
+        InstallationLogger configuredRegexLog = Mockito.mock(InstallationLogger.class);
+        AcInstallationServiceImpl.skipEveryoneAcesFromRemovalWhenRegexIsNotConfigured(authorizablesConfig,
+                principalsToRemoveAcesFor, configuredRegexLog);
+
+        assertTrue(principalsToRemoveAcesFor.contains("everyone"));
+        Mockito.verifyNoInteractions(configuredRegexLog);
     }
 
     private static class GroupIteratorAnswer implements Answer<Iterator<Group>> {
