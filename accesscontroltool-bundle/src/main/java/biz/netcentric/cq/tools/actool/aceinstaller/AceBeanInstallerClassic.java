@@ -35,7 +35,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlEntry;
 import org.apache.jackrabbit.api.security.JackrabbitAccessControlList;
+import org.apache.sling.settings.SlingSettingsService;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +46,7 @@ import biz.netcentric.cq.tools.actool.aem.AcToolCqActions;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.RestrictionsHolder;
+import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
 import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 import biz.netcentric.cq.tools.actool.impl.SimpleNamePrincipal;
 
@@ -53,7 +57,11 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
 
     private static final Logger LOG = LoggerFactory.getLogger(AceBeanInstallerClassic.class);
 
-    
+    @Activate
+    public AceBeanInstallerClassic(@Reference SlingSettingsService slingSettingsService) {
+        super(RuntimeHelper.getServerType(slingSettingsService.getRunModes()));
+    }
+
     /** Installs a full set of ACE beans that form an ACL for the path
      * 
      * @throws RepositoryException */
