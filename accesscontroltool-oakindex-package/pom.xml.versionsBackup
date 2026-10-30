@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    (C) Copyright 2015 Netcentric AG.
+
+    All rights reserved. This program and the accompanying materials
+    are made available under the terms of the Eclipse Public License v2.0
+    which accompanies this distribution, and is available at
+    https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.html
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <!-- ====================================================================== -->
+    <!-- P A R E N T P R O J E C T D E S C R I P T I O N -->
+    <!-- ====================================================================== -->
+    <parent>
+        <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
+        <artifactId>accesscontroltool</artifactId>
+        <version>4.2.5-SNAPSHOT</version>
+    </parent>
+
+    <!-- ====================================================================== -->
+    <!-- P R O J E C T D E S C R I P T I O N -->
+    <!-- ====================================================================== -->
+
+    <artifactId>accesscontroltool-oakindex-package</artifactId>
+    <packaging>content-package</packaging>
+    <name>Access Control Tool Package - Oak Index</name>
+    <description>Package containing an oak index definition for 'rep:ACL' nodetypes. This speeds up the performance of the Access Control Tool.</description>
+
+    <build>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.jackrabbit</groupId>
+                <artifactId>filevault-package-maven-plugin</artifactId>
+                <configuration>
+                    <group>Netcentric</group>
+                    <filterSource>src/main/META-INF/vault/filter.xml</filterSource>
+                    <allowIndexDefinitions>true</allowIndexDefinitions>
+                    <packageType>content</packageType><!-- regular mutable content for AEM Classic -->
+                    <validatorsSettings>
+                        <netcentric-aem-cloud>
+                            <isDisabled>true</isDisabled>
+                        </netcentric-aem-cloud>
+                    </validatorsSettings>
+                </configuration>
+           </plugin>
+
+            <plugin>
+                <groupId>com.day.jcr.vault</groupId>
+                <artifactId>content-package-maven-plugin</artifactId>
+            </plugin>
+            
+            <plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<!-- integrate the hook from https://github.com/code-distillery/filevault-oak-reindex-hook to only reindex if really necessary -->
+						<id>copy-reindex-hook-into-package</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>net.distilledcode</groupId>
+									<artifactId>filevault-oak-reindex-hook</artifactId>
+									<version>1.0.2</version>
+								</artifactItem>
+							</artifactItems>
+							<outputDirectory>${project.build.directory}/vault-work/META-INF/vault/hooks</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+		<pluginManagement>
+			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											org.apache.maven.plugins
+										</groupId>
+										<artifactId>
+											maven-dependency-plugin
+										</artifactId>
+										<versionRange>
+											[2.10,)
+										</versionRange>
+										<goals>
+											<goal>copy</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore />
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+    </build>
+    <profiles>
+        <profile>
+            <id>cloud</id>
+            <!-- automatically active on CI -->
+            <activation>
+                <property>
+                    <name>env.CI</name>
+                </property>
+            </activation>
+            <properties>
+                <!-- install package with "cloud" classifier to AEM -->
+                <contentPackageFile>${project.build.directory}/${project.build.finalName}-cloud.zip</contentPackageFile>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <!-- optionally generate two packages: one for cloud (classifier "cloud") and one for classic (no classifier) -->
+                        <groupId>org.apache.jackrabbit</groupId>
+                        <artifactId>filevault-package-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>cloud-generate-metadata</id>
+                                <goals>
+                                    <goal>generate-metadata</goal>
+                                </goals>
+                                <configuration>
+                                    <!-- application type for AEMaaCS,  -->
+                                    <packageType>application</packageType>
+                                    <classifier>cloud</classifier>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>cloud-package</id>
+                                <goals>
+                                    <goal>package</goal>
+                                </goals>
+                                <configuration>
+                                    <classifier>cloud</classifier>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>cloud-validate-package</id>
+                                <goals>
+                                    <goal>validate-package</goal>
+                                </goals>
+                                <configuration>
+                                    <classifier>cloud</classifier>
+                                    <skipPackageFile>true</skipPackageFile>
+                                    <validatorsSettings>
+                                        <jackrabbit-packagetype>
+                                            <options>
+                                                <!-- https://experienceleague.adobe.com/docs/experience-manager-cloud-service/content/operations/indexing.html?lang=en#project-configuration -->
+                                                <immutableRootNodeNames>apps,libs,oak:index</immutableRootNodeNames>
+                                            </options>
+                                        </jackrabbit-packagetype>
+                                    </validatorsSettings>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>com.adobe.aem</groupId>
+                        <artifactId>aemanalyser-maven-plugin</artifactId>
+                        <configuration>
+                            <classifier>cloud</classifier>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    (C) Copyright 2019 Netcentric AG.
+
+    All rights reserved. This program and the accompanying materials
+    are made available under the terms of the Eclipse Public License v2.0
+    which accompanies this distribution, and is available at
+    https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.html
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <!-- ====================================================================== -->
+    <!-- P A R E N T P R O J E C T D E S C R I P T I O N -->
+    <!-- ====================================================================== -->
+    <parent>
+        <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
+        <artifactId>accesscontroltool</artifactId>
+        <version>4.2.5-SNAPSHOT</version>
+    </parent>
+
+    <!-- ====================================================================== -->
+    <!-- P R O J E C T D E S C R I P T I O N -->
+    <!-- ====================================================================== -->
+
+    <artifactId>accesscontroltool-content-package</artifactId>
+    <packaging>content-package</packaging>
+    <name>Access Control Tool Package - Content</name>
+    <description>Content package of the AC Tool containing the system user and ACLs for it (only relevant for AEM onPrem)</description>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.jackrabbit</groupId>
+                <artifactId>filevault-package-maven-plugin</artifactId>
+                <configuration>
+                    <packageType>content</packageType>
+                    <properties>
+                        <acHandling>merge_preserve</acHandling>
+                    </properties>
+                    <validatorsSettings>
+                        <jackrabbit-nodetypes>
+                            <!-- disable due to https://issues.apache.org/jira/browse/JCRVLT-527 -->
+                            <isDisabled>true</isDisabled>
+                        </jackrabbit-nodetypes>
+                        <netcentric-aem-cloud>
+                            <isDisabled>true</isDisabled>
+                        </netcentric-aem-cloud>
+                    </validatorsSettings>
+                </configuration>
+            </plugin>
+            <!-- don't deploy automatically to prevent issues with AEMaaCS
+            <plugin>
+                <groupId>com.day.jcr.vault</groupId>
+                <artifactId>content-package-maven-plugin</artifactId>
+            </plugin>-->
+        </plugins>
+    </build>
+</project>

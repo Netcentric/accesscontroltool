@@ -1,0 +1,504 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- (C) Copyright 2015 Netcentric AG. All rights reserved. This program
+    and the accompanying materials are made available under the terms of the
+    Eclipse Public License v2.0 which accompanies this distribution, and is available
+    at https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.html -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd ">
+    <modelVersion>4.0.0</modelVersion>
+    <!-- ====================================================================== -->
+    <!-- P A R E N T P R O J E C T D E S C R I P T I O N -->
+    <!-- ====================================================================== -->
+    <parent>
+        <groupId>biz.netcentric.cq.tools.accesscontroltool</groupId>
+        <artifactId>accesscontroltool</artifactId>
+        <version>4.2.5-SNAPSHOT</version>
+    </parent>
+
+    <!-- ====================================================================== -->
+    <!-- P R O J E C T D E S C R I P T I O N -->
+    <!-- ====================================================================== -->
+
+    <artifactId>accesscontroltool-bundle</artifactId>
+    <packaging>jar</packaging>
+    <name>Access Control Tool Bundle</name>
+    <description>The OSGi bundle containing all classes of the Access Control Tool.</description>
+    
+    <properties>
+        <tomcat.el.version>10.1.61</tomcat.el.version>
+        <oak.testing.version>1.74.0</oak.testing.version><!-- ITs require a newer version of Oak otherwise it won't work with Java 23+ (https://issues.apache.org/jira/browse/OAK-11199) and certain classes for running the IT are not available -->
+    </properties>
+
+    <dependencies>
+
+        <!-- OSGi annotations -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.annotation.versioning</artifactId>
+            <scope>provided</scope>
+        </dependency>
+         <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.annotation.bundle</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.component.annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.metatype.annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.servlets.annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- null annotations, being used transitively -->
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>24.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- OSGi Core/Compendium individual dependencies -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.framework</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Config Admin -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.cm</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Event Admin -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.event</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- URL Handler -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.url</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.jcr</groupId>
+            <artifactId>jcr</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-jackrabbit-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- for org.apache.jackrabbit.oak.commons.jmx -->
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-core-spi</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit.vault</groupId>
+            <artifactId>org.apache.jackrabbit.vault</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>jackrabbit-jcr-commons</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.serviceusermapper</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.event</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.jcr.resource</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.jcr.api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.settings</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.xss</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.commons.osgi</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.hc.api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- API for creating external groups (those which are connected to LDAP/IDP) -->
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-auth-external</artifactId>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient-osgi</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Crypto Support -->
+        <dependency>
+            <groupId>com.adobe.granite</groupId>
+            <artifactId>com.adobe.granite.crypto</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- embedded third party libraries -->
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>tomcat-el-api</artifactId>
+            <version>${tomcat.el.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>tomcat-jasper-el</artifactId>
+            <version>${tomcat.el.version}</version>
+        </dependency>
+
+        <!-- due to https://bugs.openjdk.java.net/browse/JDK-8231581 OOTB JRE is not sufficient -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- START: Test Dependencies -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- temporarily needed until the tests migration to JUnit5 is complete -->
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-library</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.util.converter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- IT dependencies -->
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-core</artifactId>
+            <version>${oak.testing.version}</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.osgi</groupId>
+                    <artifactId>org.osgi.service.component.annotations</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-jcr</artifactId>
+            <version>${oak.testing.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-segment-tar</artifactId>
+            <version>${oak.testing.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- transitive dependency of oak-segment-tar, necessary for filedatastore (https://issues.apache.org/jira/browse/OAK-6542) -->
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>3.2.3</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- transitive dependencies of FileVault-->
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>jackrabbit-spi-commons</artifactId>
+            <version>2.16.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>jackrabbit-spi</artifactId>
+            <version>2.16.0</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- transitive dependency of oak-security-spi-->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- END: Test Dependencies -->
+    </dependencies>
+
+    <!-- ====================================================================== -->
+    <!-- B U I L D D E F I N I T I O N -->
+    <!-- ====================================================================== -->
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.owasp</groupId>
+                    <artifactId>dependency-check-maven</artifactId>
+                    <configuration>
+                        <skip>false</skip><!-- only enable in specific submodules -->
+                        <suppressionFile>${project.basedir}/suppression.xml</suppressionFile>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <configuration>
+                        <excludes>
+                            <!-- Exclude multi-version snakeyaml for Jacoco due to https://github.com/jacoco/jacoco/issues/407 -->
+                            <exclude>snakeyaml-*.jar</exclude>
+                            <exclude>tomcat-*.jar</exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <configuration>
+                        <additionalClasspathDependencies>
+                            <additionalClasspathDependency>
+                                <groupId>org.apache.jackrabbit</groupId>
+                                <artifactId>oak-security-spi</artifactId>
+                                <version>${oak.testing.version}</version>
+                            </additionalClasspathDependency>
+                            <additionalClasspathDependency>
+                                <groupId>org.apache.jackrabbit</groupId>
+                                <artifactId>oak-auth-external</artifactId>
+                                <version>${oak.testing.version}</version>
+                            </additionalClasspathDependency>
+                            <additionalClasspathDependency>
+                                <groupId>org.apache.jackrabbit</groupId>
+                                <artifactId>oak-jackrabbit-api</artifactId>
+                                <version>${oak.testing.version}</version>
+                            </additionalClasspathDependency>
+                            <additionalClasspathDependency>
+                                <groupId>org.apache.jackrabbit</groupId>
+                                <artifactId>oak-api</artifactId>
+                                <version>${oak.testing.version}</version>
+                            </additionalClasspathDependency>
+                            <additionalClasspathDependency>
+                                <groupId>org.apache.jackrabbit</groupId>
+                                <artifactId>oak-core-spi</artifactId>
+                                <version>${oak.testing.version}</version>
+                            </additionalClasspathDependency>
+                        </additionalClasspathDependencies>
+                        <classpathDependencyExcludes>
+                            <classpathDependencyExclude>org.apache.jackrabbit:oak-security-spi</classpathDependencyExclude>
+                            <classpathDependencyExclude>org.apache.jackrabbit:oak-auth-external</classpathDependencyExclude>
+                            <classpathDependencyExclude>org.apache.jackrabbit:oak-jackrabbit-api</classpathDependencyExclude>
+                            <classpathDependencyExclude>org.apache.jackrabbit:oak-api</classpathDependencyExclude>
+                            <classpathDependencyExclude>org.apache.jackrabbit:oak-core-spi</classpathDependencyExclude>
+                        </classpathDependencyExcludes>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>biz.aQute.bnd</groupId>
+                <artifactId>bnd-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>biz.aQute.bnd</groupId>
+                <artifactId>bnd-baseline-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>baseline</id>
+                        <goals>
+                            <goal>baseline</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>biz.aQute.bnd</groupId>
+                <artifactId>bnd-resolver-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>resolve-against-minimum-aem</id>
+                        <goals>
+                            <goal>resolve</goal>
+                        </goals>
+                        <phase>verify</phase>
+                        <configuration>
+                            <useMavenDependencies>false</useMavenDependencies>
+                            <bndruns>
+                                <include>minimum-aem.bndrun</include>
+                            </bndruns>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>resolve-against-minimum-sling</id>
+                        <goals>
+                            <goal>resolve</goal>
+                        </goals>
+                        <phase>verify</phase>
+                        <configuration>
+                            <useMavenDependencies>false</useMavenDependencies>
+                            <bndruns>
+                                <include>minimum-sling.bndrun</include>
+                            </bndruns>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>resolve-against-maximum-sling</id>
+                        <goals>
+                            <goal>resolve</goal>
+                        </goals>
+                        <phase>verify</phase>
+                        <configuration>
+                            <useMavenDependencies>false</useMavenDependencies>
+                            <bndruns>
+                                <include>maximum-sling.bndrun</include>
+                            </bndruns>
+                        </configuration>
+                    </execution>
+                    <!-- resolving against the maximum, i.e. AEMaaCS version happens separately in the aemanalyser-maven-plugin -->
+                </executions>
+                <configuration>
+                    <useMavenDependencies>true</useMavenDependencies>
+                    <failOnChanges>false</failOnChanges><!-- reuse for multiple bundles which all require different minimum container -->
+                    <writeOnChanges>false</writeOnChanges>
+                    
+                </configuration>
+            </plugin>
+            
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <excludePackageNames>
+                        *.impl,*.aceinstaller,*.aceservice,*.aem,*.authorizableinstaller,*.comparators,*.components,*.configmodel,*.configreader,*configupdatelistener,*.dumpservice,*.healthcheck,*.helper,*.history,*.installationhistory,*.jmx,*.validators*,*.ui
+                    </excludePackageNames>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <!-- use manifest generated from bnd-maven-plugin -->
+                    <archive>
+                        <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>sling-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
