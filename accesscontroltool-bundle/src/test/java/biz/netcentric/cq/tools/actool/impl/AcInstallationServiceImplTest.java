@@ -148,7 +148,7 @@ class AcInstallationServiceImplTest {
         assertNull(everyone.getUnmanagedAcePathsRegex());
         assertTrue(authorizablesConfig.managesPathForPrincipal("/content", "everyone", null));
         Mockito.verify(installLog).addMessage(Mockito.any(org.slf4j.Logger.class),
-                Mockito.contains("Not removing existing ACEs for principal everyone"));
+                Mockito.contains("Not removing existing ACEs for shared principal \"everyone\". To enforce this configure \"unmanagedAcePathsRegex\" for this principal in the configuration."));
 
         everyone.setUnmanagedAcePathsRegex("^/content.*");
         principalsToRemoveAcesFor.add("everyone");

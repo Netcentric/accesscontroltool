@@ -15,7 +15,6 @@ package biz.netcentric.cq.tools.actool.configmodel;
  */
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -77,15 +76,6 @@ public class AuthorizablesConfigTest {
 
         Set<String> removedPrincipals = authorizablesConfig.removeUnmanagedPrincipalNamesAtPath("/content/dam/geometrixx", principalSet, null);
         assertEquals(principalSet("testgroupAllManaged", "nonExistentPrincipal"), removedPrincipals);
-    }
-
-    @Test
-    public void testEveryoneRegexIsNotSetWhenAdded() {
-        AuthorizablesConfig config = new AuthorizablesConfig();
-        AuthorizableConfigBean everyone = getBean("everyone", null);
-        config.add(everyone);
-
-        assertNull(everyone.getUnmanagedAcePathsRegex());
     }
 
     @Test
