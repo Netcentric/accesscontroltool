@@ -655,6 +655,8 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                 .getPathBasedAceMap(acConfiguration.getAceConfig(), AcHelper.ACE_ORDER_ACTOOL_BEST_PRACTICE);
 
         Set<String> principalsToRemoveAcesFor = getPrincipalNamesToRemoveAcesFor(acConfiguration.getAuthorizablesConfig());
+        skipEveryoneAcesFromRemovalWhenRegexIsNotConfigured(acConfiguration.getAuthorizablesConfig(),
+                principalsToRemoveAcesFor, installLog);
         removeAcesForPathsNotInConfig(installLog, session, principalsToRemoveAcesFor, repositoryDumpAceMap, acConfiguration);
 
         Map<String, Set<AceBean>> filteredPathBasedAceMapFromConfig = filterForRestrictedPaths(pathBasedAceMapFromConfig,
@@ -736,6 +738,19 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
 
         installLog.addMessage(LOG, "Finished installation of authorizables without errors in "
                 + msHumanReadable(stopWatch.getTime()));
+    }
+
+    static void skipEveryoneAcesFromRemovalWhenRegexIsNotConfigured(AuthorizablesConfig authorizablesConfig,
+            Set<String> principalsToRemoveAcesFor, InstallationLogger installLog) {
+        for (AuthorizableConfigBean authorizableConfigBean : authorizablesConfig) {
+            if (PRINCIPAL_EVERYONE.equals(authorizableConfigBean.getPrincipalName())
+                    && StringUtils.isEmpty(authorizableConfigBean.getUnmanagedAcePathsRegex())
+                    && principalsToRemoveAcesFor.remove(PRINCIPAL_EVERYONE)) {
+                installLog.addMessage(LOG,
+                        "Not removing existing ACEs for shared principal \"everyone\". To enforce this configure \"unmanagedAcePathsRegex\" for this principal in the configuration.");
+                return;
+            }
+        }
     }
 
     private Set<String> removeNonExistingAuthorizables(Set<String> authorizablesToCheck, Session session)

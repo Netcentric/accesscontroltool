@@ -1,6 +1,7 @@
 package biz.netcentric.cq.tools.actool.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /*-
  * #%L
@@ -22,9 +23,11 @@ import static org.mockito.Mockito.when;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.UnaryOperator;
 
 import javax.jcr.RepositoryException;
@@ -46,6 +49,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
 import biz.netcentric.cq.tools.actool.api.InstallationOptionsBuilder;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizableConfigBean;
+import biz.netcentric.cq.tools.actool.configmodel.AuthorizablesConfig;
+import biz.netcentric.cq.tools.actool.history.InstallationLogger;
 
 @ExtendWith(MockitoExtension.class)
 class AcInstallationServiceImplTest {
@@ -124,6 +130,34 @@ class AcInstallationServiceImplTest {
 
         assertTrue(authsToDelete.indexOf(group2) < authsToDelete.indexOf(group3));
 
+    }
+
+    @Test
+    void testEveryoneAcesAreNotRemovedWithoutUnmanagedPathsRegex() {
+        AuthorizablesConfig authorizablesConfig = new AuthorizablesConfig();
+        AuthorizableConfigBean everyone = new AuthorizableConfigBean();
+        everyone.setPrincipalName("everyone");
+        authorizablesConfig.add(everyone);
+
+        Set<String> principalsToRemoveAcesFor = new HashSet<>(Arrays.asList("everyone", "someGroup"));
+        InstallationLogger installLog = Mockito.mock(InstallationLogger.class);
+        AcInstallationServiceImpl.skipEveryoneAcesFromRemovalWhenRegexIsNotConfigured(authorizablesConfig,
+                principalsToRemoveAcesFor, installLog);
+
+        assertEquals(new HashSet<>(Arrays.asList("someGroup")), principalsToRemoveAcesFor);
+        assertNull(everyone.getUnmanagedAcePathsRegex());
+        assertTrue(authorizablesConfig.managesPathForPrincipal("/content", "everyone", null));
+        Mockito.verify(installLog).addMessage(Mockito.any(org.slf4j.Logger.class),
+                Mockito.contains("Not removing existing ACEs for shared principal \"everyone\". To enforce this configure \"unmanagedAcePathsRegex\" for this principal in the configuration."));
+
+        everyone.setUnmanagedAcePathsRegex("^/content.*");
+        principalsToRemoveAcesFor.add("everyone");
+        InstallationLogger configuredRegexLog = Mockito.mock(InstallationLogger.class);
+        AcInstallationServiceImpl.skipEveryoneAcesFromRemovalWhenRegexIsNotConfigured(authorizablesConfig,
+                principalsToRemoveAcesFor, configuredRegexLog);
+
+        assertTrue(principalsToRemoveAcesFor.contains("everyone"));
+        Mockito.verifyNoInteractions(configuredRegexLog);
     }
 
     private static class GroupIteratorAnswer implements Answer<Iterator<Group>> {
