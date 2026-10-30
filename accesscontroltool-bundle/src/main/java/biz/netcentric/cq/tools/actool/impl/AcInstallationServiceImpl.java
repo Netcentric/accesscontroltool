@@ -747,7 +747,7 @@ public class AcInstallationServiceImpl implements AcInstallationService, AcInsta
                     && StringUtils.isEmpty(authorizableConfigBean.getUnmanagedAcePathsRegex())
                     && principalsToRemoveAcesFor.remove(PRINCIPAL_EVERYONE)) {
                 installLog.addMessage(LOG,
-                        "Not removing existing ACEs for principal everyone because unmanagedAcePathsRegex is not configured");
+                        "Not removing existing ACEs for shared principal \"everyone\". To force doing that use \"unmanagedAcePathsRegex\"!");
                 return;
             }
         }
