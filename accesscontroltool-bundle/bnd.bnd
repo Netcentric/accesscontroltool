@@ -15,6 +15,7 @@ com.adobe.granite.keystore;resolution:=optional,\
 com.adobe.granite.jmx.annotation;resolution:=optional,\
 com.fasterxml.jackson.databind;resolution:=optional,\
 org.apache.http.*;resolution:=optional,\
+org.apache.sling.xss;resolution:=optional,\
 org.bouncycastle.*;resolution:=optional,\
 org.apache.jackrabbit.oak.spi.security.authentication.external.*;resolution:=optional,\
 org.apache.jackrabbit.oak.commons.jmx;version="[1.1.0,3.0.0)",\
