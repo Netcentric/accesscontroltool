@@ -21,6 +21,7 @@ org.apache.jackrabbit.oak.spi.security.authentication.external.*;resolution:=opt
 org.apache.jackrabbit.oak.commons.jmx;version="[1.1.0,3.0.0)",\
 !jakarta.servlet.jsp.el,\
 *
-
-# snakeyaml 2.0 uses multi version jars which are not supported: https://github.com/bndtools/bnd/issues/3514
--fixupmessages "Classes found in the wrong directory"; restrict:=error; is:=warning
+# disable processing of org.apache.el.ExpressionFactory as otherwise a requirement to serviceloader is emitted. 
+# This is not used in ACTool as we create ExpressionFactory instances directly and not via ServiceLoader.
+# see also https://bnd.bndtools.org/instructions/metainf_services.html
+-metainf-services: none
