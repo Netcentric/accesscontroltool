@@ -84,7 +84,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <slf4j.version>1.7.25</slf4j.version>
-        <bnd.version>6.4.0</bnd.version>
+        <bnd.version>7.5.0</bnd.version>
         <bouncycastle.version>1.64</bouncycastle.version>
         <!-- release sets API classpath, source and target, see  https://docs.oracle.com/javase/9/tools/javac.htm#GUID-AEEC9F07-CB49-4E96-8BC7-BCC2C7F725C9__GUID-D343F6B4-3FDD-43A8-AD24-43DD70214471  and http://openjdk.java.net/jeps/247 -->
         <maven.compiler.release>11</maven.compiler.release>
@@ -543,7 +543,8 @@
                                     <version>3.9.0</version>
                                 </requireMavenVersion>
                                 <requireJavaVersion>
-                                    <version>11</version>
+                                    <!-- for Bnd 7.x -->
+                                    <version>17</version>
                                 </requireJavaVersion>
                             </rules>
                         </configuration>
