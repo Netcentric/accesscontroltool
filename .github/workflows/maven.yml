@@ -12,9 +12,9 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
-        jdk: [11, 17, 21, 25]
+        jdk: [17, 21, 25]
         include:
-          # lengthy build steps should only be performed on linux with Java 17 (Sonarcloud analysis, deployment)
+          # lengthy build steps should only be performed on linux with Java 21 (Sonarcloud analysis, deployment)
           - os: ubuntu-latest
             jdk: 21
             isMainBuildEnv: true
