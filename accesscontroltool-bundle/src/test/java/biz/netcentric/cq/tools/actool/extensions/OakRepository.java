@@ -1,11 +1,3 @@
-/*
- * (C) Copyright 2023 Cognizant Netcentric.
- *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v2.0
- * which accompanies this distribution, and is available at
- * https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.html
- */
 package biz.netcentric.cq.tools.actool.extensions;
 
 /*-
@@ -32,7 +24,6 @@ import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import javax.jcr.LoginException;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
