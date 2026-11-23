@@ -1,4 +1,3 @@
-
 package biz.netcentric.cq.tools.actool.helper;
 
 /*-
