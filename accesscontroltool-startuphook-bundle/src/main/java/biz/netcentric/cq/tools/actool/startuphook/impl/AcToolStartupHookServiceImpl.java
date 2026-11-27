@@ -27,6 +27,7 @@ import javax.jcr.Session;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.oak.spi.security.authorization.accesscontrol.AccessControlConstants;
 import org.apache.sling.jcr.api.SlingRepository;
+import org.apache.sling.settings.SlingSettingsService;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -40,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.api.AcInstallationService;
 import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
+import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper.ServerType;
 import biz.netcentric.cq.tools.actool.history.impl.HistoryUtils;
 
 @Component
@@ -67,13 +69,16 @@ public class AcToolStartupHookServiceImpl {
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     private SlingRepository repository;
+    
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    private SlingSettingsService slingSettingsService;
 
-    private boolean isCompositeNodeStore;
+    private ServerType serverType;
 
     @Activate
     public void activate(BundleContext bundleContext, Config config) {
-
-        boolean isCloudReady = RuntimeHelper.isCloudReadyInstance();
+        this.serverType = RuntimeHelper.getServerType(slingSettingsService.getRunModes());
+        boolean isCloudReady = serverType.isInCloud();
         Config.StartupHookActivation activationMode = config.activationMode();
         boolean runAsyncForMutableConent = config.runAsyncForMutableConent();
         int currentStartLevel = RuntimeHelper.getCurrentStartLevel(bundleContext);
@@ -92,7 +97,7 @@ public class AcToolStartupHookServiceImpl {
             LOG.info("Running AcTool with "
                     + (relevantPathsForInstallation.isEmpty() ? "all paths" : "paths " + relevantPathsForInstallation) + "...");
             
-            if (runAsyncForMutableConent && isCompositeNodeStore) {
+            if (runAsyncForMutableConent && serverType == ServerType.AEM_CLOUD_RUN) {
                 LOG.info(
                         "Running AcTool asynchronously on mutable content of composite node store (config runAsyncForMutableConent=true)...");
                 runAcToolAsync(relevantPathsForInstallation, currentStartLevel, isCloudReady);
@@ -132,10 +137,9 @@ public class AcToolStartupHookServiceImpl {
         try {
             session = repository.loginService(null, null);
 
-            isCompositeNodeStore = RuntimeHelper.isCompositeNodeStore(session);
-            LOG.info("Repo is running with Composite NodeStore: {}", isCompositeNodeStore);
+            LOG.info("Repo is running with server type: {}", serverType);
             
-            if(!isCompositeNodeStore) {
+            if(serverType != ServerType.AEM_CLOUD_RUN) {
                 return Collections.emptyList();
             }
 
@@ -150,7 +154,7 @@ public class AcToolStartupHookServiceImpl {
                         AccessControlConstants.REP_REPO_POLICY).contains(node.getName())) {
                     continue;
                 }
-                if (isCompositeNodeStore && Arrays.asList("apps", "libs").contains(node.getName())) {
+                if (serverType == ServerType.AEM_CLOUD_RUN && Arrays.asList("apps", "libs").contains(node.getName())) {
                     continue;
                 }
                 relevantPathsForInstallation.add(node.getPath());
@@ -180,7 +184,7 @@ public class AcToolStartupHookServiceImpl {
             try {
                 session = repository.loginService(null, null);
 
-                if(isCompositeNodeStore) {
+                if(serverType == ServerType.AEM_CLOUD_RUN) {
                     LOG.info("Restoring history from /apps to /var");
 
                     if(session.nodeExists(HistoryUtils.AC_HISTORY_PATH_IN_APPS)) {

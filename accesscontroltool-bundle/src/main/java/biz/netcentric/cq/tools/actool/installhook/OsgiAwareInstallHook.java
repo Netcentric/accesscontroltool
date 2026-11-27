@@ -16,6 +16,7 @@ package biz.netcentric.cq.tools.actool.installhook;
 
 import org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener;
 import org.apache.jackrabbit.vault.packaging.InstallHook;
+import org.apache.sling.settings.SlingSettingsService;
 import org.osgi.annotation.versioning.ProviderType;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -23,6 +24,9 @@ import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper;
+import biz.netcentric.cq.tools.actool.helper.runtime.RuntimeHelper.ServerType;
 
 
 /**
@@ -39,6 +43,7 @@ public abstract class OsgiAwareInstallHook implements InstallHook {
 
     private final BundleContext bundleContext;
     private static final Logger LOG = LoggerFactory.getLogger(OsgiAwareInstallHook.class);
+    private ServerType serverType;
 
     public OsgiAwareInstallHook() throws ClassCastException {
         // since this class was loaded through a bundle class loader as well, just take the bundle context
@@ -67,5 +72,19 @@ public abstract class OsgiAwareInstallHook implements InstallHook {
         } else {
             LOG.info(message);
         }
+    }
+
+    public ServerType getServerType() {
+        if (serverType == null) {
+            ServiceReference<SlingSettingsService> slingSettingsReference = getServiceReference(SlingSettingsService.class);
+            try {
+                SlingSettingsService slingSettings = getBundleContext().getService(slingSettingsReference);
+                serverType = RuntimeHelper.getServerType(slingSettings.getRunModes());
+            }
+            finally {
+                getBundleContext().ungetService(slingSettingsReference);
+            }
+        }
+        return serverType;
     }
 }

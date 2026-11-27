@@ -41,7 +41,6 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
         switch (context.getPhase()) {
         case PREPARE:
             if (!shouldInstallInPhaseInstalled(context.getPackage())) {
-
                 install(context);
             }
             break;
@@ -73,7 +72,7 @@ public class AcToolInstallHook extends OsgiAwareInstallHook {
         }
         alreadyRan = true;
 
-        if (RuntimeHelper.isCloudReadyInstance()) {
+        if (getServerType().isInCloud()) {
             log("InstallHook is skipped by default in cloud (use package property 'actool.forceInstallHookInCloud = true' to force run)",
                     listener);
             return;
