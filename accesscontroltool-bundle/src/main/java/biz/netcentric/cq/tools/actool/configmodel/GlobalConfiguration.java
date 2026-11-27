@@ -38,6 +38,8 @@ public class GlobalConfiguration {
     public static final String KEY_ALLOW_EXTERNAL_GROUPS_IN_IS_MEMBER_OF = "allowExternalGroupsInIsMemberOf";
     
     public static final String KEY_AUTOCREATE_TEST_USERS = "autoCreateTestUsers";
+    
+    public static final String KEY_IGNORE_MISSING_PRINCIPALS = "ignoreMissingPrincipals";
 
     @Deprecated
     public static final String KEY_KEEP_EXISTING_MEMBERSHIPS_FOR_GROUP_NAMES_REGEX = "keepExistingMembershipsForGroupNamesRegEx";
@@ -51,6 +53,8 @@ public class GlobalConfiguration {
     private Boolean allowCreateOfUnmanagedRelationships = null;
     
     private Boolean allowExternalGroupsInIsMemberOf = null;
+    
+    private Boolean ignoreMissingPrincipals = null;
 
     private AutoCreateTestUsersConfig autoCreateTestUsersConfig;
 
@@ -100,6 +104,10 @@ public class GlobalConfiguration {
             
             if (globalConfigMap.containsKey(KEY_ALLOW_EXTERNAL_GROUPS_IN_IS_MEMBER_OF)) {
                 setAllowExternalGroupsInIsMemberOf(Boolean.valueOf(globalConfigMap.get(KEY_ALLOW_EXTERNAL_GROUPS_IN_IS_MEMBER_OF).toString()));
+            }
+
+            if (globalConfigMap.containsKey(KEY_IGNORE_MISSING_PRINCIPALS)) {
+                setIgnoreMissingPrincipals(Boolean.valueOf(globalConfigMap.get(KEY_IGNORE_MISSING_PRINCIPALS).toString()));
             }
 
         }
@@ -169,6 +177,14 @@ public class GlobalConfiguration {
             }
         }
 
+        if (otherGlobalConfig.getIgnoreMissingPrincipals() != null) {
+            if (ignoreMissingPrincipals == null) {
+                ignoreMissingPrincipals = otherGlobalConfig.getIgnoreMissingPrincipals();
+            } else {
+                throw new IllegalArgumentException("Duplicate config for " + KEY_IGNORE_MISSING_PRINCIPALS);
+            }
+        }
+
     }
 
     public String getMinRequiredVersion() {
@@ -234,6 +250,14 @@ public class GlobalConfiguration {
 
     public void setAllowExternalGroupsInIsMemberOf(Boolean allowExternalGroupsInIsMemberOf) {
         this.allowExternalGroupsInIsMemberOf = allowExternalGroupsInIsMemberOf;
+    }
+
+    public Boolean getIgnoreMissingPrincipals() {
+        return ignoreMissingPrincipals;
+    }
+
+    public void setIgnoreMissingPrincipals(Boolean ignoreMissingPrincipals) {
+        this.ignoreMissingPrincipals = ignoreMissingPrincipals;
     }
     
 }

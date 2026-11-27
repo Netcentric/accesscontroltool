@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import biz.netcentric.cq.tools.actool.aem.AcToolCqActions;
+import biz.netcentric.cq.tools.actool.configmodel.AcConfiguration;
 import biz.netcentric.cq.tools.actool.configmodel.AceBean;
 import biz.netcentric.cq.tools.actool.helper.AccessControlUtils;
 import biz.netcentric.cq.tools.actool.helper.RestrictionsHolder;
@@ -58,7 +59,7 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
      * 
      * @throws RepositoryException */
     protected void installAcl(Set<AceBean> aceBeanSetFromConfig, String path, Set<String> principalsToRemoveAcesFor, Session session,
-            InstallationLogger installLog) throws RepositoryException {
+            InstallationLogger installLog, AcConfiguration acConfiguration) throws RepositoryException {
 
         // Remove all config contained authorizables from ACL of this path
         int countRemoved = AccessControlUtils.deleteAllEntriesForPrincipalsFromACL(session,
@@ -72,7 +73,7 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
             LOG.debug("Writing bean to repository {}", bean);
 
             Principal currentPrincipal = new SimpleNamePrincipal(bean.getPrincipalName());
-            installAce(bean, session, currentPrincipal, installLog);
+            installAce(bean, session, currentPrincipal, installLog, acConfiguration);
 
         }
 
@@ -84,7 +85,7 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
     *
     * @throws NoSuchMethodException */
    private void installAce(AceBean aceBean, final Session session, Principal principal,
-            InstallationLogger installLog) throws RepositoryException {
+            InstallationLogger installLog, AcConfiguration acConfiguration) throws RepositoryException {
 
         if (aceBean.isInitialContentOnlyConfig()) {
             return;
@@ -99,7 +100,7 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
         }
 
         // first install actions
-        final JackrabbitAccessControlList newAcl = installActions(aceBean, principal, acl, session, acMgr, installLog);
+        final JackrabbitAccessControlList newAcl = installActions(aceBean, principal, acl, session, acMgr, installLog, acConfiguration);
         if (acl != newAcl) {
             installLog.addVerboseMessage(LOG, "Added action(s) for path: " + aceBean.getJcrPath()
                     + ", principal: " + principal.getName() + ", actions: "
@@ -109,7 +110,7 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
         }
 
         // then install (remaining) privileges
-        if (installPrivileges(aceBean, principal, acl, session, acMgr)) {
+        if (installPrivileges(aceBean, principal, acl, session, acMgr, acConfiguration)) {
             installLog.addVerboseMessage(LOG, "Added privilege(s) for path: " + aceBean.getJcrPath()
                     + ", principal: " + principal.getName() + ", privileges: "
                     + aceBean.getPrivilegesString() + ", allow: " + aceBean.isAllow());
@@ -130,7 +131,7 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
      *         AccessControlList (comprising the entres being installed for the actions).
      * @throws RepositoryException */
     private JackrabbitAccessControlList installActions(AceBean aceBean, Principal principal, JackrabbitAccessControlList acl,
-            Session session, AccessControlManager acMgr, InstallationLogger installLog) throws RepositoryException {
+            Session session, AccessControlManager acMgr, InstallationLogger installLog, AcConfiguration acConfiguration) throws RepositoryException {
         final Map<String, Boolean> actionMap = aceBean.getActionMap();
         if (actionMap.isEmpty()) {
             return acl;
@@ -139,8 +140,22 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
         AcToolCqActions cqActions = new AcToolCqActions(session);
         Collection<String> inheritedAllows = cqActions.getAllowedActions(
                 aceBean.getJcrPathForPolicyApi(), Collections.singleton(principal));
-        // this does always install new entries
-        cqActions.installActions(aceBean.getJcrPathForPolicyApi(), principal, actionMap, inheritedAllows);
+        
+        boolean ignoreMissingPrincipals = acConfiguration.getGlobalConfiguration().getIgnoreMissingPrincipals() != null 
+                && acConfiguration.getGlobalConfiguration().getIgnoreMissingPrincipals().booleanValue();
+        
+        try {
+            // this does always install new entries
+            cqActions.installActions(aceBean.getJcrPathForPolicyApi(), principal, actionMap, inheritedAllows);
+        } catch (Exception e) {
+            if (ignoreMissingPrincipals && isPrincipalNotFoundException(e)) {
+                LOG.warn("Ignoring missing principal '{}' for actions on path '{}' due to ignoreMissingPrincipals=true", 
+                        principal.getName(), aceBean.getJcrPath());
+                return acl; // return original ACL unchanged
+            } else {
+                throw e;
+            }
+        }
 
         // since the aclist has been modified, retrieve it again
         final JackrabbitAccessControlList newAcl = AccessControlUtils.getAccessControlList(session, aceBean.getJcrPath());
@@ -249,6 +264,17 @@ public class AceBeanInstallerClassic extends BaseAceBeanInstaller implements Ace
         accessControlList.orderBefore(newAccessControlEntry, accessControlEntry);
         // 3. remove old entry
         accessControlList.removeAccessControlEntry(accessControlEntry);
+    }
+    
+    private boolean isPrincipalNotFoundException(Exception e) {
+        // Check for various forms of principal not found exceptions
+        String message = e.getMessage();
+        return message != null && (
+                message.toLowerCase().contains("principal") && 
+                (message.toLowerCase().contains("not found") || 
+                 message.toLowerCase().contains("does not exist") ||
+                 message.toLowerCase().contains("unknown"))
+        );
     }
 
 }
